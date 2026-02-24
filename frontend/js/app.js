@@ -529,6 +529,19 @@ if (btnGenerateDefects) {
                         const details = extractFn(tr);
                         if (descInput) descInput.value = details.desc;
                         if (locInput) locInput.value = details.loc || '';
+
+                        // Copy photo if attached to the measurement row
+                        const attrPhoto = tr.getAttribute('data-photo');
+                        if (attrPhoto) {
+                            lastDefect.setAttribute('data-photo', attrPhoto);
+                            const imgPreview = lastDefect.querySelector('.img-preview');
+                            const uploadTxt = lastDefect.querySelector('.upload-txt');
+                            if (imgPreview && uploadTxt) {
+                                imgPreview.src = attrPhoto;
+                                imgPreview.style.display = 'block';
+                                uploadTxt.style.display = 'none';
+                            }
+                        }
                     }
                 }
             });
@@ -951,12 +964,34 @@ if (window.vbfData && window.vbfData.aramkor_nevek) {
     document.body.appendChild(dl);
 }
 
+window.attachMeasurementPhoto = function (input) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const tr = input.closest('tr');
+            tr.setAttribute('data-photo', e.target.result);
+            input.parentElement.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+            input.parentElement.style.borderColor = 'var(--accent)';
+            input.parentElement.title = "Kép csatolva!";
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
 // --- MÉRÉSI ADATOK TÁBLÁZAT KEZELÉSE ---
 function createRow(tableId, htmlContent) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     if (!tbody) return;
     const tr = document.createElement('tr');
-    tr.innerHTML = htmlContent + `<td><button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()">Törlés</button></td>`;
+    tr.innerHTML = htmlContent + `
+        <td style="display:flex; gap: 5px; align-items: center; border: none;">
+            <label class="btn btn-secondary btn-small" title="Kép csatolása az áramkörhöz" style="margin:0; padding: 4px 8px; cursor: pointer;">
+                📷
+                <input type="file" accept="image/*" style="display:none;" onchange="attachMeasurementPhoto(this)">
+            </label>
+            <button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()" style="margin:0; padding: 4px 8px;">Törlés</button>
+        </td>`;
     tbody.appendChild(tr);
 }
 
@@ -1476,21 +1511,24 @@ btnSaveCloud.addEventListener('click', async () => {
                 point: tr.querySelector('.meas-point')?.value || '',
                 loc: tr.querySelector('.meas-loc')?.value || '',
                 val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             insulation: Array.from(document.querySelectorAll('#table-insulation tbody tr')).map(tr => ({
                 circuit: tr.querySelector('.meas-circuit')?.value || '',
                 ln: tr.querySelector('.meas-ln')?.value || '',
                 lpe: tr.querySelector('.meas-lpe')?.value || '',
                 npe: tr.querySelector('.meas-npe')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             loop: Array.from(document.querySelectorAll('#table-loop tbody tr')).map(tr => ({
                 circuit: tr.querySelector('.meas-circuit')?.value || '',
                 device: tr.querySelector('.meas-device')?.value || '',
                 loc: tr.querySelector('.meas-loc')?.value || '',
                 zs: tr.querySelector('.meas-zs')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             rcd: Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => ({
                 circ: tr.querySelector('.meas-circ')?.value || '',
@@ -1501,13 +1539,15 @@ btnSaveCloud.addEventListener('click', async () => {
                 t5: tr.querySelector('.meas-t5')?.value || '',
                 ramp: tr.querySelector('.meas-ramp')?.value || '',
                 uc: tr.querySelector('.meas-uc')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             tools: Array.from(document.querySelectorAll('#table-tools tbody tr')).map(tr => ({
                 name: tr.querySelector('.meas-name')?.value || '',
                 id: tr.querySelector('.meas-id')?.value || '',
                 val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             selv: Array.from(document.querySelectorAll('#table-selv tbody tr')).map(tr => ({
                 loc: tr.querySelector('.meas-loc')?.value || '',
@@ -1515,7 +1555,8 @@ btnSaveCloud.addEventListener('click', async () => {
                 ps: tr.querySelector('.meas-ps')?.value || '',
                 pt: tr.querySelector('.meas-pt')?.value || '',
                 st: tr.querySelector('.meas-st')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             })),
             eph_cont: Array.from(document.querySelectorAll('#table-eph tbody tr')).map(tr => ({
                 idx: tr.querySelector('.meas-index')?.value || '',
@@ -1524,7 +1565,8 @@ btnSaveCloud.addEventListener('click', async () => {
                 mat: tr.querySelector('.meas-mat')?.value || '',
                 conn: tr.querySelector('.meas-conn')?.value || '',
                 val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
+                pass: tr.querySelector('.meas-pass')?.value || '',
+                photo: tr.getAttribute('data-photo') || ''
             }))
         };
         payload.measurements_data = [measData];
@@ -1663,6 +1705,20 @@ if (btnExportPdfReport) {
     });
 }
 
+window.applyPhotoToLastRow = function (tableId, photo) {
+    if (!photo) return;
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    if (!tbody || !tbody.lastElementChild) return;
+    const tr = tbody.lastElementChild;
+    tr.setAttribute('data-photo', photo);
+    const input = tr.querySelector('input[type="file"]');
+    if (input) {
+        input.parentElement.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+        input.parentElement.style.borderColor = 'var(--accent)';
+        input.parentElement.title = "Kép betöltve!";
+    }
+}
+
 // CLONE & LOADING UI LOGIC
 window.loadReportIntoUI = function (rep) {
     // Clear existing QR code if present
@@ -1739,19 +1795,19 @@ window.loadReportIntoUI = function (rep) {
     const m = (rep.measurements_data && rep.measurements_data[0]) || {};
     document.querySelectorAll('.data-table tbody').forEach(tb => tb.innerHTML = '');
 
-    if (m.rpe) m.rpe.forEach(r => createRow('table-rpe', `<td><input type="number" class="meas-point" value="${r.point || ''}"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.01" class="meas-val" value="${r.val || ''}" oninput="validateRpe(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.rpe) m.rpe.forEach(r => { createRow('table-rpe', `<td><input type="number" class="meas-point" value="${r.point || ''}"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.01" class="meas-val" value="${r.val || ''}" oninput="validateRpe(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-rpe', r.photo); });
 
-    if (m.insulation) m.insulation.forEach(r => createRow('table-insulation', `<td><input type="text" class="meas-circuit" value="${r.circuit || ''}" list="circuitNames"></td><td><input type="number" step="0.1" class="meas-ln" value="${r.ln || ''}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-lpe" value="${r.lpe || ''}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-npe" value="${r.npe || ''}" oninput="validateIns(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.insulation) m.insulation.forEach(r => { createRow('table-insulation', `<td><input type="text" class="meas-circuit" value="${r.circuit || ''}" list="circuitNames"></td><td><input type="number" step="0.1" class="meas-ln" value="${r.ln || ''}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-lpe" value="${r.lpe || ''}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-npe" value="${r.npe || ''}" oninput="validateIns(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-insulation', r.photo); });
 
-    if (m.loop) m.loop.forEach(r => createRow('table-loop', `<td><input type="text" class="meas-circuit" value="${r.circuit || ''}" list="circuitNames"></td><td><input type="text" class="meas-device" value="${r.device || ''}" oninput="validateZs(this.closest('tr'))"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.01" class="meas-zs" value="${r.zs || ''}" oninput="validateZs(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.loop) m.loop.forEach(r => { createRow('table-loop', `<td><input type="text" class="meas-circuit" value="${r.circuit || ''}" list="circuitNames"></td><td><input type="text" class="meas-device" value="${r.device || ''}" oninput="validateZs(this.closest('tr'))"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.01" class="meas-zs" value="${r.zs || ''}" oninput="validateZs(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-loop', r.photo); });
 
-    if (m.rcd) m.rcd.forEach(r => createRow('table-rcd', `<td><input type="text" class="meas-circ" value="${r.circ || ''}" list="circuitNames"></td><td><select class="meas-type"><option ${r.type === 'AC' ? 'selected' : ''}>AC</option><option ${r.type === 'A' ? 'selected' : ''}>A</option><option ${r.type === 'B' ? 'selected' : ''}>B</option><option ${r.type === 'F' ? 'selected' : ''}>F</option></select></td><td><input type="number" class="meas-idn" value="${r.idn || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><select class="meas-05"><option ${r.test05 === 'OK (Nem oldott)' ? 'selected' : ''}>OK (Nem oldott)</option><option ${r.test05 === 'HIBA (Kioldott)' ? 'selected' : ''}>HIBA (Kioldott)</option></select></td><td><input type="number" step="1" class="meas-t1" value="${r.t1 || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="1" class="meas-t5" value="${r.t5 || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-ramp" value="${r.ramp || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-uc" value="${r.uc || ''}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.rcd) m.rcd.forEach(r => { createRow('table-rcd', `<td><input type="text" class="meas-circ" value="${r.circ || ''}" list="circuitNames"></td><td><select class="meas-type"><option ${r.type === 'AC' ? 'selected' : ''}>AC</option><option ${r.type === 'A' ? 'selected' : ''}>A</option><option ${r.type === 'B' ? 'selected' : ''}>B</option><option ${r.type === 'F' ? 'selected' : ''}>F</option></select></td><td><input type="number" class="meas-idn" value="${r.idn || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><select class="meas-05"><option ${r.test05 === 'OK (Nem oldott)' ? 'selected' : ''}>OK (Nem oldott)</option><option ${r.test05 === 'HIBA (Kioldott)' ? 'selected' : ''}>HIBA (Kioldott)</option></select></td><td><input type="number" step="1" class="meas-t1" value="${r.t1 || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="1" class="meas-t5" value="${r.t5 || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-ramp" value="${r.ramp || ''}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-uc" value="${r.uc || ''}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-rcd', r.photo); });
 
-    if (m.tools) m.tools.forEach(r => createRow('table-tools', `<td><input type="text" class="meas-name" value="${r.name || ''}"></td><td><input type="text" class="meas-id" value="${r.id || ''}"></td><td><input type="number" step="0.1" class="meas-val" value="${r.val || ''}" oninput="validateTool(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.tools) m.tools.forEach(r => { createRow('table-tools', `<td><input type="text" class="meas-name" value="${r.name || ''}"></td><td><input type="text" class="meas-id" value="${r.id || ''}"></td><td><input type="number" step="0.1" class="meas-val" value="${r.val || ''}" oninput="validateTool(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-tools', r.photo); });
 
-    if (m.selv) m.selv.forEach(r => createRow('table-selv', `<td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.1" class="meas-v" value="${r.v || ''}"></td><td><input type="number" step="1" class="meas-ps" value="${r.ps || ''}"></td><td><input type="number" step="1" class="meas-pt" value="${r.pt || ''}"></td><td><input type="number" step="1" class="meas-st" value="${r.st || ''}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.selv) m.selv.forEach(r => { createRow('table-selv', `<td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="number" step="0.1" class="meas-v" value="${r.v || ''}"></td><td><input type="number" step="1" class="meas-ps" value="${r.ps || ''}"></td><td><input type="number" step="1" class="meas-pt" value="${r.pt || ''}"></td><td><input type="number" step="1" class="meas-st" value="${r.st || ''}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-selv', r.photo); });
 
-    if (m.eph_cont) m.eph_cont.forEach(r => createRow('table-eph', `<td><input type="number" class="meas-index" value="${r.idx || ''}"></td><td><input type="text" class="meas-elem" value="${r.elem || ''}"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="text" class="meas-mat" value="${r.mat || ''}"></td><td><select class="meas-conn"><option ${r.conn === 'EPH bilincs' ? 'selected' : ''}>EPH bilincs</option><option ${r.conn === 'Szemes saru' ? 'selected' : ''}>Szemes saru</option><option ${r.conn === 'Hegesztett' ? 'selected' : ''}>Hegesztett</option><option ${r.conn === 'Wago/Sorkapocs' ? 'selected' : ''}>Wago/Sorkapocs</option></select></td><td><input type="number" step="0.01" class="meas-val" value="${r.val || ''}" oninput="validateEph(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`));
+    if (m.eph_cont) m.eph_cont.forEach(r => { createRow('table-eph', `<td><input type="number" class="meas-index" value="${r.idx || ''}"></td><td><input type="text" class="meas-elem" value="${r.elem || ''}"></td><td><input type="text" class="meas-loc" value="${r.loc || ''}"></td><td><input type="text" class="meas-mat" value="${r.mat || ''}"></td><td><select class="meas-conn"><option ${r.conn === 'EPH bilincs' ? 'selected' : ''}>EPH bilincs</option><option ${r.conn === 'Szemes saru' ? 'selected' : ''}>Szemes saru</option><option ${r.conn === 'Hegesztett' ? 'selected' : ''}>Hegesztett</option><option ${r.conn === 'Wago/Sorkapocs' ? 'selected' : ''}>Wago/Sorkapocs</option></select></td><td><input type="number" step="0.01" class="meas-val" value="${r.val || ''}" oninput="validateEph(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); applyPhotoToLastRow('table-eph', r.photo); });
 };
 
 window.cloneReport = async function (id) {
@@ -1791,6 +1847,39 @@ window.loadReport = async function (id) {
         if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
 
         loadReportIntoUI(rep);
+
+        // Lock UI if finalized
+        if (rep.status === 'FINAL') {
+            document.getElementById('btnSaveCloud').style.display = 'none';
+            const btnFin = document.getElementById('btnFinalize');
+            if (btnFin) btnFin.style.display = 'none';
+
+            // disable inputs
+            document.querySelectorAll('input:not(#manualQrId), select, textarea, button:not(.nav-tab):not(#btnExportWord):not(#btnExportPdfReport):not(#btnEmailReport):not(#btnLoginNav):not(#btnToggleTheme):not(#btnCloseLogin)').forEach(el => {
+                el.disabled = true;
+                el.style.opacity = '0.7';
+            });
+            // Show lock message
+            let lockMsg = document.getElementById('lockMessage');
+            if (!lockMsg) {
+                lockMsg = document.createElement('div');
+                lockMsg.id = 'lockMessage';
+                lockMsg.style = 'background: #dc2626; color: white; padding: 10px; text-align: center; font-weight: bold; width: 100%; z-index: 1000;';
+                lockMsg.innerText = '🔒 EZ A JEGYZŐKÖNYV VÉGLEGESÍTVE VAN. MÓDOSÍTÁS NEM LEHETSÉGES!';
+                document.querySelector('.app-content-wrapper').prepend(lockMsg);
+            }
+        } else {
+            document.getElementById('btnSaveCloud').style.display = 'inline-block';
+            const btnFin = document.getElementById('btnFinalize');
+            if (btnFin) btnFin.style.display = 'inline-block';
+
+            document.querySelectorAll('input:not(#manualQrId), select, textarea, button').forEach(el => {
+                el.disabled = false;
+                el.style.opacity = '1';
+            });
+            const lockMsg = document.getElementById('lockMessage');
+            if (lockMsg) lockMsg.remove();
+        }
 
         // Show QR in info area
         showReportQr(rep.id);

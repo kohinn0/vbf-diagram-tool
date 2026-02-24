@@ -332,6 +332,34 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
                 sub_num += 1
                 doc.add_paragraph()
 
+        # Print photos attached to measurement circuits
+        meas_photos = []
+        for m_key in ['rpe', 'insulation', 'loop', 'rcd', 'tools', 'selv', 'eph_cont']:
+            for m_row in meas_data.get(m_key, []):
+                p_data = m_row.get('photo')
+                if p_data and p_data.startswith('data:image'):
+                    desc = "Mérés Kép"
+                    if m_key == 'rpe': desc = f"Védővezető Rpe - {m_row.get('loc', '')}"
+                    elif m_key == 'insulation': desc = f"Szigetelés - {m_row.get('circuit', '')}"
+                    elif m_key == 'loop': desc = f"Hurokellenállás - {m_row.get('circuit', '')} ({m_row.get('loc', '')})"
+                    elif m_key == 'rcd': desc = f"Fi-Relé - {m_row.get('circ', '')}"
+                    elif m_key == 'tools': desc = f"Kéziszerszám - {m_row.get('name', '')}"
+                    elif m_key == 'selv': desc = f"SELV - {m_row.get('loc', '')}"
+                    elif m_key == 'eph_cont': desc = f"EPH - {m_row.get('elem', '')} ({m_row.get('loc', '')})"
+                    meas_photos.append((desc, p_data))
+                    
+        if meas_photos:
+            doc.add_heading(f'{section_num}. Mérési Áramkörökhöz / Sorokhoz csatolt fényképek', level=1)
+            for desc, photo_data in meas_photos:
+                try:
+                    b64_str = photo_data.split(',')[1]
+                    img_bytes = io.BytesIO(base64.b64decode(b64_str))
+                    doc.add_paragraph(f"{desc}:").bold = True
+                    doc.add_paragraph().add_run().add_picture(img_bytes, width=Cm(12))
+                except Exception as e:
+                    doc.add_paragraph(f"[Hiba a mérés képének beillesztésekor: {str(e)}]")
+            section_num += 1
+            
         section_num += 1
 
     # Defects
