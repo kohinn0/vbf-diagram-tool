@@ -2,6 +2,7 @@
  * VBF Diagram Editor Main JS
  */
 
+let canvas;
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Inicializáljuk a Fabric.js Canvast
     const wrapper = document.querySelector('.canvas-container-wrapper');
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
-    const canvas = new fabric.Canvas('diagramCanvas', {
+    canvas = new fabric.Canvas('diagramCanvas', {
         width: wrapper.clientWidth,
         height: wrapper.clientHeight,
         selection: true
