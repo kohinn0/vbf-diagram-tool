@@ -452,256 +452,257 @@
                     </div>
                 </div>
 
-            </div>
-
-            <!-- TÖMEGES ADATBEVITEL / HELYSZÍNFA -->
-            <div
-                style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--primary-color);">
-                <h3 style="margin-top: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                    </svg>
-                    Tömeges Adatbevitel és Helyszínfa
-                </h3>
-                <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 1rem;">Állítsd be az aktuális elosztót (pl.
-                    csarnok -> alelosztó) és a gyakori értékeket, így az "Új Mérés" gombok kattintásakor az itt megadott
-                    értékek automatikusan beíródnak az új sorokba, spórolva a gépeléssel!</p>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <div style="flex: 2; min-width: 250px;">
-                        <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Aktuális Helyszín / Elosztó
-                            (pl. Főépület / DB-1)</label>
-                        <input type="text" id="globalLocation" placeholder="Főelosztó -> 1. Emeleti Alelosztó"
-                            style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
-                    </div>
-                    <div style="flex: 1; min-width: 150px;">
-                        <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Kikapcsoló szerv
-                            (Zs-hez)</label>
-                        <input type="text" id="globalDevice" placeholder="B16"
-                            style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- VBF MÉRÉSEK -->
-            <div id="vbf-measurements">
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    1. Védővezető folytonosság (Rpe)</h3>
-                <table class="data-table" id="table-rpe"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Pont</th>
-                            <th>Mérés Helye</th>
-                            <th>Rpe [Ω]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddRpe">+ Rpe Mérés</button>
-
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    2. Szigetelési ellenállás (500V DC)</h3>
-                <table class="data-table" id="table-insulation"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Áramkör neve</th>
-                            <th>Riso L-N [MΩ]</th>
-                            <th>Riso L-PE [MΩ]</th>
-                            <th>Riso N-PE [MΩ]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddInsulation">+ Szig. Mérés</button>
-
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    3. Hurokellenállás (Zs) és Hibavédelem</h3>
-                <table class="data-table" id="table-loop"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Áramkör / Pont</th>
-                            <th>Kikapcsoló szerv (pl. B16)</th>
-                            <th>Helye (X/n)</th>
-                            <th>Zs [Ω]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddLoop">+ Hurok Mérés</button>
-
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    4. FI-relé (ÁVK) Részletes vizsgálat (MEEVET M5)</h3>
-                <table class="data-table" id="table-rcd"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Áramkör</th>
-                            <th>Típus</th>
-                            <th>IΔn [mA]</th>
-                            <th>0.5×IΔn</th>
-                            <th>1×IΔn [ms]</th>
-                            <th>5×IΔn [ms]</th>
-                            <th>IΔ ramp [mA]</th>
-                            <th>Uc [V]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddRcd">+ RCD Mérés</button>
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
-                <table class="data-table" id="table-tools"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Megnevezés</th>
-                            <th>Azonosító</th>
-                            <th>Szig. ell. [MΩ]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddTool">+ Szerszám Mérés</button>
-
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    6. SELV / PELV / Villamos elválasztás (MEEVET M2)</h3>
-                <table class="data-table" id="table-selv"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Hely / Tr. áttétel</th>
-                            <th>Szek. fesz. [V]</th>
-                            <th>P-S szig. [MΩ]</th>
-                            <th>P-T szig. [MΩ]</th>
-                            <th>S-T szig. [MΩ]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddSelv">+ SELV/PELV Mérés</button>
-            </div>
-
-            <!-- EPH MÉRÉSEK -->
-            <div id="eph-measurements" style="display: none;">
-                <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    EPH Bekötések Folytonossága</h3>
-                <table class="data-table" id="table-eph"
-                    style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <th>Sorszám</th>
-                            <th>Bekötött Elem (pl. Gázcső)</th>
-                            <th>Bekötés Helye</th>
-                            <th>Vezető (pl. Cu 6mm2)</th>
-                            <th>Kötés módja</th>
-                            <th>Folytonosság [Ω]</th>
-                            <th>Megfelel?</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn btn-secondary btn-small" id="btnAddEph">+ EPH Bekötés Mérés</button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- 5. TAB: FELHŐ / MENTETT JEGYZŐKÖNYVEK -->
-    <div id="tab-cloud" class="tab-pane">
-        <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
-            <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Mentett Jegyzőkönyvek</h2>
-            <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt láthatod a korábban elmentett munkáidat.
-                Bármikor visszatöltheted vagy klónozhatod őket.</p>
-
-            <div id="reportListContainer" class="report-grid">
-                <p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. TAB: ADMIN / FELHASZNÁLÓ KEZELÉS -->
-    <div id="tab-admin" class="tab-pane">
-        <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
-            <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Adminisztrátori Felület</h2>
-            <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók kezelése és előfizetések
-                beállítása.</p>
-
-            <table class="data-table" id="table-admin-users" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Felhasználónév</th>
-                        <th>Státusz</th>
-                        <th>Admin?</th>
-                        <th>Lejárat (Subscription)</th>
-                        <th>Műveletek</th>
-                    </tr>
-                </thead>
-                <tbody id="adminUserList">
-                    <!-- Ide kerülnek a felhasználók -->
-                </tbody>
-            </table>
-
-            <h3
-                style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                📅 Új Feladat / Kisállás Kiosztása</h3>
-            <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                <label>Feladat Címe (pl. "Érintésvédelmi Vizsgálat")</label>
-                <input type="text" id="adminJobTitle" placeholder="Cím">
-
-                <label style="margin-top: 10px;">Cím / Helyszín</label>
-                <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
-
-                <label style="margin-top: 10px;">Leírás / Részletek / Kontakt</label>
-                <textarea id="adminJobDesc" rows="2"
-                    placeholder="Megrendelő: Kovács János, Tel: 06201234567"></textarea>
-
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <div style="flex: 1;">
-                        <label>Dátum & Idő</label>
-                        <input type="datetime-local" id="adminJobDate">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Kijelölt Villanyszerelő / Tech</label>
-                        <select id="adminJobAssignSelect">
-                            <option value="">-- Válassz kollégát --</option>
-                        </select>
+                <!-- TÖMEGES ADATBEVITEL / HELYSZÍNFA -->
+                <div
+                    style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--primary-color);">
+                    <h3 style="margin-top: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                        Tömeges Adatbevitel és Helyszínfa
+                    </h3>
+                    <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 1rem;">Állítsd be az aktuális elosztót (pl.
+                        csarnok -> alelosztó) és a gyakori értékeket, így az "Új Mérés" gombok kattintásakor az itt
+                        megadott
+                        értékek automatikusan beíródnak az új sorokba, spórolva a gépeléssel!</p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 2; min-width: 250px;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Aktuális Helyszín /
+                                Elosztó
+                                (pl. Főépület / DB-1)</label>
+                            <input type="text" id="globalLocation" placeholder="Főelosztó -> 1. Emeleti Alelosztó"
+                                style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Kikapcsoló szerv
+                                (Zs-hez)</label>
+                            <input type="text" id="globalDevice" placeholder="B16"
+                                style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
+                        </div>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="btnAdminSaveJob" style="margin-top: 15px; width: 100%;">Munkavégzés
-                    Kiosztása</button>
+
+                <!-- VBF MÉRÉSEK -->
+                <div id="vbf-measurements">
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        1. Védővezető folytonosság (Rpe)</h3>
+                    <table class="data-table" id="table-rpe"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Pont</th>
+                                <th>Mérés Helye</th>
+                                <th>Rpe [Ω]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddRpe">+ Rpe Mérés</button>
+
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        2. Szigetelési ellenállás (500V DC)</h3>
+                    <table class="data-table" id="table-insulation"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Áramkör neve</th>
+                                <th>Riso L-N [MΩ]</th>
+                                <th>Riso L-PE [MΩ]</th>
+                                <th>Riso N-PE [MΩ]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddInsulation">+ Szig. Mérés</button>
+
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        3. Hurokellenállás (Zs) és Hibavédelem</h3>
+                    <table class="data-table" id="table-loop"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Áramkör / Pont</th>
+                                <th>Kikapcsoló szerv (pl. B16)</th>
+                                <th>Helye (X/n)</th>
+                                <th>Zs [Ω]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddLoop">+ Hurok Mérés</button>
+
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        4. FI-relé (ÁVK) Részletes vizsgálat (MEEVET M5)</h3>
+                    <table class="data-table" id="table-rcd"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Áramkör</th>
+                                <th>Típus</th>
+                                <th>IΔn [mA]</th>
+                                <th>0.5×IΔn</th>
+                                <th>1×IΔn [ms]</th>
+                                <th>5×IΔn [ms]</th>
+                                <th>IΔ ramp [mA]</th>
+                                <th>Uc [V]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddRcd">+ RCD Mérés</button>
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
+                    <table class="data-table" id="table-tools"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Megnevezés</th>
+                                <th>Azonosító</th>
+                                <th>Szig. ell. [MΩ]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddTool">+ Szerszám Mérés</button>
+
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        6. SELV / PELV / Villamos elválasztás (MEEVET M2)</h3>
+                    <table class="data-table" id="table-selv"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Hely / Tr. áttétel</th>
+                                <th>Szek. fesz. [V]</th>
+                                <th>P-S szig. [MΩ]</th>
+                                <th>P-T szig. [MΩ]</th>
+                                <th>S-T szig. [MΩ]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddSelv">+ SELV/PELV Mérés</button>
+                </div>
+
+                <!-- EPH MÉRÉSEK -->
+                <div id="eph-measurements" style="display: none;">
+                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        EPH Bekötések Folytonossága</h3>
+                    <table class="data-table" id="table-eph"
+                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <th>Sorszám</th>
+                                <th>Bekötött Elem (pl. Gázcső)</th>
+                                <th>Bekötés Helye</th>
+                                <th>Vezető (pl. Cu 6mm2)</th>
+                                <th>Kötés módja</th>
+                                <th>Folytonosság [Ω]</th>
+                                <th>Megfelel?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-small" id="btnAddEph">+ EPH Bekötés Mérés</button>
+                </div>
+
             </div>
         </div>
-    </div>
 
-    <!-- 7. TAB: NAPTÁR ÉS FELADATOK (JOBS) -->
-    <div id="tab-jobs" class="tab-pane">
-        <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto; min-height: 80vh;">
-            <h2 style="margin-bottom: 2rem; color: var(--accent);">📅 Kiosztott Feladatok & Munkák</h2>
-            <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt találod a rád bízott közelgő vizsgálatokat
-                és a naptáradat.</p>
+        <!-- 5. TAB: FELHŐ / MENTETT JEGYZŐKÖNYVEK -->
+        <div id="tab-cloud" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Mentett Jegyzőkönyvek</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt láthatod a korábban elmentett munkáidat.
+                    Bármikor visszatöltheted vagy klónozhatod őket.</p>
 
-            <div id="jobListContainer" style="display:flex; flex-direction:column; gap: 1rem;">
-                <!-- Javascript fogja ide tölteni a kártyákat -->
+                <div id="reportListContainer" class="report-grid">
+                    <p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- 6. TAB: ADMIN / FELHASZNÁLÓ KEZELÉS -->
+        <div id="tab-admin" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Adminisztrátori Felület</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók kezelése és előfizetések
+                    beállítása.</p>
+
+                <table class="data-table" id="table-admin-users" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Felhasználónév</th>
+                            <th>Státusz</th>
+                            <th>Admin?</th>
+                            <th>Lejárat</th>
+                            <th>Műveletek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUserList">
+                        <!-- Ide kerülnek a felhasználók -->
+                    </tbody>
+                </table>
+
+                <h3
+                    style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    📅 Új Feladat / Kiszállás Kiosztása</h3>
+                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <label>Feladat Címe (pl. "Érintésvédelmi Vizsgálat")</label>
+                    <input type="text" id="adminJobTitle" placeholder="Cím">
+
+                    <label style="margin-top: 10px;">Cím / Helyszín</label>
+                    <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
+
+                    <label style="margin-top: 10px;">Leírás / Részletek / Kontakt</label>
+                    <textarea id="adminJobDesc" rows="2"
+                        placeholder="Megrendelő: Kovács János, Tel: 06201234567"></textarea>
+
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <div style="flex: 1;">
+                            <label>Dátum & Idő</label>
+                            <input type="datetime-local" id="adminJobDate">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Kijelölt Villanyszerelő / Tech</label>
+                            <select id="adminJobAssignSelect">
+                                <option value="">-- Válassz kollégát --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btnAdminSaveJob"
+                        style="margin-top: 15px; width: 100%;">Munkavégzés
+                        Kiosztása</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. TAB: NAPTÁR ÉS FELADATOK (JOBS) -->
+        <div id="tab-jobs" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto; min-height: 80vh;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">📅 Kiosztott Feladatok & Munkák</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt találod a rád bízott közelgő vizsgálatokat
+                    és a naptáradat.</p>
+
+                <div id="jobListContainer" style="display:flex; flex-direction:column; gap: 1rem;">
+                    <!-- Javascript fogja ide tölteni a kártyákat -->
+                </div>
+            </div>
+        </div>
     </div> <!-- /app-content-wrapper -->
 
     <!-- QR Scan Modal -->
