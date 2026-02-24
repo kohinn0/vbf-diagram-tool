@@ -310,6 +310,49 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     });
 
+    // 8. Background Image Logic
+    document.getElementById('btnUploadBg').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                fabric.Image.fromURL(f.target.result, (img) => {
+                    // Scale image to fit canvas comfortably
+                    const scale = Math.min(
+                        (canvas.width * 0.9) / img.width,
+                        (canvas.height * 0.9) / img.height
+                    );
+                    img.set({
+                        originX: 'center',
+                        originY: 'center',
+                        left: canvas.width / 2,
+                        top: canvas.height / 2,
+                        scaleX: scale,
+                        scaleY: scale,
+                        opacity: 0.3,   // semi-transparent background
+                        selectable: false, // background shouldn't be movable by normal means
+                        evented: false
+                    });
+
+                    // Optional: remove existing background object if we track it,
+                    // but for simplicity, let's just add it as the lowest level object
+                    canvas.add(img);
+                    img.sendToBack();
+                    canvas.renderAll();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('btnClearBg')?.addEventListener('click', () => {
+        // Remove objects that have evented = false and opacity = 0.3 (our heuristic for backgrounds)
+        const objects = canvas.getObjects();
+        const bgObjects = objects.filter(o => o.selectable === false && o.opacity === 0.3);
+        bgObjects.forEach(bg => canvas.remove(bg));
+        canvas.renderAll();
+    });
+
     // ==========================================
     // MULTI-TAB LOGIC (NEW)
     // ==========================================

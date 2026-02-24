@@ -449,9 +449,19 @@ def generate_signed_pdf_stream(report: Report, pfx_path: str = "signer.pfx", pfx
             f.write(docx_stream.getvalue())
             
         try:
-            # Check if docx2pdf works
-            from docx2pdf import convert
-            convert(docx_path, pdf_path)
+            import subprocess
+            import sys
+            
+            if sys.platform == "win32":
+                # Check if docx2pdf works
+                from docx2pdf import convert
+                convert(docx_path, pdf_path)
+            else:
+                # Use LibreOffice Headless inside Docker
+                subprocess.run(
+                    ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", td, docx_path],
+                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
             
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
@@ -461,6 +471,12 @@ def generate_signed_pdf_stream(report: Report, pfx_path: str = "signer.pfx", pfx
             from pyhanko.pdf_utils.writer import copy_into_new_writer
             import io as pyhanko_io
             
+            if not os.path.exists(pfx_path):
+                # Return unsigned PDF if cert is missing
+                pdf_out = pyhanko_io.BytesIO(pdf_bytes)
+                pdf_out.seek(0)
+                return pdf_out
+
             # Load the PKCS12 / PFX certificate
             signer = signers.SimpleSigner.load_pkcs12(pfx_path, pfx_pass)
             
