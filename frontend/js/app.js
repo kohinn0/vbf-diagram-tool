@@ -653,7 +653,7 @@ if (btnGenerateDefects) {
 // ==========================================
 // AUTHENTICATION & API INTEGRATION (NEW)
 // ==========================================
-const API_BASE_URL = 'http://localhost:8001/api';
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8001/api`;
 let currentToken = localStorage.getItem('vbf_token');
 let currentUser = localStorage.getItem('vbf_user');
 
