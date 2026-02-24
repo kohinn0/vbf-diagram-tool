@@ -1,0 +1,22 @@
+# Build and environments
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# Database and uploaded data
+backend/data/*.db
+backend/data/
+padfx_extracted/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Other
+*.log
