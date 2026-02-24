@@ -47,6 +47,9 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     title = doc.add_heading(title_text, 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
+    subtitle = doc.add_heading("Hivatalos Minősítő Irat", level=1)
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
     # Preamble / Bevezető
     doc.add_heading('1. Cél és Vonatkozó Jogszabályok', level=1)
     if rep_type == "VBF_IDOSZAKOS":
