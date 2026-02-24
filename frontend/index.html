@@ -83,7 +83,7 @@
                 <input type="password" id="loginPass" placeholder="titkos">
             </div>
             <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
-            <button class="btn btn-primary" id="btnSubmitLogin">Belépés / Regisztráció</button>
+            <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
             <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
         </div>
     </div>
@@ -663,6 +663,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Felhasználónév</th>
+                            <th>Email Cím</th>
                             <th>Státusz</th>
                             <th>Admin?</th>
                             <th>Lejárat</th>
@@ -683,6 +684,9 @@
 
                     <label style="margin-top: 10px;">Jelszó</label>
                     <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
+
+                    <label style="margin-top: 10px;">Email (Google naptár miatt kötelező!)</label>
+                    <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
 
                     <label style="margin-top: 10px;">Beosztás / Jogosultság</label>
                     <select id="adminNewRole">
@@ -764,7 +768,12 @@
     <!-- Main Logic -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="js/data.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/modules/auth.js"></script>
+    <script src="js/modules/admin.js"></script>
+    <script src="js/modules/ui.js"></script>
+    <script src="js/modules/measurements.js"></script>
+    <script src="js/modules/diagram.js"></script>
+    <script src="js/modules/offline.js"></script>
 </body>
 
 </html>

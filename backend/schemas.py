@@ -13,6 +13,7 @@ class TokenData(BaseModel):
 # --- User Schemas ---
 class UserBase(BaseModel):
     username: str
+    email: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -30,6 +31,7 @@ class UserResponse(UserBase):
 class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
     role: Optional[str] = None
+    email: Optional[str] = None
     company_id: Optional[int] = None
     subscription_expires: Optional[datetime] = None
 

@@ -831,6 +831,7 @@ async function fetchAdminUsers() {
             tr.innerHTML = `
                     <td>${u.id}</td>
                     <td>${u.username}</td>
+                    <td><input type="email" value="${u.email || ''}" onchange="updateUser(${u.id}, {email: this.value})" style="width: 150px; padding: 0.2rem;" placeholder="Email cím"></td>
                     <td>
                         <select onchange="updateUser(${u.id}, {is_active: this.value === 'active'})">
                             <option value="active" ${u.is_active ? 'selected' : ''}>Aktív</option>
@@ -1459,24 +1460,8 @@ btnSubmitLogin.addEventListener('click', async () => {
         });
 
         if (!res.ok) {
-            // Ha a login nem sikerült, próbáljuk meg regisztrálni (könnyített dev flow)
-            res = await fetch(`${API_BASE_URL}/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (res.ok) {
-                // Sikeres reg után login újra
-                res = await fetch(`${API_BASE_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-            } else {
-                const errData = await res.json();
-                throw new Error(errData.detail || 'Hibás adatok vagy regisztráció!');
-            }
+            const errData = await res.json();
+            throw new Error(errData.detail || 'Hibás bejelentkezési adatok!');
         }
 
         const data = await res.json();
@@ -2709,6 +2694,7 @@ document.getElementById('btnAdminCreateUser')?.addEventListener('click', async (
     const btn = document.getElementById('btnAdminCreateUser');
     const uName = document.getElementById('adminNewUsername').value;
     const uPass = document.getElementById('adminNewPassword').value;
+    const uEmail = document.getElementById('adminNewEmail').value;
     const uRole = document.getElementById('adminNewRole').value;
     const errDiv = document.getElementById('adminCreateUserError');
 
@@ -2725,7 +2711,7 @@ document.getElementById('btnAdminCreateUser')?.addEventListener('click', async (
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentToken}`
             },
-            body: JSON.stringify({ username: uName, password: uPass })
+            body: JSON.stringify({ username: uName, password: uPass, email: uEmail || null })
         });
 
         if (res.ok) {

@@ -23,6 +23,7 @@ def admin_create_user(user_req: schemas.UserCreate, role: str = "TECH", db: Sess
     hashed_password = auth.get_password_hash(user_req.password)
     new_user = database.User(
         username=user_req.username,
+        email=user_req.email,
         hashed_password=hashed_password,
         role=role.upper(),
         is_active=True

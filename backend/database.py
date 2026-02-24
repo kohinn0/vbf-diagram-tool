@@ -21,6 +21,7 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     role = Column(String, default="TECH") # ADMIN or TECH
+    email = Column(String, nullable=True) # For SMTP job notifications
     company_id = Column(Integer, nullable=True) # For group work
     subscription_expires = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True) # GDPR soft delete

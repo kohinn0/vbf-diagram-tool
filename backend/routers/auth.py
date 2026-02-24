@@ -12,9 +12,14 @@ router = APIRouter()
 
 @router.post("/api/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
+    is_first = db.query(database.User).count() == 0
+    if not is_first:
+        raise HTTPException(status_code=403, detail="Public registration is disabled. Administrator must create your account.")
+    
     db_user = auth.get_user(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
+    
     hashed_password = auth.get_password_hash(user.password)
     
     # First user is admin (bootstrapping)
