@@ -874,14 +874,38 @@ const btnScanQr = document.getElementById('btnScanQr');
 const btnCloseQr = document.getElementById('btnCloseQr');
 const btnSubmitManualQr = document.getElementById('btnSubmitManualQr');
 const manualQrId = document.getElementById('manualQrId');
+let html5QrcodeScanner = null;
 
 btnScanQr?.addEventListener('click', () => {
     qrModal.style.display = 'flex';
+    if (!html5QrcodeScanner && window.Html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "qrReaderPlaceholder",
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            /* verbose= */ false
+        );
+        html5QrcodeScanner.render((decodedText) => {
+            const numericId = decodedText.replace(/[^0-9]/g, '');
+            if (numericId) {
+                window.loadReport(numericId);
+                closeQrScanner();
+            }
+        }, (error) => {
+            // ignore scan frame errors
+        });
+    }
 });
 
-btnCloseQr?.addEventListener('click', () => {
+function closeQrScanner() {
     qrModal.style.display = 'none';
-});
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e => console.error(e));
+        html5QrcodeScanner = null;
+        document.getElementById('qrReaderPlaceholder').innerHTML = '<p>[ Kamerakép ... ]</p>';
+    }
+}
+
+btnCloseQr?.addEventListener('click', closeQrScanner);
 
 btnSubmitManualQr?.addEventListener('click', () => {
     const id = manualQrId.value.trim();
@@ -889,7 +913,7 @@ btnSubmitManualQr?.addEventListener('click', () => {
         const numericId = id.replace(/[^0-9]/g, '');
         if (numericId) {
             window.loadReport(numericId);
-            qrModal.style.display = 'none';
+            closeQrScanner();
         }
     }
 });
