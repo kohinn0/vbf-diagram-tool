@@ -2490,9 +2490,10 @@ window.fetchJobs = async function () {
                     <p style="margin: 0; font-size: 0.9rem;"><strong>Helyszín:</strong> ${job.address || '-'}</p>
                     <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Időpont:</strong> ${dateStr}</p>
                     <p style="margin: 0 0 15px 0; font-size: 0.9rem;"><strong>Leírás:</strong> ${job.description || '-'}</p>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary btn-small" onclick="updateJobStatus(${job.id}, 'IN_PROGRESS')">Kiszállás alatt / Folyamatban</button>
-                        <button class="btn btn-primary btn-small" onclick="updateJobStatus(${job.id}, 'COMPLETED')">Megtörtént / Kész</button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-small" onclick="updateJobStatus(${job.id}, 'IN_PROGRESS')" style="flex:1;">Kiszállás alatt / Folyamatban</button>
+                        <button class="btn btn-primary btn-small" onclick="updateJobStatus(${job.id}, 'COMPLETED')" style="flex:1;">Megtörtént / Kész</button>
+                        <button class="btn btn-accent btn-small" onclick="startJobWork(${job.id}, \`${job.title || ''}\`, \`${job.address || ''}\`)" style="flex: 2; background: #10b981; color: white;">🚀 Munka Kezdése (Jegyzőkönyv)</button>
                     </div>
                 `;
             container.appendChild(card);
@@ -2517,6 +2518,30 @@ window.updateJobStatus = async function (jobId, newStatus) {
             alert("Sikertelen frissítés! Nincs jogosultságod vagy hiba történt.");
         }
     } catch (e) { console.error(e); }
+};
+
+window.startJobWork = async function (jobId, jobTitle, jobAddress) {
+    if (!confirm("Ezzel elkezdesz egy új jegyzőkönyvet ehhez a munkához. A jelenlegi rajz törlődik. Folytatod?")) return;
+
+    // Törlés és alaphelyzet
+    document.getElementById('btnClear').click();
+
+    // Adatok betöltése
+    document.getElementById('documentTitle').value = jobTitle || "Új Vizsgálat";
+    document.getElementById('siteAddress').value = jobAddress || "";
+
+    // Státusz beállítása "IN_PROGRESS"
+    try {
+        await fetch(`${API_BASE_URL}/jobs/${jobId}/status?status=IN_PROGRESS`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        fetchJobs(); // Update the list in background
+    } catch (e) { console.error("Could not update job status:", e); }
+
+    // Átváltás a Jegyzőkönyv Adatok fülre
+    const tabMatches = Array.from(document.querySelectorAll('.nav-tab')).find(t => t.getAttribute('data-target') === 'tab-report');
+    if (tabMatches) tabMatches.click();
 };
 
 // Az ADMIN tud új feladatot létrehozni
