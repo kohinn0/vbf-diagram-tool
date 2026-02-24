@@ -1,70 +1,49 @@
-# VBF Érintésvédelmi Rajzkészítő és Jegyzőkönyv Generáló
+# VBF / EPH Érintésvédelmi Rajzkészítő és Jegyzőkönyv Generáló SaaS
 
-Modern, interaktív webalkalmazás villamos biztonsági felülvizsgálatok (VBF) rögzítéséhez, alaprajzok felvételéhez, és automatizált jegyzőkönyvek generálásához. A rendszer tartalmaz egy Fabric.js alapú rajzoló felületet, QR kód olvasót, mérések rögzítésére szolgáló táblázatokat és egy Python (FastAPI) alapú backendet a Word és PDF jegyzőkönyvek előállításához.
+Modern, interaktív, vállalati szintű felhőalkalmazás (SaaS) villamos biztonsági felülvizsgálatok (VBF) és EPH nyilatkozatok rögzítéséhez, alaprajzok felvételéhez és automatizált jegyzőkönyvek generálásához. A rendszer tartalmaz egy Fabric.js alapú rajzoló felületet, okos Offline hálózatkezelést, QR kód szkennert, RBAC jogosultságkezelést és egy FastAPI alapú Python backendet a professzionális Word és elektronikusan aláírt PDF jegyzőkönyvek ipari előállításához.
 
-## 🚀 Főbb funkciók
+## 🚀 Főbb funkciók és Képességek
 
-- **Interaktív Rajzkészítő**: Villamos és építészeti szimbólumok elhelyezése vásznon.
-- **Többlapos Felület**: Rajz, Jegyzőkönyv adatok, Eredmények, Naptár, Adminisztráció egy helyen.
-- **Automatikus Hibagenerálás**: Képes elemezni a rögzített mérési adatokat, és automatikusan generálni a hibajegyzéket a "Nem" megfelelt mérések alapján.
-- **Jegyzőkönyv Export**: Valós idejű DOCX (Word) és elektronikusan aláírt PDF generálás a FastAPI backend segítségével.
-- **Metrel PADFX import**: Mérések beolvasása `.padfx` állományokból (fejlesztés alatt).
-- **Admin & Role-Based Access (RBAC)**: Különféle jogosultságok a felülvizsgálat kiosztására és a felhasználók kezelésére.
+*   **🛡️ Szerepkör alapú jogosultságkezelés (RBAC)**: Adminisztrátorok osztanak ki naptárban feladatokat (munkákat), kezelik az előfizetéseket és a felhasználókat. A szerelők (TECH) csak a nekik szánt egyszerűsített felületet, naptárat és rajztáblát látják.
+*   **📡 Okos Offline Szinkronizáció (PWA szerű működés)**: Nincs internet a pincében? Semmi gond! A rendszer háttérben figyeli a hálózatot. Ha megszakad az internet, az alkalmazás "Offline Módba" kapcsol, a telefon memóriájában tárolja a munkát, és amint lesz térerő, a technikus egyetlen gombnyomással felküldi a módosított vagy új jegyzőkönyveket a felhőbe.
+*   **🌓 Prémium Élmény (Világos / Sötét mód)**: Modern, gyönyörű, testreszabható felület azonnali Dark/Light mode váltással, ami böngésző szinten megjegyzi a preferenciádat.
+*   **📷 QR Kódos Eszközmenedzsment & Képfeltöltés**: Beépített kamerás QR szkenner a jegyzőkönyvek azonnali beolvasásához. A mérésekhez (pl. egy RPE kötési ponthoz) a technikus a helyszínen fotókat is csatolhat, amik bekerülnek a Word mellékletébe!
+*   **🤖 Automatizált Hibagenerálás**: Egy gombnyomásra kielemzi az összes mérési lapot (táblázatot), és a "Nem" megfelelt értékekből automatikusan legenerálja a Feltárt Hibák és Hiányosságok listáját fotókkal és leírásokkal együtt.
+*   **🔒 Jegyzőkönyv Véglegesítés (Lock)**: Elkészült jegyzőkönyvek fagyasztása biztonsági és jogi okokból.
+*   **📄 Fejlett Export**: Valós idejű, formázott DOCX (Word) dokumentumok és szerverszinten elektronikusan aláírt PDF-ek (PyHanko és LibreOffice headless motorral) előállítása.
 
 ## 🛠️ Technológiai Stack
 
-- **Frontend**: HTML5, Vanilla JavaScript, CSS, Fabric.js (rajz), QRCode.js.
-- **Backend**: Python 3.11, FastAPI, SQLAlchemy, python-docx (DOCX), pyhanko (PDF aláírás).
-- **Adatbázis**: SQLite (a `backend/data` mappában tárolva).
+*   **Frontend**: HTML5, Vanilla JavaScript (Moduláris), Tiszta CSS változókkal (Design System), Fabric.js (rajz), `html5-qrcode`.
+*   **Backend**: Python 3.11, FastAPI, SQLAlchemy (ORM), python-docx (DOCX manipuláció), pyhanko (PDF e-Aláírás).
+*   **Csomagolás és Adatbázis**: SQLite (a `backend/data` mappában tárolva), teljes Docker & Docker Compose ökoszisztéma LibreOffice csomagokkal a PDF konverzióhoz.
 
-## 🐳 Futtatás Dockerrel (Ajánlott)
+## 🐳 Futtatás Dockerrel (Ajánlott / Éles Környezet)
 
-A projekt teljes egészében futtatható Docker és Docker Compose segítségével.
+A projekt teljes egészében, minden függőségével (PDF motorok, adatbázis) futtatható egyetlen pillanat alatt Docker és Docker Compose segítségével.
 
 1. **Klónozd a repót**:
    ```bash
-   git clone https://github.com/felhasznalo_neved/vbf-diagram-tool.git
+   git clone https://github.com/kohinn0/vbf-diagram-tool.git
    cd vbf-diagram-tool
    ```
 
-2. **Indítsd el a konténereket**:
+2. **Indítsd el a konténereket a háttérben**:
    ```bash
    docker-compose up -d --build
    ```
 
 3. **Használat**:
-   - A frontend applikáció elérhető: [http://localhost](http://localhost)
-   - A backend API elérhető (FastAPI Docs): [http://localhost:8001/docs](http://localhost:8001/docs)
+   *   A frontend applikáció (Web kliens) elérhető: [http://localhost](http://localhost) vagy az adott gép / NAS IP címén (pl: `http://192.168.1.100`)
+   *   A backend API elérhető (FastAPI Docs Swagger): [http://localhost:8001/docs](http://localhost:8001/docs)
 
-## 💻 Helyi fejlesztés (Lokális futtatás)
+*Alapértelmezett első belépés: Készíts egy felhasználót, az legelső regisztráló automatikusan ADMIN jogot kap az egész alkalmazás felett!*
 
-Ha Docker nélkül szeretnéd futtatni:
+## 📁 Projekt struktúra (Nagyvonalakban)
 
-### Backend Indítása
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-> **Fontos**: Ahhoz hogy a PDF aláírás megfelelően működjön, kell egy PKCS12 / PFX tanúsítvány (`signer.pfx` néven a `backend` mappába). Bekerült egy teszt tanúsítvány próbára, de éles környezetben cseréld le a sajátodra!
-
-### Frontend Indítása
-Egyszerűen nyisd meg az `index.html`-t egy böngészőben, vagy indíts egy egyszerű fájlszervert:
-```bash
-cd frontend
-python -m http.server 80
-```
-Nyisd meg: [http://localhost](http://localhost)
-
-## 📁 Projekt struktúra
-
-- `frontend/`: Statikus fájlok, HTML, CSS és Vanilla JS app fájlok.
-- `backend/`: FastAPI alkalmazás, PDF/DOCX generátor logika, autentikációs rendszer.
-- `analyzer.py` / `analyzer2.py`: Műszeres fájlok (Metrel) elemzéséhez készült scriptek. 
+*   `frontend/`: Statikus fájlok, HTML beépített templatekkel, Moduláris CSS archtektúra és PWA JS alkalmazás kódja.
+*   `backend/`: Microservice orientált FastAPI alkalmazás (`main.py`, `generator.py` API-kkal), SQLite adatbázis relációkkal.
+*   `docker-compose.yml`: DevOps leíró konfiguráció az élesítéshez.
 
 ---
-
-Copyright © 2026. Minden jog fenntartva.
+VBF / EPH Cloud SaaS © 2026. Minden jog fenntartva.
