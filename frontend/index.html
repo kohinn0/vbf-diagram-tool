@@ -669,6 +669,28 @@
 
                 <h3
                     style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    👤 Új Felhasználó / Kolléga Hozzáadása</h3>
+                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <label>Felhasználónév</label>
+                    <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
+
+                    <label style="margin-top: 10px;">Jelszó</label>
+                    <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
+
+                    <label style="margin-top: 10px;">Beosztás / Jogosultság</label>
+                    <select id="adminNewRole">
+                        <option value="TECH">Villanyszerelő (TECH)</option>
+                        <option value="ADMIN">Adminisztrátor</option>
+                    </select>
+
+                    <button class="btn btn-primary" id="btnAdminCreateUser"
+                        style="margin-top: 15px;">Létrehozás</button>
+                    <div id="adminCreateUserError" style="color: var(--danger); margin-top: 10px; font-size: 0.85rem;">
+                    </div>
+                </div>
+
+                <h3
+                    style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     📅 Új Feladat / Kiszállás Kiosztása</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <label>Feladat Címe (pl. "Érintésvédelmi Vizsgálat")</label>

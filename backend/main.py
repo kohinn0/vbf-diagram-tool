@@ -243,6 +243,24 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
 def admin_get_users(db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
     return db.query(database.User).all()
 
+@app.post("/api/admin/users", response_model=schemas.UserResponse)
+def admin_create_user(user_req: schemas.UserCreate, role: str = "TECH", db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
+    db_user = auth.get_user(db, username=user_req.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    hashed_password = auth.get_password_hash(user_req.password)
+    new_user = database.User(
+        username=user_req.username,
+        hashed_password=hashed_password,
+        role=role.upper(),
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
 @app.put("/api/admin/users/{user_id}", response_model=schemas.UserResponse)
 def admin_update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
     db_user = db.query(database.User).filter(database.User.id == user_id).first()
@@ -262,9 +280,14 @@ def admin_delete_user(user_id: int, db: Session = Depends(auth.get_db), current_
     db_user = db.query(database.User).filter(database.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    db.delete(db_user)
+    
+    # GDPR soft delete implementation to preserve relational integrity (reports, jobs)
+    db_user.deleted_at = datetime.utcnow()
+    db_user.is_active = False
+    
     db.commit()
-    return {"message": "User deleted"}
+    db.refresh(db_user)
+    return {"message": "User deactivated and marked as deleted."}
 
 # --- Master Data Endpoints (Customers) ---
 @app.get("/api/customers", response_model=List[schemas.CustomerResponse])

@@ -2704,8 +2704,50 @@ window.startJobWork = async function (jobId, jobTitle, jobAddress) {
     if (tabMatches) tabMatches.click();
 };
 
+// Az ADMIN új felhasználót tud felvenni
+document.getElementById('btnAdminCreateUser')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnAdminCreateUser');
+    const uName = document.getElementById('adminNewUsername').value;
+    const uPass = document.getElementById('adminNewPassword').value;
+    const uRole = document.getElementById('adminNewRole').value;
+    const errDiv = document.getElementById('adminCreateUserError');
+
+    if (!uName || !uPass) {
+        if (errDiv) errDiv.innerText = 'Felhasználónév és jelszó is kötelező!';
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        const res = await fetch(`${API_BASE_URL}/admin/users?role=${uRole}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify({ username: uName, password: uPass })
+        });
+
+        if (res.ok) {
+            alert("Új felhasználó sikeresen létrehozva!");
+            document.getElementById('adminNewUsername').value = '';
+            document.getElementById('adminNewPassword').value = '';
+            if (errDiv) errDiv.innerText = '';
+            fetchAdminUsers();
+        } else {
+            const data = await res.json();
+            if (errDiv) errDiv.innerText = data.detail || 'Hiba történt a létrehozáskor.';
+        }
+    } catch (e) {
+        console.error(e);
+        if (errDiv) errDiv.innerText = 'Hálózat vagy szerver hiba!';
+    } finally {
+        btn.disabled = false;
+    }
+});
+
 // Az ADMIN tud új feladatot létrehozni
-document.getElementById('btnAdminSaveJob')?.addEventListener('click', async () => {
+document.getElementById('btnAdminCreateJob')?.addEventListener('click', async () => {
     const title = document.getElementById('adminJobTitle').value;
     const address = document.getElementById('adminJobAddress').value;
     const desc = document.getElementById('adminJobDesc').value;
