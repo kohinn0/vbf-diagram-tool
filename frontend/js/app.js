@@ -1623,20 +1623,29 @@ btnSaveCloud.addEventListener('click', async () => {
         };
         payload.measurements_data = [measData];
 
+        const isUpdate = !!currentSavedReportId;
+        const reqMethod = isUpdate ? 'PUT' : 'POST';
+        const reqUrl = isUpdate ? `${API_BASE_URL}/reports/${currentSavedReportId}` : `${API_BASE_URL}/reports`;
+
         if (!navigator.onLine) {
             // HÁLÓZAT NÉLKÜLI MENTÉS (OFFLINE QUEUE)
             btnSaveCloud.innerText = 'Mentés Offline...';
             let offlineQueue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
             payload._offline_id = Date.now(); // Belső azonosító
+            payload._method = reqMethod;
+            // Ne a teljes API URL-t tartogassuk, csak az elérési utat, hátha változik a domain
+            payload._endpoint = isUpdate ? `/reports/${currentSavedReportId}` : `/reports`;
+
             offlineQueue.push(payload);
             localStorage.setItem('vbf_offline_queue', JSON.stringify(offlineQueue));
 
+            // Ha új report volt offline mentve, nincs ID-ja, így legközelebb is POST lesz offline, hacsak nem ürítjük a UI-t, de ez így egy elfogadható offline UX első körben.
             alert("Nincs internetkapcsolat! A jegyzőkönyv az eszköz memóriájába (Offline) mentve. Amint lesz hálózat, szinkronizáld a felhőbe!");
             updateOfflineUI();
         } else {
             // NORMÁL ONLINE MENTÉS
-            const res = await fetch(`${API_BASE_URL}/reports`, {
-                method: 'POST',
+            const res = await fetch(reqUrl, {
+                method: reqMethod,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentToken}`
@@ -2547,11 +2556,16 @@ btnSyncOffline?.addEventListener('click', async () => {
     for (let i = 0; i < queue.length; i++) {
         let payload = queue[i];
         const oldId = payload._offline_id;
-        delete payload._offline_id; // Remove internal tracking tag
+        const method = payload._method || 'POST';
+        const endpoint = payload._endpoint || '/reports';
+
+        delete payload._offline_id; // Remove internal tracking tags before API
+        delete payload._method;
+        delete payload._endpoint;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/reports`, {
-                method: 'POST',
+            const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentToken}`
@@ -2561,10 +2575,15 @@ btnSyncOffline?.addEventListener('click', async () => {
             if (res.ok) {
                 successCount++;
             } else {
+                payload._offline_id = oldId;
+                payload._method = method;
+                payload._endpoint = endpoint;
                 failedQueue.push(payload);
             }
         } catch (e) {
-            payload._offline_id = oldId; // restore id
+            payload._offline_id = oldId; // restore tags
+            payload._method = method;
+            payload._endpoint = endpoint;
             failedQueue.push(payload);
         }
     }
