@@ -4,6 +4,19 @@
 
 let canvas;
 document.addEventListener('DOMContentLoaded', () => {
+    // Theme Toggle Logic
+    const btnTheme = document.getElementById('btnToggleTheme');
+    const toggleTheme = () => {
+        const isLight = document.body.classList.toggle('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        if (btnTheme) btnTheme.innerHTML = isLight ? '🌙 Sötét' : '☀️ Világos';
+    };
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        if (btnTheme) btnTheme.innerHTML = '🌙 Sötét';
+    }
+    btnTheme?.addEventListener('click', toggleTheme);
+
     // 1. Inicializáljuk a Fabric.js Canvast
     const wrapper = document.querySelector('.canvas-container-wrapper');
 
@@ -743,11 +756,20 @@ async function updateAuthUI() {
             });
             if (res.ok) {
                 const userData = await res.json();
+                window.currentUserRole = userData.role;
+
+                const cloudTab = document.querySelector('.nav-tab[data-target="tab-cloud"]');
+                const masterTab = document.querySelector('.nav-tab[data-target="tab-master-data"]');
+
                 if (userData.role === 'ADMIN') {
                     document.getElementById('navAdmin').style.display = 'inline-block';
+                    if (cloudTab) cloudTab.style.display = 'inline-block';
+                    if (masterTab) masterTab.style.display = 'inline-block';
                     fetchAdminUsers();
                 } else {
                     document.getElementById('navAdmin').style.display = 'none';
+                    if (cloudTab) cloudTab.style.display = 'none';
+                    if (masterTab) masterTab.style.display = 'none';
                 }
             }
         } catch (err) { console.error("Admin check failed", err); }
@@ -762,6 +784,12 @@ async function updateAuthUI() {
         if (btnEmailReport) btnEmailReport.style.display = 'none';
         document.getElementById('btnFinalize').style.display = 'none';
         document.getElementById('navAdmin').style.display = 'none';
+
+        const cloudTab = document.querySelector('.nav-tab[data-target="tab-cloud"]');
+        const masterTab = document.querySelector('.nav-tab[data-target="tab-master-data"]');
+        if (cloudTab) cloudTab.style.display = 'none';
+        if (masterTab) masterTab.style.display = 'none';
+
         currentSavedReportId = null;
         if (document.getElementById('reportListContainer')) {
             document.getElementById('reportListContainer').innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';

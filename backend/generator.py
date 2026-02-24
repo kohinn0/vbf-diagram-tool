@@ -162,6 +162,8 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     
     # Measurements
     meas_data = report.measurements_data[0] if report.measurements_data and len(report.measurements_data) > 0 else {}
+    if not isinstance(meas_data, dict):
+        meas_data = {}
     if meas_data:
         doc.add_heading(f'{section_num}. Mérési Eredmények', level=1)
         sub_num = 1
@@ -335,9 +337,12 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
         # Print photos attached to measurement circuits
         meas_photos = []
         for m_key in ['rpe', 'insulation', 'loop', 'rcd', 'tools', 'selv', 'eph_cont']:
-            for m_row in meas_data.get(m_key, []):
+            items = meas_data.get(m_key, [])
+            if not isinstance(items, list): continue
+            for m_row in items:
+                if not isinstance(m_row, dict): continue
                 p_data = m_row.get('photo')
-                if p_data and p_data.startswith('data:image'):
+                if p_data and isinstance(p_data, str) and p_data.startswith('data:image'):
                     desc = "Mérés Kép"
                     if m_key == 'rpe': desc = f"Védővezető Rpe - {m_row.get('loc', '')}"
                     elif m_key == 'insulation': desc = f"Szigetelés - {m_row.get('circuit', '')}"
@@ -358,9 +363,9 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
                     doc.add_paragraph().add_run().add_picture(img_bytes, width=Cm(12))
                 except Exception as e:
                     doc.add_paragraph(f"[Hiba a mérés képének beillesztésekor: {str(e)}]")
-            section_num += 1
+            section_num = int(section_num) + 1
             
-        section_num += 1
+        section_num = int(section_num) + 1
 
     # Defects
     doc.add_heading(f'{section_num}. Feltárt Hibák és Hiányosságok', level=1)
