@@ -3,14 +3,21 @@ import base64
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import database
 from database import Report
 
-def generate_docx_stream(report: Report) -> io.BytesIO:
+def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     doc = Document()
+    
+    settings = None
+    if db and report.owner_id:
+        settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == report.owner_id).first()
     
     # Header
     rep_type = report.report_type.upper() if report.report_type else "VBF"
@@ -27,8 +34,29 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
         header_para = header.add_paragraph()
     else:
         header_para = header.paragraphs[0]
-    header_para.text = f"Jegyzőkönyv azonosító: {rep_id_str}"
+        
+    company_name = settings.company_name if settings and settings.company_name else "VBF Program"
+    header_para.text = f"{company_name} | Azonosító: {rep_id_str}"
     header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    
+    # Insert Logo at the top if exists
+    if settings and settings.logo_path and os.path.exists(settings.logo_path):
+        import io as custom_io
+        from PIL import Image
+        try:
+            # We add it to the first paragraph of the body
+            logo_p = doc.add_paragraph()
+            logo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            logo_img = Image.open(settings.logo_path)
+            
+            # Since WebP might have issues directly in Word via docx in some versions, convert temporarily to PNG in memory
+            img_byte_arr = custom_io.BytesIO()
+            logo_img.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+            
+            logo_p.add_run().add_picture(img_byte_arr, width=Cm(5))
+        except Exception as e:
+            print(f"Hiba a logó beillesztésekor: {e}")
     
     # Title
     if rep_type == "VBF_IDOSZAKOS":
@@ -50,6 +78,39 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     subtitle = doc.add_heading("Hivatalos Minősítő Irat", level=1)
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
+    # ── Tartalomjegyzék (TOC) ──
+    doc.add_heading('Tartalomjegyzék', level=1)
+    toc_para = doc.add_paragraph()
+    toc_run = toc_para.add_run()
+    
+    # XML instruction for Word to insert TOC field
+    fldChar1 = OxmlElement('w:fldChar')
+    fldChar1.set(qn('w:fldCharType'), 'begin')
+    toc_run._r.append(fldChar1)
+    
+    instrText = OxmlElement('w:instrText')
+    instrText.set(qn('xml:space'), 'preserve')
+    instrText.text = 'TOC \\o "1-2" \\h \\z \\u'
+    toc_run._r.append(instrText)
+    
+    fldChar2 = OxmlElement('w:fldChar')
+    fldChar2.set(qn('w:fldCharType'), 'separate')
+    toc_run._r.append(fldChar2)
+    
+    # Placeholder text (Word updates this on first open if doc.settings allows)
+    toc_run2 = toc_para.add_run('(A tartalomjegyzék frissítéséhez nyomjon Ctrl+A majd F9-et, vagy fogadja el a frissítést megnyitáskor)')
+    toc_run2.font.color.rgb = RGBColor(128, 128, 128)
+    toc_run2.font.italic = True
+    
+    fldChar3 = OxmlElement('w:fldChar')
+    fldChar3.set(qn('w:fldCharType'), 'end')
+    toc_run2._r.append(fldChar3)
+    
+    # Set Word to update fields on open
+    doc.settings.element.append(OxmlElement('w:updateFields', {qn('w:val'): 'true'}))
+    
+    doc.add_page_break()
+    
     # Preamble / Bevezető
     doc.add_heading('1. Cél és Vonatkozó Jogszabályok', level=1)
     if rep_type == "VBF_IDOSZAKOS":
@@ -58,6 +119,9 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
         szabvany_ref = "• MSZ HD 60364-6:2017 – Kisfeszültségű villamos berendezések első ellenőrzése\n"
     else:
         szabvany_ref = "• MSZ HD 60364-6:2017 / MSZ 10900 – Érintésvédelmi felülvizsgálatok\n"
+    
+    # TvMI 7.7:2026.02.01 irányelv hivatkozás (hatályos 2026.02.01-től)
+    tvmi_ref = "• TvMI 7.7:2026.02.01 – Villamos berendezések és villámvédelem tűzvédelmi felülvizsgálata (hatályos irányelv)\n"
 
     preamble_text = (
         "Jelen jegyzőkönyv a vizsgált villamos berendezés, villamos hálózat, illetve berendezések "
@@ -70,6 +134,7 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
         "• 40/2017. (XII. 4.) NGM rendelet – Az összekötő és felhasználói berendezésekről, valamint a Villamos Műszaki Biztonsági Szabályzatról (VMBSZ)\n"
         "• 54/2014. (XII. 5.) BM rendelet – Országos Tűzvédelmi Szabályzat (OTSZ)\n"
         f"{szabvany_ref}"
+        f"{tvmi_ref}"
         "• MSZ EN 61140:2016 – Áramütés elleni védelem. A villamos berendezésekre és a villamos szerkezetekre vonatkozó közös szempontok\n"
         "• MSZ HD 60364-4-41:2018 – Biztonság. Áramütés elleni védelem\n\n"
         "1.2. A vizsgálat terjedelme, korlátai és a megrendelő felelőssége:\n"
@@ -97,7 +162,17 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     p.add_run(c_data.get('siteHrsz', 'N/A') + '\n')
     
     p.add_run('Épület rendeltetése (OTSZ): ').bold = True
-    p.add_run(c_data.get('buildingPurpose', 'N/A') + '\n')
+    building_purpose = c_data.get('buildingPurpose', 'N/A')
+    building_otsz = c_data.get('buildingOtsz', '')
+    otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
+    otsz_display = f" [{otsz_names.get(building_otsz, building_otsz)}]" if building_otsz else ''
+    p.add_run(f"{building_purpose}{otsz_display}" + '\n')
+    
+    # Következő kötelező felülvizsgálat dátuma (OTSZ alapján)
+    next_insp = c_data.get('nextInspectionDate', '')
+    if next_insp:
+        p.add_run('Következő kötelező felülvizsgálat (OTSZ): ').bold = True
+        p.add_run(next_insp + '\n')
     
     # Inspector Data
     doc.add_heading('3. Felülvizsgáló és Műszerek', level=1)
@@ -139,6 +214,37 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
             v_row[1].text = "Megfelelő" if val else "Nem felel meg / Nem vizsgált"
         doc.add_paragraph()
         section_num += 1
+
+    # Single-line Diagram (Egyvonalas rajz)
+    diagram_b64 = getattr(report, 'diagram_image', None)
+    if diagram_b64 and diagram_b64.startswith('data:image'):
+        doc.add_page_break()
+        doc.add_heading(f'{section_num}. Egyvonalas Rajz (Áramkör Áttekintés)', level=1)
+        doc.add_paragraph(
+            'Az alábbi egyvonalas rajz a vizsgált villamos hálózat '
+            'áramköri felépítését és az elosztók hierarchiáját mutatja be.'
+        )
+        try:
+            # Handle data URL with or without metadata prefix
+            if ',' in diagram_b64:
+                b64_str = diagram_b64.split(',')[1]
+            else:
+                b64_str = diagram_b64
+                
+            img_bytes = io.BytesIO(base64.b64decode(b64_str))
+            
+            # Add image with center alignment
+            diag_p = doc.add_paragraph()
+            diag_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            diag_run = diag_p.add_run()
+            # Scaling to fit page width (16cm) while maintaining aspect ratio
+            diag_run.add_picture(img_bytes, width=Cm(16))
+            
+            doc.add_paragraph() # Spacer
+            section_num += 1
+        except Exception as e:
+            print(f"Error embedding diagram: {e}")
+            doc.add_paragraph(f"[Hiba a rajz beillesztésekor: {str(e)}]")
 
     # EPH Specific Data
     if rep_type == "EPH":
@@ -366,19 +472,66 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
                     doc.add_paragraph().add_run().add_picture(img_bytes, width=Cm(12))
                 except Exception as e:
                     doc.add_paragraph(f"[Hiba a mérés képének beillesztésekor: {str(e)}]")
-            section_num = int(section_num) + 1
-            
-        section_num = int(section_num) + 1
+        section_num += 1
+        doc.add_paragraph()
 
-    # Defects
+    # Defects - MEE Kézikönyv szerinti kategorizálás
     doc.add_heading(f'{section_num}. Feltárt Hibák és Hiányosságok', level=1)
+    
+    # MEE severity legend
+    sev_legend = doc.add_paragraph()
+    sev_legend.add_run("Hibakategóriák a MEE Kézikönyv szerint:\n").bold = True
+    sev_legend.add_run("(A) Közvetlen élet- és tűzveszély  ")
+    sev_legend.add_run("(B) Súlyos hiba (soron kívül javítandó)  ")
+    sev_legend.add_run("(C) Karbantartási hiba  ")
+    sev_legend.add_run("(D) Felújításkor javítandó\n")
+    
     d_data = report.defects_data or []
     if not d_data:
         doc.add_paragraph("A vizsgálat során nem tártunk fel hibát vagy hiányosságot.")
     else:
+        # MEE severity keyword detection (mirror of frontend logic)
+        critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 
+                       'tűzveszély', 'védővezető hiány', 'beégett', 'érinthető feszültség']
+        serious_kw = ['szigetelés', 'rcd nem', 'ávk nem', 'fi-relé nem', 'hurokellenállás',
+                      'túlterhelés', 'zárlat', 'hurokimpedancia', 'nem old ki']
+        maintenance_kw = ['dobozfedél', 'fedél hiány', 'csatlakozó laza', 'felirat hiány',
+                          'jelölés hiány', 'kötés laza', 'sorkapocs', 'burkolat sérült']
+        renovation_kw = ['vezetékszínezés', 'régi szabvány', 'elavult', 'korszerűtlen',
+                         'alumínium vezető', 'téves színezés', 'nullázás']
+        
         for idx, defect in enumerate(d_data, 1):
-            doc.add_heading(f"Hiba #{idx}", level=2)
+            desc_lower = defect.get('description', '').lower()
+            
+            # Determine MEE severity
+            if any(kw in desc_lower for kw in critical_kw):
+                severity = '(A)'
+                sev_name = 'Közvetlen élet- és tűzveszély'
+                sev_color = RGBColor(255, 0, 0)
+            elif any(kw in desc_lower for kw in serious_kw):
+                severity = '(B)'
+                sev_name = 'Súlyos hiba (soron kívül javítandó)'
+                sev_color = RGBColor(255, 80, 0)
+            elif any(kw in desc_lower for kw in maintenance_kw):
+                severity = '(C)'
+                sev_name = 'Karbantartási hiba'
+                sev_color = RGBColor(255, 140, 0)
+            elif any(kw in desc_lower for kw in renovation_kw):
+                severity = '(D)'
+                sev_name = 'Felújításkor javítandó'
+                sev_color = RGBColor(128, 128, 0)
+            else:
+                severity = '(C)'
+                sev_name = 'Karbantartási hiba'
+                sev_color = RGBColor(255, 140, 0)
+            
+            doc.add_heading(f"Hiba #{idx} — {severity} {sev_name}", level=2)
             dp = doc.add_paragraph()
+            
+            # Severity badge
+            sev_run = dp.add_run(f"[{severity}] ")
+            sev_run.bold = True
+            sev_run.font.color.rgb = sev_color
             
             dp.add_run("Leírás és Javaslat:\n").bold = True
             dp.add_run(defect.get('description', 'N/A') + "\n\n")
@@ -386,12 +539,34 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
             dp.add_run("Pontos Helyszín: ").bold = True
             dp.add_run(defect.get('location', 'N/A') + "\n")
             
+            # Szabvány hivatkozás - automatikus kitöltés, ha nincs megadva
             dp.add_run("Szabvány hivatkozás: ").bold = True
-            dp.add_run(defect.get('standard', 'N/A') + "\n")
+            std_ref = defect.get('standard', '') or ''
+            if not std_ref.strip():
+                # Automatikus szabványhivatkozás a hiba tartalom alapján
+                if any(kw in desc_lower for kw in ['védővezető', 'rpe', 'folytonosság']):
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§'
+                elif any(kw in desc_lower for kw in ['szigetelés', 'riso', 'insulation']):
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); MEE Kézikönyv M6; TvMI 7.7:2026.02.01 §4.3'
+                elif any(kw in desc_lower for kw in ['hurok', 'hurokellenállás', 'hurokimpedancia', 'zs']):
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4; MEE Kézikönyv M1'
+                elif any(kw in desc_lower for kw in ['rcd', 'ávk', 'fi-relé', 'kioldás']):
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1; MEE Kézikönyv M5'
+                elif any(kw in desc_lower for kw in ['eph', 'potenciál', 'földelés']):
+                    std_ref = 'MSZ HD 60364-5-54:2011 §544 (EPH rendszer); MSZ HD 60364-4-41:2017 §411.3.1.2'
+                elif any(kw in desc_lower for kw in ['tűz', 'égett', 'ív']):
+                    std_ref = 'TvMI 7.7:2026.02.01 (Tűzvédelmi felülvizsgálat); 54/2014. (XII.5.) BM rendelet (OTSZ)'
+                elif any(kw in desc_lower for kw in ['selv', 'pelv', 'törpe']):
+                    std_ref = 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV); MEE Kézikönyv M2'
+                elif any(kw in desc_lower for kw in ['szerszám', 'kéziszerszám']):
+                    std_ref = 'MSZ EN 60745-1 (Kéziszerszámok biztonsága); MEE Kézikönyv M3-M4'
+                else:
+                    std_ref = 'MSZ HD 60364-6:2017 (Villamos berendezések hitelesítése); 40/2017. (XII.4.) NGM rendelet (VMBSZ)'
+            dp.add_run(std_ref + "\n")
             
             dp.add_run("Javasolt javítási határidő: ").bold = True
             run = dp.add_run(defect.get('deadline', 'N/A'))
-            run.font.color.rgb = RGBColor(255, 0, 0) # Highlight deadline
+            run.font.color.rgb = RGBColor(255, 0, 0)
             
             # Photo insertion
             photo_data = defect.get('photo')
@@ -407,19 +582,31 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     
     section_num += 1
             
-    # Result
-    doc.add_heading(f'{section_num}. Összefoglaló Minősítés', level=1)
+    # Result - MEE Handbook Minősítő Irat Változat kezelése
+    doc.add_heading(f'{section_num}. Összefoglaló Minősítés (MEE Handbook)', level=1)
     res_p = doc.add_paragraph()
-    r_val = c_data.get('reportResult', 'N/A')
-    res_run = res_p.add_run(r_val)
+    r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
+    
+    # MEE Handbook változat szerinti leírás és szín
+    mee_descriptions = {
+        'MEGFELELŐ': ('MEGFELELŐ', 'A vizsgált villamos berendezés / rendszer az érvényes szabványoknak és előírásoknak megfelel. Hibát nem tártunk fel. Az üzemeltetés folytatható.', RGBColor(0, 128, 0)),
+        'VÁLTOZAT_C': ('C VÁLTOZAT – MEGFELELŐ (kisebb hibákkal)', 'A vizsgált villamos berendezés az MSZ HD 60364 szerint alapvetően megfelelő, azonban kisebb eltérések / hibák kerültek megállapításra, amelyek azonnali veszélyt nem jelentenek. A hibák kijavítása ajánlott a következő időszakos felülvizsgálatig.', RGBColor(255, 140, 0)),
+        'VÁLTOZAT_B': ('B VÁLTOZAT – FELTÉTELESEN MEGFELELŐ', 'Súlyos hiba(k) kerültek feltárásra. A hibák kijavítása kötelező! Az ismételt ellenőrzés a javítás elvégzése után szükséges. A berendezés a hibák kijavításáig csak fokozott felügyelet mellett üzemeltethető.', RGBColor(255, 80, 0)),
+        'VÁLTOZAT_A': ('A VÁLTOZAT – PÓTLÓLAGOS ELLENŐRZÉS SZÜKSÉGES', 'Az érintésvédelmi berendezés a feltárt hibák kijavítása után ismételt, teljes körű ellenőrzésre szorul. A berendezés üzembiztos állapotba hozása és az ismételt felülvizsgálat elvégzése a tulajdonos / üzemeltető felelőssége.', RGBColor(200, 0, 0)),
+        'NEM MEGFELELŐ': ('NEM MEGFELELŐ – KÖZVETLEN VESZÉLY', 'A vizsgált villamos berendezés közvetlen élet- és/vagy tűzveszélyes állapotban van! Az azonnali üzemen kívül helyezés és a szakszerű javítás KÖTELEZŐ! A berendezés további üzemeltetése tilos.', RGBColor(255, 0, 0)),
+    }
+    
+    title_text, desc_text, color = mee_descriptions.get(r_val, (r_val, '', RGBColor(128, 128, 128)))
+    
+    res_run = res_p.add_run(title_text)
     res_run.bold = True
     res_run.font.size = Pt(14)
-    if "NEM MEGFELELŐ" in r_val and "FELTÉTELESEN" not in r_val:
-        res_run.font.color.rgb = RGBColor(255, 0, 0)
-    elif "FELTÉTELESEN" in r_val:
-        res_run.font.color.rgb = RGBColor(255, 140, 0)
-    else:
-        res_run.font.color.rgb = RGBColor(0, 128, 0)
+    res_run.font.color.rgb = color
+    
+    if desc_text:
+        res_p.add_run('\n\n')
+        desc_run = res_p.add_run(desc_text)
+        desc_run.font.size = Pt(11)
         
     disclaimer = (
         "Módszertan és Felelősség:\n"
@@ -439,6 +626,109 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
     p_disc = doc.add_paragraph(disclaimer)
     p_disc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     
+    # ═══════════════════════════════════════════════════════
+    # DIGITÁLIS INTEGRITÁS - QR Kód és Hash
+    # ═══════════════════════════════════════════════════════
+    section_num += 1
+    doc.add_heading(f'{section_num}. Digitális Integritás és Nyomonkövethetőség', level=1)
+    
+    import hashlib
+    import json
+    from datetime import datetime
+    
+    # Építünk egy hash-elhető payload-ot a dokumentum tartalmából
+    integrity_data = {
+        'report_id': rep_id_str,
+        'client': c_data.get('clientName', ''),
+        'address': c_data.get('siteAddress', ''),
+        'inspector': c_data.get('inspectorName', ''),
+        'instrument': c_data.get('instrumentType', ''),
+        'calibration': c_data.get('instrumentCal', ''),
+        'result': r_val,
+        'issued': datetime.now().isoformat(),
+        'measurement_count': {
+            'rpe': len(c_data.get('rpeData', [])),
+            'riso': len(c_data.get('insulationData', [])),
+            'loop': len(c_data.get('loopData', [])),
+            'rcd': len(c_data.get('rcdData', [])),
+        },
+        'defect_count': len(d_data),
+    }
+    
+    # SHA-256 hash a tartalomra
+    payload_json = json.dumps(integrity_data, ensure_ascii=False, sort_keys=True)
+    content_hash = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
+    integrity_data['sha256'] = content_hash
+    
+    # QR kód payload
+    qr_payload = json.dumps({
+        'id': rep_id_str,
+        'hash': content_hash[:16],  # Első 16 karakter (ellenőrzéshez elég)
+        'date': datetime.now().strftime('%Y-%m-%d'),
+        'result': r_val,
+        'inspector': c_data.get('inspectorName', '')[:30],
+    }, ensure_ascii=False)
+    
+    # QR kód generálás
+    try:
+        import qrcode
+        qr = qrcode.QRCode(version=1, box_size=6, border=2, error_correction=qrcode.constants.ERROR_CORRECT_M)
+        qr.add_data(qr_payload)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        qr_buffer = io.BytesIO()
+        qr_img.save(qr_buffer, format='PNG')
+        qr_buffer.seek(0)
+        
+        # QR kód beillesztése
+        qr_para = doc.add_paragraph()
+        qr_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        qr_run = qr_para.add_run()
+        qr_run.add_picture(qr_buffer, width=Cm(4))
+        
+        qr_label = doc.add_paragraph(f"Hitelesítési QR kód — Azonosító: {rep_id_str}")
+        qr_label.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+    except ImportError:
+        doc.add_paragraph("[QR kód generálás nem elérhető — telepítsd: pip install qrcode[pil]]")
+    except Exception as e:
+        doc.add_paragraph(f"[QR kód generálási hiba: {str(e)}]")
+    
+    # Integritási adatok szöveges formában
+    int_p = doc.add_paragraph()
+    int_p.add_run("Dokumentum Integritási Adatok:\n").bold = True
+    int_p.add_run(f"Azonosító: {rep_id_str}\n")
+    int_p.add_run(f"Generálás dátuma: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+    int_p.add_run(f"SHA-256 Hash: {content_hash}\n")
+    int_p.add_run(f"Mérések: Rpe={integrity_data['measurement_count']['rpe']} db, "
+                  f"Riso={integrity_data['measurement_count']['riso']} db, "
+                  f"Zs={integrity_data['measurement_count']['loop']} db, "
+                  f"RCD={integrity_data['measurement_count']['rcd']} db\n")
+    int_p.add_run(f"Feltárt hibák: {integrity_data['defect_count']} db\n")
+    
+    hash_note = doc.add_paragraph(
+        "A fenti SHA-256 hash a dokumentum minden lényeges adatából (megrendelő, cím, felülvizsgáló, "
+        "műszer, mérési eredmények száma, hibák száma, minősítés) számított egyedi lenyomat. "
+        "Bármilyen módosítás esetén a hash megváltozik, ezáltal a manipuláció kimutatható. "
+        "A QR kód a hitelesítési adatokat tartalmazza."
+    )
+    hash_note.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    
+    # Következő felülvizsgálat dátuma (OTSZ alapján)
+    otsz_class = c_data.get('buildingOtsz', '')
+    otsz_cycles = {'AK': 6, 'KK': 3, 'MK': 1, 'NAK': 6}
+    if otsz_class and otsz_class in otsz_cycles:
+        years = otsz_cycles[otsz_class]
+        next_date = datetime.now().replace(year=datetime.now().year + years)
+        next_p = doc.add_paragraph()
+        next_p.add_run(f"\n📅 KÖVETKEZŐ KÖTELEZŐ FELÜLVIZSGÁLAT: ").bold = True
+        next_run = next_p.add_run(f"{next_date.strftime('%Y-%m-%d')}")
+        next_run.bold = True
+        next_run.font.size = Pt(14)
+        next_run.font.color.rgb = RGBColor(255, 80, 0)
+        next_p.add_run(f"\n(OTSZ osztály: {otsz_class} → {years} évente, 54/2014. BM rendelet)")
+    
     # Signature placeholder
     sig = doc.add_paragraph("\n\n..................................................\nAláírás és Bélyegző")
     sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -448,11 +738,11 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
         doc.add_page_break()
         doc.add_heading('Függelék: Villanyszerelői Nyilatkozat a Javításról', level=1)
         
-        rep_id_str = f"{rep_type}-{report.id}" if report.id else "TERVEZET"
+        rep_id_str_f = f"{rep_type}-{report.id}" if report.id else "TERVEZET"
         nyilatkozat_szoveg = (
-            "Alulírott ..................................................... (kivitelező/villanyszerelő neve/cége), "
+            f"Alulírott ..................................................... (kivitelező/villanyszerelő neve/cége), "
             "mint megfelelő szakmai képesítéssel rendelkező villamos szakember (Fnyv. szám / bizonyítvány: ................................) "
-            f"büntetőjogi felelősségem tudatában nyilatkozom, hogy a jelen, {rep_id_str} hivatkozási számú jegyzőkönyvben ("
+            f"büntetőjogi felelősségem tudatában nyilatkozom, hogy a jelen, {rep_id_str_f} hivatkozási számú jegyzőkönyvben ("
             "vagy annak hibajegyzék mellékletében) rögzített feltárt hibákat és hiányosságokat a vonatkozó MSZ HD 60364 szabványsorozat előírásainak megfelelően "
             "szakszerűen, maradéktalanul kijavítottam.\n\n"
             "Kijelentem, hogy az általam elvégzett javítási munkálatok után a vizsgált villamos berendezés/hálózat áramütés elleni védelme, "
@@ -474,9 +764,9 @@ def generate_docx_stream(report: Report) -> io.BytesIO:
 import tempfile
 import os
 
-def generate_signed_pdf_stream(report: Report, pfx_path: str = "signer.pfx", pfx_pass: bytes = b'password') -> io.BytesIO:
+def generate_signed_pdf_stream(report: Report, db=None, pfx_path: str = "signer.pfx", pfx_pass: bytes = b'password') -> io.BytesIO:
     # Generate the standard DOCX
-    docx_stream = generate_docx_stream(report)
+    docx_stream = generate_docx_stream(report, db)
     
     with tempfile.TemporaryDirectory() as td:
         docx_path = os.path.join(td, "temp.docx")

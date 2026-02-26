@@ -1,12 +1,24 @@
+# Core framework
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
+pydantic
+pydantic-settings
+python-multipart
+
+# Auth & Security
 passlib[bcrypt]
 bcrypt==4.0.1
 python-jose[cryptography]
-python-multipart
-pydantic
-pydantic-settings
+slowapi
+
+# Document generation
 python-docx
 docx2pdf
 pyhanko
+Pillow
+openpyxl
+qrcode[pil]
+
+# Testing (dev only)
+pytest

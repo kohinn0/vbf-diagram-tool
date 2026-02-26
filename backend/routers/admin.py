@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 
@@ -60,4 +63,62 @@ def admin_delete_user(user_id: int, db: Session = Depends(auth.get_db), current_
     db.commit()
     db.refresh(db_user)
     return {"message": "User deactivated and marked as deleted."}
+
+@router.get("/api/admin/company", response_model=schemas.CompanySettingsResponse)
+def get_company_settings(db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
+    settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == current_admin.id).first()
+    if not settings:
+        settings = database.CompanySettings(owner_id=current_admin.id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+@router.put("/api/admin/company", response_model=schemas.CompanySettingsResponse)
+def update_company_settings(settings_update: schemas.CompanySettingsUpdate, db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
+    settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == current_admin.id).first()
+    if not settings:
+        settings = database.CompanySettings(owner_id=current_admin.id)
+        db.add(settings)
+    
+    update_data = settings_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(settings, key, value)
+    
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+@router.post("/api/admin/company/logo")
+def upload_company_logo(file: UploadFile = File(...), db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
+    from PIL import Image
+    import io
+
+    os.makedirs("data/logos", exist_ok=True)
+    filename = f"logo_{current_admin.id}.webp"
+    file_path = f"data/logos/{filename}"
+    
+    # Read image into memory and compress using Pillow
+    try:
+        image_data = file.file.read()
+        image = Image.open(io.BytesIO(image_data))
+        
+        # Convert to RGB (in case of RGBA/PNG) to save as WebP properly if needed, although WebP supports alpha.
+        # Resize if logo is excessively large (max 500x500 for documents is plenty)
+        image.thumbnail((500, 500))
+        
+        # Save compressed to webp
+        image.save(file_path, "WEBP", quality=80, method=4)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Hiba a kép feldolgozásakor: {str(e)}")
+        
+    settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == current_admin.id).first()
+    if not settings:
+        settings = database.CompanySettings(owner_id=current_admin.id, logo_path=file_path)
+        db.add(settings)
+    else:
+        settings.logo_path = file_path
+    
+    db.commit()
+    return {"message": "Logo feltöltve és tömörítve!", "logo_path": file_path}
 

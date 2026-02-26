@@ -20,3 +20,6 @@ Thumbs.db
 
 # Other
 *.log
+*.txt
+*.pfx
+my_diff*

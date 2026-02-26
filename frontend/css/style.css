@@ -2,23 +2,22 @@
    Design System & Tokens
    ========================================================================== */
 :root {
-    /* Premium Dark Mode Colors */
-    --bg-base: #0f1115;
-    --bg-panel: rgba(22, 25, 31, 0.7);
-    --bg-glass: rgba(30, 34, 42, 0.5);
+    /* Premium Dark Mode Colors (Matched with index.html) */
+    --bg-base: #040914;
+    --bg-panel: rgba(11, 21, 39, 0.7);
+    --bg-glass: rgba(18, 30, 54, 0.5);
 
-    --text-main: #f0f2f5;
-    --text-muted: #8b92a5;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
 
-    --primary: #3b82f6;
-    /* Modern Blue */
-    --primary-hover: #2563eb;
-    --secondary: #374151;
-    --secondary-hover: #4b5563;
+    --primary: #0ea5e9;
+    --primary-hover: #0284c7;
+    --secondary: #121e36;
+    --secondary-hover: #1e293b;
     --danger: #ef4444;
     --danger-hover: #dc2626;
 
-    --accent: #10b981;
+    --accent: #f59e0b;
     /* Success / Highlight */
 
     --border-color: rgba(255, 255, 255, 0.08);
@@ -27,7 +26,7 @@
     --radius: 12px;
     --radius-sm: 8px;
     --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* ==========================================================================
@@ -40,7 +39,7 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
     background-color: var(--bg-base);
     color: var(--text-main);
     height: 100vh;
@@ -48,7 +47,7 @@ body {
     display: flex;
     flex-direction: column;
     /* Subtle radial gradient background */
-    background-image: radial-gradient(circle at 50% 0%, #1e2535 0%, var(--bg-base) 60%);
+    background-image: radial-gradient(circle at 50% 0%, #0b1527 0%, var(--bg-base) 60%);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 

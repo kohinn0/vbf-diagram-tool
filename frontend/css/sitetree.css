@@ -1,0 +1,299 @@
+/* ==========================================================================
+   Site Tree Hierarchy Styles
+   ========================================================================== */
+
+#siteTreePanel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.st-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: rgba(14, 165, 233, 0.08);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.st-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.st-header h3 svg {
+    color: var(--accent);
+}
+
+.st-header .st-add-root {
+    min-height: 36px !important;
+    padding: 0.3rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    margin: 0 !important;
+}
+
+.st-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.st-empty p {
+    margin: 0.25rem 0;
+}
+
+/* Tree Container */
+.st-tree {
+    padding: 0.5rem 0;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.st-tree::-webkit-scrollbar {
+    width: 6px;
+}
+
+.st-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.st-tree::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+/* Node Row */
+.st-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    padding-right: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-left: 3px solid transparent;
+    min-height: 38px;
+}
+
+.st-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.st-row.active {
+    background: rgba(14, 165, 233, 0.12);
+    border-left-color: var(--primary);
+}
+
+.st-row.active .st-name {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Toggle */
+.st-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+
+.st-toggle:hover {
+    color: var(--text-main);
+}
+
+.st-toggle-space {
+    width: 16px;
+    flex-shrink: 0;
+}
+
+/* Icon */
+.st-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* Name */
+.st-name {
+    flex: 1;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+    min-width: 0;
+}
+
+.st-name:hover {
+    color: var(--primary);
+}
+
+/* Device input (for panel nodes) */
+.st-device-input {
+    width: 55px !important;
+    min-height: 28px !important;
+    padding: 0.15rem 0.4rem !important;
+    font-size: 0.75rem !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: var(--accent) !important;
+    border-radius: 4px !important;
+    text-align: center;
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.st-device-input:focus {
+    border-color: var(--primary) !important;
+    outline: none !important;
+}
+
+/* Type badge */
+.st-type-badge {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+/* Actions */
+.st-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+.st-row:hover .st-actions {
+    opacity: 1;
+}
+
+.st-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.st-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.st-btn-add {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.st-btn-add:hover {
+    background: rgba(14, 165, 233, 0.15);
+    color: var(--primary);
+}
+
+.st-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+/* Children container */
+.st-children {
+    position: relative;
+}
+
+.st-children::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 8px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Depth-based indentation guide lines */
+.depth-1 .st-children::before {
+    left: 48px;
+}
+
+.depth-2 .st-children::before {
+    left: 68px;
+}
+
+.depth-3 .st-children::before {
+    left: 88px;
+}
+
+/* ── Connection lines for each depth ── */
+.st-node[data-depth="1"]>.st-row::before,
+.st-node[data-depth="2"]>.st-row::before,
+.st-node[data-depth="3"]>.st-row::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    left: calc(var(--indent) - 12px);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .st-tree {
+        max-height: 250px;
+    }
+
+    .st-actions {
+        opacity: 1;
+    }
+
+    .st-type-badge {
+        display: none;
+    }
+
+    .st-row {
+        padding: 0.6rem 0.5rem;
+        min-height: 44px;
+    }
+
+    .st-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+    }
+
+    .st-device-input {
+        width: 50px !important;
+    }
+}

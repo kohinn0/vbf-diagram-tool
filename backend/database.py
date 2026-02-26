@@ -4,11 +4,24 @@ from datetime import datetime
 import os
 
 os.makedirs("data", exist_ok=True)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./data/vbf_database.db"
+
+# Support environment variable for Docker, fallback to local path
+_db_path = os.environ.get("DATABASE_PATH", "./data/vbf_database.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{_db_path}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
+
+# Enable WAL journal mode for better concurrency (critical in Docker/containers)
+from sqlalchemy import event
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=5000")  # Wait up to 5s if DB is locked
+    cursor.close()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -25,6 +38,7 @@ class User(Base):
     company_id = Column(Integer, nullable=True) # For group work
     subscription_expires = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True) # GDPR soft delete
+    report_limit = Column(Integer, default=-1) # -1 for unlimited, else monthly limit
     
     reports = relationship("Report", back_populates="owner")
     customers = relationship("Customer", back_populates="owner")
@@ -44,6 +58,7 @@ class Report(Base):
     # For SQLite, SQLAlchemy JSON column type will handle serialization
     client_data = Column(JSON, nullable=True)
     diagram_data = Column(JSON, nullable=True) # the fabric.js canvas JSON
+    diagram_image = Column(Text, nullable=True) # base64 PNG rendered diagram for docx export
     defects_data = Column(JSON, nullable=True) # array of defects
     measurements_data = Column(JSON, nullable=True)
     
@@ -63,6 +78,17 @@ class Customer(Base):
     building_purpose = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="customers")
+
+class CompanySettings(Base):
+    __tablename__ = "company_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String, nullable=True)
+    tax_number = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    bank_account = Column(String, nullable=True)
+    logo_path = Column(String, nullable=True) # relative path to logo
+    owner_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    owner = relationship("User", backref="company_settings")
 
 class Inspector(Base):
     __tablename__ = "inspectors"

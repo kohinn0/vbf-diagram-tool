@@ -6,6 +6,9 @@ services:
       context: ./frontend
     ports:
       - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: always
 
   backend:
@@ -14,5 +17,51 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./backend/data:/app/data
+      # Named volume for persistent SQLite database & uploaded files
+      # Data survives container restarts, rebuilds, and docker-compose down
+      # Only docker-compose down -v or docker volume rm will delete it
+      - vbf_data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/vbf_database.db
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: always
+
+  # Napi SQLite backup szolgáltatás
+  # Manuálisan: docker compose run --rm db-backup
+  db-backup:
+    image: alpine:latest
+    volumes:
+      - vbf_data:/app/data:ro # Olvasási jog az adatbázishoz
+      - vbf_backups:/backups # Backup mentési kötet
+    entrypoint: /bin/sh
+    command: >
+      -c "
+        apk add --no-cache sqlite &&
+        DATE=$$(date +%Y%m%d_%H%M%S) &&
+        echo '[BACKUP] Start: $$DATE' &&
+        sqlite3 /app/data/vbf_database.db \".backup '/backups/vbf_backup_$$DATE.db'\" &&
+        echo '[BACKUP] ✅ Sikeres backup: /backups/vbf_backup_$$DATE.db' &&
+        find /backups -name 'vbf_backup_*.db' -mtime +30 -delete &&
+        echo '[BACKUP] Backup fájlok:' && ls -lh /backups/
+      "
+    profiles:
+      - backup # Csak kérésre indul: docker compose --profile backup run --rm db-backup
+
+# Named volumes - persist across container lifecycle
+volumes:
+  vbf_data:
+    driver: local
+  vbf_backups:
+    driver: local

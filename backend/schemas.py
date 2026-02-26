@@ -41,6 +41,7 @@ class ReportBase(BaseModel):
     report_type: str
     client_data: Optional[Dict[str, Any]] = None
     diagram_data: Optional[Dict[str, Any]] = None
+    diagram_image: Optional[str] = None
     defects_data: Optional[List[Dict[str, Any]]] = None
     measurements_data: Optional[List[Dict[str, Any]]] = None
 
@@ -60,6 +61,28 @@ class ReportResponse(ReportBase):
 
     class Config:
         from_attributes = True
+
+# --- Company Settings Schemas ---
+class CompanySettingsBase(BaseModel):
+    company_name: Optional[str] = None
+    tax_number: Optional[str] = None
+    address: Optional[str] = None
+    bank_account: Optional[str] = None
+    logo_path: Optional[str] = None
+
+class CompanySettingsCreate(CompanySettingsBase):
+    pass
+
+class CompanySettingsUpdate(CompanySettingsBase):
+    pass
+
+class CompanySettingsResponse(CompanySettingsBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
 
 # --- Master Data Schemas ---
 class CustomerBase(BaseModel):

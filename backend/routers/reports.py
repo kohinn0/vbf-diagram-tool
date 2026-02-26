@@ -4,6 +4,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import smtplib
+from email.message import EmailMessage
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 
@@ -17,6 +22,20 @@ def get_reports(skip: int = 0, limit: int = 100, db: Session = Depends(auth.get_
 
 @router.post("/api/reports", response_model=schemas.ReportResponse)
 def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    # Check Report Limit (e.g for monthly plans)
+    if current_user.report_limit > -1:
+        # Calculate how many reports created this month
+        current_date = datetime.utcnow()
+        first_day_of_month = datetime(current_date.year, current_date.month, 1)
+        
+        report_count = db.query(database.Report).filter(
+            database.Report.owner_id == current_user.id,
+            database.Report.created_at >= first_day_of_month
+        ).count()
+        
+        if report_count >= current_user.report_limit:
+            raise HTTPException(status_code=403, detail="Elérted a havi jegyzőkönyv limitet (15 db). Válts éves prémium előfizetésre!")
+
     db_report = database.Report(**report.dict(), owner_id=current_user.id)
     db.add(db_report)
     db.commit()
@@ -68,7 +87,7 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    stream = generator.generate_docx_stream(report)
+    stream = generator.generate_docx_stream(report, db)
     rep_type = report.report_type.upper() if report.report_type else "VBF"
     short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
     year = report.created_at.year if report.created_at else datetime.utcnow().year
@@ -92,7 +111,7 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
         raise HTTPException(status_code=404, detail="Report not found")
         
     try:
-        stream = generator.generate_signed_pdf_stream(report)
+        stream = generator.generate_signed_pdf_stream(report, db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
@@ -127,7 +146,7 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
     if not db_report:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    doc_stream = generator.generate_docx_stream(db_report)
+    doc_stream = generator.generate_docx_stream(db_report, db)
     doc_bytes = doc_stream.getvalue()
     
     # Send Email settings

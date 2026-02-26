@@ -4,776 +4,871 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VBF Elektromos Rajzkészítő | Prémium Szerkesztő</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Google Fonts for Modern Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Fabric.js for Canvas Manipulation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <!-- QR Code Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <meta name="description"
+        content="VBF SaaS - A jövő VBF programja! Érintésvédelmi és Villamos Biztonsági Felülvizsgálati jegyzőkönyvek, elosztó rajzoló és hibagenerátor.">
+    <title>VBF SaaS | Érintésvédelmi Jegyzőkönyv Készítő & Webshop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --primary-light: #38bdf8;
+            --accent: #f59e0b;
+            --bg-color: #040914;
+            --surface-color: #0b1527;
+            --surface-light: #121e36;
+            --text-color: #ffffff;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(11, 21, 39, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-light);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Glassmorphism Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            color: var(--primary);
+            font-size: 2.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.05rem;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-light);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--glass-border);
+            color: var(--text-color);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            background: rgba(14, 165, 233, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.5);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #d97706);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 5% 4rem;
+            position: relative;
+            background: radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 40%);
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 700px;
+            z-index: 2;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 50px;
+            color: var(--primary-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #ffffff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.35rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            max-width: 600px;
+        }
+
+        .hero-graphics {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .floating-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-card img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(1deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 5%;
+            background: var(--surface-color);
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 50%);
+            z-index: -1;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(14, 165, 233, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* Shopping / Pricing Section */
+        .shop-section {
+            padding: 8rem 5%;
+            background: var(--bg-color);
+            position: relative;
+        }
+
+        .shop-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+        }
+
+        .pricing-grid {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: var(--surface-light);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px rgba(14, 165, 233, 0.15);
+            transform: scale(1.05);
+            background: linear-gradient(180deg, rgba(14, 165, 233, 0.05) 0%, var(--surface-light) 100%);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(14, 165, 233, 0.4);
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .pricing-card.popular .plan-name {
+            color: var(--primary-light);
+        }
+
+        .price {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .price span {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .billing-period {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 3rem;
+            flex-grow: 1;
+        }
+
+        .features-list li {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            color: #cbd5e1;
+            font-size: 1.05rem;
+        }
+
+        .features-list li .check {
+            color: var(--primary-light);
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 50%;
+            padding: 2px;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .cart-total {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 600px;
+            margin: 4rem auto 0;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface-color);
+            padding: 4rem 5% 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .footer-desc {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-light);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 992px) {
+            h1 {
+                font-size: 3.5rem;
+            }
+
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 8rem;
+            }
+
+            .hero-content {
+                margin-bottom: 3rem;
+            }
+
+            .hero p {
+                margin: 0 auto 2rem;
+            }
+
+            .cta-group {
+                justify-content: center;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .pricing-card.popular {
+                transform: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.8rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                display: block;
+            }
+
+            .pricing-card {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Top Navigation System -->
-    <nav class="main-nav panel-glass">
-        <div class="nav-brand">⚡ Szabványos Érintésvédelmi Rendszer</div>
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-target="tab-diagram">Rajz & Alaprajz</button>
-            <button class="nav-tab" data-target="tab-report">Jegyzőkönyv Adatok</button>
-            <button class="nav-tab" data-target="tab-defects">Hibajegyzék & Képek</button>
-            <button class="nav-tab" data-target="tab-measurements">Mérési Adatok (Metrel)</button>
-            <button class="nav-tab" data-target="tab-jobs">📅 Naptár & Feladatok</button>
-            <button class="nav-tab" data-target="tab-cloud">☁️ Mentett Ügyek</button>
-            <button class="nav-tab" data-target="tab-master-data">🏢 Törzsadatok</button>
-            <button class="nav-tab" id="navAdmin" data-target="tab-admin" style="display: none;">🔑 Admin</button>
+
+    <nav>
+        <div class="logo">
+            <span class="logo-icon">⚡</span> VBF Premium
         </div>
-        <div class="user-controls" style="display: flex; gap: 15px; align-items: center; justify-content: flex-end;">
-
-            <!-- Report Actions Group (Hidden by default until logged in/report loaded) -->
-            <div id="reportActionsGroup"
-                style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 5px; border-radius: 8px; align-items: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                <button class="btn btn-primary btn-small" id="btnSaveCloud" style="display: none; margin:0;"><span
-                        style="font-size:1.1em;vertical-align:middle;">☁️</span> Mentés</button>
-                <button class="btn btn-danger btn-small" id="btnFinalize"
-                    style="display: none; background: #b91c1c; margin:0;"><span
-                        style="font-size:1.1em;vertical-align:middle;">🔒</span> Zárás</button>
-                <button class="btn btn-accent btn-small" id="btnExportWord"
-                    style="display: none; background: #2563eb; color: white; margin:0;">Word 📄</button>
-                <button class="btn btn-accent btn-small" id="btnExportPdfReport"
-                    style="display: none; background: #dc2626; color: white; margin:0;">PDF 📜</button>
-                <button class="btn btn-accent btn-small" id="btnEmailReport"
-                    style="display: none; background: #8b5cf6; color: white; margin:0;">Küldés ✉️</button>
-            </div>
-
-            <!-- System Info & Settings Group -->
-            <div
-                style="display: flex; gap: 10px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px;">
-                <div id="offlineIndicator"
-                    style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: bold; background: var(--bg-glass); padding: 5px 8px; border-radius: 6px;">
-                    <span id="offlineDot"
-                        style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-                    <span id="offlineText">Online</span>
-                </div>
-                <!-- Értesítő badge ha van offline mentés -->
-                <button id="btnSyncOffline" class="btn btn-primary btn-small"
-                    style="display:none; background:#f59e0b; color:white; margin:0; padding: 4px 8px;">
-                    🔄 Szinkronizálás (<span id="offlineCount">0</span>)
-                </button>
-
-                <span id="userInfo" style="color: var(--accent); font-weight: 500; font-size: 0.9rem;"></span>
-                <button class="btn btn-secondary btn-small" id="btnLoginNav"
-                    style="margin:0; padding: 4px 10px;">Belépés</button>
-                <button class="btn btn-secondary btn-small" id="btnToggleTheme" style="margin:0; padding: 4px 6px;"
-                    title="Téma Váltása">☀️ Váltás</button>
-            </div>
+        <div class="nav-links">
+            <a href="#features">Funkciók</a>
+            <a href="#how-it-works">Hogyan Működik</a>
+            <a href="#shop">Webshop & Árazás</a>
+        </div>
+        <div class="nav-actions">
+            <a href="app.html" class="btn btn-outline" style="padding: 0.5rem 1.2rem;">Belépés</a>
+            <a href="#shop" class="btn btn-primary" style="padding: 0.5rem 1.2rem;">Vásárlás 🛒</a>
         </div>
     </nav>
 
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass">
-            <h2 style="margin-bottom: 2rem;">Bejelentkezés</h2>
-            <div class="prop-group">
-                <label>Felhasználónév</label>
-                <input type="text" id="loginUser" placeholder="admin">
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge">SaaS Megoldás Villanyszerelőknek</div>
+            <h1>Minősítő Iratok.<br>Precízebben, Gyorsabban.</h1>
+            <p>Hozd létre, oszd meg és kezeld az Érintésvédelmi, Villamos Biztonsági és EPH jegyzőkönyveidet egyetlen
+                modern, webes felületen. Felejtsd el a papírozást és az Excel táblákat!</p>
+            <div class="cta-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="#shop" class="btn btn-accent btn-large"
+                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Licenc Vásárlása</a>
+                <a href="app.html" class="btn btn-outline btn-large"
+                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Demó Kipróbálása</a>
             </div>
-            <div class="prop-group">
-                <label>Jelszó</label>
-                <input type="password" id="loginPass" placeholder="titkos">
-            </div>
-            <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
-            <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
-            <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
-        </div>
-    </div>
 
-    <!-- Main Content Area -->
-    <div class="app-content-wrapper">
-        <!-- 1. TAB: RAJZOLÓ (Eredeti funkció) -->
-        <div id="tab-diagram" class="tab-pane active">
-            <div class="app-container">
-                <!-- Sidebar: Tools and Symbols -->
-                <aside class="sidebar panel-glass">
-                    <div class="sidebar-header">
-                        <h2>VBF Diagram</h2>
-                        <button class="btn btn-secondary btn-small" id="btnScanQr"
-                            style="width: 100%; margin-top: 1rem; padding: 0.5rem;">📷 QR Kód Szkennelés</button>
-                    </div>
-
-                    <div class="tool-section">
-                        <h3>Villamos Elemek</h3>
-                        <div class="symbol-grid" id="symbolGrid">
-                            <!-- Javascript fogja feltölteni a szimbólumokat -->
-                        </div>
-                    </div>
-
-                    <div class="tool-section">
-                        <h3>Építészeti Elemek</h3>
-                        <div class="symbol-grid" id="archGrid">
-                            <!-- Javascript fogja feltölteni az alaprajz elemeit -->
-                        </div>
-                    </div>
-
-                    <div class="tool-section">
-                        <h3>Műveletek</h3>
-                        <button class="btn btn-primary" id="btnExportPdf">Rajz Exportálása PDF-be</button>
-                        <button class="btn btn-secondary" id="btnExportPng">Rajz Letöltése Képként</button>
-                        <button class="btn btn-danger" id="btnClear">Vászon Törlése</button>
-                    </div>
-                </aside>
-
-                <!-- Main Drawing Area -->
-                <main class="drawing-area">
-                    <header class="topbar panel-glass">
-                        <input type="text" id="documentTitle" value="Névtelen Jegyzőkönyv Rajz"
-                            placeholder="Diagram neve...">
-                        <div class="tools-horizontal">
-                            <button class="tool-btn active" id="toolSelect" title="Kijelölés">👆</button>
-                            <button class="tool-btn" id="toolLine" title="Vezeték húzása">✏️</button>
-                            <button class="tool-btn" id="toolDelete" title="Kijelölt törlése">🗑️</button>
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-color); margin: 0 5px; align-self: center;">
-                            </div>
-                            <label class="tool-btn" title="Alaprajz betöltése háttérként"
-                                style="cursor: pointer; margin: 0;">
-                                🖼️
-                                <input type="file" id="btnUploadBg" accept="image/*" style="display:none;">
-                            </label>
-                            <button class="tool-btn" id="btnClearBg" title="Háttér Törlése">🚫</button>
-                        </div>
-                    </header>
-
-                    <div class="canvas-container-wrapper">
-                        <canvas id="diagramCanvas"></canvas>
-                    </div>
-                </main>
-
-                <!-- Right Panel: Properties Inspector -->
-                <aside class="properties-panel panel-glass">
-                    <h3>Tulajdonságok</h3>
-                    <div id="inspector-content">
-                        <p class="empty-state">Válassz ki egy elemet a szerkesztéshez.</p>
-                        <!-- Kijelölt elem tulajdonságai ide kerülnek -->
-                    </div>
-                </aside>
+            <div style="margin-top: 3rem; display: flex; align-items: center; gap: 15px;">
+                <div style="display:flex;">
+                    <span style="font-size: 1.5rem;">⭐⭐⭐⭐⭐</span>
+                </div>
+                <span style="color: var(--text-muted); font-size: 0.95rem;">Már több mint 500+ szakember minket
+                    választott.</span>
             </div>
         </div>
-
-        <!-- 5. TAB: MENTETT ÜGYEK (Cloud) -->
-        <div id="tab-cloud" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Felhőbe Mentett Jegyzőkönyvek</h2>
-                <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <!-- Javascript fogja ide tölteni a kártyákat -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 6. TAB: TÖRZSDATATOK (Master Data) -->
-        <div id="tab-master-data" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 1200px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🏢 Ügyfél és Felülvizsgáló Kezelés</h2>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                    <!-- Ügyfelek Oszlop -->
-                    <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: #10b981;">
-                            👥 Mentett Ügyfelek</h3>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4>Új Ügyfél Hozzáadása</h4>
-                            <div class="prop-group"><input type="text" id="mdCustName" placeholder="Cégnév / Név"></div>
-                            <div class="prop-group"><input type="text" id="mdCustAddr" placeholder="Cím"></div>
-                            <div class="prop-group"><input type="text" id="mdCustHrsz" placeholder="HRSZ"></div>
-                            <div class="prop-group"><input type="text" id="mdCustPurpose"
-                                    placeholder="Épület Rendeltetése"></div>
-                            <button class="btn btn-primary btn-small" id="btnSaveCustomer" style="width: 100%;">➕ Ügyfél
-                                Mentése</button>
-                        </div>
-
-                        <div id="customerListContainer"
-                            style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;">
-                            <!-- JS fills this -->
-                        </div>
-                    </div>
-
-                    <!-- Felülvizsgálók Oszlop -->
-                    <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: #3b82f6;">
-                            👨‍🔧 Mentett Felülvizsgálók</h3>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4>Új Felülvizsgáló / Eszköz</h4>
-                            <div class="prop-group"><input type="text" id="mdInspName" placeholder="Név / Cégnév"></div>
-                            <div class="prop-group"><input type="text" id="mdInspLic" placeholder="Bizonyítvány száma">
-                            </div>
-                            <div class="prop-group"><input type="text" id="mdInspInst"
-                                    placeholder="Műszer Típusa (pl. Metrel)"></div>
-                            <div class="prop-group"><input type="text" id="mdInspCal"
-                                    placeholder="Kalibrálás (pl. 2026.10.12)"></div>
-                            <button class="btn btn-primary btn-small" id="btnSaveInspector" style="width: 100%;">➕
-                                Felülvizsgáló Mentése</button>
-                        </div>
-
-                        <div id="inspectorListContainer"
-                            style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;">
-                            <!-- JS fills this -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- 2. TAB: JEGYZŐKÖNYV ADATOK -->
-        <div id="tab-report" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 900px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">📊 Jegyzőkönyv Típusa és Alapadatok</h2>
-
-                <div class="prop-group"
-                    style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #ffc107;">
-                    <label style="color: #ffc107; font-weight: bold;">📝 Gyorskitöltő Sablon Betöltése</label>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <select id="loadTemplateSelect" style="background: rgba(0,0,0,0.5); flex-grow: 1;">
-                            <option value="">-- Válassz Sablont (Opcionális) --</option>
-                            <option value="TPL_PANEL_3ROOM">3 Szobás Panel Lakás (Alapkiépítés) - Alap mérések kitöltése
-                            </option>
-                            <option value="TPL_APARTMENT_1ROOM">1 Szobás (Garzon) Lakás - Alap mérések kitöltése
-                            </option>
-                            <option value="TPL_FAMILY_HOUSE">Családi Ház (Új építés / 3 fázis) - Családi házas mérések
-                                kitöltése</option>
-                            <option value="TPL_OFFICE_SMALL">Kisebb Iroda / Üzlethelyiség (3 fázis) - Irodai mérések
-                                kitöltése</option>
-                            <option value="TPL_WORKSHOP">Ipari Csarnok / Műhely / Raktár (3 fázis) - Ipari mérések
-                                kitöltése</option>
-                            <option value="TPL_RESTAURANT">Étterem / Konyha (3 fázis) - Nagykonyhai mérések kitöltése
-                            </option>
-                            <option value="TPL_EPH_BOILER">Csak EPH - Kazán, gázmérő és fémcsövek</option>
-                        </select>
-                        <button class="btn btn-primary" id="btnSaveCustomTemplate"
-                            style="margin: 0; white-space: nowrap;">Mentés Saját Sablonként 💾</button>
-                    </div>
-                </div>
-
-                <div class="prop-group" style="margin-bottom: 2rem;">
-                    <label style="font-size: 1.1rem; color: var(--text-main);">Vizsgálat Típusa (MSZ HD 60364 /
-                        OTSZ)</label>
-                    <select id="docType" style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.3);">
-                        <option value="VBF_IDOSZAKOS">VBF - Időszakos felülvizsgálat (OTSZ szerint)</option>
-                        <option value="VBF_ELSO">VBF - Első felülvizsgálat (Üzembe helyezés előtti)</option>
-                        <option value="VBF_BERBEADAS">VBF - Bérbeadás előtti felülvizsgálat (40/2017. NGM)</option>
-                        <option value="VBF_ELADAS">VBF - Tulajdonosi jogváltás / Eladás előtti felülvizsgálat</option>
-                        <option value="EPH">EPH - Egyenpotenciálra Hozó Hálózat Felülvizsgálat Mérés</option>
-                    </select>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                    <!-- Megrendelő és Helyszín -->
-                    <div>
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                            🏢 Helyszín és Megrendelő</h3>
-                        <div class="prop-group"
-                            style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label style="color: var(--accent);">🔄 Mentett Ügyfél Betöltése</label>
-                            <select id="loadCustomerSelect" style="background: rgba(0,0,0,0.5);">
-                                <option value="">-- Válassz Ügyfelet --</option>
-                            </select>
-                        </div>
-                        <div class="prop-group">
-                            <label>Megrendelő Neve / Cégneve</label>
-                            <input type="text" id="customerName" placeholder="Pl. Kovács Kft. vagy Gipsz Jakab">
-                        </div>
-                        <div class="prop-group">
-                            <label>Vizsgált Objektum Címe</label>
-                            <input type="text" id="siteAddress" placeholder="Pl. 1011 Bp., Fő utca 1.">
-                        </div>
-                        <div class="prop-group">
-                            <label>Helyrajzi Szám (HRSZ) / Épület azonosító (OTSZ)</label>
-                            <input type="text" id="siteHrsz" placeholder="Pl. 12345/6 / A Épület">
-                        </div>
-                        <div class="prop-group">
-                            <label>Épület Rendeltetése (OTSZ kockázati besoroláshoz)</label>
-                            <input type="text" id="buildingPurpose" placeholder="Pl. Iroda, Ipari csarnok, Társasház">
-                        </div>
-                    </div>
-
-                    <!-- Felülvizsgáló és Műszer -->
-                    <div>
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                            👨‍🔧 Előadó és Eszközök</h3>
-                        <div class="prop-group"
-                            style="background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label style="color: var(--accent);">🔄 Mentett Felülvizsgáló Betöltése</label>
-                            <select id="loadInspectorSelect" style="background: rgba(0,0,0,0.5);">
-                                <option value="">-- Válassz Felülvizsgálót --</option>
-                            </select>
-                        </div>
-                        <div class="prop-group">
-                            <label>Felülvizsgáló Cég / Személy Neve</label>
-                            <input type="text" id="inspectorName" placeholder="Zöldfülű Vill Kft.">
-                        </div>
-                        <div class="prop-group">
-                            <label>Vizsgabizonyítvány Száma</label>
-                            <input type="text" id="inspectorLicense" placeholder="Pl. VBF-12345/2023">
-                        </div>
-                        <div class="prop-group">
-                            <label>Mérőműszer (Típus és Gyári Szám)</label>
-                            <input type="text" id="instrumentType" placeholder="Pl. Metrel MI 3152, SN:123456">
-                        </div>
-                        <div class="prop-group">
-                            <label>Műszer Kalibrálás Érvényessége</label>
-                            <input type="text" id="instrumentCal" placeholder="Pl. Érvényes: 2026.12">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- EPH and Földelés Mérés Section -->
-                <div id="sectionEPH"
-                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;">
-                    <h3 style="margin-bottom: 1rem; color: #2563eb;">⚡ EPH és Földelés Specifikus Adatok</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <div>
-                            <div class="prop-group">
-                                <label>Gázszolgáltató (Gázmérő) bevonása szükséges?</label>
-                                <select id="ephGasRequired" style="background: rgba(0,0,0,0.5);">
-                                    <option value="Nem">Nem</option>
-                                    <option value="Igen">Igen</option>
-                                </select>
-                            </div>
-                            <div class="prop-group">
-                                <label>Gázmérő gyári száma (ha van)</label>
-                                <input type="text" id="ephGasMeter" placeholder="Pl. 11223344">
-                            </div>
-                            <div class="prop-group">
-                                <label>PE-N Szétválasztás Helye</label>
-                                <input type="text" id="ephPenSep" placeholder="Pl. Főelosztó, Utcai szekrény">
-                            </div>
-                        </div>
-                        <div>
-                            <div class="prop-group">
-                                <label>Földelési Ellenállás Mérési Módszer (Metrel)</label>
-                                <select id="ephEarthMethod" style="background: rgba(0,0,0,0.5);">
-                                    <option value="3-vezetékes">3-vezetékes mérési módszer</option>
-                                    <option value="2-lakatfogós">2-lakatfogós hurok mérés</option>
-                                    <option value="Fajlagos">Fajlagos Talajellenállás</option>
-                                </select>
-                            </div>
-                            <div class="prop-group">
-                                <label>Mért Földelési Ellenállás (Ra) [Ω]</label>
-                                <input type="number" step="0.01" id="ephRaValue" placeholder="Pl. 5.2">
-                            </div>
-                            <div class="prop-group">
-                                <label>EPH Fővezeték Keresztmetszete (mm²)</label>
-                                <input type="number" step="0.5" id="ephConductor" placeholder="Pl. 16">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Szemrevételezés Section (MEEVET/OTSZ/VMBSZ) -->
-                <div id="sectionVisual"
-                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <h3 style="margin-bottom: 1rem; color: #10b981;">👁️ Szemrevételezéses Ellenőrzések (MEEVET)</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="visualChecklist">
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_id_marks" checked> <label for="check_id_marks">Azonosító
-                                jelek, feliratok megléte</label>
-                        </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_protection" checked> <label for="check_protection">Áramütés
-                                elleni védelem kialakítása</label>
-                        </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_fire" checked> <label for="check_fire">Tűzvédelmi
-                                óvintézkedések, hőhatás elleni védelem</label>
-                        </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_conduction" checked> <label for="check_conduction">Vezetők
-                                megfelelő megválasztása, terhelhetőség</label>
-                        </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_connection" checked> <label
-                                for="check_connection">Csatlakozások, kötések megfelelősége</label>
-                        </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_access" checked> <label
-                                for="check_access">Karbantarthatóság, hozzáférhetőség</label>
-                        </div>
-                    </div>
-                </div>
-
+        <div class="hero-graphics">
+            <div class="floating-card">
+                <!-- Illustration Placeholder or UI mockup -->
                 <div
-                    style="margin-top: 2rem; background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
-                    <h3 style="margin-bottom: 1rem;">📝 Összefoglaló Minősítés</h3>
-                    <div class="prop-group">
-                        <label>A Vizsgált Berendezés / Rendszer Állapota:</label>
-                        <select id="reportResult"
-                            style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.5);">
-                            <option value="MEGFELELŐ">✅ MEGFELELŐ - Üzemeltetésre alkalmas, nincsenek feltárt hibák.
-                            </option>
-                            <option value="FELTÉTELESEN MEGFELELŐ">⚠️ FELTÉTELESEN MEGFELELŐ - Kisebb hibák javítandók,
-                                időszakos javítás.</option>
-                            <option value="NEM MEGFELELŐ">❌ NEM MEGFELELŐ - Közvetlen veszély, üzemen kívül helyezés
-                                indokolt.</option>
-                        </select>
-                    </div>
+                    style="width: 400px; height: 300px; background: rgba(0,0,0,0.5); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">📝</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary-light);">Gyönyörű
+                        Jegyzőkönyvek</div>
+                    <div style="color: #64748b; margin-top: 10px;">MSZ HD 60364 & OTSZ Kompatibilis</div>
+
+                    <div
+                        style="margin-top: 20px; padding: 10px 20px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 5px; border: 1px solid #10b981;">
+                        ✅ Saját Céges Logóval</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="section-header">
+            <h2 class="section-title">A Legjobb Eszközök a Munkához</h2>
+            <p class="section-subtitle">Minden funkció azonnal elérhető, hogy a felülvizsgálatok adminisztrációja
+                percekre csökkenjen.</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📐</div>
+                <h3>Intelligens Rajzoló</h3>
+                <p>Készíts egyvonalas elosztó rajzokat pillanatok alatt egyenesen a tabletről. Húzd be a
+                    kismegszakítókat, ÁVK-kat, és exportáld be a jegyzőkönyvedbe gombnyomásra.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔌</div>
+                <h3>Műszer Integráció (Metrel)</h3>
+                <p>Töltsd fel a Metrel PADFX fájljaidat. A szoftver azonnal felismeri a méréseket, beilleszti a
+                    táblázatba, és kiemeli a hibás értékeket.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>Auto-Hibagenerátor</h3>
+                <p>Egy gombnyomás megvizsgálja a mérési eredményeket, és ha a hurok, szigetelés vagy RCD teszt elbukott,
+                    automatikusan legenerálja a szabványos hibaleírást a hibajegyzékbe.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏢</div>
+                <h3>Céges Személyre Szabás</h3>
+                <p>Add meg a céges adataidat, töltsd fel a logódat az Admin panelen, és minden generált dokumentum
+                    garantáltan a te arculatodban fog megjelenni.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>QR Kódos Leltár</h3>
+                <p>Ragaszd fel az okos QR kódot az elosztóra. Amikor legközelebb mész karbantartani, elég leolvasni
+                    telefonnal és azonnal behozza a korábbi mérési eredményeket.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Gördülékeny Munkakiosztás</h3>
+                <p>Admin felületen oszd ki a feladatokat a technikusoknak. Minden munkáról azonnali ICS (Google Naptár)
+                    naptárbejegyzés email megy a dolgozónak.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="shop" class="shop-section">
+        <div class="section-header">
+            <h2 class="section-title">Webshop & Előfizetés</h2>
+            <p class="section-subtitle">Válaszd ki a számodra megfelelő licencet. Egyszerű, rejtett költségek nélküli
+                díjazás.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Basic Plan -->
+            <div class="pricing-card">
+                <div class="plan-name">Havi Licenc / "Próba"</div>
+                <div class="price">12.990 <span>Ft</span></div>
+                <div class="billing-period">Havonta számlázva</div>
+
+                <ul class="features-list">
+                    <li><span class="check">✔</span> Havonta maximum 15 jegyzőkönyv</li>
+                    <li><span class="check">✔</span> Rajzoló eszköz használata</li>
+                    <li><span class="check">✔</span> Alap sablonok elérése</li>
+                    <li style="color: #64748b; text-decoration: line-through;"><span class="check"
+                            style="background:transparent; color:#475569;">✖</span> Auto-Hibagenerálás</li>
+                    <li style="color: #64748b; text-decoration: line-through;"><span class="check"
+                            style="background:transparent; color:#475569;">✖</span> Saját céges logó használata</li>
+                </ul>
+                <button id="btnBuyMonthly" class="btn btn-outline" style="width: 100%;">Kipróbálom 🛒</button>
+            </div>
+
+            <!-- Pro Plan (Popular) -->
+            <div class="pricing-card popular">
+                <div class="popular-badge">Legnépszerűbb</div>
+                <div class="plan-name">Professzionális Éves Licenc</div>
+                <div class="price">99.000 <span>Ft</span></div>
+                <div class="billing-period">Évente számlázva (2 hónap ajándék!)</div>
+
+                <ul class="features-list">
+                    <li><span class="check">✔</span> Korlátlan Jegyzőkönyv & Rajz</li>
+                    <li><span class="check">✔</span> <strong>Személyre szabás (Saját Logó, Céges Adatok)</strong></li>
+                    <li><span class="check">✔</span> Metrel (PADFX) fájlimport</li>
+                    <li><span class="check">✔</span> Auto-Hibagenerálás AI Mérésekből</li>
+                    <li><span class="check">✔</span> Csoportos Munkavégzés & Delegálás</li>
+                    <li><span class="check">✔</span> Kiemelt (0-24) Support</li>
+                </ul>
+                <button id="btnBuyStripe" class="btn btn-primary"
+                    style="width: 100%; font-size: 1.2rem; padding: 1.2rem;">Kosárba: Megveszem 🛒</button>
+                <div id="paymentStatus"
+                    style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--accent);">
+                    <!-- Status messages will appear here -->
                 </div>
             </div>
         </div>
 
-        <!-- 3. TAB: HIBAJEGYZÉK -->
-        <div id="tab-defects" class="tab-pane">
-            <div class="defects-container panel-glass">
-                <div class="defects-header"
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2>Feltárt Hibák és Hiányosságok</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-secondary" style="width: auto; margin:0;" id="btnGenerateDefects">🤖
-                            Automatikus Gyűjtés a Mérésekből</button>
-                        <button class="btn btn-primary" style="width: auto; margin:0;" id="btnAddDefect">+ Új Hiba
-                            Felvitele</button>
-                    </div>
-                </div>
-                <!-- Template szövegek tárháza (rejtett) -->
-                <datalist id="defectTemplates">
-                    <option value="A biztosíték tábla nincs megfelelően feliratozva.">
-                    <option value="A PE vezető keresztmetszete nem megfelelő.">
-                    <option value="Szinjelzési hiba (zöld-sárga vezető fázisként használva).">
-                    <option value="EPH csomópont kialakítása hiányos.">
-                </datalist>
-
-                <div id="defectList">
-                    <!-- A hibák JS-ből lesznek ide generálva -->
-                </div>
+        <div class="cart-total">
+            <h3 style="margin-bottom: 10px;">Biztonságos Fizetés a Stripe-on Keresztül 🔒</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">A fizetésre kattintva a Stripe biztonságos
+                felületére irányítunk. A fizetés után az automata rendszerünk azonnal kiküldi a belépési adatokat, és
+                használatba veheted a programot az admin fiókoddal.</p>
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+                <span style="font-size: 2rem;">💳</span>
+                <span style="font-size: 2rem;">🛡️</span>
+                <span style="font-size: 2rem;">🚀</span>
             </div>
         </div>
+    </section>
 
-        <!-- 4. TAB: MÉRÉSI ADATOK -->
-        <div id="tab-measurements" class="tab-pane">
-            <div class="measurements-container panel-glass"
-                style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2 style="margin: 0; color: var(--accent);">🔬 Mérési Adatok (Kézi bevitel)</h2>
-                    <div>
-                        <input type="file" id="inputPadfx" accept=".padfx,.xml" style="display: none;" />
-                        <button class="btn btn-primary" id="btnLoadPadfx"
-                            style="background-color: var(--accent); color: white;">Metrel PADFX Import 📥</button>
-                    </div>
-                </div>
-
-                <!-- TÖMEGES ADATBEVITEL / HELYSZÍNFA -->
-                <div
-                    style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--primary-color);">
-                    <h3 style="margin-top: 0; color: #fff; display: flex; align-items: center; gap: 8px;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        </svg>
-                        Tömeges Adatbevitel és Helyszínfa
-                    </h3>
-                    <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 1rem;">Állítsd be az aktuális elosztót (pl.
-                        csarnok -> alelosztó) és a gyakori értékeket, így az "Új Mérés" gombok kattintásakor az itt
-                        megadott
-                        értékek automatikusan beíródnak az új sorokba, spórolva a gépeléssel!</p>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <div style="flex: 2; min-width: 250px;">
-                            <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Aktuális Helyszín /
-                                Elosztó
-                                (pl. Főépület / DB-1)</label>
-                            <input type="text" id="globalLocation" placeholder="Főelosztó -> 1. Emeleti Alelosztó"
-                                style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
-                        </div>
-                        <div style="flex: 1; min-width: 150px;">
-                            <label style="display: block; margin-bottom: 0.5rem; color: #ddd;">Kikapcsoló szerv
-                                (Zs-hez)</label>
-                            <input type="text" id="globalDevice" placeholder="B16"
-                                style="width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); padding: 0.8rem; color: white; border-radius: 4px;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VBF MÉRÉSEK -->
-                <div id="vbf-measurements">
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        1. Védővezető folytonosság (Rpe)</h3>
-                    <table class="data-table" id="table-rpe"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Pont</th>
-                                <th>Mérés Helye</th>
-                                <th>Rpe [Ω]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddRpe">+ Rpe Mérés</button>
-
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        2. Szigetelési ellenállás (500V DC)</h3>
-                    <table class="data-table" id="table-insulation"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Áramkör neve</th>
-                                <th>Riso L-N [MΩ]</th>
-                                <th>Riso L-PE [MΩ]</th>
-                                <th>Riso N-PE [MΩ]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddInsulation">+ Szig. Mérés</button>
-
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        3. Hurokellenállás (Zs) és Hibavédelem</h3>
-                    <table class="data-table" id="table-loop"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Áramkör / Pont</th>
-                                <th>Kikapcsoló szerv (pl. B16)</th>
-                                <th>Helye (X/n)</th>
-                                <th>Zs [Ω]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddLoop">+ Hurok Mérés</button>
-
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        4. FI-relé (ÁVK) Részletes vizsgálat (MEEVET M5)</h3>
-                    <table class="data-table" id="table-rcd"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Áramkör</th>
-                                <th>Típus</th>
-                                <th>IΔn [mA]</th>
-                                <th>0.5×IΔn</th>
-                                <th>1×IΔn [ms]</th>
-                                <th>5×IΔn [ms]</th>
-                                <th>IΔ ramp [mA]</th>
-                                <th>Uc [V]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddRcd">+ RCD Mérés</button>
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
-                    <table class="data-table" id="table-tools"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Megnevezés</th>
-                                <th>Azonosító</th>
-                                <th>Szig. ell. [MΩ]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddTool">+ Szerszám Mérés</button>
-
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        6. SELV / PELV / Villamos elválasztás (MEEVET M2)</h3>
-                    <table class="data-table" id="table-selv"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Hely / Tr. áttétel</th>
-                                <th>Szek. fesz. [V]</th>
-                                <th>P-S szig. [MΩ]</th>
-                                <th>P-T szig. [MΩ]</th>
-                                <th>S-T szig. [MΩ]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddSelv">+ SELV/PELV Mérés</button>
-                </div>
-
-                <!-- EPH MÉRÉSEK -->
-                <div id="eph-measurements" style="display: none;">
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        EPH Bekötések Folytonossága</h3>
-                    <table class="data-table" id="table-eph"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <th>Sorszám</th>
-                                <th>Bekötött Elem (pl. Gázcső)</th>
-                                <th>Bekötés Helye</th>
-                                <th>Vezető (pl. Cu 6mm2)</th>
-                                <th>Kötés módja</th>
-                                <th>Folytonosság [Ω]</th>
-                                <th>Megfelel?</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddEph">+ EPH Bekötés Mérés</button>
-                </div>
-
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo"><span class="logo-icon">⚡</span> VBF Premium</div>
+                <p class="footer-desc">A legkorszerűbb felhőalapú érintésvédelmi minősítő és elosztó tervező szoftver
+                    magyar szakembereknek. Tervezd újra a munkafolyamataidat velünk.</p>
+            </div>
+            <div>
+                <h4 class="footer-title">Termék</h4>
+                <ul class="footer-links">
+                    <li><a href="#features">Funkciók</a></li>
+                    <li><a href="#shop">Árazás</a></li>
+                    <li><a href="#">Fejlesztési Ütemterv</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-title">Támogatás</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Dokumentáció</a></li>
+                    <li><a href="#">Gyakori Kérdések</a></li>
+                    <li><a href="#">Kapcsolat</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-title">Jogi</h4>
+                <ul class="footer-links">
+                    <li><a href="#">ÁSZF</a></li>
+                    <li><a href="#">Adatvédelmi Nyilatkozat</a></li>
+                    <li><a href="#">Imprint</a></li>
+                </ul>
             </div>
         </div>
-
-        <!-- 5. TAB: FELHŐ / MENTETT JEGYZŐKÖNYVEK -->
-        <div id="tab-cloud" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Mentett Jegyzőkönyvek</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt láthatod a korábban elmentett munkáidat.
-                    Bármikor visszatöltheted vagy klónozhatod őket.</p>
-
-                <div id="reportListContainer" class="report-grid">
-                    <p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>
-                </div>
-            </div>
+        <div class="copyright">
+            &copy; 2026 VBF Premium SaaS. Minden jog fenntartva. Készült a magyar villanyszerelőkért.
         </div>
+    </footer>
 
-        <!-- 6. TAB: ADMIN / FELHASZNÁLÓ KEZELÉS -->
-        <div id="tab-admin" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Adminisztrátori Felület</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók kezelése és előfizetések
-                    beállítása.</p>
+    <script>
+        const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8001/api`;
 
-                <table class="data-table" id="table-admin-users" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Felhasználónév</th>
-                            <th>Email Cím</th>
-                            <th>Státusz</th>
-                            <th>Admin?</th>
-                            <th>Lejárat</th>
-                            <th>Műveletek</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminUserList">
-                        <!-- Ide kerülnek a felhasználók -->
-                    </tbody>
-                </table>
+        const btnBuyYearly = document.getElementById('btnBuyStripe');
+        const btnBuyMonthly = document.getElementById('btnBuyMonthly');
+        const statusDiv = document.getElementById('paymentStatus');
 
-                <h3
-                    style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    👤 Új Felhasználó / Kolléga Hozzáadása</h3>
-                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <label>Felhasználónév</label>
-                    <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
+        async function initiateCheckout(planType, buttonElement) {
+            buttonElement.disabled = true;
+            const originalText = buttonElement.innerHTML;
+            buttonElement.innerHTML = 'Feldolgozás... <span style="font-size:1.2rem" class="spinner">⏳</span>';
+            if (statusDiv) statusDiv.innerText = '';
 
-                    <label style="margin-top: 10px;">Jelszó</label>
-                    <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ plan: planType })
+                });
 
-                    <label style="margin-top: 10px;">Email (Google naptár miatt kötelező!)</label>
-                    <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
+                if (!response.ok) throw new Error('Hiba történt a fizetés indítása során.');
 
-                    <label style="margin-top: 10px;">Beosztás / Jogosultság</label>
-                    <select id="adminNewRole">
-                        <option value="TECH">Villanyszerelő (TECH)</option>
-                        <option value="ADMIN">Adminisztrátor</option>
-                    </select>
+                const data = await response.json();
 
-                    <button class="btn btn-primary" id="btnAdminCreateUser"
-                        style="margin-top: 15px;">Létrehozás</button>
-                    <div id="adminCreateUserError" style="color: var(--danger); margin-top: 10px; font-size: 0.85rem;">
-                    </div>
-                </div>
+                if (data.url) {
+                    if (statusDiv) statusDiv.innerText = 'Átirányítás a biztonságos fizetési felületre...';
+                    window.location.href = data.url;
+                } else {
+                    throw new Error('Nem érkezett érvényes Stripe URL.');
+                }
+            } catch (error) {
+                console.error('Checkout Hiba:', error);
+                if (statusDiv) {
+                    statusDiv.style.color = '#ef4444'; // Red
+                    statusDiv.innerText = 'A fizetési átjáró jelenleg nem elérhető. Kérjük próbáld később!';
+                }
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalText;
+            }
+        }
 
-                <h3
-                    style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                    📅 Új Feladat / Kiszállás Kiosztása</h3>
-                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <label>Feladat Címe (pl. "Érintésvédelmi Vizsgálat")</label>
-                    <input type="text" id="adminJobTitle" placeholder="Cím">
+        if (btnBuyYearly) {
+            btnBuyYearly.addEventListener('click', () => initiateCheckout('yearly', btnBuyYearly));
+        }
 
-                    <label style="margin-top: 10px;">Cím / Helyszín</label>
-                    <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
-
-                    <label style="margin-top: 10px;">Leírás / Részletek / Kontakt</label>
-                    <textarea id="adminJobDesc" rows="2"
-                        placeholder="Megrendelő: Kovács János, Tel: 06201234567"></textarea>
-
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <div style="flex: 1;">
-                            <label>Dátum & Idő</label>
-                            <input type="datetime-local" id="adminJobDate">
-                        </div>
-                        <div style="flex: 1;">
-                            <label>Kijelölt Villanyszerelő / Tech</label>
-                            <select id="adminJobAssignSelect">
-                                <option value="">-- Válassz kollégát --</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="btnAdminSaveJob"
-                        style="margin-top: 15px; width: 100%;">Munkavégzés
-                        Kiosztása</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 7. TAB: NAPTÁR ÉS FELADATOK (JOBS) -->
-        <div id="tab-jobs" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto; min-height: 80vh;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">📅 Kiosztott Feladatok & Munkák</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt találod a rád bízott közelgő vizsgálatokat
-                    és a naptáradat.</p>
-
-                <div id="jobListContainer" style="display:flex; flex-direction:column; gap: 1rem;">
-                    <!-- Javascript fogja ide tölteni a kártyákat -->
-                </div>
-            </div>
-        </div>
-    </div> <!-- /app-content-wrapper -->
-
-    <!-- QR Scan Modal -->
-    <div id="qrModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; text-align: center;">
-            <h2 style="margin-bottom: 1.5rem;">QR Kód Beolvasása</h2>
-            <div id="qrReaderPlaceholder"
-                style="width: 100%; height: 250px; background: #000; border-radius: var(--radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; color: #fff;">
-                <p>[ Kamerakép ... ]</p>
-            </div>
-            <p style="margin-bottom: 1rem; font-size: 0.9rem;">Vagy írd be az azonosítót manuálisan:</p>
-            <input type="text" id="manualQrId" placeholder="Pl. R-1023" style="width: 100%; margin-bottom: 1.5rem;">
-
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" id="btnSubmitManualQr" style="flex: 1;">Betöltés</button>
-                <button class="btn btn-secondary" id="btnCloseQr" style="flex: 1;">Mégse</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Logic -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="js/data.js"></script>
-    <script src="js/modules/auth.js"></script>
-    <script src="js/modules/admin.js"></script>
-    <script src="js/modules/ui.js"></script>
-    <script src="js/modules/measurements.js"></script>
-    <script src="js/modules/diagram.js"></script>
-    <script src="js/modules/offline.js"></script>
+        if (btnBuyMonthly) {
+            btnBuyMonthly.addEventListener('click', () => initiateCheckout('monthly', btnBuyMonthly));
+        }
+    </script>
 </body>
 
 </html>

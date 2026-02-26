@@ -1,0 +1,20 @@
+{
+    "name": "VBF Érintésvédelmi Rendszer",
+    "short_name": "VBF",
+    "description": "Villamos Biztonsági Felülvizsgálati Jegyzőkönyv szerkesztő és dokumentáló rendszer. MSZ HD 60364-6, TvMI 7.7:2026.02.01",
+    "start_url": "/app.html",
+    "display": "standalone",
+    "orientation": "any",
+    "theme_color": "#0e1726",
+    "background_color": "#0e1726",
+    "lang": "hu",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "categories": ["business", "productivity", "utilities"],
+    "screenshots": []
+}

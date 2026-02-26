@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.onload = function () {
                         const canvas2 = document.createElement('canvas');
                         const ctx = canvas2.getContext('2d');
-                        const MAX_WIDTH = 800;
+                        const MAX_WIDTH = 800; // Optimal for reports
                         let width = img.width;
                         let height = img.height;
                         if (width > MAX_WIDTH) {
@@ -508,7 +508,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         canvas2.width = width;
                         canvas2.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
-                        const dataUrl = canvas2.toDataURL('image/jpeg', 0.8);
+
+                        // Use WebP compression instead of JPEG for much better size vs quality ratio
+                        const dataUrl = canvas2.toDataURL('image/webp', 0.7);
 
                         imgPreview.src = dataUrl;
                         imgPreview.style.display = 'block';
@@ -539,9 +541,11 @@ if (btnGenerateDefects) {
                     if (lastDefect) {
                         const descInput = lastDefect.querySelector('.desc-input');
                         const locInput = lastDefect.querySelector('.loc-input');
+                        const stdInput = lastDefect.querySelector('.standard-input');
                         const details = extractFn(tr);
                         if (descInput) descInput.value = details.desc;
                         if (locInput) locInput.value = details.loc || '';
+                        if (stdInput) stdInput.value = details.standard || '';
 
                         // Copy photo if attached to the measurement row
                         const attrPhoto = tr.getAttribute('data-photo');
@@ -560,80 +564,98 @@ if (btnGenerateDefects) {
             });
         };
 
-        // RPE Táblázat
+        // RPE Táblázat — M1 melléklet, Védővezető folytonosság
         scanTable('#table-rpe tbody tr', (tr) => {
             const loc = tr.querySelector('.meas-loc')?.value || '';
             const val = tr.querySelector('.meas-val')?.value || '';
             return {
                 desc: `A védővezető folytonossága nem megfelelő. Mért érték: ${val} Ω (Követelmény: ≤ 1.0 Ω). Javaslat: Kötések ellenőrzése, utánahúzása, szükség esetén a vezeték cseréje.`,
-                loc: loc
+                loc: loc,
+                standard: 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§'
             };
         });
 
-        // Szigetelés Táblázat
+        // Szigetelés Táblázat — M6 melléklet, Hálózat szigetelési ellenállás
         scanTable('#table-insulation tbody tr', (tr) => {
             const circ = tr.querySelector('.meas-circuit')?.value || '';
             const ln = tr.querySelector('.meas-ln')?.value || '';
             const lpe = tr.querySelector('.meas-lpe')?.value || '';
             const npe = tr.querySelector('.meas-npe')?.value || '';
             return {
-                desc: `Szigetelési ellenállás érték határértéken kívül. Mért értékek [MΩ]: L-N: ${ln}, L-PE: ${lpe}, N-PE: ${npe} (Követelmény: ≥ 1.0 MΩ). Javaslat: Vezetékrendszer és kötődobozok szigetelésvizsgálata, rágás/sérülés keresése.`,
-                loc: circ
+                desc: `Szigetelési ellenállás érték határértéken kívül. Mért értékek [MΩ]: L-N: ${ln}, L-PE: ${lpe}, N-PE: ${npe} (Követelmény: ≥ 1.0 MΩ, 500V DC mérőfeszültség). Javaslat: Vezetékrendszer és kötődobozok szigetelésvizsgálata, rágás/sérülés keresése.`,
+                loc: circ,
+                standard: 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); MEE Kézikönyv M6; TvMI 7.7:2026.02.01 §4.3'
             };
         });
 
-        // Hurok Táblázat
+        // Hurok Táblázat — M1 melléklet, Hibavédelem ellenőrzése
         scanTable('#table-loop tbody tr', (tr) => {
             const circ = tr.querySelector('.meas-circuit')?.value || '';
             const loc = tr.querySelector('.meas-loc')?.value || '';
             const device = tr.querySelector('.meas-device')?.value || '';
             const val = tr.querySelector('.meas-zs')?.value || '';
+            // Számolt határérték
+            const curve = device.toUpperCase().match(/[A-Z]+/)?.[0] || '';
+            const In = parseFloat(device.match(/[0-9.]+/)?.[0]);
+            let maxZsStr = '';
+            if (curve && !isNaN(In)) {
+                let Ia = 0;
+                if (curve === 'B') Ia = In * 5;
+                else if (curve === 'C') Ia = In * 10;
+                else if (curve === 'D') Ia = In * 20;
+                if (Ia > 0) maxZsStr = ` (Határérték: Zs ≤ ${((230 * 0.95) / Ia).toFixed(2)} Ω, ${curve}${In}A, Ia=${Ia}A)`;
+            }
             return {
-                desc: `A hurokellenállás értéke nem biztosítja a ${device} kikapcsoló szerv előírt időn belüli kioldását. Mért Zs érték: ${val} Ω. Javaslat: Keresztmetszet-növelés vagy ÁVK (RCD) beépítése javasolt a kiegészítő védelemhez.`,
-                loc: `${circ} (${loc})`
+                desc: `A hurokellenállás értéke nem biztosítja a ${device} kikapcsoló szerv előírt időn belüli kioldását. Mért Zs érték: ${val} Ω${maxZsStr}. Képlet: Zs ≤ (U₀×0.95)/Ia. Javaslat: Keresztmetszet-növelés vagy ÁVK (RCD) beépítése javasolt a kiegészítő védelemhez.`,
+                loc: `${circ} (${loc})`,
+                standard: 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4; MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§'
             };
         });
 
-        // RCD Táblázat
+        // RCD Táblázat — M5 melléklet, FI-relék (áram-védőkapcsoló)
         scanTable('#table-rcd tbody tr', (tr) => {
             const circ = tr.querySelector('.meas-circ')?.value || '';
             const idn = tr.querySelector('.meas-idn')?.value || '';
             const t1 = tr.querySelector('.meas-t1')?.value || '';
             return {
-                desc: `Az ÁVK (FI-relé) kioldási ideje vagy kioldó árama nem megfelelő. Kioldási idő (1xIdn): ${t1} ms, Névleges áram: ${idn} mA. Javaslat: Az ÁVK azonnali cseréje és az áramkör felülvizsgálata javasolt!`,
-                loc: circ
+                desc: `Az ÁVK (FI-relé) kioldási ideje vagy kioldó árama nem megfelelő. Kioldási idő (1×Idn): ${t1} ms (Követelmény: ≤ 300 ms általános, ≤ 40 ms perszonális védelem), Névleges áram: ${idn} mA. Javaslat: Az ÁVK azonnali cseréje és az áramkör felülvizsgálata!`,
+                loc: circ,
+                standard: 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1; MEE Kézikönyv M5; TvMI 7.7:2026.02.01 §4.4'
             };
         });
 
-        // EPH Táblázat
+        // EPH Táblázat — Egyenértékű potenciálkiegyenlítés
         scanTable('#table-eph tbody tr', (tr) => {
             const node = tr.querySelector('.meas-loc')?.value || '';
             const conn = tr.querySelector('.meas-elem')?.value || '';
             const val = tr.querySelector('.meas-val')?.value || '';
             return {
                 desc: `A ${conn} és a ${node} EPH csomópont közötti földelővezető vagy összekötő vezető folytonossága / ellenállása nem megfelelő. Mért Rpe érték: ${val} Ω. Javaslat: Földelési / EPH kötés javítása elengedhetetlen!`,
-                loc: `Csomópont: ${node}, Eszköz: ${conn}`
+                loc: `Csomópont: ${node}, Eszköz: ${conn}`,
+                standard: 'MSZ HD 60364-5-54:2011 §544 (EPH rendszer); MSZ HD 60364-4-41:2017 §411.3.1.2; 40/2017. (XII.4.) NGM 6.§'
             };
         });
 
-        // Szerszám Táblázat
+        // Szerszám Táblázat — M3-M4 melléklet, Kéziszerszámok
         scanTable('#table-tools tbody tr', (tr) => {
             const name = tr.querySelector('.meas-name')?.value || '';
             const id = tr.querySelector('.meas-id')?.value || '';
             const val = tr.querySelector('.meas-val')?.value || '';
             return {
-                desc: `A ${name} megnevezésű kéziszerszám / berendezés szigetelési ellenállása nem megfelelő. Mért érték: ${val} MΩ (Követelmény: ≥ 2.0 MΩ). Javaslat: Eszköz javítása vagy selejtezése!`,
-                loc: `Eszköz: ${name}, Azonosító: ${id}`
+                desc: `A ${name} megnevezésű kéziszerszám / berendezés szigetelési ellenállása nem megfelelő. Mért érték: ${val} MΩ (Követelmény: ≥ 2.0 MΩ, II. érintésvédelmi osztály). Javaslat: Eszköz javítása vagy selejtezése!`,
+                loc: `Eszköz: ${name}, Azonosító: ${id}`,
+                standard: 'MSZ EN 60745-1 (Kéziszerszámok biztonsága); MEE Kézikönyv M3-M4; MSZ 1585:2021'
             };
         });
 
-        // SELV/PELV Táblázat
+        // SELV/PELV Táblázat — M2 melléklet, Törpefeszültség
         scanTable('#table-selv tbody tr', (tr) => {
             const loc = tr.querySelector('.meas-loc')?.value || '';
             const v = tr.querySelector('.meas-v')?.value || '';
             return {
-                desc: `SELV/PELV áramkör érintésvédelmi vagy szigetelési paraméterei nem megfelelőek. Szekunder feszültség: ${v} V. Javaslat: Biztonsági transzformátor vagy leválasztó áramkör felülvizsgálata!`,
-                loc: loc
+                desc: `SELV/PELV áramkör érintésvédelmi vagy szigetelési paraméterei nem megfelelőek. Szekunder feszültség: ${v} V (Követelmény: max. 50V AC / 120V DC). Javaslat: Biztonsági transzformátor vagy leválasztó áramkör felülvizsgálata!`,
+                loc: loc,
+                standard: 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV); MSZ EN 61558-2-6 (Biztonsági transzformátorok); MEE Kézikönyv M2'
             };
         });
 
@@ -652,8 +674,9 @@ if (btnGenerateDefects) {
 
 // ==========================================
 // AUTHENTICATION & API INTEGRATION (NEW)
-// ==========================================
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8001/api`;
+const API_BASE_URL = (window.location.protocol === 'file:')
+    ? 'http://127.0.0.1:8001/api'
+    : `${window.location.protocol}//${window.location.hostname}:8001/api`;
 let currentToken = localStorage.getItem('vbf_token');
 let currentUser = localStorage.getItem('vbf_user');
 
@@ -760,16 +783,20 @@ async function updateAuthUI() {
 
                 const cloudTab = document.querySelector('.nav-tab[data-target="tab-cloud"]');
                 const masterTab = document.querySelector('.nav-tab[data-target="tab-master-data"]');
+                const dashboardTab = document.getElementById('navDashboard');
 
                 if (userData.role === 'ADMIN') {
                     document.getElementById('navAdmin').style.display = 'inline-block';
                     if (cloudTab) cloudTab.style.display = 'inline-block';
                     if (masterTab) masterTab.style.display = 'inline-block';
+                    if (dashboardTab) dashboardTab.style.display = 'inline-block';
                     fetchAdminUsers();
+                    fetchCompanySettings();
                 } else {
                     document.getElementById('navAdmin').style.display = 'none';
                     if (cloudTab) cloudTab.style.display = 'none';
                     if (masterTab) masterTab.style.display = 'none';
+                    if (dashboardTab) dashboardTab.style.display = 'none';
                 }
             }
         } catch (err) { console.error("Admin check failed", err); }
@@ -796,6 +823,88 @@ async function updateAuthUI() {
         }
     }
 }
+
+async function fetchCompanySettings() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/company`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('adminCompName').value = data.company_name || '';
+            document.getElementById('adminCompTax').value = data.tax_number || '';
+            document.getElementById('adminCompAddress').value = data.address || '';
+            document.getElementById('adminCompBank').value = data.bank_account || '';
+
+            if (data.logo_path) {
+                const img = document.getElementById('adminCompLogoPreview');
+                // Ha statikus fileról van szó:
+                img.src = `${API_BASE_URL.replace('/api', '')}/${data.logo_path}`;
+                img.style.display = 'block';
+            }
+        }
+    } catch (e) {
+        console.error("Nem sikerült betölteni a céges adatokat", e);
+    }
+}
+
+document.getElementById('btnAdminSaveCompany')?.addEventListener('click', async () => {
+    const data = {
+        company_name: document.getElementById('adminCompName').value,
+        tax_number: document.getElementById('adminCompTax').value,
+        address: document.getElementById('adminCompAddress').value,
+        bank_account: document.getElementById('adminCompBank').value
+    };
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/company`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            alert('Céges adatok sikeresen elmentve!');
+        } else {
+            alert('Hiba történt a mentés során.');
+        }
+    } catch (e) {
+        alert('Hálózati hiba: ' + e.message);
+    }
+});
+
+document.getElementById('btnAdminUploadLogo')?.addEventListener('click', () => {
+    document.getElementById('adminCompLogoInput').click();
+});
+
+document.getElementById('adminCompLogoInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/company/logo`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: formData
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const img = document.getElementById('adminCompLogoPreview');
+            img.src = `${API_BASE_URL.replace('/api', '')}/${data.logo_path}?t=${new Date().getTime()}`;
+            img.style.display = 'block';
+            alert('Logó sikeresen feltöltve!');
+        } else {
+            alert('Hiba történt a logó feltöltésekor.');
+        }
+    } catch (err) {
+        alert('Hálózati hiba: ' + err.message);
+    }
+});
 
 async function fetchAdminUsers() {
     const list = document.getElementById('adminUserList');
@@ -1017,304 +1126,9 @@ if (window.vbfData && window.vbfData.aramkor_nevek) {
     document.body.appendChild(dl);
 }
 
-window.attachMeasurementPhoto = function (input) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const tr = input.closest('tr');
-            tr.setAttribute('data-photo', e.target.result);
-            input.parentElement.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-            input.parentElement.style.borderColor = 'var(--accent)';
-            input.parentElement.title = "Kép csatolva!";
-        };
-        reader.readAsDataURL(file);
-    }
-};
+// --- MÉRÉSI ADATOK LOGIKA → measurements.js-be került ---
 
-// --- MÉRÉSI ADATOK TÁBLÁZAT KEZELÉSE ---
-function createRow(tableId, htmlContent) {
-    const tbody = document.querySelector(`#${tableId} tbody`);
-    if (!tbody) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = htmlContent + `
-        <td style="display:flex; gap: 5px; align-items: center; border: none;">
-            <label class="btn btn-secondary btn-small" title="Kép csatolása az áramkörhöz" style="margin:0; padding: 4px 8px; cursor: pointer;">
-                📷
-                <input type="file" accept="image/*" style="display:none;" onchange="attachMeasurementPhoto(this)">
-            </label>
-            <button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()" style="margin:0; padding: 4px 8px;">Törlés</button>
-        </td>`;
-    tbody.appendChild(tr);
-}
 
-document.getElementById('btnAddRpe')?.addEventListener('click', () => {
-    const gloc = document.getElementById('globalLocation')?.value || '';
-    createRow('table-rpe', `
-            <td><input type="number" class="meas-point" placeholder="1"></td>
-            <td><input type="text" class="meas-loc" placeholder="PE sín - Gázcső" value="${gloc}"></td>
-            <td><input type="number" step="0.01" class="meas-val" placeholder="0.12" oninput="validateRpe(this.closest('tr'))"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateRpe = function (tr) {
-    const valInput = tr.querySelector('.meas-val');
-    const val = parseFloat(valInput.value);
-    const passSelect = tr.querySelector('.meas-pass');
-
-    if (isNaN(val)) return;
-
-    // Jellemzően védővezető folytonosságnál szigorúan max. 1.0 Ohm
-    if (val > 1.0) {
-        valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
-        passSelect.value = 'Nem';
-    } else if (val > 0.5) {
-        valInput.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber/Warning
-        passSelect.value = 'Igen';
-    } else {
-        valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
-        passSelect.value = 'Igen';
-    }
-};
-
-document.getElementById('btnAddInsulation')?.addEventListener('click', () => {
-    const gloc = document.getElementById('globalLocation')?.value || '';
-    createRow('table-insulation', `
-            <td><input type="text" class="meas-circuit" placeholder="L1 - Világítás" list="circuitNames" value="${gloc ? gloc + ' - ' : ''}"></td>
-            <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-            <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-            <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateIns = function (tr) {
-    const lnI = tr.querySelector('.meas-ln');
-    const lpeI = tr.querySelector('.meas-lpe');
-    const npeI = tr.querySelector('.meas-npe');
-    const passSelect = tr.querySelector('.meas-pass');
-
-    const limit = 1.0; // Szabvány szerint kisfeszültségre: >= 1.0 MOhm
-    let isOk = true;
-    let anyFilled = false;
-
-    [lnI, lpeI, npeI].forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) {
-            anyFilled = true;
-            if (val < limit) {
-                input.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
-                isOk = false;
-            } else {
-                input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-            }
-        } else {
-            input.style.backgroundColor = ''; // clear if empty
-        }
-    });
-
-    if (anyFilled) {
-        passSelect.value = isOk ? 'Igen' : 'Nem';
-    }
-};
-
-document.getElementById('btnAddLoop')?.addEventListener('click', () => {
-    const gloc = document.getElementById('globalLocation')?.value || '';
-    const gdev = document.getElementById('globalDevice')?.value || '';
-    createRow('table-loop', `
-            <td><input type="text" class="meas-circuit" placeholder="Dugalj 1. szoba" list="circuitNames"></td>
-            <td><input type="text" class="meas-device" placeholder="B16" value="${gdev}" oninput="validateZs(this.closest('tr'))"></td>
-            <td><input type="text" class="meas-loc" placeholder="E1/4" value="${gloc}"></td>
-            <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="validateZs(this.closest('tr'))"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateZs = function (tr) {
-    const deviceInput = tr.querySelector('.meas-device').value.toUpperCase(); // pl: B16, C20
-    const zsInput = tr.querySelector('.meas-zs');
-    const zsVal = parseFloat(zsInput.value);
-    const passSelect = tr.querySelector('.meas-pass');
-
-    if (!deviceInput || isNaN(zsVal)) return;
-
-    // Parse: kioldási karakterisztika és névleges áram
-    const curve = deviceInput.match(/[A-Z]+/)?.[0];
-    const nominalStr = deviceInput.match(/[0-9.]+/)?.[0];
-    const In = parseFloat(nominalStr);
-
-    let maxZs = null;
-
-    if (curve && !isNaN(In)) {
-        let Ia = 0;
-        // Szabványos kioldási szorzók: B -> 5x, C -> 10x, D -> 20x
-        if (curve === 'B') Ia = In * 5;
-        else if (curve === 'C') Ia = In * 10;
-        else if (curve === 'D') Ia = In * 20;
-
-        if (Ia > 0) {
-            maxZs = 230 / Ia; // Zs <= Uo / Ia paraméter a képletből
-        }
-    }
-
-    // Ha nincs maxZs (pl. betétes biztosító), nem tudunk automatizáltan minősíteni
-    if (maxZs !== null) {
-        if (zsVal > maxZs) {
-            zsInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
-            passSelect.value = 'Nem';
-        } else {
-            zsInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
-            passSelect.value = 'Igen';
-        }
-    }
-};
-
-document.getElementById('btnAddRcd')?.addEventListener('click', () => {
-    createRow('table-rcd', `
-            <td><input type="text" class="meas-circ" placeholder="Fürdő ÁVK" list="circuitNames"></td>
-            <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
-            <td><input type="number" class="meas-idn" placeholder="30" oninput="validateRcd(this.closest('tr'))"></td>
-            <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
-            <td><input type="number" step="1" class="meas-t1" placeholder="24" oninput="validateRcd(this.closest('tr'))"></td>
-            <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
-            <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
-            <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateRcd = function (tr) {
-    const idn = parseFloat(tr.querySelector('.meas-idn').value);
-    const t1Input = tr.querySelector('.meas-t1');
-    const t1 = parseFloat(t1Input.value);
-    const t5Input = tr.querySelector('.meas-t5');
-    const t5 = parseFloat(t5Input.value);
-    const rampInput = tr.querySelector('.meas-ramp');
-    const ramp = parseFloat(rampInput.value);
-    const ucInput = tr.querySelector('.meas-uc');
-    const uc = parseFloat(ucInput?.value || 0);
-
-    const test05Select = tr.querySelector('.meas-05');
-    const passSelect = tr.querySelector('.meas-pass');
-
-    let isOk = true;
-
-    // 0. Fél Idn teszt
-    if (test05Select.value !== 'OK (Nem oldott)') {
-        isOk = false;
-    }
-
-    // 1. Általános RCD max kioldási idő 300ms a HD 60364-4-41 alapján (TN 230V -> 400ms is lehet, de 300ms konzervatív)
-    if (!isNaN(t1)) {
-        if (t1 > 300) {
-            t1Input.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
-            isOk = false;
-        } else {
-            t1Input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-        }
-    }
-
-    // 5x Idn teszt (jellemzően max 40 ms)
-    if (!isNaN(t5)) {
-        if (t5 > 40) {
-            t5Input.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber
-        } else {
-            t5Input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-        }
-    }
-
-    // 2. Kioldóáram RAMP (Szabványosan: 50% < I_kioldás <= 100%)
-    if (!isNaN(idn) && !isNaN(ramp)) {
-        if (ramp <= idn * 0.5 || ramp > idn) {
-            rampInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
-            isOk = false;
-        } else {
-            rampInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-        }
-    }
-
-    // 3. Érintési feszültség Uc (Max 50V általános esetben)
-    if (!isNaN(uc)) {
-        if (uc > 50) {
-            if (ucInput) ucInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
-            isOk = false;
-        } else {
-            if (ucInput) ucInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-        }
-    }
-
-    passSelect.value = isOk ? 'Igen' : 'Nem';
-};
-
-document.getElementById('btnAddTool')?.addEventListener('click', () => {
-    createRow('table-tools', `
-            <td><input type="text" class="meas-name" placeholder="Ütvefúró"></td>
-            <td><input type="text" class="meas-id" placeholder="HILTI-01"></td>
-            <td><input type="number" step="0.1" class="meas-val" placeholder="50" oninput="validateTool(this.closest('tr'))"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateTool = function (tr) {
-    const valInput = tr.querySelector('.meas-val');
-    const val = parseFloat(valInput.value);
-    const passSelect = tr.querySelector('.meas-pass');
-
-    if (isNaN(val)) return;
-
-    // Szabványosan a kéziszerszámok szigetelési ellenállása I. év II. év. osztálytól függően > 2.0 MQ
-    if (val < 2.0) {
-        valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
-        passSelect.value = 'Nem';
-    } else {
-        valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
-        passSelect.value = 'Igen';
-    }
-};
-
-document.getElementById('btnAddSelv')?.addEventListener('click', () => {
-    createRow('table-selv', `
-            <td><input type="text" class="meas-loc" placeholder="Fszt. folyosó / 230-24V"></td>
-            <td><input type="number" step="0.1" class="meas-v" placeholder="26.4"></td>
-            <td><input type="number" step="1" class="meas-ps" placeholder="999"></td>
-            <td><input type="number" step="1" class="meas-pt" placeholder="999"></td>
-            <td><input type="number" step="1" class="meas-st" placeholder="999"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-document.getElementById('btnAddEph')?.addEventListener('click', () => {
-    createRow('table-eph', `
-            <td><input type="number" class="meas-index" placeholder="1"></td>
-            <td><input type="text" class="meas-elem" placeholder="Fémkád"></td>
-            <td><input type="text" class="meas-loc" placeholder="EPH sín"></td>
-            <td><input type="text" class="meas-mat" placeholder="Cu 6mm2"></td>
-            <td><select class="meas-conn"><option>EPH bilincs</option><option>Szemes saru</option><option>Hegesztett</option><option>Wago/Sorkapocs</option></select></td>
-            <td><input type="number" step="0.01" class="meas-val" placeholder="0.15" oninput="validateEph(this.closest('tr'))"></td>
-            <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
-        `);
-});
-
-window.validateEph = function (tr) {
-    const valInput = tr.querySelector('.meas-val');
-    const val = parseFloat(valInput.value);
-    const passSelect = tr.querySelector('.meas-pass');
-
-    if (isNaN(val)) return;
-
-    // EPH folytonosságnál maximum 1.0 Ohm, de inkább kevesebb!
-    if (val > 1.0) {
-        valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
-        passSelect.value = 'Nem';
-    } else if (val > 0.3) {
-        valInput.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber/Warning
-        passSelect.value = 'Igen';
-    } else {
-        valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
-        passSelect.value = 'Igen';
-    }
-};
 
 // --- PADFX / Metrel Fájl Betöltés Logika ---
 const btnLoadPadfx = document.getElementById('btnLoadPadfx');
@@ -1480,12 +1294,333 @@ btnSubmitLogin.addEventListener('click', async () => {
     }
 });
 
-// Mentés a Felhőbe Funkció
-btnSaveCloud.addEventListener('click', async () => {
-    if (!currentToken) return alert('Előbb jelentkezz be!');
+// ==========================================
+// SZABVÁNYOSSÁGI VALIDÁCIÓ ÉS MEE MINŐSÍTÉS
+// TvMI 7.7:2026.02.01 alapján
+// ==========================================
 
-    btnSaveCloud.innerText = 'Mentés...';
-    btnSaveCloud.disabled = true;
+/**
+ * Validates mandatory fields before allowing save/finalization.
+ * Returns an object: { valid: boolean, errors: string[], warnings: string[] }
+ */
+function validateReportBeforeSave() {
+    const errors = [];
+    const warnings = [];
+    const docType = document.getElementById('docType')?.value || '';
+    const isVBF = docType.startsWith('VBF_');
+
+    // ═══════════════════════════════════════════════════
+    // 1. KÖTELEZŐ MÉRÉSEK (MSZ HD 60364-6 Stop-szabályok)
+    // ═══════════════════════════════════════════════════
+    if (isVBF) {
+        // 1a. Riso - Szigetelési ellenállás (M6 melléklet)
+        const insulationRows = document.querySelectorAll('#table-insulation tbody tr');
+        if (insulationRows.length === 0) {
+            errors.push('⚠️ KÖTELEZŐ SZIGETELÉSMÉRÉS (Riso) HIÁNYZIK!\n' +
+                'Az MSZ HD 60364-6 szerint kötelező mérni minden áramkör\n' +
+                'szigetelési ellenállását (Riso ≥ 1 MΩ, 500V DC mérőfesz.)\n' +
+                'az aktív vezetők és a föld között.\n' +
+                'A jegyzőkönyv NEM zárható le ezen adatsor kitöltése nélkül!');
+        }
+
+        // 1b. Zs - Hurokellenállás (M1 melléklet)
+        const loopRows = document.querySelectorAll('#table-loop tbody tr');
+        if (loopRows.length === 0) {
+            errors.push('⚠️ KÖTELEZŐ HUROKELLENÁLLÁS (Zs) MÉRÉS HIÁNYZIK!\n' +
+                'Az MSZ HD 60364-6 szerint kötelező mérni a hurokellenállást\n' +
+                'a védőeszközök (kismegszakítók) kioldási feltételeinek igazolására.\n' +
+                'Képlet: Zs ≤ (U₀ × 0.95) / Ia');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 2. MŰSZERADATOK KÖTELEZŐ VALIDÁCIÓ
+    // ═══════════════════════════════════════════════════
+    const instrumentType = document.getElementById('instrumentType')?.value?.trim() || '';
+    const instrumentCal = document.getElementById('instrumentCal')?.value?.trim() || '';
+    if (!instrumentType) {
+        errors.push('🔧 MÉRŐMŰSZER TÍPUSA ÉS GYÁRI SZÁMA HIÁNYZIK!\n' +
+            'Bírósági eljárásban a műszer típusa és gyári száma nélkül\n' +
+            'az okirat hiteltelen. Pl.: "Metrel MI 3152, SN:21070123"');
+    } else if (!instrumentType.match(/\d/)) {
+        warnings.push('🔧 A mérőműszer adatainál nem található gyári szám (szám karakter).');
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 3. KALIBRÁLÁSI GÁT — Lejárt kalibráció → NEM adható "Megfelelő"
+    // ═══════════════════════════════════════════════════
+    if (instrumentCal) {
+        const calDate = new Date(instrumentCal);
+        const now = new Date();
+        if (calDate < now) {
+            errors.push('📅 KALIBRÁLÁS LEJÁRT!\n' +
+                `A megadott kalibrálási dátum (${instrumentCal}) a múltban van.\n` +
+                'Lejárt kalibrálású műszerrel végzett mérés érvénytelen.\n' +
+                'A jegyzőkönyvben NEM adható "Megfelelő" minősítés!');
+        }
+    } else {
+        warnings.push('📅 A műszer kalibrálási érvényessége nincs kitöltve!');
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 4. KOCKÁZATI OSZTÁLY / OTSZ BESOROLÁS
+    // ═══════════════════════════════════════════════════
+    const buildingPurpose = document.getElementById('buildingPurpose')?.value?.trim() || '';
+    const buildingOtsz = document.getElementById('buildingOtsz')?.value || '';
+    if (isVBF && !buildingPurpose) {
+        warnings.push('🏢 Az "Épület Rendeltetése" mező üres — ez határozza meg a következő felülvizsgálat dátumát.');
+    }
+    if (isVBF && !buildingOtsz) {
+        warnings.push('🏗️ OTSZ kockázati osztály (AK/KK/MK) nincs kiválasztva — jogilag ez határozza meg a kötelező felülvizsgálati időközöket.');
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 5. FELÜLVIZSGÁLÓ ADATOK
+    // ═══════════════════════════════════════════════════
+    const inspectorName = document.getElementById('inspectorName')?.value?.trim() || '';
+    const inspectorLicense = document.getElementById('inspectorLicense')?.value?.trim() || '';
+    if (!inspectorName) {
+        warnings.push('👨‍🔧 A felülvizsgáló neve/cégneve nincs megadva.');
+    }
+    if (!inspectorLicense) {
+        warnings.push('📜 A vizsgabizonyítvány száma nincs megadva.');
+    }
+
+    return { valid: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Automatically determines the MEE Handbook qualifying document variant (A/B/C/MEGFELELŐ)
+ * based on found defects, failed measurements, and their severity.
+ * 
+ * MEE Handbook Categories:
+ *   MEGFELELŐ:   No defects found at all
+ *   C Változat:  Minor defects found, no immediate danger
+ *   B Változat:  Serious defects that must be fixed, re-inspection after fix
+ *   A Változat:  Immediate life-threatening danger detected
+ *   NEM MEGFELELŐ: Critical failure, must be taken out of service immediately
+ */
+function autoDetectMEEQualification() {
+    let hasAnyDefect = false;
+    let hasCriticalDefect = false;  // MEE "(A)" - Közvetlen élet- és tűzveszély
+    let hasSeriousDefect = false;   // MEE "(B)" - Súlyos hiba (soron kívül javítandó)
+    let hasMaintenanceDefect = false; // MEE "(C)" - Karbantartási hiba
+    let hasRenovationDefect = false;  // MEE "(D)" - Felújításkor javítandó
+
+    // ═══════════════════════════════════════════════
+    // 1. Hibajegyzék elemzése (kulcsszó alapú AI)
+    // ═══════════════════════════════════════════════
+    const defectCards = document.querySelectorAll('#defectList .defect-card');
+    if (defectCards.length > 0) {
+        hasAnyDefect = true;
+
+        defectCards.forEach(card => {
+            const desc = (card.querySelector('.desc-input')?.value || '').toLowerCase();
+
+            // (A) Közvetlen élet- és tűzveszély
+            const criticalA = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 'halál',
+                'tűzveszély', 'védővezető hiány', 'felületen feszültség', 'nincsen pe',
+                'test feszültség', 'védőföldelés hiány', 'nincs földelés', 'beégett', 'ívhiba',
+                'érinthető feszültség', 'leolvadt', 'kiégett'];
+            if (criticalA.some(kw => desc.includes(kw))) {
+                hasCriticalDefect = true;
+                return; // Nem kell tovább vizsgálni ezt a hibát
+            }
+
+            // (B) Súlyos hiba (soron kívül javítandó)
+            const seriousB = ['szigetelés sérült', 'rcd nem', 'ávk nem', 'fi-relé nem', 'kioldási idő',
+                'hurokellenállás', 'keresztmetszet nem', 'túlterhelés', 'zárlat',
+                'védővezető folytonosság', 'rpe nem', 'hurokimpedancia', 'nem old ki',
+                'olvadóbiztosító hiány', 'érintésvédelmi osztály'];
+            if (seriousB.some(kw => desc.includes(kw))) {
+                hasSeriousDefect = true;
+                return;
+            }
+
+            // (C) Karbantartási hiba
+            const maintenanceC = ['dobozfedél', 'fedél hiány', 'csatlakozó laza', 'felirat hiány',
+                'jelölés hiány', 'kötés laza', 'sorkapocs', 'takarólemez',
+                'burkolat sérült', 'por', 'tisztítás', 'kopott'];
+            if (maintenanceC.some(kw => desc.includes(kw))) {
+                hasMaintenanceDefect = true;
+                return;
+            }
+
+            // (D) Felújításkor javítandó
+            const renovationD = ['vezetékszínezés', 'régi szabvány', 'elavult', 'korszerűtlen',
+                'alumínium vezető', 'régi típus', 'nem szabványos szín',
+                'téves színezés', 'nullázás'];
+            if (renovationD.some(kw => desc.includes(kw))) {
+                hasRenovationDefect = true;
+                return;
+            }
+
+            // Ha nem illeszkedik semmire, akkor karbantartási kategória
+            hasMaintenanceDefect = true;
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // 2. Mérési táblázatok automatikus kiértékelése
+    // ═══════════════════════════════════════════════
+
+    // 2a. Rpe - Védővezető folytonosság: > 1.0 Ω = súlyos hiba (B)
+    document.querySelectorAll('#table-rpe tbody tr').forEach(tr => {
+        const val = parseFloat(tr.querySelector('.meas-val')?.value);
+        if (!isNaN(val) && val > 1.0) {
+            hasAnyDefect = true;
+            hasSeriousDefect = true; // Rpe > 1Ω → B kategória
+        }
+    });
+
+    // 2b. Riso - Szigetelési ellenállás: < 1 MΩ = súlyos hiba (B)  
+    document.querySelectorAll('#table-insulation tbody tr').forEach(tr => {
+        const ln = parseFloat(tr.querySelector('.meas-ln')?.value);
+        const lpe = parseFloat(tr.querySelector('.meas-lpe')?.value);
+        const npe = parseFloat(tr.querySelector('.meas-npe')?.value);
+        if ((!isNaN(ln) && ln < 1) || (!isNaN(lpe) && lpe < 1) || (!isNaN(npe) && npe < 1)) {
+            hasAnyDefect = true;
+            hasSeriousDefect = true; // Riso < 1MΩ → B kategória
+        }
+    });
+
+    // 2c. Zs - Hurokellenállás: automatikus kioldási feltétel ellenőrzés
+    document.querySelectorAll('#table-loop tbody tr').forEach(tr => {
+        const device = (tr.querySelector('.meas-device')?.value || '').toUpperCase();
+        const zsVal = parseFloat(tr.querySelector('.meas-zs')?.value);
+        if (!device || isNaN(zsVal)) return;
+
+        const curve = device.match(/[A-Z]+/)?.[0];
+        const In = parseFloat(device.match(/[0-9.]+/)?.[0]);
+        if (!curve || isNaN(In)) return;
+
+        let Ia = 0;
+        if (curve === 'B') Ia = In * 5;
+        else if (curve === 'C') Ia = In * 10;
+        else if (curve === 'D') Ia = In * 20;
+
+        if (Ia > 0) {
+            const maxZs = (230 * 0.95) / Ia;
+            if (zsVal > maxZs) {
+                hasAnyDefect = true;
+                hasSeriousDefect = true; // Kioldás nem garantált → B kategória
+            }
+        }
+    });
+
+    // 2d. RCD kioldási idő: > 300ms = hiba (40ms is alkalmazható szigorúbban)
+    document.querySelectorAll('#table-rcd tbody tr').forEach(tr => {
+        const t1 = parseFloat(tr.querySelector('.meas-t1')?.value);
+        if (!isNaN(t1) && t1 > 300) {
+            hasAnyDefect = true;
+            hasCriticalDefect = true; // RCD nem old ki időben → A (életveszély)
+        }
+        const pass = tr.querySelector('.meas-pass')?.value;
+        if (pass === 'Nem') {
+            hasAnyDefect = true;
+            hasSeriousDefect = true;
+        }
+    });
+
+    // 2e. Általános "Nem" mérési eredmények
+    const allPassSelects = document.querySelectorAll('.data-table .meas-pass');
+    allPassSelects.forEach(sel => {
+        if (sel.value === 'Nem') {
+            hasAnyDefect = true;
+            hasSeriousDefect = true; // Bármely mérési fail → minimum B
+        }
+    });
+
+    // ═══════════════════════════════════════════════
+    // 3. MEE Minősítés meghatározása
+    // ═══════════════════════════════════════════════
+    if (hasCriticalDefect) return 'NEM MEGFELELŐ';      // (A) Életveszély → üzemen kívül
+    if (hasSeriousDefect) return 'VÁLTOZAT_B';           // (B) Súlyos → javítás + újraellenőrzés
+    if (hasMaintenanceDefect) return 'VÁLTOZAT_C';       // (C) Karbantartási → javítás ajánlott
+    if (hasRenovationDefect) return 'VÁLTOZAT_C';        // (D) Felújítási → is C-be sorolva
+    if (hasAnyDefect) return 'VÁLTOZAT_C';               // Egyéb → C
+    return 'MEGFELELŐ';                                   // Hibamentes
+}
+
+/**
+ * Calculates the next mandatory inspection date based on OTSZ risk class.
+ * Returns a string like "2029-02-25" or null if not determinable.
+ */
+function calculateNextInspectionDate(otszClass) {
+    const now = new Date();
+    let yearsUntilNext = 6; // Default (AK - lakóépület)
+
+    switch (otszClass) {
+        case 'AK': yearsUntilNext = 6; break;   // Alacsony kockázat: 6 év
+        case 'KK': yearsUntilNext = 3; break;   // Közepes kockázat: 3 év
+        case 'MK': yearsUntilNext = 1; break;   // Magas kockázat: 1 év
+        default: return null;
+    }
+
+    const nextDate = new Date(now);
+    nextDate.setFullYear(nextDate.getFullYear() + yearsUntilNext);
+    return nextDate.toISOString().split('T')[0];
+}
+
+// Mentés a Felhőbe Funkció
+async function saveReportToCloud(silent = false) {
+    if (!currentToken) {
+        if (!silent) alert('Előbb jelentkezz be!');
+        return false;
+    }
+
+    // --- PRE-SAVE VALIDÁCIÓ ---
+    const validation = validateReportBeforeSave();
+
+    if (!validation.valid) {
+        // BLOKKOLÓ HIBÁK - nem engedjük a mentést
+        if (!silent) {
+            const errorMsg = '🛑 A JEGYZŐKÖNYV NEM MENTHETŐ!\n\nAz alábbi kötelező feltételek nem teljesülnek:\n\n' +
+                validation.errors.join('\n\n');
+            alert(errorMsg);
+        }
+        return false;
+    }
+
+    if (!silent && validation.warnings.length > 0) {
+        // FIGYELMEZTETÉSEK - megkérdezzük a felhasználót
+        const warningMsg = '⚠️ FIGYELMEZTETÉSEK:\n\n' +
+            validation.warnings.join('\n\n') +
+            '\n\n─────────────────────\nSzeretné folytatni a mentést a hiányosságok ellenére?';
+        if (!confirm(warningMsg)) return false;
+    }
+
+    // --- AUTOMATIKUS MEE MINŐSÍTÉS ---
+    const autoQualification = autoDetectMEEQualification();
+    const currentResult = document.getElementById('reportResult')?.value || '';
+
+    if (!silent && autoQualification !== currentResult) {
+        const qualNames = {
+            'MEGFELELŐ': '✅ MEGFELELŐ',
+            'VÁLTOZAT_C': 'C Változat: Kisebb hibák',
+            'VÁLTOZAT_B': 'B Változat: Súlyos hibák',
+            'VÁLTOZAT_A': 'A Változat: Pótlólagos ellenőrzés',
+            'NEM MEGFELELŐ': '❌ NEM MEGFELELŐ'
+        };
+        const autoName = qualNames[autoQualification] || autoQualification;
+        const currentName = qualNames[currentResult] || currentResult;
+
+        const switchMsg = `🔄 AUTOMATIKUS MINŐSÍTŐ IRAT JAVASLAT (MEE Handbook)\n\n` +
+            `Az Ön által kiválasztott minősítés: ${currentName}\n` +
+            `A rendszer a hibák és mérések alapján javasolt minősítés: ${autoName}\n\n` +
+            `A MEE Handbook szerint az időszakos felülvizsgálatnál, ha hiba van, a minősítő iratnak ` +
+            `tükröznie kell a hiba súlyosságát (A: életveszély, B: súlyos, C: kisebb).\n\n` +
+            `Szeretné ÁTVÁLTANI a javasolt minősítésre?`;
+
+        if (confirm(switchMsg)) {
+            document.getElementById('reportResult').value = autoQualification;
+        }
+    }
+
+    if (btnSaveCloud) {
+        btnSaveCloud.innerText = 'Mentés...';
+        btnSaveCloud.disabled = true;
+    }
 
     try {
         // 1. Kinyerjük az aktuális kliens adatokat az Űrlapról
@@ -1513,11 +1648,21 @@ btnSaveCloud.addEventListener('click', async () => {
                 conduction: document.getElementById('check_conduction')?.checked || false,
                 connection: document.getElementById('check_connection')?.checked || false,
                 access: document.getElementById('check_access')?.checked || false
-            }
+            },
+            // Új szabványossági metaadatok (TvMI 7.7:2026.02.01)
+            buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
+            standardReference: 'TvMI 7.7:2026.02.01',
+            meeQualification: document.getElementById('reportResult')?.value || '',
+            nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
+            siteTree: VBF.siteTree ? VBF.siteTree.toJSON() : []
         };
 
         // 2. Kinyerjük a Fabric Canvas-t
         const canvasJson = canvas.toJSON(['vbfData']);
+        // 2b. Egyvonalas rajz raszteres képe (base64 PNG) — jegyzőkönyvbe illesztéshez
+        const diagramImage = (canvas.getObjects().length > 0)
+            ? canvas.toDataURL({ format: 'png', multiplier: 2 })
+            : null;
 
         // 3. Kinyerjük a Hibajegyzéket
         const defectsArr = [];
@@ -1538,75 +1683,10 @@ btnSaveCloud.addEventListener('click', async () => {
             report_type: clientDataObj.type.toLowerCase(),
             client_data: clientDataObj,
             diagram_data: canvasJson,
+            diagram_image: diagramImage,
             defects_data: defectsArr,
-            measurements_data: []
+            measurements_data: [VBF.measurements.collectAll()]
         };
-
-        // Összegyűjtjük a méréseket JSON objektumokként a táblázatokból
-        const measData = {
-            rpe: Array.from(document.querySelectorAll('#table-rpe tbody tr')).map(tr => ({
-                point: tr.querySelector('.meas-point')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            insulation: Array.from(document.querySelectorAll('#table-insulation tbody tr')).map(tr => ({
-                circuit: tr.querySelector('.meas-circuit')?.value || '',
-                ln: tr.querySelector('.meas-ln')?.value || '',
-                lpe: tr.querySelector('.meas-lpe')?.value || '',
-                npe: tr.querySelector('.meas-npe')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            loop: Array.from(document.querySelectorAll('#table-loop tbody tr')).map(tr => ({
-                circuit: tr.querySelector('.meas-circuit')?.value || '',
-                device: tr.querySelector('.meas-device')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                zs: tr.querySelector('.meas-zs')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            rcd: Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => ({
-                circ: tr.querySelector('.meas-circ')?.value || '',
-                type: tr.querySelector('.meas-type')?.value || 'A',
-                idn: tr.querySelector('.meas-idn')?.value || '',
-                test05: tr.querySelector('.meas-05')?.value || '',
-                t1: tr.querySelector('.meas-t1')?.value || '',
-                t5: tr.querySelector('.meas-t5')?.value || '',
-                ramp: tr.querySelector('.meas-ramp')?.value || '',
-                uc: tr.querySelector('.meas-uc')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            tools: Array.from(document.querySelectorAll('#table-tools tbody tr')).map(tr => ({
-                name: tr.querySelector('.meas-name')?.value || '',
-                id: tr.querySelector('.meas-id')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            selv: Array.from(document.querySelectorAll('#table-selv tbody tr')).map(tr => ({
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                v: tr.querySelector('.meas-v')?.value || '',
-                ps: tr.querySelector('.meas-ps')?.value || '',
-                pt: tr.querySelector('.meas-pt')?.value || '',
-                st: tr.querySelector('.meas-st')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            })),
-            eph_cont: Array.from(document.querySelectorAll('#table-eph tbody tr')).map(tr => ({
-                idx: tr.querySelector('.meas-index')?.value || '',
-                elem: tr.querySelector('.meas-elem')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                mat: tr.querySelector('.meas-mat')?.value || '',
-                conn: tr.querySelector('.meas-conn')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || '',
-                photo: tr.getAttribute('data-photo') || ''
-            }))
-        };
-        payload.measurements_data = [measData];
 
         const isUpdate = !!currentSavedReportId;
         const reqMethod = isUpdate ? 'PUT' : 'POST';
@@ -1614,7 +1694,7 @@ btnSaveCloud.addEventListener('click', async () => {
 
         if (!navigator.onLine) {
             // HÁLÓZAT NÉLKÜLI MENTÉS (OFFLINE QUEUE)
-            btnSaveCloud.innerText = 'Mentés Offline...';
+            if (btnSaveCloud) btnSaveCloud.innerText = 'Mentés Offline...';
             let offlineQueue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
             payload._offline_id = Date.now(); // Belső azonosító
             payload._method = reqMethod;
@@ -1624,44 +1704,56 @@ btnSaveCloud.addEventListener('click', async () => {
             offlineQueue.push(payload);
             localStorage.setItem('vbf_offline_queue', JSON.stringify(offlineQueue));
 
-            // Ha új report volt offline mentve, nincs ID-ja, így legközelebb is POST lesz offline, hacsak nem ürítjük a UI-t, de ez így egy elfogadható offline UX első körben.
-            alert("Nincs internetkapcsolat! A jegyzőkönyv az eszköz memóriájába (Offline) mentve. Amint lesz hálózat, szinkronizáld a felhőbe!");
-            updateOfflineUI();
-        } else {
-            // NORMÁL ONLINE MENTÉS
-            const res = await fetch(reqUrl, {
-                method: reqMethod,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentToken}`
-                },
-                body: JSON.stringify(payload)
-            });
+            if (!silent) showToast('A kapcsolat megszakadt, a jegyzőkönyv az offline várólistára került.');
+            return true;
+        }
 
-            if (!res.ok) throw new Error('Hiba történt a mentés során!');
+        const res = await fetch(reqUrl, {
+            method: reqMethod,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify(payload)
+        });
 
-            const jsonResponse = await res.json();
-            currentSavedReportId = jsonResponse.id;
-            btnExportWord.style.display = 'inline-block';
+        const data = await res.json();
+
+        if (res.ok) {
+            currentSavedReportId = data.id;
+            if (!silent) showToast('✅ Jegyzőkönyv sikeresen mentve a felhőbe!');
+
+            // UI elements update
+            if (btnExportWord) btnExportWord.style.display = 'inline-block';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
             if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
-            const savedDocId = formatDocId(payload.report_type, jsonResponse.id, null);
-            alert(`Sikeres mentés! Jegyzőkönyv Száma: ${savedDocId}`);
 
             // Generate QR Code in Inspector or a specific area
-            showReportQr(jsonResponse.id);
+            showReportQr(data.id);
             fetchReports(); // Refresh cloud list
+            return true;
+        } else {
+            throw new Error(data.detail || 'Hiba a mentés során');
         }
     } catch (err) {
-        alert(err.message);
+        if (!silent) alert('Hiba történt: ' + err.message);
+        return false;
     } finally {
-        btnSaveCloud.innerText = 'Mentés ☁️';
-        btnSaveCloud.disabled = false;
+        if (btnSaveCloud) {
+            btnSaveCloud.innerText = 'Mentés ☁️';
+            btnSaveCloud.disabled = false;
+        }
     }
-});
+}
+
+btnSaveCloud.addEventListener('click', () => saveReportToCloud(false));
 
 // Word Generálás Funkció
 btnExportWord.addEventListener('click', async () => {
+    // Automatikus mentés generálás előtt
+    const saved = await saveReportToCloud(true);
+    if (!saved) return alert('Hiba az automatikus mentés során. Kérjük, mentse kézzel az exportálás előtt!');
+
     if (!currentSavedReportId || !currentToken) return alert('Előbb mentsd el a jegyzőkönyvet a felhőbe!');
 
     btnExportWord.innerText = 'Generálás...';
@@ -1680,7 +1772,6 @@ btnExportWord.addEventListener('click', async () => {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.style.display = 'none';
         a.href = url;
 
         // Try to extract filename from header
@@ -1706,6 +1797,10 @@ btnExportWord.addEventListener('click', async () => {
 // PDF Generálás és Aláírás Funkció
 if (btnExportPdfReport) {
     btnExportPdfReport.addEventListener('click', async () => {
+        // Automatikus mentés generálás előtt
+        const saved = await saveReportToCloud(true);
+        if (!saved) return alert('Hiba az automatikus mentés során. Kérjük, mentse kézzel az exportálás előtt!');
+
         if (!currentSavedReportId || !currentToken) return alert('Előbb mentsd el a jegyzőkönyvet a felhőbe!');
 
         btnExportPdfReport.innerText = 'PDF Aláírása... ⏳';
@@ -1721,13 +1816,12 @@ if (btnExportPdfReport) {
 
             if (!res.ok) {
                 const error = await res.json();
-                throw new Error(error.detail || 'Hiba a PDF generálás során! (Backend hiba). Telepítve van a MS Word a szerveren?');
+                throw new Error(error.detail || 'Hiba a PDF generálás során!');
             }
 
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.style.display = 'none';
             a.href = url;
 
             // Try to extract filename from header
@@ -1835,6 +1929,11 @@ window.loadReportIntoUI = function (rep) {
                 }
             }
         });
+    }
+
+    // Helyszínfa betöltése
+    if (VBF.siteTree && c.siteTree) {
+        VBF.siteTree.fromJSON(c.siteTree);
     }
 
     // Mérések
@@ -2395,62 +2494,7 @@ if (btnSaveCustomTemplate) {
         const tplName = prompt("Add meg a saját sablon nevét (pl. 'Kissék Családi Ház'):");
         if (!tplName) return;
 
-        const measData = {
-            rpe: Array.from(document.querySelectorAll('#table-rpe tbody tr')).map(tr => ({
-                point: tr.querySelector('.meas-point')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            insulation: Array.from(document.querySelectorAll('#table-insulation tbody tr')).map(tr => ({
-                circuit: tr.querySelector('.meas-circuit')?.value || '',
-                ln: tr.querySelector('.meas-ln')?.value || '',
-                lpe: tr.querySelector('.meas-lpe')?.value || '',
-                npe: tr.querySelector('.meas-npe')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            loop: Array.from(document.querySelectorAll('#table-loop tbody tr')).map(tr => ({
-                circuit: tr.querySelector('.meas-circuit')?.value || '',
-                device: tr.querySelector('.meas-device')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                zs: tr.querySelector('.meas-zs')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            rcd: Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => ({
-                circ: tr.querySelector('.meas-circ')?.value || '',
-                type: tr.querySelector('.meas-type')?.value || 'A',
-                idn: tr.querySelector('.meas-idn')?.value || '',
-                test05: tr.querySelector('.meas-05')?.value || '',
-                t1: tr.querySelector('.meas-t1')?.value || '',
-                t5: tr.querySelector('.meas-t5')?.value || '',
-                ramp: tr.querySelector('.meas-ramp')?.value || '',
-                uc: tr.querySelector('.meas-uc')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            tools: Array.from(document.querySelectorAll('#table-tools tbody tr')).map(tr => ({
-                name: tr.querySelector('.meas-name')?.value || '',
-                id: tr.querySelector('.meas-id')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            selv: Array.from(document.querySelectorAll('#table-selv tbody tr')).map(tr => ({
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                v: tr.querySelector('.meas-v')?.value || '',
-                ps: tr.querySelector('.meas-ps')?.value || '',
-                pt: tr.querySelector('.meas-pt')?.value || '',
-                st: tr.querySelector('.meas-st')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            })),
-            eph_cont: Array.from(document.querySelectorAll('#table-eph tbody tr')).map(tr => ({
-                idx: tr.querySelector('.meas-index')?.value || '',
-                elem: tr.querySelector('.meas-elem')?.value || '',
-                loc: tr.querySelector('.meas-loc')?.value || '',
-                mat: tr.querySelector('.meas-mat')?.value || '',
-                conn: tr.querySelector('.meas-conn')?.value || '',
-                val: tr.querySelector('.meas-val')?.value || '',
-                pass: tr.querySelector('.meas-pass')?.value || ''
-            }))
-        };
+        const measData = VBF.measurements.collectAll();
 
         const docType = document.getElementById('docType')?.value || '';
         const buildingPurpose = document.getElementById('buildingPurpose')?.value || '';
@@ -2771,3 +2815,188 @@ document.getElementById('btnAdminCreateJob')?.addEventListener('click', async ()
         }
     } catch (e) { console.error(e); }
 });
+
+// ==========================================
+// VALÓS IDEJŰ KÉSZÜLTSÉGFIGYELŐ (UX)
+// "Hülyebiztos" felhasználói segédlet
+// ==========================================
+function updateCompleteness() {
+    const bar = document.getElementById('completenessBar');
+    const text = document.getElementById('completenessText');
+    const status = document.getElementById('completenessStatus');
+    const items = document.getElementById('checkItems');
+    if (!bar || !items) return;
+
+    const docType = document.getElementById('docType')?.value || '';
+    const isVBF = docType.startsWith('VBF_');
+
+    // Checklist items: { label, required, filled, hint }
+    const checks = [];
+
+    // 1. Azonosító adatok
+    const clientName = document.getElementById('clientName')?.value?.trim();
+    checks.push({ label: 'Megrendelő neve', req: true, ok: !!clientName, hint: 'Jegyzőkönyv Adatok fül → Megrendelő', fieldId: 'clientName' });
+
+    const siteAddress = document.getElementById('siteAddress')?.value?.trim();
+    checks.push({ label: 'Vizsgált objektum címe', req: true, ok: !!siteAddress, hint: 'Jegyzőkönyv Adatok fül → Cím', fieldId: 'siteAddress' });
+
+    const reportId = document.getElementById('reportId')?.value?.trim();
+    checks.push({ label: 'Vizsgabizonyítvány száma', req: false, ok: !!reportId, hint: 'Pl. VBF-12345/2026', fieldId: 'reportId' });
+
+    // 2. Felülvizsgáló
+    const inspName = document.getElementById('inspectorName')?.value?.trim();
+    checks.push({ label: 'Felülvizsgáló neve', req: true, ok: !!inspName, hint: 'Jegyzőkönyv Adatok fül → Felülvizsgáló', fieldId: 'inspectorName' });
+
+    const inspLic = document.getElementById('inspectorLicense')?.value?.trim();
+    checks.push({ label: 'Vizsgabizonyítvány szám', req: false, ok: !!inspLic, hint: 'Regisztrációs szám', fieldId: 'inspectorLicense' });
+
+    // 3. Műszer
+    const instrType = document.getElementById('instrumentType')?.value?.trim();
+    checks.push({ label: '🔧 Mérőműszer típus + gyári szám', req: true, ok: !!(instrType && instrType.match(/\d/)), hint: 'Pl.: Metrel MI 3152, SN:21070123', fieldId: 'instrumentType' });
+
+    const instrCal = document.getElementById('instrumentCal')?.value?.trim();
+    let calOk = false;
+    if (instrCal) {
+        calOk = new Date(instrCal) >= new Date();
+    }
+    checks.push({ label: '📅 Kalibrálás érvényessége', req: true, ok: calOk, hint: instrCal ? (calOk ? 'Érvényes' : '⚠️ LEJÁRT!') : 'Dátum hiányzik', fieldId: 'instrumentCal' });
+
+    // 4. Épület
+    const bPurpose = document.getElementById('buildingPurpose')?.value?.trim();
+    checks.push({ label: '🏢 Épület rendeltetése', req: isVBF, ok: !!bPurpose, hint: 'Pl. Lakóépület, Iroda, Üzem', fieldId: 'buildingPurpose' });
+
+    const bOtsz = document.getElementById('buildingOtsz')?.value;
+    checks.push({ label: '🏗️ OTSZ kockázati osztály', req: isVBF, ok: !!bOtsz, hint: 'AK / KK / MK', fieldId: 'buildingOtsz' });
+
+    // 5. Mérések
+    const rpeRows = document.querySelectorAll('#table-rpe tbody tr').length;
+    checks.push({ label: '📏 Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor` });
+
+    const isoRows = document.querySelectorAll('#table-insulation tbody tr').length;
+    checks.push({ label: '⚡ Riso mérések (szigetelés)', req: isVBF, ok: isoRows > 0, hint: isVBF ? (isoRows > 0 ? `${isoRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${isoRows} db sor` });
+
+    const loopRows = document.querySelectorAll('#table-loop tbody tr').length;
+    checks.push({ label: '🔄 Zs mérések (hurok)', req: isVBF, ok: loopRows > 0, hint: isVBF ? (loopRows > 0 ? `${loopRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${loopRows} db sor` });
+
+    const rcdRows = document.querySelectorAll('#table-rcd tbody tr').length;
+    checks.push({ label: '🛡️ RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor` });
+
+    // 6. Minősítés
+    const reportResult = document.getElementById('reportResult')?.value;
+    checks.push({ label: '📊 Összefoglaló minősítés', req: true, ok: !!reportResult, hint: 'Válaszd ki a minősítést!', fieldId: 'reportResult' });
+
+    // Count
+    const requiredItems = checks.filter(c => c.req);
+    const filledRequired = requiredItems.filter(c => c.ok).length;
+    const allFilled = checks.filter(c => c.ok).length;
+    const totalChecks = checks.length;
+    const pct = Math.round((allFilled / totalChecks) * 100);
+    const canSave = requiredItems.every(c => c.ok);
+
+    // Update bar
+    bar.style.width = pct + '%';
+    if (pct >= 90) {
+        bar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+    } else if (pct >= 50) {
+        bar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+    } else {
+        bar.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
+    }
+
+    text.textContent = `${pct}% kész (${filledRequired}/${requiredItems.length} kötelező)`;
+
+    if (canSave) {
+        status.textContent = '✅ Menthető!';
+        status.style.color = '#10b981';
+    } else {
+        status.textContent = '❌ Nem menthető';
+        status.style.color = '#ef4444';
+    }
+
+    // Build checklist HTML with click-to-navigate
+    let html = '';
+    checks.forEach(c => {
+        const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
+        const color = c.ok ? '#10b981' : (c.req ? '#ef4444' : 'var(--text-secondary)');
+        const reqBadge = c.req ? '<span style="color:#ef4444; font-weight:700; font-size:0.7rem; margin-left:4px;">KÖTELEZŐ</span>' : '';
+        const fieldId = c.fieldId || '';
+        const clickAttr = fieldId ? `onclick="navigateToField('${fieldId}')" style="cursor:pointer;"` : '';
+        html += `<div ${clickAttr} style="display:flex; align-items:center; gap:6px; color:${color}; padding: 3px 0; ${fieldId ? 'cursor:pointer;' : ''} border-radius:4px; ${fieldId ? '' : ''}" title="${fieldId ? 'Kattints ide → Odanavigálok!' : ''}">
+            <span>${icon}</span>
+            <span style="flex:1; color: var(--text-primary);">${c.label}${reqBadge}</span>
+            <span style="font-size:0.75rem; color: var(--text-secondary); max-width: 140px; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.hint}</span>
+        </div>`;
+    });
+    items.innerHTML = html;
+
+    // ═══════════════════════════════════════════════
+    // INLINE VALIDÁCIÓ - Piros/zöld keretszín a mezőkön
+    // ═══════════════════════════════════════════════
+    const highlightField = (id, isOk) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!el.value || !el.value.trim()) {
+            el.style.borderColor = '';  // Üres → alapértelmezett
+            return;
+        }
+        el.style.borderColor = isOk ? '#10b981' : '#ef4444';
+        el.style.boxShadow = isOk ? '0 0 0 2px rgba(16,185,129,0.2)' : '0 0 0 2px rgba(239,68,68,0.2)';
+    };
+
+    highlightField('instrumentType', !!(instrType && instrType.match(/\d/)));
+    highlightField('instrumentCal', calOk);
+    highlightField('clientName', !!clientName);
+    highlightField('siteAddress', !!siteAddress);
+    highlightField('inspectorName', !!inspName);
+
+    // Kalibrálási dátum élő visszajelzés
+    const calHelper = document.getElementById('calHelper');
+    if (calHelper && instrCal) {
+        if (calOk) {
+            calHelper.innerHTML = '✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ' + instrCal;
+        } else {
+            calHelper.innerHTML = '⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (' + instrCal + ') a múltban van. "Megfelelő" minősítés NEM adható!';
+        }
+    }
+}
+
+// Navigate to a field when clicked in checklist
+window.navigateToField = function (fieldId) {
+    const el = document.getElementById(fieldId);
+    if (!el) return;
+
+    // Find which tab the field is in
+    const tabPane = el.closest('.tab-pane');
+    if (tabPane) {
+        const tabId = tabPane.id;
+        // Activate that tab
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        const targetTab = document.querySelector(`.nav-tab[data-target="${tabId}"]`);
+        if (targetTab) targetTab.classList.add('active');
+        tabPane.classList.add('active');
+    }
+
+    // Scroll to the field
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Highlight animation
+    el.style.transition = 'all 0.3s ease';
+    el.style.boxShadow = '0 0 0 4px rgba(245,158,11,0.6)';
+    el.style.borderColor = '#f59e0b';
+    el.focus();
+
+    setTimeout(() => {
+        el.style.boxShadow = '';
+        el.style.borderColor = '';
+    }, 2000);
+};
+
+// Run completeness check periodically and on input events
+setInterval(updateCompleteness, 2000);
+document.addEventListener('input', () => setTimeout(updateCompleteness, 300));
+document.addEventListener('change', () => setTimeout(updateCompleteness, 300));
+
+// Initial run
+setTimeout(updateCompleteness, 1000);

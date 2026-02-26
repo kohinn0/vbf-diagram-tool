@@ -1,0 +1,136 @@
+name: VBF CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ═══════════════════════════════════════
+  # 1. Backend tesztek és lint
+  # ═══════════════════════════════════════
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest flake8
+      
+      - name: Lint with flake8
+        run: |
+          # Stop on syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warnings (non-blocking)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+      
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/ -v --tb=short --junitxml=test-results.xml
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/test-results.xml
+
+  # ═══════════════════════════════════════
+  # 2. Frontend statikus elemzés
+  # ═══════════════════════════════════════
+  frontend-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check HTML validity
+        run: |
+          # Basic syntax check - no unclosed tags in critical files
+          python -c "
+          import re
+          for f in ['frontend/app.html', 'frontend/index.html']:
+              with open(f, 'r', encoding='utf-8') as fh:
+                  content = fh.read()
+                  scripts = re.findall(r'<script[^>]*src=\"([^\"]+)\"', content)
+                  print(f'{f}: {len(scripts)} script tags found')
+                  if 'app.js' not in str(scripts):
+                      raise Exception(f'FATAL: app.js not found in {f}!')
+          print('✅ HTML structure OK')
+          "
+      
+      - name: Check JS syntax
+        run: |
+          # Use node to check for syntax errors
+          node --check frontend/js/app.js || echo "⚠️ app.js syntax check failed"
+          node --check frontend/js/sanitize.js || echo "⚠️ sanitize.js syntax check failed"
+          node --check frontend/js/validation.js || echo "⚠️ validation.js syntax check failed"
+          node --check frontend/js/measurements.js || echo "⚠️ measurements.js syntax check failed"
+          node --check frontend/js/dashboard.js || echo "⚠️ dashboard.js syntax check failed"
+          node --check frontend/js/sitetree.js || echo "⚠️ sitetree.js syntax check failed"
+          node --check frontend/js/autodiagram.js || echo "⚠️ autodiagram.js syntax check failed"
+
+  # ═══════════════════════════════════════
+  # 3. Docker build teszt
+  # ═══════════════════════════════════════
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-check]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build backend Docker image
+        run: docker build -t vbf-backend:test ./backend
+      
+      - name: Build frontend Docker image
+        run: docker build -t vbf-frontend:test ./frontend
+      
+      - name: Test backend container starts
+        run: |
+          docker run -d --name vbf-test -p 8000:8000 vbf-backend:test
+          sleep 5
+          curl -f http://localhost:8000/docs || exit 1
+          docker logs vbf-test
+          docker stop vbf-test
+      
+      - name: Docker Compose validation
+        run: docker compose config --quiet
+
+  # ═══════════════════════════════════════
+  # 4. Security scan
+  # ═══════════════════════════════════════
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for hardcoded secrets
+        run: |
+          # Search for potential secrets in code
+          echo "Scanning for hardcoded secrets..."
+          ! grep -rn "sk_live\|sk_test_[a-zA-Z0-9]\{20,\}\|password\s*=\s*['\"][^'\"]\{8,\}['\"]" \
+            --include="*.py" --include="*.js" \
+            --exclude-dir=node_modules --exclude-dir=__pycache__ \
+            backend/ frontend/js/ || echo "⚠️ Potential secrets found - review needed"
+      
+      - name: Python dependency vulnerability scan
+        run: |
+          pip install pip-audit
+          cd backend && pip-audit -r requirements.txt || echo "⚠️ Vulnerabilities found"

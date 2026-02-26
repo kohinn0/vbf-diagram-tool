@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 
@@ -45,8 +47,15 @@ def delete_my_account(db: Session = Depends(auth.get_db), current_user: database
     db.commit()
     return {"message": "Sikeres törlés (GDPR compliance)"}
 
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
 @router.post("/api/login", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(auth.get_db)):
+@limiter.limit("10/minute")
+def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(auth.get_db)):
     user = auth.get_user(db, form_data.username)
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
