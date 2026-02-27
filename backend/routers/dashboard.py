@@ -294,9 +294,9 @@ def _analyze_defects(db: Session, owner_id: int) -> dict:
     ).all()
 
     category_counts = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
-    total_defects = 0
+    total_defects: int = 0
     common_defects = {}
-    reports_with_defects = 0
+    reports_with_defects: int = 0
 
     for rep in reports:
         defects = rep.defects_data or []
@@ -396,9 +396,9 @@ def _analyze_results(db: Session, owner_id: int) -> dict:
                             elif row['pass'] == 'Nem':
                                 failed += 1
 
-    pass_rate = 0.0
+    pass_rate: float = 0.0
     if total_measurements > 0:
-        pass_rate = round(float(passed) / float(total_measurements) * 100.0, 1)
+        pass_rate = float(round((float(passed) / float(total_measurements) * 100.0) * 10) / 10.0)
 
     return {
         "total_measurements": total_measurements,

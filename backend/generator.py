@@ -11,6 +11,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import database
 from database import Report
+import hashlib
+import json
+import qrcode
+from datetime import datetime
 
 def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     doc = Document()
@@ -629,14 +633,9 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     # ═══════════════════════════════════════════════════════
     # DIGITÁLIS INTEGRITÁS - QR Kód és Hash
     # ═══════════════════════════════════════════════════════
-    section_num += 1
     doc.add_heading(f'{section_num}. Digitális Integritás és Nyomonkövethetőség', level=1)
     
-    import hashlib
-    import json
-    from datetime import datetime
-    
-    # Építünk egy hash-elhető payload-ot a dokumentum tartalmából
+    # Payload for hashing
     integrity_data = {
         'report_id': rep_id_str,
         'client': c_data.get('clientName', ''),
@@ -671,7 +670,6 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     
     # QR kód generálás
     try:
-        import qrcode
         qr = qrcode.QRCode(version=1, box_size=6, border=2, error_correction=qrcode.constants.ERROR_CORRECT_M)
         qr.add_data(qr_payload)
         qr.make(fit=True)
@@ -700,12 +698,19 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     int_p.add_run("Dokumentum Integritási Adatok:\n").bold = True
     int_p.add_run(f"Azonosító: {rep_id_str}\n")
     int_p.add_run(f"Generálás dátuma: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+    
+    m_counts = integrity_data.get('measurement_count', {})
+    rpe_c = m_counts.get('rpe', 0)
+    riso_c = m_counts.get('riso', 0)
+    loop_c = m_counts.get('loop', 0)
+    rcd_c = m_counts.get('rcd', 0)
+    
     int_p.add_run(f"SHA-256 Hash: {content_hash}\n")
-    int_p.add_run(f"Mérések: Rpe={integrity_data['measurement_count']['rpe']} db, "
-                  f"Riso={integrity_data['measurement_count']['riso']} db, "
-                  f"Zs={integrity_data['measurement_count']['loop']} db, "
-                  f"RCD={integrity_data['measurement_count']['rcd']} db\n")
-    int_p.add_run(f"Feltárt hibák: {integrity_data['defect_count']} db\n")
+    int_p.add_run(f"Mérések: Rpe={rpe_c} db, "
+                  f"Riso={riso_c} db, "
+                  f"Zs={loop_c} db, "
+                  f"RCD={rcd_c} db\n")
+    int_p.add_run(f"Feltárt hibák: {integrity_data.get('defect_count', 0)} db\n")
     
     hash_note = doc.add_paragraph(
         "A fenti SHA-256 hash a dokumentum minden lényeges adatából (megrendelő, cím, felülvizsgáló, "

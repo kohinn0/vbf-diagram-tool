@@ -53,21 +53,8 @@
 /* Tree Container */
 .st-tree {
     padding: 0.5rem 0;
-    max-height: 360px;
+    max-height: 450px;
     overflow-y: auto;
-}
-
-.st-tree::-webkit-scrollbar {
-    width: 6px;
-}
-
-.st-tree::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.st-tree::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
 }
 
 /* Node Row */
@@ -296,4 +283,65 @@
     .st-device-input {
         width: 50px !important;
     }
+}
+
+/* Measurement Dropdown Menu */
+.st-measure-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.st-btn-meas {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    width: 32px !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.st-btn-meas:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.st-meas-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 110%;
+    background: var(--bg-panel);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 140px;
+}
+
+.st-measure-menu:hover .st-meas-dropdown {
+    display: block;
+}
+
+.st-meas-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.8rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.st-meas-dropdown button:hover {
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--primary);
+}
+
+.st-meas-dropdown button:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.st-meas-dropdown button:last-child {
+    border-radius: 0 0 8px 8px;
 }

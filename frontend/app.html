@@ -228,14 +228,23 @@
             </div>
         </div>
 
-        <!-- 5. TAB: MENTETT ÜGYEK (Cloud) -->
+        <!-- 5. TAB: CLOUD / MENTETT JEGYZŐKÖNYVEK (Eredeti) -->
         <div id="tab-cloud" class="tab-pane">
             <div class="form-container panel-glass"
                 style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
                 <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Felhőbe Mentett Jegyzőkönyvek</h2>
                 <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <!-- Javascript fogja ide tölteni a kártyákat -->
+                    <p class="empty-state">Jelentkezz be a felhő adatok eléréséhez!</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- LPS TAB placeholder -->
+        <div id="tab-lps" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">🌩️ Villámvédelmi Felülvizsgálat</h2>
+                <p>Ez a modul fejlesztés alatt áll. Itt tudod majd rögzíteni a felfogók, levezetők és a földelés
+                    méréseit.</p>
             </div>
         </div>
 
@@ -748,6 +757,15 @@
             </div>
         </div>
 
+        <!-- 5. TAB: VILLÁMHÁRÍTÓ MÉRÉSEK (LPS) -->
+        <div id="tab-lps" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">⚡ Villámhárító Mérések (LPS)</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt rögzítheted a villámhárító rendszer
+                    méréseit.</p>
+                <!-- LPS measurement content will go here -->
+            </div>
+        </div>
 
         <!-- DASHBOARD TAB -->
         <div id="tab-dashboard" class="tab-pane">
@@ -904,15 +922,8 @@
     </div>
 
     <!-- Main Logic -->
+    <script type="module" src="js/main.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="js/data.js"></script>
-    <script src="js/sanitize.js"></script>
-    <script src="js/validation.js"></script>
-    <script src="js/measurements.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/sitetree.js"></script>
-    <script src="js/autodiagram.js"></script>
-    <script src="js/app.js"></script>
 
     <!-- Stripe Checkout Success Handler -->
     <script>

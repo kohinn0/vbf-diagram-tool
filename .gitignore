@@ -23,3 +23,8 @@ Thumbs.db
 *.txt
 *.pfx
 my_diff*
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+.env.local

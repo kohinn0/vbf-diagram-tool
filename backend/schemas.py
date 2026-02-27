@@ -147,3 +147,50 @@ class EmailRequest(BaseModel):
     to_email: str
     subject: Optional[str] = "Jegyzőkönyv"
     body: Optional[str] = "Tisztelt Ügyfelünk!\n\nMellékelve küldjük az elkészült érintésvédelmi jegyzőkönyvet.\n\nÜdvözlettel,\nA VizsgálóCsapat"
+
+# --- Site Tree & Measurement Schemas (Relational) ---
+class SiteNodeSchema(BaseModel):
+    id: str
+    type: str  # building, floor, panel, circuit
+    name: str
+    device: Optional[str] = None
+    collapsed: bool = False
+    parent_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class RpeMeasurementSchema(BaseModel):
+    node_id: str
+    point: Optional[str] = None
+    location: Optional[str] = None
+    val: Optional[str] = None
+    pass_status: str = "Igen"
+
+class LoopMeasurementSchema(BaseModel):
+    node_id: str
+    circuit: Optional[str] = None
+    device: Optional[str] = None
+    location: Optional[str] = None
+    zs: Optional[str] = None
+    pass_status: str = "Igen"
+
+class RcdMeasurementSchema(BaseModel):
+    node_id: str
+    circuit: Optional[str] = None
+    type: str = "A"
+    idn: Optional[str] = None
+    test_05: Optional[str] = None
+    t1: Optional[str] = None
+    t5: Optional[str] = None
+    ramp: Optional[str] = None
+    uc: Optional[str] = None
+    pass_status: str = "Igen"
+
+class InsulationMeasurementSchema(BaseModel):
+    node_id: str
+    circuit: Optional[str] = None
+    ln: Optional[str] = None
+    lpe: Optional[str] = None
+    npe: Optional[str] = None
+    pass_status: str = "Igen"

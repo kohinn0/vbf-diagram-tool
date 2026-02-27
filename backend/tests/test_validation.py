@@ -17,7 +17,7 @@ class TestZsValidation:
         """B16 kismegszakító: Ia = 16 × 5 = 80A → Zs ≤ 230×0.95/80 = 2.73 Ω"""
         Ia = 16 * 5
         maxZs = (230 * 0.95) / Ia
-        assert round(maxZs, 2) == 2.73
+        assert round(maxZs * 100) / 100.0 == 2.73
 
     def test_c16_max_zs(self):
         """C16 kismegszakító: Ia = 16 × 10 = 160A → Zs ≤ 230×0.95/160 = 1.37 Ω"""

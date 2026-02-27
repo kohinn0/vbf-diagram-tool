@@ -1,15 +1,9 @@
 /**
  * sanitize.js — XSS és input sanitizáció
  * Minden felhasználói inputot ezen a modulon kell átvezetni DOM-ba illesztés előtt.
- * 
- * Használat:
- *   <script src="js/sanitize.js"></script>
- *   const safe = VBF.sanitize.html(userInput);
  */
 
-window.VBF = window.VBF || {};
-
-VBF.sanitize = {
+export const sanitize = {
     /**
      * HTML entitások escape-elése — megakadályozza az XSS-t
      * @param {string} str — Nyers input
@@ -115,12 +109,12 @@ VBF.sanitize = {
 };
 
 // Globális segéd: innerHTML helyett használható textContent beállítás
-VBF.safeSetText = function (elementOrId, text) {
+export function safeSetText(elementOrId, text) {
     const el = typeof elementOrId === 'string' ? document.getElementById(elementOrId) : elementOrId;
     if (el) el.textContent = text || '';
-};
+}
 
-// Automatikus sanitizáció a defect és measurement inputokon
+// Automatikus sanitizáció a defect és measurement input
 document.addEventListener('DOMContentLoaded', () => {
     // Figyelmeztetés ha valaki <script> taget próbál beírni
     document.addEventListener('input', (e) => {
@@ -137,5 +131,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-console.log('[VBF] sanitize.js betöltve — XSS védelem aktív');

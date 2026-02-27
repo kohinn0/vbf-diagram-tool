@@ -7,7 +7,7 @@
  * - API kérések: Network-first, fallback offline queue-ra
  */
 
-const CACHE_NAME = 'vbf-cache-v2';
+const CACHE_NAME = 'vbf-cache-v3';
 const STATIC_ASSETS = [
     '/app.html',
     '/css/style.css',
@@ -46,8 +46,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // API kérések → Network-first
-    if (url.pathname.startsWith('/api/')) {
+    // API kérések → Network-first (Csak saját origin-en belüli API-kra!)
+    if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
         event.respondWith(
             fetch(event.request)
                 .then(response => {

@@ -4,6 +4,12 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 import os
+import sys
+import tempfile
+import zipfile
+import sqlite3
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 
@@ -182,50 +188,14 @@ async def parse_padfx_file(
             return {"status": "success", "schema": schema, "data_sample": data_sample, "is_sqlite": True}
         except sqlite3.DatabaseError:
             # Parse XML
+            if not padf_path:
+                 return {"status": "error", "message": "Nincs elérhető adatfájl."}
             try:
-                import xml.etree.ElementTree as ET
-                tree = ET.parse(padf_path)
-                root = tree.getroot()
+                with open(padf_path, "r", encoding='utf-8') as xf:
+                    xml_content = xf.read()
                 
-                measurements = []
-                for so in root.findall('.//SO'):
-                    node_name = so.find('N').text if so.find('N') is not None else "Unknown"
-                    for m in so.findall('.//M'):
-                        mid_elem = m.find('.//MID')
-                        mid = mid_elem.text if mid_elem is not None else "Unknown"
-                        
-                        m_date = ""
-                        m_params = {}
-                        for mp in m.findall('.//MP'):
-                            val = mp.find('V').text if mp.find('V') is not None else ""
-                            mp_id = mp.attrib.get('Id', '')
-                            if mp_id == '1':
-                                m_date = val
-                            else:
-                                m_params[f"p_{mp_id}"] = val
-                                
-                        m_results = {}
-                        for rs in m.findall('.//R'):
-                            val = rs.find('V').text if rs.find('V') is not None else ""
-                            rs_id = rs.attrib.get('Id', '')
-                            m_results[f"r_{rs_id}"] = val
-                            
-                        # Extract some human readable types based on MID
-                        m_type = "Ismeretlen"
-                        if mid == "20": m_type = "Rpe Folytonosság"
-                        elif mid in ["16", "17", "111"]: m_type = "Zs Hurokellenállás"
-                        elif mid in ["11", "12", "14"]: m_type = "RCD (FI-relé)"
-                        elif mid == "22": m_type = "Riso Szigetelés"
-
-                        measurements.append({
-                            "mid": mid,
-                            "type": m_type,
-                            "location": node_name,
-                            "date": m_date,
-                            "params": m_params,
-                            "results": m_results
-                        })
-                        
+                import analyzer2
+                measurements = analyzer2.parse_padfx_xml(xml_content)
                 return {"status": "success", "is_sqlite": False, "measurements": measurements}
             except Exception as e:
                  return {"status": "error", "message": f"Nem olvasható XML fájl! {str(e)}"}
