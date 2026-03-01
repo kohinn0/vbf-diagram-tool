@@ -14,18 +14,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database import Base
 
-# Fájl-alapú teszt DB (in-memory helyett, hogy minden kapcsolat ugyanazt lássa).
-# Workspace-relatív útvonal (backend/data/), hogy CI-ben ne readonly legyen (pl. /tmp).
-_backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_data_dir = os.path.join(_backend_dir, "data")
-os.makedirs(_data_dir, exist_ok=True)
-_test_db_path = os.path.join(_data_dir, "vbf_test.db")
-if os.path.exists(_test_db_path):
-    try:
-        os.unlink(_test_db_path)
-    except Exception:
-        pass
-_test_engine = create_engine(f"sqlite:///{_test_db_path}", connect_args={"check_same_thread": False})
+# Megosztott in-memory SQLite: minden kapcsolat ugyanazt a DB-t látja (TestClient másik szál).
+# Nincs fájl → nincs readonly hiba CI-ben.
+_test_engine = create_engine(
+    "sqlite:///file:memdb?mode=memory&cache=shared",
+    connect_args={"check_same_thread": False, "uri": True},
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_test_engine)
 
 # Auth és main import csak az engine után (database már betöltődött TESTING=1-gyel)
@@ -51,10 +45,6 @@ def db_session():
     finally:
         session.close()
         Base.metadata.drop_all(bind=_test_engine)
-        try:
-            os.unlink(_test_db_path)
-        except Exception:
-            pass
 
 
 @pytest.fixture(scope="function")
