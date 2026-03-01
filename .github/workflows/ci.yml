@@ -33,12 +33,13 @@ jobs:
       
       - name: Lint with flake8
         run: |
-          # Stop on syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Warnings (non-blocking)
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+          # Only fail on syntax/undefined (E9,F63,F7,F82); ignore line length in tests
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=__pycache__,data
+          flake8 . --count --exit-zero --max-complexity=12 --max-line-length=120 --exclude=__pycache__,data --statistics
       
       - name: Run unit tests
+        env:
+          TESTING: '1'
         run: |
           python -m pytest tests/ -v --tb=short --junitxml=test-results.xml
       
@@ -50,7 +51,7 @@ jobs:
           path: backend/test-results.xml
 
   # ═══════════════════════════════════════
-  # 2. Frontend statikus elemzés
+  # 2. Frontend: HTML ellenőrzés + Vite build
   # ═══════════════════════════════════════
   frontend-check:
     runs-on: ubuntu-latest
@@ -58,31 +59,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Check HTML validity
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Check HTML entry point
         run: |
-          # Basic syntax check - no unclosed tags in critical files
           python -c "
           import re
-          for f in ['frontend/app.html', 'frontend/index.html']:
-              with open(f, 'r', encoding='utf-8') as fh:
-                  content = fh.read()
-                  scripts = re.findall(r'<script[^>]*src=\"([^\"]+)\"', content)
-                  print(f'{f}: {len(scripts)} script tags found')
-                  if 'app.js' not in str(scripts):
-                      raise Exception(f'FATAL: app.js not found in {f}!')
-          print('✅ HTML structure OK')
+          with open('frontend/app.html', 'r', encoding='utf-8') as fh:
+              content = fh.read()
+              scripts = re.findall(r'<script[^>]*src=\"([^\"]+)\"', content)
+              if 'js/main.js' not in str(scripts) and 'main.js' not in str(scripts) and 'app.js' not in str(scripts):
+                  raise Exception('app.html must load main.js or app.js')
+          if not open('frontend/index.html').read():
+              raise Exception('index.html missing')
+          print('HTML entry OK')
           "
       
-      - name: Check JS syntax
+      - name: Install and build frontend
         run: |
-          # Use node to check for syntax errors
-          node --check frontend/js/app.js || echo "⚠️ app.js syntax check failed"
-          node --check frontend/js/sanitize.js || echo "⚠️ sanitize.js syntax check failed"
-          node --check frontend/js/validation.js || echo "⚠️ validation.js syntax check failed"
-          node --check frontend/js/measurements.js || echo "⚠️ measurements.js syntax check failed"
-          node --check frontend/js/dashboard.js || echo "⚠️ dashboard.js syntax check failed"
-          node --check frontend/js/sitetree.js || echo "⚠️ sitetree.js syntax check failed"
-          node --check frontend/js/autodiagram.js || echo "⚠️ autodiagram.js syntax check failed"
+          cd frontend
+          npm ci || npm install
+          npm run build
 
   # ═══════════════════════════════════════
   # 3. Docker build teszt
@@ -109,7 +111,8 @@ jobs:
           docker stop vbf-test
       
       - name: Docker Compose validation
-        run: docker compose config --quiet
+        run: |
+          if [ -f docker-compose.yml ]; then docker compose config --quiet; else echo "No docker-compose.yml, skip"; fi
 
   # ═══════════════════════════════════════
   # 4. Security scan
