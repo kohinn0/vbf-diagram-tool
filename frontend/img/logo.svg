@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true" role="img">
+  <defs>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <!-- Lightning bolt: top-right, down-left, notch, down to tip, up-right, notch, close -->
+  <path fill="url(#bolt)" d="M27 2L15 24h8l-6 22 16-22h-8L27 2z"/>
+</svg>

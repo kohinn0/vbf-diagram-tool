@@ -1,3 +1,5 @@
+import os
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -7,12 +9,32 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import SessionLocal, User
 
-SECRET_KEY = "super-secret-vbf-key-change-in-production"
+# Élesben kötelező: SECRET_KEY és JWT_EXPIRE_MINUTES env (pl. 1440 = 1 nap)
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-vbf-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days for dev
+_access_expire = os.getenv("JWT_EXPIRE_MINUTES", "")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(_access_expire) if _access_expire.isdigit() else (60 * 24 * 7)  # default 7 nap (dev)
+
+# Jelszó policy: min 8 karakter, legalább 1 nagybetű, 1 kisbetű, 1 szám vagy speciális
+PASSWORD_MIN_LEN = 8
+PASSWORD_REGEX = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).+$")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def validate_password_policy(password: str) -> None:
+    """Erős jelszó követelmény. Ha nem megfelelő, HTTPException."""
+    if len(password) < PASSWORD_MIN_LEN:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A jelszónak legalább {PASSWORD_MIN_LEN} karakter hosszúnak kell lennie.",
+        )
+    if not PASSWORD_REGEX.match(password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A jelszónak tartalmaznia kell legalább egy nagybetűt, egy kisbetűt és egy számot vagy speciális karaktert.",
+        )
 
 def get_db():
     db = SessionLocal()
@@ -58,8 +80,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None or user.deleted_at:
         raise credentials_exception
         
-    # Check subscription
-    if user.role != "ADMIN" and user.subscription_expires:
+    # Check subscription (super admin és céges vezető is mentes)
+    if user.role not in ("SUPER_ADMIN", "ADMIN", "COMPANY_ADMIN") and user.subscription_expires:
         if datetime.utcnow() > user.subscription_expires:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -68,10 +90,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             
     return user
 
+def _is_super_admin(user: User) -> bool:
+    return user.role in ("SUPER_ADMIN", "ADMIN")
+
+
 def get_current_admin(current_user: User = Depends(get_current_user)):
-    if current_user.role != "ADMIN":
+    """Céges vezető (COMPANY_ADMIN) vagy super admin (SUPER_ADMIN/ADMIN) használhatja az admin API-t."""
+    if current_user.role not in ("SUPER_ADMIN", "ADMIN", "COMPANY_ADMIN"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Adminisztrátori jogosultság szükséges!"
+            detail="Adminisztrátori jogosultság szükséges!",
+        )
+    return current_user
+
+
+def get_current_super_admin(current_user: User = Depends(get_current_user)):
+    """Csak super admin: minden felhasználó/cég kezelése, új super admin/cég létrehozása."""
+    if not _is_super_admin(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Csak főadminisztrátor jogosultság szükséges!",
         )
     return current_user

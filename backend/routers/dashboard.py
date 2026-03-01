@@ -20,8 +20,56 @@ from email.message import EmailMessage
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import auth, database
+import schemas
 
 router = APIRouter()
+
+
+def _dashboard_reports_query(db, current_user):
+    """Jegyzőkönyvek lekérdezése: SUPER_ADMIN/ADMIN = minden, COMPANY_ADMIN = cégé, TECH = saját."""
+    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+        return db.query(database.Report)
+    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+        return (
+            db.query(database.Report)
+            .join(database.User, database.Report.owner_id == database.User.id)
+            .filter(database.User.company_id == current_user.company_id)
+        )
+    return db.query(database.Report).filter(database.Report.owner_id == current_user.id)
+
+
+@router.get("/api/usage", response_model=schemas.UsageResponse)
+def get_usage(
+    db: Session = Depends(auth.get_db),
+    current_user: database.User = Depends(auth.get_current_user),
+):
+    """SaaS: havi jegyzőkönyv és felhasználó kihasználtság a cégedre (limit figyeléshez)."""
+    if not current_user.company_id:
+        return schemas.UsageResponse(plan="FREE", reports_this_month=0, users_count=0)
+    company = db.query(database.Company).filter(database.Company.id == current_user.company_id).first()
+    if not company:
+        return schemas.UsageResponse(plan="FREE", reports_this_month=0, users_count=0)
+    now = datetime.utcnow()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    reports_this_month = (
+        db.query(database.Report)
+        .join(database.User, database.Report.owner_id == database.User.id)
+        .filter(database.User.company_id == company.id, database.Report.created_at >= start_of_month)
+        .count()
+    )
+    users_count = db.query(database.User).filter(
+        database.User.company_id == company.id,
+        database.User.deleted_at == None,
+    ).count()
+    reports_limit, users_limit = database.get_effective_plan_limits(db, company)
+    return schemas.UsageResponse(
+        plan=company.plan or "FREE",
+        reports_this_month=reports_this_month,
+        reports_limit=reports_limit,
+        users_count=users_count,
+        users_limit=users_limit,
+    )
+
 
 # ═══════════════════════════════════════════════
 # OTSZ Inspection Cycles (years)
@@ -38,72 +86,65 @@ async def get_dashboard_stats(
     db: Session = Depends(auth.get_db),
     current_user: database.User = Depends(auth.get_current_user)
 ):
-    """Main dashboard statistics — ADMIN only."""
-    if current_user.role != 'ADMIN':
-        raise HTTPException(status_code=403, detail="Csak admin felhasználók érhetik el.")
+    """Dashboard statisztikák — ADMIN / SUPER_ADMIN / COMPANY_ADMIN (cégen belül)."""
+    if current_user.role not in ("ADMIN", "SUPER_ADMIN", "COMPANY_ADMIN"):
+        raise HTTPException(status_code=403, detail="Csak admin/céges vezető érheti el.")
 
     now = datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    base_reports = _dashboard_reports_query(db, current_user)
 
     # ── Total reports ──
-    total_reports = db.query(func.count(database.Report.id)).filter(
-        database.Report.owner_id == current_user.id
-    ).scalar() or 0
+    total_reports = base_reports.count() or 0
 
     # ── This month's reports ──
-    monthly_reports = db.query(func.count(database.Report.id)).filter(
-        database.Report.owner_id == current_user.id,
-        database.Report.created_at >= start_of_month
-    ).scalar() or 0
+    monthly_reports = base_reports.filter(database.Report.created_at >= start_of_month).count() or 0
 
     # ── Finalized reports ──
-    finalized_reports = db.query(func.count(database.Report.id)).filter(
-        database.Report.owner_id == current_user.id,
-        database.Report.status == 'FINAL'
-    ).scalar() or 0
+    finalized_reports = base_reports.filter(database.Report.status == "FINAL").count() or 0
 
     # ── Reports by type ──
-    type_breakdown = db.query(
-        database.Report.report_type,
-        func.count(database.Report.id)
-    ).filter(
-        database.Report.owner_id == current_user.id
-    ).group_by(database.Report.report_type).all()
-
+    type_breakdown = (
+        base_reports.with_entities(database.Report.report_type, func.count(database.Report.id))
+        .group_by(database.Report.report_type)
+        .all()
+    )
     type_data = {t: c for t, c in type_breakdown}
 
     # ── Monthly trend (last 12 months) ──
     twelve_months_ago = now - timedelta(days=365)
-    monthly_trend_raw = db.query(
-        extract('year', database.Report.created_at).label('year'),
-        extract('month', database.Report.created_at).label('month'),
-        func.count(database.Report.id)
-    ).filter(
-        database.Report.owner_id == current_user.id,
-        database.Report.created_at >= twelve_months_ago
-    ).group_by('year', 'month').order_by('year', 'month').all()
+    monthly_trend_raw = (
+        base_reports.filter(database.Report.created_at >= twelve_months_ago)
+        .with_entities(
+            extract("year", database.Report.created_at).label("year"),
+            extract("month", database.Report.created_at).label("month"),
+            func.count(database.Report.id),
+        )
+        .group_by("year", "month")
+        .order_by("year", "month")
+        .all()
+    )
+    monthly_trend = [{"year": int(y), "month": int(m), "count": c} for y, m, c in monthly_trend_raw]
 
-    monthly_trend = [
-        {"year": int(y), "month": int(m), "count": c}
-        for y, m, c in monthly_trend_raw
-    ]
+    # ── Defect / result analytics (ugyanaz a report halmaz) ──
+    defect_stats = _analyze_defects_from_query(db, base_reports)
+    result_stats = _analyze_results_from_query(db, base_reports)
 
-    # ── Defect analytics ──
-    defect_stats = _analyze_defects(db, current_user.id)
+    # ── Active users: super admin = minden, céges vezető = cégé ──
+    user_filter = db.query(database.User).filter(
+        database.User.is_active == True, database.User.deleted_at == None
+    )
+    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+        user_filter = user_filter.filter(database.User.company_id == current_user.company_id)
+    active_users = user_filter.count() or 0
 
-    # ── Result breakdown (MEGFELELT / NEM MEGFELELT) ──
-    result_stats = _analyze_results(db, current_user.id)
-
-    # ── Active users count (admin sees all) ──
-    active_users = db.query(func.count(database.User.id)).filter(
-        database.User.is_active == True,
-        database.User.deleted_at == None
-    ).scalar() or 0
-
-    # ── Pending jobs ──
-    pending_jobs = db.query(func.count(database.Job.id)).filter(
-        database.Job.status == 'PENDING'
-    ).scalar() or 0
+    # ── Pending jobs: super admin = minden, céges vezető = cég felhasználóinak ──
+    job_q = db.query(func.count(database.Job.id)).filter(database.Job.status == "PENDING")
+    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+        job_q = job_q.join(database.User, database.Job.assigned_to_id == database.User.id).filter(
+            database.User.company_id == current_user.company_id
+        )
+    pending_jobs = job_q.scalar() or 0
 
     return {
         "total_reports": total_reports,
@@ -129,15 +170,13 @@ async def get_upcoming_inspections(
     Returns reports whose next inspection date falls within the given window.
     Looks at client_data.nextInspectionDate stored in each report.
     """
-    if current_user.role != 'ADMIN':
-        raise HTTPException(status_code=403, detail="Csak admin felhasználók érhetik el.")
+    if current_user.role not in ("ADMIN", "SUPER_ADMIN", "COMPANY_ADMIN"):
+        raise HTTPException(status_code=403, detail="Csak admin/céges vezető érheti el.")
 
     now = datetime.utcnow()
     cutoff = now + timedelta(days=days)
-
-    reports = db.query(database.Report).filter(
-        database.Report.owner_id == current_user.id,
-        database.Report.status == 'FINAL'
+    reports = _dashboard_reports_query(db, current_user).filter(
+        database.Report.status == "FINAL"
     ).all()
 
     upcoming = []
@@ -192,15 +231,19 @@ async def send_inspection_reminder(
     current_user: database.User = Depends(auth.get_current_user)
 ):
     """Send an inspection reminder email for a specific report."""
-    if current_user.role != 'ADMIN':
-        raise HTTPException(status_code=403, detail="Csak admin felhasználók érhetik el.")
+    if current_user.role not in ("ADMIN", "SUPER_ADMIN", "COMPANY_ADMIN"):
+        raise HTTPException(status_code=403, detail="Csak admin/céges vezető érheti el.")
 
-    report = db.query(database.Report).filter(
-        database.Report.id == report_id,
-        database.Report.owner_id == current_user.id
-    ).first()
-
+    report = db.query(database.Report).filter(database.Report.id == report_id).first()
     if not report:
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+        pass
+    elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+        owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+        if not owner or owner.company_id != current_user.company_id:
+            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    elif report.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
     cd = report.client_data or {}
@@ -210,10 +253,15 @@ async def send_inspection_reminder(
     inspector_name = cd.get('inspectorName', '')
 
     # Get company settings for branding
-    company = db.query(database.CompanySettings).filter(
-        database.CompanySettings.owner_id == current_user.id
-    ).first()
-    company_name = company.company_name if company else 'VBF Készítő'
+    if current_user.company_id:
+        company = db.query(database.CompanySettings).filter(
+            database.CompanySettings.company_id == current_user.company_id
+        ).first()
+    else:
+        company = db.query(database.CompanySettings).filter(
+            database.CompanySettings.owner_id == current_user.id
+        ).first()
+    company_name = company.company_name if company else "VBF Készítő"
 
     # Build email
     smtp_user = os.getenv("SMTP_USER", "")
@@ -287,11 +335,9 @@ Ez az email automatikusan lett generálva a VBF Készítő rendszerből.
 # Internal helper functions
 # ═══════════════════════════════════════════════
 
-def _analyze_defects(db: Session, owner_id: int) -> dict:
-    """Analyze defects across all reports for the given user."""
-    reports = db.query(database.Report).filter(
-        database.Report.owner_id == owner_id
-    ).all()
+def _analyze_defects_from_query(db: Session, report_query) -> dict:
+    """Analyze defects across the reports in the given query."""
+    reports = report_query.all()
 
     category_counts = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
     total_defects: int = 0
@@ -351,11 +397,9 @@ def _classify_defect(desc: str) -> str:
     return 'C'
 
 
-def _analyze_results(db: Session, owner_id: int) -> dict:
-    """Analyze measurement pass/fail results across all reports."""
-    reports = db.query(database.Report).filter(
-        database.Report.owner_id == owner_id
-    ).all()
+def _analyze_results_from_query(db: Session, report_query) -> dict:
+    """Analyze measurement pass/fail results across the reports in the given query."""
+    reports = report_query.all()
 
     total_measurements = 0
     passed = 0

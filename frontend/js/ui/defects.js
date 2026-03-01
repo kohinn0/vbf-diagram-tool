@@ -216,7 +216,7 @@ export function initDefects() {
 
             // RCD Táblázat — M5 melléklet, FI-relék (áram-védőkapcsoló)
             scanTable('#table-rcd tbody tr', (tr) => {
-                const circ = tr.querySelector('.meas-circ')?.value || '';
+                const circ = tr.querySelector('.meas-circuit')?.value || '';
                 const idn = tr.querySelector('.meas-idn')?.value || '';
                 const t1 = tr.querySelector('.meas-t1')?.value || '';
                 return {

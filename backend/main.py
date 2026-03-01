@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, reports, admin, masterdata, jobs, payments, dashboard
+from routers import auth, reports, admin, masterdata, jobs, payments, dashboard, legal
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -14,11 +14,31 @@ from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 import os
-import sqlite3
+import sys
+import logging
 
-limiter = Limiter(key_func=get_remote_address)
+# Strukturált logging: szint, idő, üzenet
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("vbf")
+
+# Opcionális Sentry (ha SENTRY_DSN env be van állítva)
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    dsn = os.environ.get("SENTRY_DSN")
+    if dsn:
+        sentry_sdk.init(dsn=dsn, integrations=[FastApiIntegration()], traces_sample_rate=0.1)
+        logger.info("Sentry error tracking enabled")
+except ImportError:
+    pass
+
 app = FastAPI(title="VBF Készítő API", description="Jegyzőkönyv és rajz kezelő rendszer", version="1.0.0")
 
+limiter = auth.limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -37,18 +57,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Setup CORS - Outermost layer
+# Setup CORS - Outermost layer (dev: engedünk mindent)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:8001",
-        "http://127.0.0.1:8001",
-        "null", # For file:// origin if still used
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],  # fejlesztéshez: bárhonnan
+    allow_credentials=False,
+    allow_methods=["*"],   
     allow_headers=["*"],
     expose_headers=["*"],
 )
@@ -61,11 +75,29 @@ app.include_router(masterdata.router)
 app.include_router(jobs.router)
 app.include_router(payments.router)
 app.include_router(dashboard.router)
+app.include_router(legal.router)
 app.include_router(padfx.router)
 
 from fastapi.staticfiles import StaticFiles
-import os
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+import database
 
 os.makedirs("data", exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
+
+
+@app.get("/health")
+def health():
+    """Kubernetes / load balancer probe: DB elérhetőség."""
+    try:
+        with database.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception("Health check failed")
+        return JSONResponse(
+            {"status": "error", "detail": str(e)},
+            status_code=503,
+        )
 

@@ -69,7 +69,7 @@ export const Storage = {
             let payload = queue[i];
             const oldId = payload._offline_id;
             const method = payload._method || 'POST';
-            const endpoint = payload._endpoint || '/reports';
+            const endpoint = payload._endpoint || '/api/reports';
 
             delete payload._offline_id; // Remove internal tracking tags before API
             delete payload._method;
@@ -111,7 +111,8 @@ export const Storage = {
         }
 
         if (successCount > 0) {
-            alert(`Sikeresen felszinkronizálva ${successCount} db Offline jegyzőkönyv a felhőbe!`);
+            if (typeof window.showToast === 'function') window.showToast(`Sikeresen felszinkronizálva ${successCount} db offline jegyzőkönyv!`, 'success');
+            else alert(`Sikeresen felszinkronizálva ${successCount} db Offline jegyzőkönyv a felhőbe!`);
             // Custom event trigger, hogy az app.js is észrevegye és frissítse a listát
             window.dispatchEvent(new CustomEvent('offlineSyncComplete'));
         } else if (failedQueue.length > 0) {

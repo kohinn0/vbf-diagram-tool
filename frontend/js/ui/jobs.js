@@ -4,7 +4,7 @@ export function initJobs() {
         if (!container || !window.currentToken) return;
 
         try {
-            const res = await fetch(`${window.API_BASE_URL}/jobs`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/jobs`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             if (!res.ok) throw new Error("Hiba a feladatok betöltésekor");
@@ -52,7 +52,7 @@ export function initJobs() {
 
     window.updateJobStatus = async function (jobId, newStatus) {
         try {
-            const res = await fetch(`${window.API_BASE_URL}/jobs/${jobId}/status?status=${newStatus}`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/jobs/${jobId}/status?status=${newStatus}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
@@ -75,7 +75,7 @@ export function initJobs() {
         document.getElementById('siteAddress').value = jobAddress || "";
 
         try {
-            await fetch(`${window.API_BASE_URL}/jobs/${jobId}/status?status=IN_PROGRESS`, {
+            await fetch(`${window.API_BASE_URL}/api/jobs/${jobId}/status?status=IN_PROGRESS`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
@@ -105,7 +105,7 @@ export function initJobs() {
         };
 
         try {
-            const res = await fetch(`${window.API_BASE_URL}/admin/jobs`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/admin/jobs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -3,9 +3,9 @@
  * Kezeli a hálózati kéréseket, mentéseket, felhő szinkronizációt.
  */
 
-// A baseUrl lekérdezése a környezetből vagy globális változóból,
-// hogy kompatibilis maradhasson az eddigi kóddal az átmeneti időszakban.
-const getBaseUrl = () => window.API_BASE_URL || 'http://localhost:8000';
+// A baseUrl lekérdezése: alapértelmezetten ugyanaz az origin,
+// Vite dev szerver proxyzza az /api hívásokat a backend felé.
+const getBaseUrl = () => window.API_BASE_URL || window.location.origin;
 const getToken = () => window.currentToken || localStorage.getItem('vbf_token');
 
 export const API = {
@@ -13,7 +13,7 @@ export const API = {
      * Bejelentkezés a szerverre
      */
     async login(username, password) {
-        const url = `${getBaseUrl()}/token`;
+        const url = `${getBaseUrl()}/api/login`;
         const formData = new URLSearchParams();
         formData.append('username', username);
         formData.append('password', password);
@@ -33,7 +33,7 @@ export const API = {
      * Mester Adatok (Ügyfelek, Felülvizsgálók) letöltése
      */
     async getMasterData() {
-        const res = await fetch(`${getBaseUrl()}/master-data`, {
+        const res = await fetch(`${getBaseUrl()}/api/master-data`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) return { customers: [], inspectors: [] };
@@ -46,7 +46,7 @@ export const API = {
     async saveReport(payload, reportId = null) {
         const isUpdate = !!reportId;
         const reqMethod = isUpdate ? 'PUT' : 'POST';
-        const endpoint = isUpdate ? `/reports/${reportId}` : '/reports';
+        const endpoint = isUpdate ? `/api/reports/${reportId}` : '/api/reports';
 
         const res = await fetch(`${getBaseUrl()}${endpoint}`, {
             method: reqMethod,
@@ -66,7 +66,7 @@ export const API = {
      * Jegyzőkönyvek listájának lekérése
      */
     async fetchReports() {
-        const res = await fetch(`${getBaseUrl()}/reports`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
@@ -78,7 +78,7 @@ export const API = {
      * Egy jegyzőkönyv lekérése ID alapján
      */
     async fetchReportById(reportId) {
-        const res = await fetch(`${getBaseUrl()}/reports/${reportId}`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports/${reportId}`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
@@ -90,7 +90,7 @@ export const API = {
      * Jegyzőkönyv törlése
      */
     async deleteReport(reportId) {
-        const res = await fetch(`${getBaseUrl()}/reports/${reportId}`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports/${reportId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
@@ -102,7 +102,7 @@ export const API = {
      * Word export generálása
      */
     async exportWord(reportId) {
-        const res = await fetch(`${getBaseUrl()}/reports/${reportId}/export/docx`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports/${reportId}/export/docx`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
@@ -114,7 +114,7 @@ export const API = {
      * PDF export generálása
      */
     async exportPdf(reportId) {
-        const res = await fetch(`${getBaseUrl()}/reports/${reportId}/export/pdf`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports/${reportId}/export/pdf`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
@@ -126,7 +126,7 @@ export const API = {
      * Email küldése a jegyzőkönyvvel
      */
     async sendEmail(reportId, emailAddress) {
-        const res = await fetch(`${getBaseUrl()}/reports/${reportId}/email`, {
+        const res = await fetch(`${getBaseUrl()}/api/reports/${reportId}/email`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${getToken()}`,
@@ -143,7 +143,7 @@ export const API = {
      * Dashboard statisztikák letöltése
      */
     async getAdminStats() {
-        const res = await fetch(`${getBaseUrl()}/admin/stats`, {
+        const res = await fetch(`${getBaseUrl()}/api/dashboard/stats`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         return res.json();

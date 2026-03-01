@@ -8,7 +8,10 @@
  *   2. Measurement tables (RCD, loop, insulation)
  * 
  * Symbols: IEC 60617 standard single-line style
- * 
+ *
+ * Mérési táblák: az áramkör nevét minden táblában .meas-circuit osztályú mező tartalmazza
+ * (Zs, Riso, RCD, Rpe). A helyszínfa struktúrája: sitetree.js fejléc dokumentáció.
+ *
  * Performance optimizations for 1000+ circuits:
  *   - Batch rendering (renderOnAddRemove = false)
  *   - Multi-page vertical layout for large sets
@@ -156,9 +159,9 @@ export function initAutoDiagram() {
                 }
             });
 
-            // RCD table
+            // RCD table (áramkör mező: .meas-circuit – közös konvenció minden táblánál)
             document.querySelectorAll('#table-rcd tbody tr').forEach(tr => {
-                const name = tr.querySelector('.meas-circ')?.value?.trim();
+                const name = tr.querySelector('.meas-circuit')?.value?.trim();
                 if (name) {
                     const existing = circuitMap.get(name) || { device: '', tables: [] };
                     if (!existing.tables.includes('RCD')) existing.tables.push('RCD');
@@ -200,7 +203,8 @@ export function initAutoDiagram() {
                 }
                 panelGroups.get(panelName).push({
                     name: circName,
-                    device: data.device || globalDev
+                    device: data.device || globalDev,
+                    tables: data.tables || []  // forrás: Zs, Riso, RCD, Rpe – duplikátum jelöléshez
                 });
             });
 
@@ -374,6 +378,11 @@ export function initAutoDiagram() {
                 this._truncate(circ.name, 12),
                 cx, loadY + 28, 8, 'center', C.LABEL_COLOR
             ));
+            // Forrás jelölés (Zs, Riso, RCD, Rpe) – melyik mérési táblából jött
+            if (circ.tables && circ.tables.length > 0) {
+                const srcLabel = circ.tables.join(' ');
+                this._addObj(this._text(srcLabel, cx, loadY + 42, 6, 'center', '#64748b'));
+            }
         },
 
         // ═══════════════════════════════════════

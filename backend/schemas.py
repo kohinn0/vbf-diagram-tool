@@ -23,6 +23,7 @@ class UserResponse(UserBase):
     is_active: bool
     role: str
     company_id: Optional[int] = None
+    company_name: Optional[str] = None  # kitöltve a backendben joinnal
     subscription_expires: Optional[datetime] = None
 
     class Config:
@@ -34,6 +35,26 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     company_id: Optional[int] = None
     subscription_expires: Optional[datetime] = None
+
+
+class PasswordChangeRequest(BaseModel):
+    """Jelszó módosítás: régi + új (bejelentkezett user)."""
+    current_password: str
+    new_password: str
+
+
+class ProfileUpdateRequest(BaseModel):
+    """Saját profil: csak email módosítható (bejelentkezett user)."""
+    email: Optional[str] = None
+
+
+class RequestPasswordResetRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 # --- Report Schemas ---
 class ReportBase(BaseModel):
@@ -62,6 +83,136 @@ class ReportResponse(ReportBase):
     class Config:
         from_attributes = True
 
+
+class ReportExportZipRequest(BaseModel):
+    report_ids: List[int]
+
+
+class ReportImportRequest(BaseModel):
+    title: str
+    report_type: str
+    client_data: Optional[Dict[str, Any]] = None
+    diagram_data: Optional[Dict[str, Any]] = None
+    diagram_image: Optional[str] = None
+    defects_data: Optional[List[Dict[str, Any]]] = None
+    measurements_data: Optional[Dict[str, Any]] = None  # dict formátum (rpe, loop, stb.)
+
+
+class ReportShareResponse(BaseModel):
+    share_url: str
+    token: str
+    expires_at: Optional[datetime] = None
+
+# --- Company (cégenkénti szűrés) ---
+class CompanyBase(BaseModel):
+    name: str
+
+
+class CompanyCreate(CompanyBase):
+    pass
+
+
+class CompanyUpdate(BaseModel):
+    """Super admin: csomag és limitek frissítése."""
+    name: Optional[str] = None
+    plan: Optional[str] = None
+    reports_per_month_limit: Optional[int] = None
+    max_users: Optional[int] = None
+
+
+class CompanyResponse(CompanyBase):
+    id: int
+    plan: Optional[str] = "FREE"
+    reports_per_month_limit: Optional[int] = None
+    max_users: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UsageResponse(BaseModel):
+    """SaaS: havi report és user limit kihasználtság (cégenként)."""
+    reports_this_month: int = 0
+    reports_limit: Optional[int] = None  # None = korlátlan
+    users_count: int = 0
+    users_limit: Optional[int] = None
+    plan: str = "FREE"
+
+
+# --- Előfizetési csomagok (admin szerkesztheti: ár, tartalom) ---
+class SubscriptionPlanResponse(BaseModel):
+    plan_key: str
+    display_name: str
+    price_monthly: Optional[int] = None   # HUF
+    price_yearly: Optional[int] = None
+    reports_per_month_limit: Optional[int] = None
+    max_users: Optional[int] = None
+    features: Optional[List[str]] = None
+    sort_order: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class SubscriptionPlanUpdate(BaseModel):
+    display_name: Optional[str] = None
+    price_monthly: Optional[int] = None
+    price_yearly: Optional[int] = None
+    reports_per_month_limit: Optional[int] = None
+    max_users: Optional[int] = None
+    features: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+
+
+# --- Utalásos megrendelés (nincs token vissza, csak üzenet) ---
+class BankTransferRequest(BaseModel):
+    email: str
+    customer_name: str
+    plan_type: str = "yearly"  # monthly | yearly
+    buyer_address: str  # Kötelező számlázási cím
+    buyer_zip: Optional[str] = None
+    buyer_city: Optional[str] = None
+    buyer_tax_number: Optional[str] = None
+
+
+class BankTransferResponse(BaseModel):
+    message: str  # Csak üzenet, semmilyen token vagy hozzáférés adat
+
+
+class PendingOrderResponse(BaseModel):
+    id: int
+    email: str
+    customer_name: str
+    plan_type: str
+    amount_huf: int
+    status: str
+    invoice_number: Optional[str] = None
+    company_id: Optional[int] = None
+    created_at: datetime
+    paid_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PaymentLogResponse(BaseModel):
+    id: int
+    email: str
+    customer_name: Optional[str] = None
+    plan_type: str
+    amount_huf: int
+    payment_method: str
+    stripe_session_id: Optional[str] = None
+    pending_order_id: Optional[int] = None
+    company_id: Optional[int] = None
+    status: str
+    created_at: datetime
+    refunded_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # --- Company Settings Schemas ---
 class CompanySettingsBase(BaseModel):
     company_name: Optional[str] = None
@@ -69,6 +220,8 @@ class CompanySettingsBase(BaseModel):
     address: Optional[str] = None
     bank_account: Optional[str] = None
     logo_path: Optional[str] = None
+    signature_path: Optional[str] = None
+    pfx_path: Optional[str] = None
 
 class CompanySettingsCreate(CompanySettingsBase):
     pass
@@ -78,7 +231,8 @@ class CompanySettingsUpdate(CompanySettingsBase):
 
 class CompanySettingsResponse(CompanySettingsBase):
     id: int
-    owner_id: int
+    owner_id: Optional[int] = None
+    company_id: Optional[int] = None
 
     class Config:
         from_attributes = True

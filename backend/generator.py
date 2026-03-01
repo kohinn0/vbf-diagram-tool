@@ -15,13 +15,84 @@ import hashlib
 import json
 import qrcode
 from datetime import datetime
+from typing import Optional
 
-def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
+# ─── Premium dokumentum stílusok ───
+def _apply_premium_styles(doc, section, header_para):
+    """Margók, alap betűtípus, címsorok és fejléc megjelenése."""
+    # Margók: széles, professzionális
+    section.left_margin = Cm(1.8)
+    section.right_margin = Cm(1.8)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    # Normal: Calibri 11pt, térköz után
+    try:
+        normal = doc.styles['Normal']
+        normal.font.name = 'Calibri'
+        normal.font.size = Pt(11)
+        normal.paragraph_format.space_after = Pt(6)
+        normal.paragraph_format.line_spacing = 1.15
+    except Exception:
+        pass
+    # Heading 1: szakaszcímek
+    try:
+        h1 = doc.styles['Heading 1']
+        h1.font.name = 'Calibri'
+        h1.font.size = Pt(14)
+        h1.font.bold = True
+        h1.font.color.rgb = RGBColor(31, 41, 55)
+        h1.paragraph_format.space_before = Pt(16)
+        h1.paragraph_format.space_after = Pt(8)
+    except Exception:
+        pass
+    # Heading 2: alszakaszok
+    try:
+        h2 = doc.styles['Heading 2']
+        h2.font.name = 'Calibri'
+        h2.font.size = Pt(12)
+        h2.font.bold = True
+        h2.font.color.rgb = RGBColor(55, 65, 81)
+        h2.paragraph_format.space_before = Pt(10)
+        h2.paragraph_format.space_after = Pt(4)
+    except Exception:
+        pass
+    # Fejléc: kisebb, szürke
+    for run in header_para.runs:
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(107, 114, 128)
+        run.font.name = 'Calibri'
+
+
+def _style_table_header(table):
+    """Tábla fejlécsora: szürke háttér, félkövér szöveg."""
+    try:
+        row0 = table.rows[0]
+        for cell in row0.cells:
+            tc = cell._tc
+            tcPr = tc.get_or_add_tcPr()
+            shd = OxmlElement('w:shd')
+            shd.set(qn('w:fill'), 'E2E8F0')
+            shd.set(qn('w:val'), 'clear')
+            tcPr.append(shd)
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.bold = True
+                    run.font.size = Pt(10)
+                    run.font.name = 'Calibri'
+    except Exception:
+        pass
+
+
+def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = None) -> io.BytesIO:
     doc = Document()
     
     settings = None
     if db and report.owner_id:
-        settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == report.owner_id).first()
+        owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+        if owner and owner.company_id:
+            settings = db.query(database.CompanySettings).filter(database.CompanySettings.company_id == owner.company_id).first()
+        if not settings:
+            settings = db.query(database.CompanySettings).filter(database.CompanySettings.owner_id == report.owner_id).first()
     
     # Header
     rep_type = report.report_type.upper() if report.report_type else "VBF"
@@ -42,7 +113,8 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     company_name = settings.company_name if settings and settings.company_name else "VBF Program"
     header_para.text = f"{company_name} | Azonosító: {rep_id_str}"
     header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    
+    _apply_premium_styles(doc, section, header_para)
+
     # Insert Logo at the top if exists
     if settings and settings.logo_path and os.path.exists(settings.logo_path):
         import io as custom_io
@@ -75,12 +147,87 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
         title_text = "EPH Kialakítás és Bekötés Felülvizsgálati Jegyzőkönyv"
     else:
         title_text = f"Villamos Biztonsági Felülvizsgálati Jegyzőkönyv"
-        
-    title = doc.add_heading(title_text, 0)
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    # Címblokk – premium megjelenés
+    title_para = doc.add_paragraph()
+    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_run = title_para.add_run(title_text)
+    title_run.bold = True
+    title_run.font.size = Pt(18)
+    title_run.font.name = 'Calibri'
+    title_run.font.color.rgb = RGBColor(15, 23, 42)
+    title_para.paragraph_format.space_before = Pt(6)
+    title_para.paragraph_format.space_after = Pt(4)
+
+    subtitle_para = doc.add_paragraph()
+    subtitle_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    sub_run = subtitle_para.add_run("Hivatalos Minősítő Irat")
+    sub_run.font.size = Pt(11)
+    sub_run.font.name = 'Calibri'
+    sub_run.font.color.rgb = RGBColor(100, 116, 139)
+    sub_run.italic = True
+    subtitle_para.paragraph_format.space_after = Pt(12)
+
+    # ── Összefoglaló kártya (1 oldal) ──
+    c_data = report.client_data or {}
+    d_data = report.defects_data or []
+    critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 'tűzveszély', 'védővezető hiány', 'beégett', 'érinthető feszültség']
+    serious_kw = ['szigetelés', 'rcd nem', 'ávk nem', 'fi-relé nem', 'hurokellenállás', 'túlterhelés', 'zárlat', 'hurokimpedancia', 'nem old ki']
+    def _is_critical(desc):
+        return any(kw in desc for kw in critical_kw)
+    def _is_serious(desc):
+        return any(kw in desc for kw in serious_kw)
+    cnt_a = sum(1 for d in d_data if _is_critical((d.get('description') or '').lower()))
+    cnt_b = sum(1 for d in d_data if _is_serious((d.get('description') or '').lower()) and not _is_critical((d.get('description') or '').lower()))
+    r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
     
-    subtitle = doc.add_heading("Hivatalos Minősítő Irat", level=1)
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    card_p = doc.add_paragraph()
+    card_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    card_run = card_p.add_run("ÖSSZEFOGLALÓ KÁRTYA")
+    card_run.bold = True
+    card_run.font.size = Pt(12)
+    card_run.font.color.rgb = RGBColor(55, 65, 81)
+    card_p.paragraph_format.space_after = Pt(8)
+    
+    card_table = doc.add_table(rows=6, cols=2)
+    card_table.style = 'Table Grid'
+    _style_table_header(card_table)
+    rows = [
+        ('Ügyfél / Megrendelő', c_data.get('customerName', 'N/A')),
+        ('Vizsgálat helyszíne', c_data.get('siteAddress', 'N/A')),
+        ('Vizsgálat dátuma', c_data.get('inspectionDate', report.created_at.strftime('%Y-%m-%d') if report.created_at else 'N/A')),
+        ('Következő vizsgálat', c_data.get('nextInspectionDate', 'N/A')),
+        ('Eredmény', r_val),
+        ('Kritikus (A) / Súlyos (B) hibák', f'{cnt_a} / {cnt_b} db'),
+    ]
+    for i, (label, val) in enumerate(rows):
+        card_table.rows[i].cells[0].text = label
+        card_table.rows[i].cells[1].text = str(val)
+    doc.add_paragraph()
+    
+    # ── QR-kód a borítólapra (megosztási / PDF link) ──
+    if share_url:
+        try:
+            qr_cover = qrcode.QRCode(version=1, box_size=5, border=2, error_correction=qrcode.constants.ERROR_CORRECT_M)
+            qr_cover.add_data(share_url)
+            qr_cover.make(fit=True)
+            qr_cover_img = qr_cover.make_image(fill_color="black", back_color="white")
+            qr_cover_buf = io.BytesIO()
+            qr_cover_img.save(qr_cover_buf, format='PNG')
+            qr_cover_buf.seek(0)
+            qr_cover_para = doc.add_paragraph()
+            qr_cover_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            qr_cover_para.add_run().add_picture(qr_cover_buf, width=Cm(3.5))
+            qr_label_para = doc.add_paragraph("Megosztás / Letöltés")
+            qr_label_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for r in qr_label_para.runs:
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(107, 114, 128)
+        except Exception as e:
+            doc.add_paragraph(f"[QR kód: {str(e)}]")
+    
+    doc.add_paragraph()
+    subtitle_para.paragraph_format.space_after = Pt(6)
     
     # ── Tartalomjegyzék (TOC) ──
     doc.add_heading('Tartalomjegyzék', level=1)
@@ -151,32 +298,49 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
     p_intro = doc.add_paragraph(preamble_text)
     p_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-    # Client Data
+    # Client Data – Multi-vizsgálat: több helyszín egy jegyzőkönyvben
     doc.add_heading('2. Alapadatok és Helyszín', level=1)
     c_data = report.client_data or {}
-    
-    p = doc.add_paragraph()
-    p.add_run('Megrendelő / Üzemeltető: ').bold = True
-    p.add_run(c_data.get('customerName', 'N/A') + '\n')
-    
-    p.add_run('Vizsgálat helyszíne: ').bold = True
-    p.add_run(c_data.get('siteAddress', 'N/A') + '\n')
-    
-    p.add_run('Helyrajzi Szám (HRSZ) / Azonosító: ').bold = True
-    p.add_run(c_data.get('siteHrsz', 'N/A') + '\n')
-    
-    p.add_run('Épület rendeltetése (OTSZ): ').bold = True
-    building_purpose = c_data.get('buildingPurpose', 'N/A')
-    building_otsz = c_data.get('buildingOtsz', '')
-    otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
-    otsz_display = f" [{otsz_names.get(building_otsz, building_otsz)}]" if building_otsz else ''
-    p.add_run(f"{building_purpose}{otsz_display}" + '\n')
-    
-    # Következő kötelező felülvizsgálat dátuma (OTSZ alapján)
-    next_insp = c_data.get('nextInspectionDate', '')
-    if next_insp:
-        p.add_run('Következő kötelező felülvizsgálat (OTSZ): ').bold = True
-        p.add_run(next_insp + '\n')
+    sites = c_data.get('sites') or []
+    if isinstance(sites, list) and len(sites) > 1:
+        for i, site in enumerate(sites, 1):
+            if not isinstance(site, dict):
+                continue
+            doc.add_heading(f'2.{i} Helyszín: {site.get("name", site.get("siteName", f"Helyszín {i}"))}', level=2)
+            p = doc.add_paragraph()
+            p.add_run('Megrendelő / Üzemeltető: ').bold = True
+            p.add_run(site.get('customerName', site.get('customer', c_data.get('customerName', 'N/A'))) + '\n')
+            p.add_run('Vizsgálat helyszíne: ').bold = True
+            p.add_run(site.get('siteAddress', site.get('address', 'N/A')) + '\n')
+            p.add_run('Helyrajzi Szám (HRSZ): ').bold = True
+            p.add_run(site.get('siteHrsz', site.get('hrsz', 'N/A')) + '\n')
+            b_purpose = site.get('buildingPurpose', site.get('purpose', 'N/A'))
+            b_otsz = site.get('buildingOtsz', site.get('otsz', ''))
+            otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
+            otsz_disp = f" [{otsz_names.get(b_otsz, b_otsz)}]" if b_otsz else ''
+            p.add_run(f'Épület rendeltetése (OTSZ): {b_purpose}{otsz_disp}\n')
+            if site.get('nextInspectionDate'):
+                p.add_run('Következő vizsgálat: ').bold = True
+                p.add_run(site.get('nextInspectionDate') + '\n')
+    else:
+        # Egyetlen helyszín (visszafelé kompatibilis)
+        p = doc.add_paragraph()
+        p.add_run('Megrendelő / Üzemeltető: ').bold = True
+        p.add_run(c_data.get('customerName', 'N/A') + '\n')
+        p.add_run('Vizsgálat helyszíne: ').bold = True
+        p.add_run(c_data.get('siteAddress', 'N/A') + '\n')
+        p.add_run('Helyrajzi Szám (HRSZ) / Azonosító: ').bold = True
+        p.add_run(c_data.get('siteHrsz', 'N/A') + '\n')
+        p.add_run('Épület rendeltetése (OTSZ): ').bold = True
+        building_purpose = c_data.get('buildingPurpose', 'N/A')
+        building_otsz = c_data.get('buildingOtsz', '')
+        otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
+        otsz_display = f" [{otsz_names.get(building_otsz, building_otsz)}]" if building_otsz else ''
+        p.add_run(f"{building_purpose}{otsz_display}" + '\n')
+        next_insp = c_data.get('nextInspectionDate', '')
+        if next_insp:
+            p.add_run('Következő kötelező felülvizsgálat (OTSZ): ').bold = True
+            p.add_run(next_insp + '\n')
     
     # Inspector Data
     doc.add_heading('3. Felülvizsgáló és Műszerek', level=1)
@@ -200,6 +364,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
         doc.add_heading(f'{section_num}. Szemrevételezéses Ellenőrzések (6.4.2 MSZ HD 60364-6)', level=1)
         v_table = doc.add_table(rows=1, cols=2)
         v_table.style = 'Table Grid'
+        _style_table_header(v_table)
         v_hdr = v_table.rows[0].cells
         v_hdr[0].text = 'Ellenőrzött pont'
         v_hdr[1].text = 'Minősítés'
@@ -250,8 +415,12 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
             print(f"Error embedding diagram: {e}")
             doc.add_paragraph(f"[Hiba a rajz beillesztésekor: {str(e)}]")
 
-    # EPH Specific Data
-    if rep_type == "EPH":
+    # EPH Specific Data — jelenjen meg VBF jegyzőkönyvekben is, ha ki van töltve
+    has_eph_fields = any(
+        c_data.get(key)
+        for key in ["ephGasRequired", "ephGasMeter", "ephPenSep", "ephEarthMethod", "ephRaValue", "ephConductor"]
+    )
+    if rep_type == "EPH" or has_eph_fields:
         doc.add_heading(f'{section_num}. EPH és Földelés Specifikus Adatok', level=1)
         p3 = doc.add_paragraph()
         p3.add_run('Gázszolgáltató (Gázmérő) bevonása szükséges: ').bold = True
@@ -289,6 +458,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} Védővezető folytonosság (Rpe)', level=2)
                 table = doc.add_table(rows=1, cols=4)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Pont'
                 hdr[1].text = 'Mérés Helye'
@@ -309,6 +479,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} Szigetelési ellenállás (500V DC)', level=2)
                 table = doc.add_table(rows=1, cols=5)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Áramkör'
                 hdr[1].text = 'Riso L-N [MΩ]'
@@ -331,6 +502,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} Hurokellenállás (Zs) és Hibavédelem', level=2)
                 table = doc.add_table(rows=1, cols=5)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Áramkör / Pont'
                 hdr[1].text = 'Kikapcsoló szerv'
@@ -353,6 +525,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} FI-relé (ÁVK) részletes vizsgálat', level=2)
                 table = doc.add_table(rows=1, cols=9)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Áramkör'
                 hdr[1].text = 'Típus'
@@ -383,6 +556,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} Kéziszerszámok vizsgálata', level=2)
                 table = doc.add_table(rows=1, cols=4)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Megnevezés'
                 hdr[1].text = 'Azonosító'
@@ -403,6 +577,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} SELV / PELV / Elválasztás', level=2)
                 table = doc.add_table(rows=1, cols=6)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Hely / Áttétel'
                 hdr[1].text = 'V [V]'
@@ -427,6 +602,7 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
                 doc.add_heading(f'{section_num}.{sub_num} EPH Bekötések Folytonossága', level=2)
                 table = doc.add_table(rows=1, cols=7)
                 table.style = 'Table Grid'
+                _style_table_header(table)
                 hdr = table.rows[0].cells
                 hdr[0].text = 'Sorszám'
                 hdr[1].text = 'Bekötött Elem'
@@ -539,7 +715,31 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
             
             dp.add_run("Leírás és Javaslat:\n").bold = True
             dp.add_run(defect.get('description', 'N/A') + "\n\n")
-            
+
+            # Ajánlott javítási szöveg (MSZ alapján) – automatikus
+            repair_text = defect.get('repairSuggestion', '')
+            if not repair_text or not str(repair_text).strip():
+                if any(kw in desc_lower for kw in ['védővezető', 'rpe', 'folytonosság', 'pe hiány']):
+                    repair_text = 'A védővezető folytonosságának helyreállítása szükséges. Ellenőrizze a csatlakozások megfelelőségét, a PE vezeték épségét. MSZ HD 60364-6:2017 §61.3.2; VMBSZ 40/2017. (XII.4.) NGM rendelet.'
+                elif any(kw in desc_lower for kw in ['szigetelés', 'riso', 'insulation']):
+                    repair_text = 'Szigetelési ellenállás mérés és vizuális ellenőrzés. Serült vezeték cseréje, nedves/károsodott részek javítása. MSZ HD 60364-6:2017 §61.3.3; TvMI 7.7:2026.02.01.'
+                elif any(kw in desc_lower for kw in ['hurok', 'hurokellenállás', 'hurokimpedancia', 'zs']):
+                    repair_text = 'A hurokimpedancia csökkentése: hibavédelmi berendezés csere, vezetékkeresztmetszet növelés, csatlakozások ellenőrzése. MSZ HD 60364-4-41 §411.4.'
+                elif any(kw in desc_lower for kw in ['rcd', 'ávk', 'fi-relé', 'kioldás', 'nem old']):
+                    repair_text = 'FI-relé (ÁVK) cseréje vagy javítása. Ellenőrizze a bekötést és a kioldási időket. MSZ HD 60364-6:2017 §61.3.7; MSZ EN 61008-1.'
+                elif any(kw in desc_lower for kw in ['tűz', 'égett', 'ív', 'beégett']):
+                    repair_text = 'A károsodott berendezés azonnali cseréje. Tűzvédelmi szabályok betartása (OTSZ 54/2014. BM rendelet).'
+                elif any(kw in desc_lower for kw in ['dobozfedél', 'fedél hiány', 'burkolat']):
+                    repair_text = 'Hiányzó fedél vagy burkolat pótlása. MSZ HD 60364-6 szerinti szemrevételezés.'
+                elif any(kw in desc_lower for kw in ['csatlakozó laza', 'kötés laza', 'sorkapocs']):
+                    repair_text = 'Csatlakozások meghúzása, megfelelő szorítónyomat. Ellenőrizze a hőnyomokat.'
+                elif any(kw in desc_lower for kw in ['felirat hiány', 'jelölés hiány']):
+                    repair_text = 'Azonosító feliratok, jelölők kialakítása. MSZ HD 60364-6 azonosíthatósági követelmények.'
+                else:
+                    repair_text = 'A hibához illeszkedő szakszerű javítás végrehajtása. MSZ HD 60364-6:2017 és VMBSZ megfelelés.'
+            dp.add_run("Javasolt javítási lépések (MSZ alapján): ").bold = True
+            dp.add_run(repair_text + "\n\n")
+
             dp.add_run("Pontos Helyszín: ").bold = True
             dp.add_run(defect.get('location', 'N/A') + "\n")
             
@@ -734,9 +934,23 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
         next_run.font.color.rgb = RGBColor(255, 80, 0)
         next_p.add_run(f"\n(OTSZ osztály: {otsz_class} → {years} évente, 54/2014. BM rendelet)")
     
-    # Signature placeholder
+    # Aláírás: feltöltött kép (ha van), különben szöveges placeholder
     sig = doc.add_paragraph("\n\n..................................................\nAláírás és Bélyegző")
     sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    if settings and getattr(settings, 'signature_path', None) and os.path.exists(settings.signature_path):
+        try:
+            from PIL import Image as PilImage
+            import io as _io
+            sig_img = PilImage.open(settings.signature_path)
+            sig_buf = _io.BytesIO()
+            sig_img.save(sig_buf, format='PNG')
+            sig_buf.seek(0)
+            sig_para = doc.add_paragraph()
+            sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            sig_run = sig_para.add_run()
+            sig_run.add_picture(sig_buf, width=Cm(4.5))
+        except Exception as e:
+            print(f"Aláírás kép beillesztési hiba: {e}")
     
     # --- Függelék: Villanyszerelői Javítási Nyilatkozat (Opcionális panel) ---
     if "NEM MEGFELELŐ" in r_val or "FELTÉTELESEN" in r_val:
@@ -760,6 +974,19 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
         
         j_sig = doc.add_paragraph("..................................................\nJavítást Végző Villanyszerelő aláírása")
         j_sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        if settings and getattr(settings, 'signature_path', None) and os.path.exists(settings.signature_path):
+            try:
+                from PIL import Image as PilImage
+                import io as _io
+                sig_img = PilImage.open(settings.signature_path)
+                sig_buf = _io.BytesIO()
+                sig_img.save(sig_buf, format='PNG')
+                sig_buf.seek(0)
+                j_sig_para = doc.add_paragraph()
+                j_sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                j_sig_para.add_run().add_picture(sig_buf, width=Cm(4.5))
+            except Exception as e:
+                print(f"Javítás aláírás kép beillesztési hiba: {e}")
 
     stream = io.BytesIO()
     doc.save(stream)
@@ -769,46 +996,61 @@ def generate_docx_stream(report: Report, db=None) -> io.BytesIO:
 import tempfile
 import os
 
-def generate_signed_pdf_stream(report: Report, db=None, pfx_path: str = "signer.pfx", pfx_pass: bytes = b'password') -> io.BytesIO:
-    # Generate the standard DOCX
-    docx_stream = generate_docx_stream(report, db)
-    
+def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] = None, pfx_pass: Optional[bytes] = None, share_url: Optional[str] = None) -> io.BytesIO:
+    # PFX: először megadott path/jelszó, majd céges beállítások, végül alapértelmezett
+    if pfx_path is None and db and report.owner_id:
+        owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+        if owner and getattr(owner, "company_id", None):
+            settings = db.query(database.CompanySettings).filter(
+                database.CompanySettings.company_id == owner.company_id
+            ).first()
+        else:
+            settings = db.query(database.CompanySettings).filter(
+                database.CompanySettings.owner_id == report.owner_id
+            ).first()
+        if settings and getattr(settings, "pfx_path", None) and os.path.exists(settings.pfx_path):
+            pfx_path = settings.pfx_path
+    if pfx_path is None:
+        pfx_path = "signer.pfx"
+    if pfx_pass is None:
+        import os as _os
+        pfx_pass = (_os.environ.get("VBF_PFX_PASSWORD") or "").encode("utf-8") or b"password"
+
+    # Generate the standard DOCX (share_url → QR borítólapra)
+    docx_stream = generate_docx_stream(report, db, share_url=share_url)
+
     with tempfile.TemporaryDirectory() as td:
         docx_path = os.path.join(td, "temp.docx")
         pdf_path = os.path.join(td, "temp.pdf")
         with open(docx_path, "wb") as f:
             f.write(docx_stream.getvalue())
-            
+
         try:
             import subprocess
             import sys
-            
+
             if sys.platform == "win32":
-                # Check if docx2pdf works
                 from docx2pdf import convert
                 convert(docx_path, pdf_path)
             else:
-                # Use LibreOffice Headless inside Docker
                 subprocess.run(
                     ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", td, docx_path],
                     check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
-            
+
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
-                
+
             from pyhanko.sign import signers
             from pyhanko.pdf_utils.reader import PdfFileReader
             from pyhanko.pdf_utils.writer import copy_into_new_writer
             import io as pyhanko_io
-            
+
             if not os.path.exists(pfx_path):
-                # Return unsigned PDF if cert is missing
                 pdf_out = pyhanko_io.BytesIO(pdf_bytes)
                 pdf_out.seek(0)
                 return pdf_out
 
-            # Load the PKCS12 / PFX certificate
             signer = signers.SimpleSigner.load_pkcs12(pfx_path, pfx_pass)
             
             r = PdfFileReader(pyhanko_io.BytesIO(pdf_bytes))

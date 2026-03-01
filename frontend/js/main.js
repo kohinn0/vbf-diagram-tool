@@ -17,18 +17,58 @@ import { initMeasurements } from './ui/measurements.js';
 import { initDashboard } from './ui/dashboard.js';
 import { initSiteTree } from './ui/sitetree.js';
 import { initAutoDiagram } from './ui/autodiagram.js';
+import { initTour } from './ui/tour.js';
+import { initToast } from './ui/toast.js';
 
 // Más fájlok számára elérhető globális objektumok (a refaktorálás ezen fázisában még szükség lehet rá)
-window.API_BASE_URL = 'http://localhost:8000';
+// Ha üresen hagyjuk, az API modul window.location.origin-t fog használni (Vite proxy).
+window.API_BASE_URL = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("🚀 VBF App Inicializálása (Moduláris)");
 
+    // Toast (korán, hogy showToast mindenhol elérhető legyen)
+    initToast();
     // UI Komponensek
     initData();
     initSanitize();
     initThemeToggle();
     initTabs();
+    (function initReportActionsDropdown() {
+        const trigger = document.getElementById('reportActionsTrigger');
+        const wrapper = document.querySelector('.report-actions-wrapper');
+        if (!trigger || !wrapper) return;
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrapper.classList.toggle('report-actions-open');
+            trigger.setAttribute('aria-expanded', wrapper.classList.contains('report-actions-open'));
+        });
+        document.addEventListener('click', () => {
+            wrapper.classList.remove('report-actions-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
+    })();
+    (function initHelpDropdown() {
+        const trigger = document.getElementById('navHelpTrigger');
+        const wrapper = document.querySelector('.nav-help-dropdown');
+        const btnStartTour = document.getElementById('btnStartTour');
+        if (!trigger || !wrapper) return;
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrapper.classList.toggle('is-open');
+            trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
+        });
+        document.addEventListener('click', () => {
+            wrapper.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
+        if (btnStartTour) {
+            btnStartTour.addEventListener('click', () => {
+                wrapper.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+            });
+        }
+    })();
     initDefects();
     initCanvas();
     initPadfx();
@@ -41,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
     initSiteTree();
     initAutoDiagram();
+    initTour();
     const auth = initAuth();
     window.updateAuthUI = auth.updateAuthUI;
 

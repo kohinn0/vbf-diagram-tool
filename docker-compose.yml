@@ -5,7 +5,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -15,7 +15,7 @@ services:
     build:
       context: ./backend
     ports:
-      - "8001:8000"
+      - "8002:8000"
     volumes:
       # Named volume for persistent SQLite database & uploaded files
       # Data survives container restarts, rebuilds, and docker-compose down

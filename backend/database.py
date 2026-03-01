@@ -7,8 +7,10 @@ os.makedirs("data", exist_ok=True)
 
 # 🌐 Database configuration
 # Set DATABASE_URL env var for PostgreSQL: postgresql://user:password@localhost:5432/dbname
-# Otherwise it falls back to a local SQLite file.
+# TESTING=1 (pytest) → in-memory SQLite. Otherwise fall back to a local SQLite file.
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
+if os.environ.get("TESTING") == "1" and not SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 if not SQLALCHEMY_DATABASE_URL:
     os.makedirs("data", exist_ok=True)
@@ -36,6 +38,39 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+
+# Csomag alapértelmezett limitek (ha nincs subscription_plans rekord)
+PLAN_DEFAULTS = {
+    "FREE": {"reports_per_month": 5, "max_users": 2},
+    "PRO": {"reports_per_month": 50, "max_users": 10},
+    "ENTERPRISE": {"reports_per_month": None, "max_users": None},
+}
+
+
+class SubscriptionPlan(Base):
+    """Admin által szerkeszthető csomag: ár, limitek, tartalom (hozzáférések)."""
+    __tablename__ = "subscription_plans"
+    plan_key = Column(String(32), primary_key=True)  # FREE, PRO, ENTERPRISE
+    display_name = Column(String(128), nullable=False)
+    price_monthly = Column(Integer, nullable=True)   # HUF, null = ingyenes / egyedi
+    price_yearly = Column(Integer, nullable=True)    # HUF
+    reports_per_month_limit = Column(Integer, nullable=True)  # null = korlátlan
+    max_users = Column(Integer, nullable=True)
+    features = Column(JSON, nullable=True)           # ["PDF export", "Email küldés", ...]
+    sort_order = Column(Integer, default=0)
+
+
+class Company(Base):
+    """Cég: SUPER_ADMIN látja mindet, COMPANY_ADMIN csak a saját cégét. SaaS: plan + limitek."""
+    __tablename__ = "companies"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True, nullable=False)
+    plan = Column(String, default="FREE", nullable=False)  # FREE | PRO | ENTERPRISE
+    reports_per_month_limit = Column(Integer, nullable=True)  # null = korlátlan
+    max_users = Column(Integer, nullable=True)  # null = korlátlan
+    users = relationship("User", back_populates="company")
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -43,9 +78,10 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    role = Column(String, default="TECH") # ADMIN or TECH
-    email = Column(String, nullable=True) # For SMTP job notifications
-    company_id = Column(Integer, nullable=True) # For group work
+    role = Column(String, default="TECH")  # SUPER_ADMIN | ADMIN | COMPANY_ADMIN | TECH
+    email = Column(String, nullable=True)  # For SMTP job notifications
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+    company = relationship("Company", back_populates="users")
     subscription_expires = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True) # GDPR soft delete
     report_limit = Column(Integer, default=-1) # -1 for unlimited, else monthly limit
@@ -96,8 +132,11 @@ class CompanySettings(Base):
     tax_number = Column(String, nullable=True)
     address = Column(String, nullable=True)
     bank_account = Column(String, nullable=True)
-    logo_path = Column(String, nullable=True) # relative path to logo
-    owner_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    logo_path = Column(String, nullable=True)  # relative path to logo
+    signature_path = Column(String, nullable=True)  # aláírás kép (díszítés DOCX-ben)
+    pfx_path = Column(String, nullable=True)  # hitelesítő tanúsítvány .pfx/.p12 (PDF aláíráshoz)
+    owner_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True)  # legacy: super admin saját
+    company_id = Column(Integer, ForeignKey("companies.id"), unique=True, nullable=True)  # céghez kötött
     owner = relationship("User", backref="company_settings")
 
 class Inspector(Base):
@@ -134,9 +173,11 @@ class SiteNode(Base):
     name = Column(String)
     device = Column(String, nullable=True) # for panels
     collapsed = Column(Boolean, default=False)
-    
+
+    # ORM relationships
     report = relationship("Report", backref="nodes")
-    children = relationship("SiteNode", backref=relationship("SiteNode", remote_side=[id]))
+    # Self-referential parent/children kapcsolat helyesen definiálva
+    parent = relationship("SiteNode", remote_side=[id], backref="children")
 
 class RpeMeasurement(Base):
     __tablename__ = "meas_rpe"
@@ -181,4 +222,200 @@ class InsulationMeasurement(Base):
     npe = Column(String, nullable=True)
     pass_status = Column(String, default="Igen")
 
+
+class AuditLog(Base):
+    """Audit napló: bejelentkezés, sikertelen kísérlet, regisztráció, fontos műveletek."""
+    __tablename__ = "audit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String, index=True)  # login_ok, login_fail, register, delete_account, report_create, ...
+    detail = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PendingOrder(Base):
+    """Utalásos megrendelés: számla készül, hozzáférés csak jóváhagyás után."""
+    __tablename__ = "pending_orders"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, index=True, nullable=False)
+    customer_name = Column(String, nullable=False)
+    plan_type = Column(String, nullable=False)  # monthly | yearly
+    amount_huf = Column(Integer, nullable=False)
+    status = Column(String, default="PENDING", nullable=False)  # PENDING | PAID | REJECTED
+    buyer_zip = Column(String, nullable=True)
+    buyer_city = Column(String, nullable=True)
+    buyer_address = Column(String, nullable=True)
+    buyer_tax_number = Column(String, nullable=True)
+    invoice_number = Column(String, nullable=True)  # szamlazz.hu válaszból
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)  # PAID után
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+
+class ReportShareToken(Base):
+    """Jegyzőkönyv megosztás: read-only link token alapján."""
+    __tablename__ = "report_share_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=True)  # None = lejárhatatlan
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PasswordResetToken(Base):
+    """Jelszó-visszaállító link: token hash, user_id, lejárat."""
+    __tablename__ = "password_reset_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token_hash = Column(String(64), nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PaymentLog(Base):
+    """Vásárlási előzmények: Stripe és utalás egy helyen (admin lista, refund)."""
+    __tablename__ = "payment_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, index=True, nullable=False)
+    customer_name = Column(String, nullable=True)
+    plan_type = Column(String, nullable=False)  # monthly | yearly
+    amount_huf = Column(Integer, nullable=False)
+    payment_method = Column(String, nullable=False)  # stripe | bank_transfer
+    stripe_session_id = Column(String, nullable=True)  # refundhoz
+    pending_order_id = Column(Integer, ForeignKey("pending_orders.id"), nullable=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+    status = Column(String, default="completed", nullable=False)  # completed | refunded
+    created_at = Column(DateTime, default=datetime.utcnow)
+    refunded_at = Column(DateTime, nullable=True)
+
 Base.metadata.create_all(bind=engine)
+
+# Migráció: company_settings.company_id (ha még nincs)
+if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
+    with engine.connect() as conn:
+        try:
+            r = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            cols = [row[1] for row in r.fetchall()]
+            if "company_id" not in cols:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN company_id INTEGER"))
+                conn.commit()
+            r2 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            cols2 = [row[1] for row in r2.fetchall()]
+            if "signature_path" not in cols2:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN signature_path VARCHAR"))
+                conn.commit()
+            r3 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            cols3 = [row[1] for row in r3.fetchall()]
+            if "pfx_path" not in cols3:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN pfx_path VARCHAR"))
+                conn.commit()
+            # SaaS: companies plan + limits
+            r4 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(companies)"))
+            cols4 = [row[1] for row in r4.fetchall()]
+            if "plan" not in cols4:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN plan VARCHAR DEFAULT 'FREE'"))
+                conn.commit()
+            if "reports_per_month_limit" not in cols4:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN reports_per_month_limit INTEGER"))
+                conn.commit()
+            if "max_users" not in cols4:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN max_users INTEGER"))
+                conn.commit()
+            # payment_logs tábla (ha még nincs)
+            try:
+                r5 = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='payment_logs'"))
+                if r5.fetchone() is None:
+                    conn.execute(__import__("sqlalchemy").text("""
+                        CREATE TABLE payment_logs (
+                            id INTEGER NOT NULL PRIMARY KEY,
+                            email VARCHAR NOT NULL,
+                            customer_name VARCHAR,
+                            plan_type VARCHAR NOT NULL,
+                            amount_huf INTEGER NOT NULL,
+                            payment_method VARCHAR NOT NULL,
+                            stripe_session_id VARCHAR,
+                            pending_order_id INTEGER,
+                            company_id INTEGER,
+                            status VARCHAR NOT NULL DEFAULT 'completed',
+                            created_at DATETIME,
+                            refunded_at DATETIME,
+                            FOREIGN KEY(pending_order_id) REFERENCES pending_orders(id),
+                            FOREIGN KEY(company_id) REFERENCES companies(id)
+                        )
+                    """))
+                    conn.commit()
+            except Exception:
+                pass
+            # password_reset_tokens tábla (elfelejtett jelszó)
+            try:
+                r6 = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='password_reset_tokens'"))
+                if r6.fetchone() is None:
+                    conn.execute(__import__("sqlalchemy").text("""
+                        CREATE TABLE password_reset_tokens (
+                            id INTEGER NOT NULL PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            token_hash VARCHAR(64) NOT NULL,
+                            expires_at DATETIME NOT NULL,
+                            created_at DATETIME,
+                            FOREIGN KEY(user_id) REFERENCES users(id)
+                        )
+                    """))
+                    conn.execute(__import__("sqlalchemy").text("CREATE INDEX ix_password_reset_tokens_token_hash ON password_reset_tokens (token_hash)"))
+                    conn.commit()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+# subscription_plans tábla: create_all létrehozza; seed ha üres
+def _seed_subscription_plans():
+    try:
+        db = SessionLocal()
+        if db.query(SubscriptionPlan).count() == 0:
+            for i, (key, defaults) in enumerate([
+                ("FREE", {"display_name": "Ingyenes", "reports": 5, "users": 2, "features": ["5 jegyzőkönyv/hó", "2 felhasználó", "Word/PDF export"]}),
+                ("PRO", {"display_name": "Pro", "reports": 50, "users": 10, "features": ["50 jegyzőkönyv/hó", "10 felhasználó", "PDF aláírás", "Email küldés"]}),
+                ("ENTERPRISE", {"display_name": "Céges", "reports": None, "users": None, "features": ["Korlátlan jegyzőkönyv", "Korlátlan felhasználó", "Minden funkció"]}),
+            ]):
+                d = defaults
+                plan = SubscriptionPlan(
+                    plan_key=key,
+                    display_name=d["display_name"],
+                    price_monthly=0 if key == "FREE" else None,
+                    price_yearly=None,
+                    reports_per_month_limit=d.get("reports"),
+                    max_users=d.get("users"),
+                    features=d.get("features", []),
+                    sort_order=i,
+                )
+                db.add(plan)
+            db.commit()
+        db.close()
+    except Exception:
+        pass
+
+_seed_subscription_plans()
+
+
+def get_effective_plan_limits(db, company):
+    """Cég effektív limitei: company override, vagy subscription_plans sor, vagy PLAN_DEFAULTS. (reports_per_month, max_users)."""
+    if not company:
+        return None, None
+    reports = getattr(company, "reports_per_month_limit", None)
+    users = getattr(company, "max_users", None)
+    if reports is not None and users is not None:
+        return reports, users
+    plan_row = db.query(SubscriptionPlan).filter(SubscriptionPlan.plan_key == (company.plan or "FREE")).first()
+    if plan_row:
+        if reports is None:
+            reports = plan_row.reports_per_month_limit
+        if users is None:
+            users = plan_row.max_users
+    if reports is None or users is None:
+        defaults = PLAN_DEFAULTS.get(company.plan or "FREE", {})
+        if reports is None:
+            reports = defaults.get("reports_per_month")
+        if users is None:
+            users = defaults.get("max_users")
+    return reports, users

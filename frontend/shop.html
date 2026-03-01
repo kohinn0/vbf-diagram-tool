@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0e1726">
+    <meta name="description" content="VBF Cég admin és Dashboard – Webshop, felhasználók, előfizetések, munkakiosztás.">
+    <title>VBF Cég admin | Dashboard & Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="main-nav panel-glass">
+        <a href="index.html" class="nav-brand" style="text-decoration: none; color: inherit;" title="Főoldal">⚡ VBF Premium</a>
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-target="tab-dashboard">📊 Dashboard</button>
+            <button class="nav-tab" data-target="tab-admin" id="navAdminShop" style="display: none;">🔑 Admin</button>
+        </div>
+        <div class="user-controls" style="display: flex; gap: 15px; align-items: center; justify-content: flex-end;">
+            <a href="app.html" class="btn btn-outline btn-small" style="white-space: nowrap;">📝 Jegyzőkönyv alkalmazás</a>
+            <a href="#" id="linkProfile" style="color: var(--accent); font-weight: 500; font-size: 0.9rem; text-decoration: none;"></a>
+            <span id="userInfo" style="color: var(--accent); font-weight: 500; font-size: 0.9rem;"></span>
+            <div id="gdprLinks" style="display: none; align-items: center; gap: 8px;">
+                <a href="#" id="linkChangePassword" style="font-size: 0.8rem; color: var(--text-muted);">Jelszó módosítása</a>
+                <a href="#" id="linkDataExportZip" style="font-size: 0.8rem; color: var(--primary, #0ea5e9);">Teljes adatcsomag (ZIP)</a>
+                <a href="#" id="linkDeleteAccount" style="font-size: 0.8rem; color: var(--danger, #ef4444);">Fiók törlése</a>
+            </div>
+            <button class="btn btn-secondary btn-small" id="btnLoginNav" style="margin:0; padding: 4px 10px;">Belépés</button>
+        </div>
+    </nav>
+
+    <div class="app-content-wrapper">
+        <div id="tab-dashboard" class="tab-pane active">
+            <div class="form-container" style="max-width: 1200px; margin: 0 auto;" id="dashboardContainer">
+                <p style="color:var(--text-muted); text-align:center; padding: 3rem;">Jelentkezz be az admin felület megtekintéséhez.</p>
+            </div>
+        </div>
+        <div id="tab-admin" class="tab-pane">
+            <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Adminisztrátori Felület</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók kezelése és előfizetések beállítása.</p>
+
+                <div id="adminPlansSection" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">💰 Előfizetési csomagok</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Árak (HUF) és hozzáférések beállítása.</p>
+                    <div id="adminPlansList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 1rem;"></div>
+                </div>
+                <div id="adminPlanModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+                    <div class="panel-glass" style="max-width: 480px; width: 100%; padding: 1.5rem; border-radius: 12px;">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--accent);">Csomag szerkesztése: <span id="adminPlanModalTitle"></span></h4>
+                        <input type="hidden" id="adminPlanModalKey" value="">
+                        <label>Megjelenített név</label>
+                        <input type="text" id="adminPlanDisplayName" placeholder="Pl. Pro" style="width: 100%; margin-bottom: 10px;">
+                        <label>Ár havi (HUF)</label>
+                        <input type="number" id="adminPlanPriceMonthly" min="0" placeholder="0 = ingyenes" style="width: 100%; margin-bottom: 10px;">
+                        <label>Ár éves (HUF, opcionális)</label>
+                        <input type="number" id="adminPlanPriceYearly" min="0" placeholder="Üres = nincs" style="width: 100%; margin-bottom: 10px;">
+                        <label>Havi jegyzőkönyv limit (üres = korlátlan)</label>
+                        <input type="number" id="adminPlanReportsLimit" min="0" placeholder="Pl. 50" style="width: 100%; margin-bottom: 10px;">
+                        <label>Max. felhasználó / cég (üres = korlátlan)</label>
+                        <input type="number" id="adminPlanMaxUsers" min="0" placeholder="Pl. 10" style="width: 100%; margin-bottom: 10px;">
+                        <label>Tartalom / hozzáférések (soronként egy elem)</label>
+                        <textarea id="adminPlanFeatures" rows="4" placeholder="PDF export&#10;Email küldés" style="width: 100%; resize: vertical; margin-bottom: 1rem;"></textarea>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" id="adminPlanModalCancel">Mégse</button>
+                            <button type="button" class="btn btn-primary" id="adminPlanModalSave">💾 Mentés</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="adminPendingOrdersSection" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏦 Utalásos megrendelések</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Függő megrendelések jóváhagyása.</p>
+                    <div id="adminPendingOrdersList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;"><p style="color: var(--text-muted);">Nincs függő megrendelés.</p></div>
+                </div>
+                <div id="adminPaymentHistorySection" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📋 Fizetési előzmények</h3>
+                    <div id="adminPaymentHistoryList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;"><p style="color: var(--text-muted);">Betöltés…</p></div>
+                </div>
+                <div id="adminCompaniesSection" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏛️ Cégek</h3>
+                    <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label>Új cég neve</label>
+                                <input type="text" id="adminNewCompanyName" placeholder="Pl. Zöldfülű Vill Kft.">
+                            </div>
+                            <button class="btn btn-primary" id="btnAdminCreateCompany">➕ Cég létrehozása</button>
+                        </div>
+                        <p id="adminCompaniesList" style="margin-top: 10px; color: var(--text-muted); font-size: 0.9rem;"></p>
+                    </div>
+                </div>
+                <table class="data-table" id="table-admin-users" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Felhasználónév</th><th>Email</th><th>Státusz</th><th>Jogosultság</th><th>Cég</th><th>Lejárat</th><th>Műveletek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUserList"></tbody>
+                </table>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏢 Céges Adatok és Logó</h3>
+                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <label>Cégnév</label>
+                    <input type="text" id="adminCompName" placeholder="Zöldfülű Vill Kft.">
+                    <label style="margin-top: 10px;">Adószám</label>
+                    <input type="text" id="adminCompTax" placeholder="12345678-2-41">
+                    <label style="margin-top: 10px;">Székhely / Számlázási Cím</label>
+                    <input type="text" id="adminCompAddress" placeholder="1111 Bp., Pelikán u. 2.">
+                    <label style="margin-top: 10px;">Bankszámlaszám</label>
+                    <input type="text" id="adminCompBank" placeholder="11773000-12345678">
+                    <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Céges Adatok mentése</button>
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <label>Céges Logó</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                        <img id="adminCompLogoPreview" src="" alt="Nincs logó" style="max-height: 60px; display: none; border-radius: 5px;">
+                        <input type="file" id="adminCompLogoInput" accept="image/png, image/jpeg" style="display: none;">
+                        <button class="btn btn-secondary btn-small" id="btnAdminUploadLogo" style="margin:0;">🖼️ Logó</button>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <label>Aláírás kép</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                        <img id="adminCompSignaturePreview" src="" alt="Nincs aláírás" style="max-height: 50px; display: none; border-radius: 5px; background: #fff;">
+                        <input type="file" id="adminCompSignatureInput" accept="image/png, image/jpeg, image/webp" style="display: none;">
+                        <button class="btn btn-secondary btn-small" id="btnAdminUploadSignature" style="margin:0;">✍️ Aláírás</button>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <label>Hitelesítő tanúsítvány (.pfx) – PDF aláíráshoz</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+                        <span id="adminCompCertStatus" style="font-size: 0.9rem; color: var(--text-muted);">Nincs feltöltött tanúsítvány</span>
+                        <input type="file" id="adminCompCertInput" accept=".pfx,.p12,application/x-pkcs12" style="display: none;">
+                        <button class="btn btn-secondary btn-small" id="btnAdminUploadCert" style="margin:0;">🔐 Tanúsítvány</button>
+                    </div>
+                </div>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">👤 Új Felhasználó</h3>
+                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <label>Felhasználónév</label>
+                    <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
+                    <label style="margin-top: 10px;">Jelszó</label>
+                    <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
+                    <label style="margin-top: 10px;">Email</label>
+                    <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
+                    <label style="margin-top: 10px;">Jogosultság</label>
+                    <select id="adminNewRole">
+                        <option value="TECH">Villanyszerelő</option>
+                        <option value="COMPANY_ADMIN">Céges vezető</option>
+                        <option value="ADMIN">Főadmin</option>
+                    </select>
+                    <div id="adminNewCompanyWrap" style="margin-top: 10px; display: none;">
+                        <label>Cég</label>
+                        <select id="adminNewCompanyId"><option value="">-- Válassz céget --</option></select>
+                    </div>
+                    <button class="btn btn-primary" id="btnAdminCreateUser" style="margin-top: 15px;">Létrehozás</button>
+                    <div id="adminCreateUserError" style="color: var(--danger); margin-top: 10px; font-size: 0.85rem;"></div>
+                </div>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📅 Feladat / Kiszállás Kiosztása</h3>
+                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <label>Feladat címe</label>
+                    <input type="text" id="adminJobTitle" placeholder="Cím">
+                    <label style="margin-top: 10px;">Cím / Helyszín</label>
+                    <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
+                    <label style="margin-top: 10px;">Leírás</label>
+                    <textarea id="adminJobDesc" rows="2" placeholder="Kontakt, megjegyzés"></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <div style="flex: 1;"><label>Dátum & Idő</label><input type="datetime-local" id="adminJobDate"></div>
+                        <div style="flex: 1;"><label>Kijelölt szerelő</label><select id="adminJobAssignSelect"><option value="">-- Válassz kollégát --</option></select></div>
+                    </div>
+                    <button class="btn btn-primary" id="btnAdminSaveJob" style="margin-top: 15px; width: 100%;">Munkavégzés kiosztása</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth modals (same IDs as app for auth.js) -->
+    <div id="loginModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content panel-glass">
+            <h2 style="margin-bottom: 2rem;">Bejelentkezés</h2>
+            <div class="prop-group"><label>Felhasználónév</label><input type="text" id="loginUser" placeholder="admin"></div>
+            <div class="prop-group"><label>Jelszó</label><input type="password" id="loginPass" placeholder="••••"></div>
+            <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
+            <p style="margin-top: 0.75rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
+            <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
+            <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
+        </div>
+    </div>
+    <div id="passwordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content panel-glass" style="max-width: 400px;">
+            <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
+            <div class="prop-group"><label>Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••" autocomplete="current-password"></div>
+            <div class="prop-group"><label>Új jelszó</label><input type="password" id="passwordNew" placeholder="••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••" autocomplete="new-password"></div>
+            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" id="btnPasswordSubmit">Mentés</button>
+                <button class="btn btn-secondary" id="btnPasswordClose">Mégse</button>
+            </div>
+        </div>
+    </div>
+    <div id="profileModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content panel-glass" style="max-width: 420px;">
+            <h2 style="margin-bottom: 1rem;">Profil</h2>
+            <div class="prop-group"><label>Felhasználónév</label><p id="profileUsername" style="margin: 0; font-weight: 600;"></p></div>
+            <div class="prop-group"><label>E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">Email mentése</button></div>
+            <div class="prop-group"><label>Cég</label><p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p></div>
+            <div class="prop-group"><label>Előfizetés lejár</label><p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p></div>
+            <hr style="border-color: var(--border-color); margin: 1rem 0;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-small" id="btnProfileChangePassword">Jelszó módosítása</button>
+                <a href="#" id="btnProfileExportZip" class="btn btn-secondary btn-small" style="text-align: center;">Teljes adatcsomag (ZIP)</a>
+                <a href="#" id="linkDeleteAccountFromProfile" class="btn btn-danger btn-small" style="text-align: center;">Fiók törlése</a>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btnProfileClose" style="margin-top: 1rem;">Bezárás</button>
+        </div>
+    </div>
+    <div id="forgotPasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content panel-glass" style="max-width: 400px;">
+            <h2 style="margin-bottom: 1rem;">Elfelejtett jelszó</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed.</p>
+            <div class="prop-group"><label>E-mail</label><input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu"></div>
+            <p id="forgotPasswordStatus" style="font-size: 0.85rem; min-height: 1.2em;"></p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" id="btnForgotPasswordSubmit">Link kérése</button>
+                <button class="btn btn-secondary" id="btnForgotPasswordClose">Mégse</button>
+            </div>
+        </div>
+    </div>
+    <div id="expiryBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: #fff; padding: 0.6rem 1rem; font-size: 0.9rem; z-index: 9998; align-items: center; justify-content: center; gap: 1rem;">
+        <span id="expiryBannerText"></span>
+        <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
+    </div>
+    <div id="resetPasswordPanel" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content panel-glass" style="max-width: 400px;">
+            <h2 style="margin-bottom: 1rem;">Új jelszó</h2>
+            <div class="prop-group"><label>Új jelszó</label><input type="password" id="resetNewPassword" placeholder="••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="resetNewPasswordConfirm" placeholder="••••" autocomplete="new-password"></div>
+            <p id="resetPasswordError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
+            <button type="button" class="btn btn-primary" id="btnResetPasswordSubmit">Jelszó mentése</button>
+        </div>
+    </div>
+    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-glass); border-top: 1px solid var(--border-color); padding: 1rem; z-index: 9999; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <p style="margin: 0; font-size: 0.9rem; flex: 1;">A weboldal sütiket használ. <a href="#" id="cookieBannerPrivacyLink" style="color: var(--accent);">Adatkezelési tájékoztató</a>.</p>
+        <button type="button" id="cookieBannerAccept" class="btn btn-primary btn-small">Elfogadom</button>
+    </div>
+
+    <script type="module" src="js/shop.js"></script>
+</body>
+</html>

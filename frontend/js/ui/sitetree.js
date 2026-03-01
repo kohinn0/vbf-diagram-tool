@@ -1,3 +1,15 @@
+/**
+ * Helyszínfa (Site Tree) — hierarchia az egyvonalas rajz és mérések adatforrásához.
+ *
+ * NODE TÍPUSOK (autodiagram.js és mérések ezekre támaszkodnak):
+ *   - building: épület, gyökér, children: floor[]
+ *   - floor:     szint, children: panel[]
+ *   - panel:     elosztó, children: circuit[], device: string (pl. B16)
+ *   - circuit:   áramkör, nincs children, name = áramkör megnevezés
+ *
+ * Az automata egyvonalas rajz (_collectPanels) a type === 'panel' node-okat keresi,
+ * és a panel children közül a type === 'circuit' elemeket veszi áramkörnek.
+ */
 export function initSiteTree() {
     window.VBF = window.VBF || {};
 
@@ -124,7 +136,7 @@ export function initSiteTree() {
                 `, node.id);
             } else if (type === 'rcd') {
                 window.createRow('table-rcd', `
-                    <td><input type="text" class="meas-circ" value="${safeName}" list="circuitNames"></td>
+                    <td><input type="text" class="meas-circuit" value="${safeName}" list="circuitNames"></td>
                     <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
                     <td><input type="number" class="meas-idn" value="30" oninput="window.validateRcd(this.closest('tr'))"></td>
                     <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>

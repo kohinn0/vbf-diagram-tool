@@ -22,7 +22,7 @@ export function initPadfx() {
                     fetchHeaders['Authorization'] = `Bearer ${window.currentToken}`;
                 }
 
-                const res = await fetch(`${window.API_BASE_URL}/padfx/parse`, {
+                const res = await fetch(`${window.API_BASE_URL}/api/padfx/parse`, {
                     method: 'POST',
                     headers: fetchHeaders,
                     body: formData
@@ -79,7 +79,7 @@ export function initPadfx() {
                                 const idn = parseInt(m.params["p_28"]) || 30;
                                 const t1 = parseFloat(m.results["r_28"]) || "";
                                 window.createRow('table-rcd', `
-                                    <td><input type="text" class="meas-circ" value="${m.location}" list="circuitNames"></td>
+                                    <td><input type="text" class="meas-circuit" value="${m.location}" list="circuitNames"></td>
                                     <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
                                     <td><input type="number" class="meas-idn" value="${idn}" oninput="validateRcd(this.closest('tr'))"></td>
                                     <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>

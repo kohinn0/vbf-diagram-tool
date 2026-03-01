@@ -16,8 +16,8 @@ export function initDashboard() {
 
             try {
                 const [statsRes, inspRes] = await Promise.all([
-                    this.fetchJSON('/dashboard/stats'),
-                    this.fetchJSON('/dashboard/upcoming-inspections?days=90')
+                    this.fetchJSON('/api/dashboard/stats'),
+                    this.fetchJSON('/api/dashboard/upcoming-inspections?days=90')
                 ]);
 
                 if (!statsRes) {
@@ -36,8 +36,8 @@ export function initDashboard() {
             const token = localStorage.getItem('vbf_token');
             if (!token) return null;
 
-            const API_BASE_URL = window.API_BASE_URL || 'http://localhost:8000';
-            const res = await fetch(`${API_BASE_URL}${path}`, {
+            const base = window.API_BASE_URL || window.location.origin;
+            const res = await fetch(`${base}${path}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -310,7 +310,7 @@ export function initDashboard() {
         async sendReminder(reportId) {
             if (!confirm('Emlékeztető email küldése erről a felülvizsgálatról?')) return;
             try {
-                const res = await this.fetchJSON(`/dashboard/send-reminder/${reportId}`);
+                const res = await this.fetchJSON(`/api/dashboard/send-reminder/${reportId}`);
                 alert(res?.message || 'Emlékeztető elküldve!');
             } catch (err) {
                 alert('Hiba: ' + err.message);

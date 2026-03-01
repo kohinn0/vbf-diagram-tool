@@ -211,7 +211,7 @@ export function initMeasurements() {
 
     document.getElementById('btnAddRcd')?.addEventListener('click', () => {
         window.createRow('table-rcd', `
-                <td><input type="text" class="meas-circ" placeholder="Fürdő ÁVK" list="circuitNames"></td>
+                <td><input type="text" class="meas-circuit" placeholder="Fürdő ÁVK" list="circuitNames"></td>
                 <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
                 <td><input type="number" class="meas-idn" placeholder="30" oninput="validateRcd(this.closest('tr'))"></td>
                 <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
@@ -402,7 +402,7 @@ export function initMeasurements() {
                     photo: tr.getAttribute('data-photo') || ''
                 })),
                 rcd: Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => ({
-                    circ: tr.querySelector('.meas-circ')?.value || '',
+                    circ: tr.querySelector('.meas-circuit')?.value || '',
                     type: tr.querySelector('.meas-type')?.value || 'A',
                     idn: tr.querySelector('.meas-idn')?.value || '',
                     test05: tr.querySelector('.meas-05')?.value || '',

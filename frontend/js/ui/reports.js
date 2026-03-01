@@ -4,6 +4,28 @@ export function initReports() {
     window.currentUser = localStorage.getItem('vbf_user');
     window.currentSavedReportId = window.currentSavedReportId || null;
 
+    window.updateHeaderReportContext = function (title, status) {
+        const el = document.getElementById('headerReportContext');
+        const titleEl = el?.querySelector('.nav-context-title');
+        const chipEl = document.getElementById('headerReportContextChip');
+        if (!el || !titleEl) return;
+        const displayTitle = (title && title.trim()) ? title.trim() : 'Nincs megnyitott jegyzőkönyv';
+        titleEl.textContent = displayTitle;
+        if (chipEl) {
+            if (status === 'saved') {
+                chipEl.textContent = 'Mentve';
+                chipEl.classList.remove('modified');
+                chipEl.style.display = '';
+            } else if (status === 'modified') {
+                chipEl.textContent = 'Módosítva';
+                chipEl.classList.add('modified');
+                chipEl.style.display = '';
+            } else {
+                chipEl.style.display = 'none';
+            }
+        }
+    };
+
     const btnSaveCloud = document.getElementById('btnSaveCloud');
     const btnExportWord = document.getElementById('btnExportWord');
     const btnExportPdfReport = document.getElementById('btnExportPdfReport');
@@ -25,20 +47,25 @@ export function initReports() {
 
     // DocType változás figyelése (EPH szekció)
     if (docTypeSelect && sectionEPH) {
-        docTypeSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'EPH') {
+        const applyDocTypeVisibility = (value) => {
+            if (value === 'EPH') {
+                // Tiszta EPH jegyzőkönyv: csak EPH mérések
                 sectionEPH.style.display = 'block';
                 if (vbfMeasurements) vbfMeasurements.style.display = 'none';
                 if (ephMeasurements) ephMeasurements.style.display = 'block';
-            } else if (e.target.value === 'VBF_ELSO') {
-                sectionEPH.style.display = 'none';
-                if (vbfMeasurements) vbfMeasurements.style.display = 'block';
-                if (ephMeasurements) ephMeasurements.style.display = 'none';
             } else {
-                sectionEPH.style.display = 'none';
+                // Minden VBF típusnál: VBF + EPH blokk IS legyen látható
+                sectionEPH.style.display = 'block';
                 if (vbfMeasurements) vbfMeasurements.style.display = 'block';
                 if (ephMeasurements) ephMeasurements.style.display = 'none';
             }
+        };
+
+        // Induláskor is alkalmazzuk az aktuális értéket
+        applyDocTypeVisibility(docTypeSelect.value);
+
+        docTypeSelect.addEventListener('change', (e) => {
+            applyDocTypeVisibility(e.target.value);
         });
     }
 
@@ -108,15 +135,15 @@ export function initReports() {
         if (!confirm('Biztosan véglegesíted? Ezután a módosítás már nem lehetséges!')) return;
 
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${window.currentSavedReportId}/finalize`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}/finalize`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             if (res.ok) {
-                alert('Jegyzőkönyv véglegesítve! (LOCKED)');
+                if (window.showToast) window.showToast('Jegyzőkönyv véglegesítve! (LOCKED)', 'success'); else alert('Jegyzőkönyv véglegesítve! (LOCKED)');
                 window.loadReport(window.currentSavedReportId); // Reload to lock UI
             }
-        } catch (err) { alert('Szerver hiba a véglegesítéskor.'); }
+        } catch (err) { if (window.showToast) window.showToast('Szerver hiba a véglegesítéskor.', 'error'); else alert('Szerver hiba a véglegesítéskor.'); }
     });
 
     function formatDocId(typeStr, id, dateStr) {
@@ -139,7 +166,7 @@ export function initReports() {
         reportListContainer.innerHTML = '<p>Betöltés...</p>';
 
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             const reports = await res.json();
@@ -404,14 +431,14 @@ export function initReports() {
 
             const isUpdate = !!window.currentSavedReportId;
             const reqMethod = isUpdate ? 'PUT' : 'POST';
-            const reqUrl = isUpdate ? `${window.API_BASE_URL}/reports/${window.currentSavedReportId}` : `${window.API_BASE_URL}/reports`;
+            const reqUrl = isUpdate ? `${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}` : `${window.API_BASE_URL}/api/reports`;
 
             if (!navigator.onLine) {
                 if (btnSaveCloud) btnSaveCloud.innerText = 'Mentés Offline...';
                 let offlineQueue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
                 payload._offline_id = Date.now();
                 payload._method = reqMethod;
-                payload._endpoint = isUpdate ? `/reports/${window.currentSavedReportId}` : `/reports`;
+                payload._endpoint = isUpdate ? `/api/reports/${window.currentSavedReportId}` : `/api/reports`;
                 offlineQueue.push(payload);
                 localStorage.setItem('vbf_offline_queue', JSON.stringify(offlineQueue));
                 if (!silent) window.showToast ? window.showToast('Kapcsolat megszakadt, mentve offline tárolóba.') : alert('Offilne mentve!');
@@ -426,6 +453,8 @@ export function initReports() {
             const data = await res.json();
             if (res.ok) {
                 window.currentSavedReportId = data.id;
+                const savedTitle = document.getElementById('documentTitle')?.value?.trim() || data.title || 'Jegyzőkönyv';
+                if (window.updateHeaderReportContext) window.updateHeaderReportContext(savedTitle, 'saved');
                 if (!silent && window.showToast) window.showToast('✅ Jegyzőkönyv sikeresen mentve a felhőbe!');
                 if (btnExportWord) btnExportWord.style.display = 'inline-block';
                 if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
@@ -437,7 +466,7 @@ export function initReports() {
                 throw new Error(data.detail || 'Hiba a mentés során');
             }
         } catch (err) {
-            if (!silent) alert('Hiba történt: ' + err.message);
+            if (!silent && window.showToast) window.showToast('Hiba történt: ' + err.message, 'error'); else if (!silent) alert('Hiba történt: ' + err.message);
             return false;
         } finally {
             if (btnSaveCloud) {
@@ -456,7 +485,7 @@ export function initReports() {
         btnExportWord.innerText = 'Generálás...';
         btnExportWord.disabled = true;
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${window.currentSavedReportId}/export/docx`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}/export/docx`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             if (!res.ok) throw new Error('Hiba a Word generálás során!');
@@ -471,7 +500,7 @@ export function initReports() {
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
-        } catch (err) { alert(err.message); }
+        } catch (err) { if (window.showToast) window.showToast(err.message, 'error'); else alert(err.message); }
         finally { btnExportWord.innerText = 'Word Generálás 📄'; btnExportWord.disabled = false; }
     });
 
@@ -482,7 +511,7 @@ export function initReports() {
         btnExportPdfReport.innerText = 'Generálás...';
         btnExportPdfReport.disabled = true;
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${window.currentSavedReportId}/export/pdf`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}/export/pdf`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             if (!res.ok) throw new Error('Hiba a PDF generálás során!');
@@ -497,7 +526,7 @@ export function initReports() {
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
-        } catch (err) { alert(err.message); }
+        } catch (err) { if (window.showToast) window.showToast(err.message, 'error'); else alert(err.message); }
         finally { btnExportPdfReport.innerText = 'PDF Aláírva 📜'; btnExportPdfReport.disabled = false; }
     });
 
@@ -571,7 +600,7 @@ export function initReports() {
         if (m.rpe) m.rpe.forEach(r => { window.createRow('table-rpe', `<td><input type="number" class="meas-point" value="${sq(r.point)}"></td><td><input type="text" class="meas-loc" value="${sq(r.loc)}"></td><td><input type="number" step="0.01" class="meas-val" value="${sq(r.val)}" oninput="validateRpe(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-rpe', r.photo); });
         if (m.insulation) m.insulation.forEach(r => { window.createRow('table-insulation', `<td><input type="text" class="meas-circuit" value="${sq(r.circuit)}" list="circuitNames"></td><td><input type="number" step="0.1" class="meas-ln" value="${sq(r.ln)}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-lpe" value="${sq(r.lpe)}" oninput="validateIns(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-npe" value="${sq(r.npe)}" oninput="validateIns(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-insulation', r.photo); });
         if (m.loop) m.loop.forEach(r => { window.createRow('table-loop', `<td><input type="text" class="meas-circuit" value="${sq(r.circuit)}" list="circuitNames"></td><td><input type="text" class="meas-device" value="${sq(r.device)}" oninput="validateZs(this.closest('tr'))"></td><td><input type="text" class="meas-loc" value="${sq(r.loc)}"></td><td><input type="number" step="0.01" class="meas-zs" value="${sq(r.zs)}" oninput="validateZs(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-loop', r.photo); });
-        if (m.rcd) m.rcd.forEach(r => { window.createRow('table-rcd', `<td><input type="text" class="meas-circ" value="${sq(r.circ)}" list="circuitNames"></td><td><select class="meas-type"><option ${r.type === 'AC' ? 'selected' : ''}>AC</option><option ${r.type === 'A' ? 'selected' : ''}>A</option><option ${r.type === 'B' ? 'selected' : ''}>B</option><option ${r.type === 'F' ? 'selected' : ''}>F</option></select></td><td><input type="number" class="meas-idn" value="${sq(r.idn)}" oninput="validateRcd(this.closest('tr'))"></td><td><select class="meas-05"><option ${r.test05 === 'OK (Nem oldott)' ? 'selected' : ''}>OK (Nem oldott)</option><option ${r.test05 === 'HIBA (Kioldott)' ? 'selected' : ''}>HIBA (Kioldott)</option></select></td><td><input type="number" step="1" class="meas-t1" value="${sq(r.t1)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="1" class="meas-t5" value="${sq(r.t5)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-ramp" value="${sq(r.ramp)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-uc" value="${sq(r.uc)}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-rcd', r.photo); });
+        if (m.rcd) m.rcd.forEach(r => { window.createRow('table-rcd', `<td><input type="text" class="meas-circuit" value="${sq(r.circ)}" list="circuitNames"></td><td><select class="meas-type"><option ${r.type === 'AC' ? 'selected' : ''}>AC</option><option ${r.type === 'A' ? 'selected' : ''}>A</option><option ${r.type === 'B' ? 'selected' : ''}>B</option><option ${r.type === 'F' ? 'selected' : ''}>F</option></select></td><td><input type="number" class="meas-idn" value="${sq(r.idn)}" oninput="validateRcd(this.closest('tr'))"></td><td><select class="meas-05"><option ${r.test05 === 'OK (Nem oldott)' ? 'selected' : ''}>OK (Nem oldott)</option><option ${r.test05 === 'HIBA (Kioldott)' ? 'selected' : ''}>HIBA (Kioldott)</option></select></td><td><input type="number" step="1" class="meas-t1" value="${sq(r.t1)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="1" class="meas-t5" value="${sq(r.t5)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-ramp" value="${sq(r.ramp)}" oninput="validateRcd(this.closest('tr'))"></td><td><input type="number" step="0.1" class="meas-uc" value="${sq(r.uc)}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-rcd', r.photo); });
         if (m.tools) m.tools.forEach(r => { window.createRow('table-tools', `<td><input type="text" class="meas-name" value="${sq(r.name)}"></td><td><input type="text" class="meas-id" value="${sq(r.id)}"></td><td><input type="number" step="0.1" class="meas-val" value="${sq(r.val)}" oninput="validateTool(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-tools', r.photo); });
         if (m.selv) m.selv.forEach(r => { window.createRow('table-selv', `<td><input type="text" class="meas-loc" value="${sq(r.loc)}"></td><td><input type="number" step="0.1" class="meas-v" value="${sq(r.v)}"></td><td><input type="number" step="1" class="meas-ps" value="${sq(r.ps)}"></td><td><input type="number" step="1" class="meas-pt" value="${sq(r.pt)}"></td><td><input type="number" step="1" class="meas-st" value="${sq(r.st)}"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-selv', r.photo); });
         if (m.eph_cont) m.eph_cont.forEach(r => { window.createRow('table-eph', `<td><input type="number" class="meas-index" value="${sq(r.idx)}"></td><td><input type="text" class="meas-elem" value="${sq(r.elem)}"></td><td><input type="text" class="meas-loc" value="${sq(r.loc)}"></td><td><input type="text" class="meas-mat" value="${sq(r.mat)}"></td><td><select class="meas-conn"><option ${r.conn === 'EPH bilincs' ? 'selected' : ''}>EPH bilincs</option><option ${r.conn === 'Szemes saru' ? 'selected' : ''}>Szemes saru</option><option ${r.conn === 'Hegesztett' ? 'selected' : ''}>Hegesztett</option><option ${r.conn === 'Wago/Sorkapocs' ? 'selected' : ''}>Wago/Sorkapocs</option></select></td><td><input type="number" step="0.01" class="meas-val" value="${sq(r.val)}" oninput="validateEph(this.closest('tr'))"></td><td><select class="meas-pass"><option ${r.pass === 'Igen' ? 'selected' : ''}>Igen</option><option ${r.pass === 'Nem' ? 'selected' : ''}>Nem</option></select></td>`); window.applyPhotoToLastRow('table-eph', r.photo); });
@@ -580,22 +609,23 @@ export function initReports() {
     window.cloneReport = async function (id) {
         if (!confirm('Biztosan szeretnéd másolni ezt a jegyzőkönyvet? Új mentésként kerül rögzítésre.')) return;
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
             const rep = await res.json();
             window.currentSavedReportId = null;
             if (btnExportWord) btnExportWord.style.display = 'none';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
             window.loadReportIntoUI(rep);
             if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = "MÁSOLAT: " + (rep.title || '');
+            if (window.updateHeaderReportContext) window.updateHeaderReportContext("MÁSOLAT: " + (rep.title || ''), 'modified');
             const tabDiag = document.querySelector('.nav-tab[data-target="tab-diagram"]');
             if (tabDiag) tabDiag.click();
-            alert('Jegyzőkönyv adatai betöltve másolásra!');
-        } catch (err) { alert('Hiba a másolás során!'); }
+            if (window.showToast) window.showToast('Jegyzőkönyv adatai betöltve másolásra!', 'success'); else alert('Jegyzőkönyv adatai betöltve másolásra!');
+        } catch (err) { if (window.showToast) window.showToast('Hiba a másolás során!', 'error'); else alert('Hiba a másolás során!'); }
     };
 
     window.loadReport = async function (id) {
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
             const rep = await res.json();
             window.currentSavedReportId = rep.id;
             if (btnExportWord) btnExportWord.style.display = 'inline-block';
@@ -623,16 +653,17 @@ export function initReports() {
             }
 
             window.showReportQr(rep.id);
+            if (window.updateHeaderReportContext) window.updateHeaderReportContext(rep.title || '', 'saved');
             const tabDiag = document.querySelector('.nav-tab[data-target="tab-diagram"]');
             if (tabDiag) tabDiag.click();
-            alert('Jegyzőkönyv betöltve!');
-        } catch (err) { alert('Hiba a betöltés során!'); }
+            if (window.showToast) window.showToast('Jegyzőkönyv betöltve!', 'success'); else alert('Jegyzőkönyv betöltve!');
+        } catch (err) { if (window.showToast) window.showToast('Hiba a betöltés során!', 'error'); else alert('Hiba a betöltés során!'); }
     };
 
     window.deleteReport = async function (id) {
         if (!confirm('VIGYÁZAT! Biztosan törölni szeretnéd ezt a jegyzőkönyvet? Ez a művelet nem vonható vissza!')) return;
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${window.currentToken}` } });
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${window.currentToken}` } });
             if (res.ok) {
                 if (window.currentSavedReportId === id) {
                     window.currentSavedReportId = null;
@@ -640,11 +671,12 @@ export function initReports() {
                     if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
                     if (btnEmailReport) btnEmailReport.style.display = 'none';
                     if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = '';
+                    if (window.updateHeaderReportContext) window.updateHeaderReportContext('', null);
                 }
-                alert('Jegyzőkönyv törölve!');
+                if (window.showToast) window.showToast('Jegyzőkönyv törölve!', 'success'); else alert('Jegyzőkönyv törölve!');
                 window.fetchReports();
-            } else alert('Sikertelen törlés.');
-        } catch (err) { alert('Hiba a törlés során.'); }
+            } else { if (window.showToast) window.showToast('Sikertelen törlés.', 'error'); else alert('Sikertelen törlés.'); }
+        } catch (err) { if (window.showToast) window.showToast('Hiba a törlés során.', 'error'); else alert('Hiba a törlés során.'); }
     };
 
     window.sendEmailReport = async function (id) {
@@ -654,14 +686,14 @@ export function initReports() {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) return alert("Érvénytelen e-mail!");
         alert("Küldés folyamatban...");
         try {
-            const res = await fetch(`${window.API_BASE_URL}/reports/${id}/email`, {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}/email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.currentToken}` },
                 body: JSON.stringify({ to_email: toEmail, subject: "Érintésvédelmi Jegyzőkönyv" })
             });
-            if (res.ok) alert("Email elküldve!");
-            else alert("Hiba az elküldés során!");
-        } catch (err) { alert("Hiba: " + err.message); }
+            if (res.ok) { if (window.showToast) window.showToast('Email elküldve!', 'success'); else alert("Email elküldve!"); }
+            else { if (window.showToast) window.showToast('Hiba az elküldés során!', 'error'); else alert("Hiba az elküldés során!"); }
+        } catch (err) { if (window.showToast) window.showToast('Hiba: ' + err.message, 'error'); else alert("Hiba: " + err.message); }
     };
 
     window.showReportQr = function (id) {
@@ -680,7 +712,16 @@ export function initReports() {
         }
     };
 
-    // Load reports initially if logged in
+    if (window.updateHeaderReportContext) {
+        if (window.currentSavedReportId) {
+            const t = document.getElementById('documentTitle')?.value?.trim();
+            window.updateHeaderReportContext(t || 'Jegyzőkönyv', 'saved');
+        } else {
+            const t = document.getElementById('documentTitle')?.value?.trim();
+            window.updateHeaderReportContext(t || '', t ? 'modified' : null);
+        }
+    }
+
     if (window.currentToken) {
         window.fetchReports();
     }

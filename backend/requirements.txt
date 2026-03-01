@@ -22,3 +22,10 @@ qrcode[pil]
 
 # Testing (dev only)
 pytest
+httpx
+
+# Payments
+stripe
+
+# Optional: error tracking (pip install sentry-sdk, then set SENTRY_DSN)
+# sentry-sdk
