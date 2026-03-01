@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 120
+exclude = __pycache__, .pytest_cache, data, *.egg-info
+# Only fail on critical: E9 (runtime), F821 (undefined name). F63,F7,F82 in CI.
