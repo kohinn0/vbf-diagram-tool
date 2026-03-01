@@ -17,6 +17,12 @@ from database import Base
 # Fájl-alapú teszt DB (in-memory helyett, hogy minden kapcsolat ugyanazt lássa)
 import tempfile
 _test_db_path = os.path.join(tempfile.gettempdir(), "vbf_test.db")
+# Töröljük a korábbi fájlt (pl. CI előző run), hogy tiszta állapotból induljunk
+if os.path.exists(_test_db_path):
+    try:
+        os.unlink(_test_db_path)
+    except Exception:
+        pass
 _test_engine = create_engine(f"sqlite:///{_test_db_path}", connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_test_engine)
 

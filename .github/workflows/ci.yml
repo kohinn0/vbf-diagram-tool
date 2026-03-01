@@ -43,7 +43,7 @@ jobs:
         env:
           TESTING: '1'
         run: |
-          python -m pytest tests/ -v --tb=short --junitxml=test-results.xml
+          python -m pytest tests/ -v --tb=long -x --junitxml=test-results.xml
       
       - name: Lint with flake8
         continue-on-error: true
