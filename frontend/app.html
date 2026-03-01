@@ -52,9 +52,9 @@
                 </button>
             <div class="nav-section-panel" id="navSectionDropdown" role="menu" aria-label="Alkalmazás szekciók">
                 <button type="button" class="nav-tab active" data-target="tab-diagram">Rajz & Alaprajz</button>
-                <button type="button" class="nav-tab" data-target="tab-report">Jegyzőkönyv Adatok</button>
+                <button type="button" class="nav-tab" data-target="tab-report">Jegyzőkönyv Adatok <span class="tab-badge" id="tabReportBadge" aria-hidden="true"></span></button>
                 <button type="button" class="nav-tab" data-target="tab-defects">Hibajegyzék & Képek</button>
-                <button type="button" class="nav-tab" data-target="tab-measurements">Mérési Adatok (Metrel)</button>
+                <button type="button" class="nav-tab" data-target="tab-measurements">Mérési Adatok (Metrel) <span class="tab-badge" id="tabMeasurementsBadge" aria-hidden="true"></span></button>
                 <button type="button" class="nav-tab" data-target="tab-lps">Villámvédelem</button>
                 <button type="button" class="nav-tab" data-target="tab-jobs">Naptár & Feladatok</button>
                 <button type="button" class="nav-tab" data-target="tab-cloud">Mentett Ügyek</button>
@@ -82,6 +82,7 @@
                 <button type="button" class="nav-help-trigger btn btn-secondary btn-small nav-util-btn" id="navHelpTrigger" aria-haspopup="true" aria-expanded="false" title="Súgó">? Súgó</button>
                 <div class="nav-help-panel" id="navHelpPanel" role="menu">
                     <button type="button" class="nav-help-item" id="btnStartTour">Bemutató</button>
+                    <button type="button" class="nav-help-item" id="btnShowKeyboardShortcuts">⌨️ Billentyűk</button>
                 </div>
             </div>
             <div class="nav-system-group">
@@ -104,6 +105,19 @@
         </div>
         </nav>
     </header>
+
+    <!-- Billentyűparancsok (Súgó → Billentyűk) -->
+    <div id="keyboardShortcutsModal" class="modal-overlay" style="display: none;" aria-hidden="true">
+        <div class="modal-content panel-glass keyboard-shortcuts-modal">
+            <h2 style="margin: 0 0 1rem 0; font-size: 1.25rem;">⌨️ Billentyűparancsok</h2>
+            <ul class="keyboard-shortcuts-list">
+                <li><kbd>Ctrl</kbd> + <kbd>S</kbd> <span>Jegyzőkönyv mentése a felhőbe</span></li>
+                <li><kbd>Ctrl</kbd> + <kbd>E</kbd> <span>Word dokumentum generálása (mentés + export)</span></li>
+            </ul>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 1rem 0 0 0;">A billentyűk nem működnek beviteli mezők (szöveg, szám) fókuszálásakor.</p>
+            <button type="button" class="btn btn-secondary" id="btnCloseKeyboardShortcuts" style="margin-top: 1.25rem;">Bezárás</button>
+        </div>
+    </div>
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
@@ -348,6 +362,22 @@
             <div class="form-container panel-glass"
                 style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
                 <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Felhőbe Mentett Jegyzőkönyvek</h2>
+                <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">Új jegyzőkönyv:</span>
+                    <button type="button" class="btn btn-secondary btn-small" id="btnNewReportEmpty">Új üres</button>
+                    <select id="reportTemplateSelect" class="btn btn-secondary btn-small" style="width: auto; min-width: 180px;">
+                        <option value="">Új sablonból...</option>
+                        <option value="lako">Lakóépület</option>
+                        <option value="iroda">Iroda / Kereskedelmi</option>
+                        <option value="uzem">Ipari / Üzem</option>
+                        <option value="eph">EPH felülvizsgálat</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <label for="reportSearchInput" style="color: var(--text-muted); font-size: 0.9rem;">🔍 Keresés:</label>
+                    <input type="text" id="reportSearchInput" placeholder="Cím, megrendelő, dokumentum..." style="flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main);">
+                    <span style="color: var(--text-muted); font-size: 0.85rem;" id="reportSearchHint"></span>
+                </div>
                 <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;">
                     <p class="empty-state">Jelentkezz be a felhő adatok eléréséhez!</p>
                 </div>
@@ -658,11 +688,17 @@
                 <div class="defects-header"
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                     <h2>Feltárt Hibák és Hiányosságok</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-secondary" style="width: auto; margin:0;" id="btnGenerateDefects">🤖
-                            Automatikus Gyűjtés a Mérésekből</button>
-                        <button class="btn btn-primary" style="width: auto; margin:0;" id="btnAddDefect">+ Új Hiba
-                            Felvitele</button>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <label for="defectFilterSelect" style="color: var(--text-muted); font-size: 0.9rem;">Szűrés:</label>
+                        <select id="defectFilterSelect" style="padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main);">
+                            <option value="">Összes hiba</option>
+                            <option value="kritikus">Kritikus</option>
+                            <option value="sulyos">Súlyos</option>
+                            <option value="kozepes">Közepes</option>
+                            <option value="egyedi">Egyedi (sablon nélkül)</option>
+                        </select>
+                        <button class="btn btn-secondary" style="width: auto; margin:0;" id="btnGenerateDefects">🤖 Automatikus Gyűjtés</button>
+                        <button class="btn btn-primary" style="width: auto; margin:0;" id="btnAddDefect">+ Új Hiba</button>
                     </div>
                 </div>
                 <!-- Template szövegek tárháza (rejtett) -->
@@ -672,6 +708,7 @@
                     <option value="Szinjelzési hiba (zöld-sárga vezető fázisként használva).">
                     <option value="EPH csomópont kialakítása hiányos.">
                 </datalist>
+                <datalist id="defectLocationDatalist"></datalist>
 
                 <div id="defectList">
                     <!-- A hibák JS-ből lesznek ide generálva -->
@@ -686,10 +723,11 @@
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                     <h2 style="margin: 0; color: var(--accent);">🔬 Mérési Adatok (Kézi bevitel)</h2>
-                    <div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <input type="file" id="inputPadfx" accept=".padfx,.xml" style="display: none;" />
                         <button class="btn btn-primary" id="btnLoadPadfx"
                             style="background-color: var(--accent); color: white;">Metrel PADFX Import 📥</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportMeasurementsCsv">Mérések export CSV 📊</button>
                     </div>
                 </div>
 
@@ -936,9 +974,56 @@
         </div>
     </div>
 
+    <!-- Cookie / helyi tárolás nyilatkozat -->
+    <div id="cookieConsentBanner" class="cookie-consent-banner" role="dialog" aria-label="Cookie nyilatkozat" style="display: none;">
+        <div class="cookie-consent-inner">
+            <p class="cookie-consent-text">
+                Az alkalmazás cookie-kat és helyi tárolást (localStorage) használ a bejelentkezés, téma és offline működés megjegyzéséhez.
+                A további használattal elfogadod a cookie-k és a helyi tárolás használatát.
+                <a href="#" id="cookieConsentDetails" class="cookie-consent-link">Részletek</a>
+            </p>
+            <div class="cookie-consent-actions">
+                <button type="button" id="cookieConsentAccept" class="btn btn-primary">Elfogadom</button>
+            </div>
+        </div>
+    </div>
+    <div id="cookieConsentModal" class="cookie-consent-modal" style="display: none;" aria-hidden="true">
+        <div class="cookie-consent-modal-content">
+            <h3>Cookie és helyi tárolás</h3>
+            <p>Az alkalmazás a következő célokra használ helyi tárolást (localStorage), illetve szükség esetén cookie-kat:</p>
+            <ul>
+                <li><strong>Bejelentkezés:</strong> token és felhasználói adat megjegyzése a munkamenethez.</li>
+                <li><strong>Megjelenés:</strong> világos/sötét téma preferencia.</li>
+                <li><strong>Offline működés:</strong> mentési sor és adatok helyi tárolása szinkronizálás előtt.</li>
+                <li><strong>Funkcionális:</strong> sablonok, bemutató már megtekintve jelzés.</li>
+            </ul>
+            <p>Ezeket az adatokat nem küldjük harmadik félnek; a tárolás kizárólag a szolgáltatás működtetéséhez szükséges.</p>
+            <button type="button" id="cookieConsentModalClose" class="btn btn-secondary">Bezárás</button>
+        </div>
+    </div>
+    <link rel="stylesheet" href="css/cookie-consent.css">
+
     <!-- Main Logic -->
     <script type="module" src="js/main.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        (function () {
+            var key = 'vbf_cookie_consent';
+            var banner = document.getElementById('cookieConsentBanner');
+            var modal = document.getElementById('cookieConsentModal');
+            if (!banner) return;
+            if (localStorage.getItem(key) === '1') { banner.style.display = 'none'; return; }
+            banner.style.display = 'block';
+            document.getElementById('cookieConsentAccept').addEventListener('click', function () {
+                try { localStorage.setItem(key, '1'); } catch (e) {}
+                banner.style.display = 'none';
+            });
+            var details = document.getElementById('cookieConsentDetails');
+            if (details) details.addEventListener('click', function (e) { e.preventDefault(); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); });
+            var closeBtn = document.getElementById('cookieConsentModalClose');
+            if (closeBtn) closeBtn.addEventListener('click', function () { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); });
+        })();
+    </script>
 
     <!-- Stripe sikeres visszatérés: session-status ellenőrzés auth.js-ben (csak paid esetén üzenet) -->
 </body>

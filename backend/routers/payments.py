@@ -24,6 +24,8 @@ AMOUNT_YEARLY_HUF = 99000
 
 class CheckoutRequest(BaseModel):
     plan: str = "yearly"  # 'monthly' or 'yearly'
+    email: str | None = None   # regisztrációhoz: ezzel a címmel jön létre a user
+    password: str | None = None  # vásárláskor megadott jelszó → adatbázisba kerül
 
 
 def _amount_huf_for_plan(plan_type: str) -> int:
@@ -88,26 +90,41 @@ def create_checkout_session(request: Request, body: CheckoutRequest, db: Session
         desc = 'Minden funkció elérése 1 éven át. Korlátlan technikus hozzáadása és jegyzőkönyv generálás.'
         amount = yearly_huf * 100  # fillérben
         
+    customer_email = (body.email or "").strip().lower() if body.email else None
+    if customer_email and "@" not in customer_email:
+        customer_email = None
+    if body.password and not customer_email:
+        raise HTTPException(status_code=400, detail="Jelszó megadásához email cím is szükséges.")
+    if body.password:
+        auth.validate_password_policy(body.password)
     try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'huf',
-                    'product_data': {
-                        'name': name,
-                        'description': desc,
-                    },
-                    'unit_amount': amount,
+        create_params = {
+            "payment_method_types": ["card"],
+            "line_items": [{
+                "price_data": {
+                    "currency": "huf",
+                    "product_data": {"name": name, "description": desc},
+                    "unit_amount": amount,
                 },
-                'quantity': 1,
+                "quantity": 1,
             }],
-            mode='payment',
-            success_url=domain_url + '/index.html?payment=success&session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=domain_url + '/index.html',
-            metadata={'plan_type': body.plan},
-            allow_promotion_codes=True,
-        )
+            "mode": "payment",
+            "success_url": domain_url + "/index.html?payment=success&session_id={CHECKOUT_SESSION_ID}",
+            "cancel_url": domain_url + "/index.html",
+            "metadata": {"plan_type": body.plan},
+            "allow_promotion_codes": True,
+        }
+        if customer_email:
+            create_params["customer_email"] = customer_email
+        session = stripe.checkout.Session.create(**create_params)
+        if body.password and customer_email:
+            pending = database.PendingCheckoutPassword(
+                stripe_session_id=session.id,
+                email=customer_email,
+                password_hash=auth.get_password_hash(body.password),
+            )
+            db.add(pending)
+            db.commit()
         return {"id": session.id, "url": session.url}
     except Exception as e:
         print(f"Checkout error: {e}")
@@ -208,9 +225,10 @@ def _send_bank_transfer_info_email(order, pdf_attachment: bytes = None):
         logging.getLogger("vbf").exception("SMTP hiba utalásos email: %s", e)
 
 
-def grant_access_after_payment(db: Session, customer_email: str, customer_name: str, plan_type: str, pdf_attachment: bytes = None):
+def grant_access_after_payment(db: Session, customer_email: str, customer_name: str, plan_type: str, pdf_attachment: bytes = None, stripe_session_id: str = None):
     """
     Fizetés után (Stripe vagy utalás jóváhagyás): cég + user PRO hozzáférés, email.
+    Ha stripe_session_id megvan és van hozzá pending jelszó, azt használjuk (adatbázisba kerül).
     Csak backendről hívandó (webhook vagy admin mark-paid).
     """
     plan_key = "PRO"
@@ -247,8 +265,19 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
     else:
         import string
         import random
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-        hashed_password = auth.get_password_hash(temp_password)
+        hashed_password = None
+        if stripe_session_id:
+            pending = db.query(database.PendingCheckoutPassword).filter(
+                database.PendingCheckoutPassword.stripe_session_id == stripe_session_id
+            ).first()
+            if pending:
+                hashed_password = pending.password_hash
+                db.delete(pending)
+        if hashed_password is None:
+            temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+            hashed_password = auth.get_password_hash(temp_password)
+        else:
+            temp_password = None
         base_username = customer_email.split('@')[0]
         username = base_username
         counter = 1
@@ -302,7 +331,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(auth.get_db)):
             except Exception as e:
                 import logging
                 logging.getLogger("vbf").warning("Szamlazz.hu számla kihagyva vagy hiba: %s", e)
-            grant_access_after_payment(db, customer_email, customer_name, plan_type, pdf_attachment=pdf_bytes)
+            grant_access_after_payment(db, customer_email, customer_name, plan_type, pdf_attachment=pdf_bytes, stripe_session_id=session.get("id"))
             company = db.query(database.Company).join(database.User).filter(database.User.email == customer_email).first()
             if company:
                 log = database.PaymentLog(
@@ -334,14 +363,23 @@ def _send_access_email(username: str, to_email: str, password: str, plan_type: s
     msg['Subject'] = "Sikeres előfizetés: VBF Tervező hozzáférés"
     msg['From'] = smtp_user
     msg['To'] = to_email
-    if is_new and password:
-        content = (
-            f"Kedves Felhasználó!\n\nSikeresen megvásároltad a VBF Tervező "
-            f"{'havi' if plan_type == 'monthly' else 'éves'} előfizetést.\n\n"
-            "Belépési adataid (céges vezető):\n"
-            f"Felhasználónév: {username}\nJelszó: {password}\n\n"
-            "Kérjük első belépés után változtasd meg a jelszavad!\n\nÜdvözlettel,\nA VBF Csapat"
-        )
+    if is_new:
+        if password:
+            content = (
+                f"Kedves Felhasználó!\n\nSikeresen megvásároltad a VBF Tervező "
+                f"{'havi' if plan_type == 'monthly' else 'éves'} előfizetést.\n\n"
+                "Belépési adataid (céges vezető):\n"
+                f"Felhasználónév: {username}\nJelszó: {password}\n\n"
+                "Kérjük első belépés után változtasd meg a jelszavad!\n\nÜdvözlettel,\nA VBF Csapat"
+            )
+        else:
+            content = (
+                f"Kedves Felhasználó!\n\nSikeresen megvásároltad a VBF Tervező "
+                f"{'havi' if plan_type == 'monthly' else 'éves'} előfizetést.\n\n"
+                "Belépési adataid (céges vezető):\n"
+                f"Felhasználónév: {username}\n"
+                "A belépéshez a vásárláskor megadott jelszavadat használd.\n\nÜdvözlettel,\nA VBF Csapat"
+            )
     else:
         content = (
             f"Kedves Felhasználó!\n\nAz előfizetésedet meghosszabbítottuk "

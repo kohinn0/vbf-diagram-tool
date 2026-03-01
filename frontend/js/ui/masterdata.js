@@ -1,3 +1,12 @@
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 export function initMasterData() {
     let customersData = [];
     let inspectorsData = [];
@@ -45,12 +54,17 @@ export function initMasterData() {
             div.style.display = 'flex';
             div.style.justifyContent = 'space-between';
             div.style.alignItems = 'center';
+            div.style.gap = '8px';
+            div.style.flexWrap = 'wrap';
             div.innerHTML = `
-                <div>
-                    <strong>${c.name}</strong><br>
-                    <small style="color:#aaa;">${c.address || ''} | ${c.hrsz || ''}</small>
+                <div style="flex:1; min-width:0;">
+                    <strong>${escapeHtml(c.name)}</strong><br>
+                    <small style="color:#aaa;">${escapeHtml(c.address || '')} | ${escapeHtml(c.hrsz || '')}</small>
                 </div>
-                <button class="btn btn-danger btn-small" onclick="deleteCustomer(${c.id})">Del</button>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn btn-primary btn-small btn-use-customer" data-customer-id="${c.id}" title="Kitölti a jegyzőkönyv Megrendelő/Cím mezőit">Használj ezt</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteCustomer(${c.id})">Del</button>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -73,12 +87,17 @@ export function initMasterData() {
             div.style.display = 'flex';
             div.style.justifyContent = 'space-between';
             div.style.alignItems = 'center';
+            div.style.gap = '8px';
+            div.style.flexWrap = 'wrap';
             div.innerHTML = `
-                <div>
-                    <strong>${i.name}</strong><br>
-                    <small style="color:#aaa;">${i.license || ''} | ${i.instrument_type || ''}</small>
+                <div style="flex:1; min-width:0;">
+                    <strong>${escapeHtml(i.name)}</strong><br>
+                    <small style="color:#aaa;">${escapeHtml(i.license || '')} | ${escapeHtml(i.instrument_type || '')}</small>
                 </div>
-                <button class="btn btn-danger btn-small" onclick="deleteInspector(${i.id})">Del</button>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn btn-primary btn-small btn-use-inspector" data-inspector-id="${i.id}" title="Kitölti a jegyzőkönyv Felülvizsgáló/Műszer mezőit">Használj ezt</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteInspector(${i.id})">Del</button>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -196,28 +215,73 @@ export function initMasterData() {
         } catch (e) { console.error(e); }
     };
 
+    function applyCustomerToReport(c) {
+        if (!c) return;
+        const customerName = document.getElementById('customerName');
+        const siteAddress = document.getElementById('siteAddress');
+        const siteHrsz = document.getElementById('siteHrsz');
+        const buildingPurpose = document.getElementById('buildingPurpose');
+        if (customerName) customerName.value = c.name || '';
+        if (siteAddress) siteAddress.value = c.address || '';
+        if (siteHrsz) siteHrsz.value = c.hrsz || '';
+        if (buildingPurpose) buildingPurpose.value = c.building_purpose || '';
+    }
+
+    function applyInspectorToReport(i) {
+        if (!i) return;
+        const inspectorName = document.getElementById('inspectorName');
+        const inspectorLicense = document.getElementById('inspectorLicense');
+        const instrumentType = document.getElementById('instrumentType');
+        const instrumentCal = document.getElementById('instrumentCal');
+        if (inspectorName) inspectorName.value = i.name || '';
+        if (inspectorLicense) inspectorLicense.value = i.license || '';
+        if (instrumentType) instrumentType.value = i.instrument_type || '';
+        if (instrumentCal) instrumentCal.value = i.instrument_cal || '';
+    }
+
+    function navigateToReportTab() {
+        const targetTab = document.querySelector('.nav-tab[data-target="tab-report"]');
+        const targetPane = document.getElementById('tab-report');
+        if (targetTab && targetPane) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            targetTab.classList.add('active');
+            targetPane.classList.add('active');
+        }
+    }
+
+    document.getElementById('customerListContainer')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-use-customer')) {
+            const id = parseInt(e.target.getAttribute('data-customer-id'));
+            const c = customersData.find(x => x.id === id);
+            applyCustomerToReport(c);
+            navigateToReportTab();
+            if (window.showToast) window.showToast('Ügyfél adatok beírva a jegyzőkönyvbe.', 'success');
+        }
+    });
+
+    document.getElementById('inspectorListContainer')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-use-inspector')) {
+            const id = parseInt(e.target.getAttribute('data-inspector-id'));
+            const i = inspectorsData.find(x => x.id === id);
+            applyInspectorToReport(i);
+            navigateToReportTab();
+            if (window.showToast) window.showToast('Felülvizsgáló és műszer adatok beírva a jegyzőkönyvbe.', 'success');
+        }
+    });
+
     document.getElementById('loadCustomerSelect')?.addEventListener('change', (e) => {
         const id = parseInt(e.target.value);
         if (!id) return;
         const c = customersData.find(x => x.id === id);
-        if (c) {
-            document.getElementById('customerName').value = c.name || '';
-            document.getElementById('siteAddress').value = c.address || '';
-            document.getElementById('siteHrsz').value = c.hrsz || '';
-            document.getElementById('buildingPurpose').value = c.building_purpose || '';
-        }
+        if (c) applyCustomerToReport(c);
     });
 
     document.getElementById('loadInspectorSelect')?.addEventListener('change', (e) => {
         const id = parseInt(e.target.value);
         if (!id) return;
         const i = inspectorsData.find(x => x.id === id);
-        if (i) {
-            document.getElementById('inspectorName').value = i.name || '';
-            document.getElementById('inspectorLicense').value = i.license || '';
-            document.getElementById('instrumentType').value = i.instrument_type || '';
-            document.getElementById('instrumentCal').value = i.instrument_cal || '';
-        }
+        if (i) applyInspectorToReport(i);
     });
 
     if (window.currentToken) {

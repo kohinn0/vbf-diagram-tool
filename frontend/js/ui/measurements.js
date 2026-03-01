@@ -12,32 +12,18 @@ export function initMeasurements() {
 
         const reader = new FileReader();
         reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function () {
-                const canvas2 = document.createElement('canvas');
-                const ctx = canvas2.getContext('2d');
-                const MAX_WIDTH = 800;
-                let width = img.width;
-                let height = img.height;
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-                canvas2.width = width;
-                canvas2.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const dataUrl = canvas2.toDataURL('image/webp', 0.7);
-                tr.setAttribute('data-photo', dataUrl);
-
-                // Visual feedback
+            const dataUrl = e.target.result;
+            const compress = typeof window.VBF_compressImage === 'function'
+                ? window.VBF_compressImage(dataUrl, { maxWidth: 720, maxHeight: 720, quality: 0.6 })
+                : Promise.resolve(dataUrl);
+            compress.then(function (compressed) {
+                tr.setAttribute('data-photo', compressed);
                 const photoBtn = tr.querySelector('label[title]');
                 if (photoBtn) {
                     photoBtn.innerHTML = `✅ <input type="file" accept="image/*" style="display:none;" onchange="attachMeasurementPhoto(this)">`;
                     photoBtn.title = 'Kép csatolva! Kattints a cseréhez.';
                 }
-            };
-            img.src = e.target.result;
+            });
         };
         reader.readAsDataURL(file);
     };
@@ -54,6 +40,7 @@ export function initMeasurements() {
         if (nodeId) tr.setAttribute('data-node-id', nodeId);
         tr.innerHTML = htmlContent + `
             <td class="meas-actions" style="white-space:nowrap;">
+                <button type="button" class="btn btn-secondary btn-small" title="Hiba felvitele a hibajegyzékbe" style="margin:0; padding: 4px 8px;" onclick="typeof window.addDefectFromMeasurementRow==='function'&&window.addDefectFromMeasurementRow(this.closest('tr'))">Hiba</button>
                 <label class="btn btn-secondary btn-small" title="Fotó csatolása" style="margin:0; padding: 4px 8px;">
                     📷
                     <input type="file" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
@@ -442,4 +429,72 @@ export function initMeasurements() {
             };
         }
     };
+
+    // Mérések export CSV (Rpe, Riso, Zs, RCD) — egy fájl, szakaszok fejléccel
+    function escapeCsvCell(val) {
+        const s = String(val == null ? '' : val);
+        if (/[";\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+    }
+    document.getElementById('btnExportMeasurementsCsv')?.addEventListener('click', () => {
+        const rows = [];
+        const sep = ';';
+        rows.push('Rpe - Védővezető folytonosság');
+        rows.push(['Pont', 'Helyszín', 'Rpe (Ω)', 'Megfelel'].join(sep));
+        document.querySelectorAll('#table-rpe tbody tr').forEach(tr => {
+            rows.push([
+                tr.querySelector('.meas-point')?.value ?? '',
+                tr.querySelector('.meas-loc')?.value ?? '',
+                tr.querySelector('.meas-val')?.value ?? '',
+                tr.querySelector('.meas-pass')?.value ?? ''
+            ].map(escapeCsvCell).join(sep));
+        });
+        rows.push('');
+        rows.push('Riso - Szigetelési ellenállás');
+        rows.push(['Áramkör', 'L-N (MΩ)', 'L-PE (MΩ)', 'N-PE (MΩ)', 'Megfelel'].join(sep));
+        document.querySelectorAll('#table-insulation tbody tr').forEach(tr => {
+            rows.push([
+                tr.querySelector('.meas-circuit')?.value ?? '',
+                tr.querySelector('.meas-ln')?.value ?? '',
+                tr.querySelector('.meas-lpe')?.value ?? '',
+                tr.querySelector('.meas-npe')?.value ?? '',
+                tr.querySelector('.meas-pass')?.value ?? ''
+            ].map(escapeCsvCell).join(sep));
+        });
+        rows.push('');
+        rows.push('Zs - Hurokellenállás');
+        rows.push(['Áramkör', 'Védelem', 'Helyszín', 'Zs (Ω)', 'Megfelel'].join(sep));
+        document.querySelectorAll('#table-loop tbody tr').forEach(tr => {
+            rows.push([
+                tr.querySelector('.meas-circuit')?.value ?? '',
+                tr.querySelector('.meas-device')?.value ?? '',
+                tr.querySelector('.meas-loc')?.value ?? '',
+                tr.querySelector('.meas-zs')?.value ?? '',
+                tr.querySelector('.meas-pass')?.value ?? ''
+            ].map(escapeCsvCell).join(sep));
+        });
+        rows.push('');
+        rows.push('RCD / ÁVK');
+        rows.push(['Áramkör', 'Típus', 'Idn (mA)', '0,5x teszt', 't1 (ms)', 't5 (ms)', 'Megfelel'].join(sep));
+        document.querySelectorAll('#table-rcd tbody tr').forEach(tr => {
+            rows.push([
+                tr.querySelector('.meas-circuit')?.value ?? '',
+                tr.querySelector('.meas-type')?.value ?? '',
+                tr.querySelector('.meas-idn')?.value ?? '',
+                tr.querySelector('.meas-05')?.value ?? '',
+                tr.querySelector('.meas-t1')?.value ?? '',
+                tr.querySelector('.meas-t5')?.value ?? '',
+                tr.querySelector('.meas-pass')?.value ?? ''
+            ].map(escapeCsvCell).join(sep));
+        });
+        const csv = '\uFEFF' + rows.join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Meresi_adatok_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        if (typeof window.showToast === 'function') window.showToast('CSV export kész.', 'success');
+    });
 }

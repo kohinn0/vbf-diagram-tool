@@ -34,8 +34,21 @@ export function initCompleteness() {
 
         const instrCal = document.getElementById('instrumentCal')?.value?.trim();
         let calOk = false;
-        if (instrCal) calOk = new Date(instrCal) >= new Date();
-        checks.push({ label: '📅 Kalibrálás érvényessége', req: true, ok: calOk, hint: instrCal ? (calOk ? 'Érvényes' : '⚠️ LEJÁRT!') : 'Dátum hiányzik', fieldId: 'instrumentCal' });
+        let calExpiringSoon = false;
+        let calDaysLeft = null;
+        if (instrCal) {
+            const calDate = new Date(instrCal);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            calDate.setHours(0, 0, 0, 0);
+            calOk = calDate >= today;
+            if (calOk) {
+                calDaysLeft = Math.ceil((calDate - today) / (24 * 60 * 60 * 1000));
+                calExpiringSoon = calDaysLeft <= 30 && calDaysLeft >= 0;
+            }
+        }
+        const calHint = !instrCal ? 'Dátum hiányzik' : !calOk ? '⚠️ LEJÁRT!' : calExpiringSoon ? `⏳ ${calDaysLeft} nap múlva lejár` : 'Érvényes';
+        checks.push({ label: '📅 Kalibrálás érvényessége', req: true, ok: calOk, hint: calHint, fieldId: 'instrumentCal' });
 
         // 4. Épület
         const bPurpose = document.getElementById('buildingPurpose')?.value?.trim();
@@ -44,18 +57,18 @@ export function initCompleteness() {
         const bOtsz = document.getElementById('buildingOtsz')?.value;
         checks.push({ label: '🏗️ OTSZ kockázati osztály', req: isVBF, ok: !!bOtsz, hint: 'AK / KK / MK', fieldId: 'buildingOtsz' });
 
-        // 5. Mérések
+        // 5. Mérések (tab + scroll a Mérési Adatok fülre)
         const rpeRows = document.querySelectorAll('#table-rpe tbody tr').length;
-        checks.push({ label: '📏 Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor` });
+        checks.push({ label: '📏 Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rpe' });
 
         const isoRows = document.querySelectorAll('#table-insulation tbody tr').length;
-        checks.push({ label: '⚡ Riso mérések (szigetelés)', req: isVBF, ok: isoRows > 0, hint: isVBF ? (isoRows > 0 ? `${isoRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${isoRows} db sor` });
+        checks.push({ label: '⚡ Riso mérések (szigetelés)', req: isVBF, ok: isoRows > 0, hint: isVBF ? (isoRows > 0 ? `${isoRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${isoRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-insulation' });
 
         const loopRows = document.querySelectorAll('#table-loop tbody tr').length;
-        checks.push({ label: '🔄 Zs mérések (hurok)', req: isVBF, ok: loopRows > 0, hint: isVBF ? (loopRows > 0 ? `${loopRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${loopRows} db sor` });
+        checks.push({ label: '🔄 Zs mérések (hurok)', req: isVBF, ok: loopRows > 0, hint: isVBF ? (loopRows > 0 ? `${loopRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${loopRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-loop' });
 
         const rcdRows = document.querySelectorAll('#table-rcd tbody tr').length;
-        checks.push({ label: '🛡️ RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor` });
+        checks.push({ label: '🛡️ RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rcd' });
 
         // 6. Minősítés
         const reportResult = document.getElementById('reportResult')?.value;
@@ -83,14 +96,47 @@ export function initCompleteness() {
             status.style.color = '#ef4444';
         }
 
+        const reportTabBadge = document.getElementById('tabReportBadge');
+        if (reportTabBadge) {
+            const reportMissing = requiredItems.filter(c => c.fieldId && !c.ok).length;
+            if (reportMissing > 0) {
+                reportTabBadge.textContent = reportMissing;
+                reportTabBadge.style.display = 'inline';
+            } else {
+                reportTabBadge.textContent = '';
+                reportTabBadge.style.display = 'none';
+            }
+        }
+        const measurementsBadge = document.getElementById('tabMeasurementsBadge');
+        if (measurementsBadge) {
+            const measMissing = requiredItems.filter(c => c.tabTarget === 'tab-measurements' && !c.ok).length;
+            if (measMissing > 0) {
+                measurementsBadge.textContent = measMissing;
+                measurementsBadge.style.display = 'inline';
+            } else {
+                measurementsBadge.textContent = '';
+                measurementsBadge.style.display = 'none';
+            }
+        }
+
         let html = '';
         checks.forEach(c => {
             const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
             const color = c.ok ? '#10b981' : (c.req ? '#ef4444' : 'var(--text-secondary)');
             const reqBadge = c.req ? '<span style="color:#ef4444; font-weight:700; font-size:0.7rem; margin-left:4px;">KÖTELEZŐ</span>' : '';
             const fieldId = c.fieldId || '';
-            const clickAttr = fieldId ? `onclick="navigateToField('${fieldId}')" style="cursor:pointer;"` : '';
-            html += `<div ${clickAttr} style="display:flex; align-items:center; gap:6px; color:${color}; padding: 3px 0; ${fieldId ? 'cursor:pointer;' : ''} border-radius:4px;" title="${fieldId ? 'Kattints ide → Odanavigálok!' : ''}">
+            const tabTarget = c.tabTarget || '';
+            const sectionSelector = c.sectionSelector || '';
+            let clickAttr = '';
+            let title = '';
+            if (fieldId) {
+                clickAttr = `onclick="navigateToField('${fieldId}')" style="cursor:pointer;"`;
+                title = 'Kattints ide → Odanavigálok!';
+            } else if (tabTarget && sectionSelector) {
+                clickAttr = `onclick="navigateToSection('${tabTarget}','${sectionSelector}')" style="cursor:pointer;"`;
+                title = 'Kattints → Mérési Adatok fül + megfelelő táblázat';
+            }
+            html += `<div ${clickAttr} style="display:flex; align-items:center; gap:6px; color:${color}; padding: 3px 0; ${fieldId || tabTarget ? 'cursor:pointer;' : ''} border-radius:4px;" title="${title}">
             <span>${icon}</span>
             <span style="flex:1; color: var(--text-primary);">${c.label}${reqBadge}</span>
             <span style="font-size:0.75rem; color: var(--text-secondary); max-width: 140px; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.hint}</span>
@@ -117,8 +163,13 @@ export function initCompleteness() {
 
         const calHelper = document.getElementById('calHelper');
         if (calHelper && instrCal) {
-            if (calOk) calHelper.innerHTML = `✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
-            else calHelper.innerHTML = `⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (${instrCal}) a múltban van. "Megfelelő" minősítés NEM adható!`;
+            if (!calOk) {
+                calHelper.innerHTML = `⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (${instrCal}) a múltban van. "Megfelelő" minősítés NEM adható!`;
+            } else if (calExpiringSoon) {
+                calHelper.innerHTML = `⏳ <span style="color:#f59e0b; font-weight:600;">Kalibrálás hamarosan lejár!</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
+            } else {
+                calHelper.innerHTML = `✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
+            }
         }
     }
 
@@ -143,6 +194,24 @@ export function initCompleteness() {
             el.style.boxShadow = '';
             el.style.borderColor = '';
         }, 2000);
+    };
+
+    /** Tab váltás + scroll a megadott szekcióra (pl. mérési táblázat). */
+    window.navigateToSection = function (tabTarget, sectionSelector) {
+        const targetTab = document.querySelector(`.nav-tab[data-target="${tabTarget}"]`);
+        const targetPane = document.getElementById(tabTarget);
+        if (!targetTab || !targetPane) return;
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        targetTab.classList.add('active');
+        targetPane.classList.add('active');
+        const section = sectionSelector ? document.querySelector(sectionSelector) : targetPane;
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            section.style.transition = 'box-shadow 0.3s ease';
+            section.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.5)';
+            setTimeout(() => { section.style.boxShadow = ''; }, 2500);
+        }
     };
 
     setInterval(updateCompleteness, 2000);

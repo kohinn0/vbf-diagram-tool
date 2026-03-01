@@ -1,4 +1,42 @@
 export function initData() {
+    // Központi képtömörítés feltöltés/mentés előtt (kevesebb adat, gyorsabb szinkron)
+    window.VBF_compressImage = function (dataUrl, opts) {
+        const maxWidth = (opts && opts.maxWidth) || 720;
+        const maxHeight = (opts && opts.maxHeight) || 720;
+        const quality = (opts && opts.quality) != null ? opts.quality : 0.6;
+        return new Promise((resolve, reject) => {
+            if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
+                resolve(dataUrl || '');
+                return;
+            }
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+                let w = img.width;
+                let h = img.height;
+                if (w > maxWidth || h > maxHeight) {
+                    const r = Math.min(maxWidth / w, maxHeight / h);
+                    w = Math.round(w * r);
+                    h = Math.round(h * r);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { resolve(dataUrl); return; }
+                ctx.drawImage(img, 0, 0, w, h);
+                try {
+                    const out = canvas.toDataURL('image/webp', quality);
+                    resolve(out || dataUrl);
+                } catch (e) {
+                    try { resolve(canvas.toDataURL('image/jpeg', quality)); } catch (_) { resolve(dataUrl); }
+                }
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    };
+
     window.vbfData = {
         "meta": {
             "verzio": "1.0",
@@ -271,6 +309,28 @@ export function initData() {
                 "javasolt_intezkedes": "A sorba fűzött hosszabbítók megszüntetése, szükség esetén új fix, falba/szerelvénydobozba szerelt végponti dugaljak kiépítése.",
                 "szabvany_pont": "MSZ HD 60364-4-42:2011, 422.3",
                 "kepek": ["egymasba_dugott_elosztok", "tulterhelt_konnektor"]
+            },
+            {
+                "id": "HIBA-025",
+                "nev": "ÁVK (RCD) kioldási idő túl nagy",
+                "kategoria": "aramutes_veszelye",
+                "sulyossag": "sulyos",
+                "leiras": "Az áramvédő kapcsoló (FI-relé) mért kioldási ideje meghaladja az MSZ HD 60364-4-41 és az MSZ EN 61008 előírt maximális értéket (általános védelem: 300 ms, perszonális: 40 ms 1×Idn esetén).",
+                "sablon_szoveg": "A(z) {aramkor} áramkörön beépített ÁVK (FI-relé) kioldási ideje (1×Idn): {t1} ms. A megengedett maximum általános védelemnél 300 ms, perszonális védelemnél 40 ms (MSZ HD 60364-4-41:2017, 411.4.5). A mért érték nem megfelelő.",
+                "javasolt_intezkedes": "Az ÁVK működésének ellenőrzése, szükség esetén cseréje megfelelő gyorsaságú, típushelyes készülékre.",
+                "szabvany_pont": "MSZ HD 60364-4-41:2017, 411.4.5; MSZ EN 61008-1",
+                "kepek": ["rcd_meres_ido", "rcd_kioldas"]
+            },
+            {
+                "id": "HIBA-026",
+                "nev": "EPH (egyenpotenciálra hozás) ellenállás túl magas",
+                "kategoria": "aramutes_veszelye",
+                "sulyossag": "sulyos",
+                "leiras": "A főföldvezető és a vezetőképes külső részek (víz-, gáz-, fűtéscső) közötti EPH ellenállás mért értéke meghaladja a megengedett maximumot, így zárlat esetén a feszültség nem csökken kellő mértékben.",
+                "sablon_szoveg": "A(z) {helyszin} főelosztójánál a fő EPH csomópont és a(z) {rendszer} közötti ellenállás mért értéke: {ertek} Ω. A megengedett maximális érték 0,2 Ω (MSZ HD 60364-5-54:2011, 544.1.2). Az egyenpotenciálra hozás nem megfelelő.",
+                "javasolt_intezkedes": "Az EPH bekötések ellenőrzése, meglazult csatlakozások meghúzása, szükség esetén a földelővezető keresztmetszetének növelése vagy a bekötési pont javítása.",
+                "szabvany_pont": "MSZ HD 60364-5-54:2011, 544.1.2; 40/2017. (XII. 4.) NGM 6. §",
+                "kepek": ["eph_meres", "eph_csomopont"]
             }
         ],
 

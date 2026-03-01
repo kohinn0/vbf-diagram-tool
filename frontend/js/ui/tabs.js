@@ -68,6 +68,7 @@ export function initTabs() {
             setSectionLabel(tab.getAttribute('data-section-label') || tab.textContent?.trim());
             closeDropdown();
             window.dispatchEvent(new CustomEvent('tabChanged', { detail: { targetId } }));
+            if (targetId === 'tab-defects' && typeof window.refreshDefectLocationDatalist === 'function') window.refreshDefectLocationDatalist();
         });
     });
 }

@@ -273,6 +273,16 @@ class PasswordResetToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class PendingCheckoutPassword(Base):
+    """Vásárláskor megadott jelszó: Stripe session_id → hash; webhook felhasználja, majd törli."""
+    __tablename__ = "pending_checkout_passwords"
+    id = Column(Integer, primary_key=True, index=True)
+    stripe_session_id = Column(String(255), unique=True, nullable=False, index=True)
+    email = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PaymentLog(Base):
     """Vásárlási előzmények: Stripe és utalás egy helyen (admin lista, refund)."""
     __tablename__ = "payment_logs"

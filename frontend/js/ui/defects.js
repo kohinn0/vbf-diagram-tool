@@ -39,7 +39,7 @@ export function initDefects() {
                 <input type="text" class="standard-input" placeholder="MSZ HD 60364..." style="margin-bottom: 10px;" />
                 
                 <label>Pontos Helyszín (Emelet, Részleg, Vagy Eszköz):</label>
-                <textarea rows="3" class="loc-input" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító..."></textarea>
+                <input type="text" class="loc-input" list="defectLocationDatalist" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító..." style="width:100%; padding:0.5rem; min-height:2.5rem;">
             </div>
             
             <div class="defect-image">
@@ -61,26 +61,29 @@ export function initDefects() {
         const deadlineInput = defectRow.querySelector('.deadline-input');
         const standardInput = defectRow.querySelector('.standard-input');
 
+        defectRow.setAttribute('data-severity', 'egyedi');
         tplSelect.addEventListener('change', (e) => {
             const hibaId = e.target.value;
             if (hibaId && typeof window.vbfData !== 'undefined') {
                 const hibaData = window.vbfData.tipikus_hibak.find(h => h.id === hibaId);
                 if (hibaData) {
+                    defectRow.setAttribute('data-severity', hibaData.sulyossag || 'egyedi');
                     descInput.value = hibaData.sablon_szoveg + "\\n" + "Javasolt intézkedés: " + hibaData.javasolt_intezkedes;
                     standardInput.value = hibaData.szabvany_pont;
 
                     // Határidő beállítása a súlyosság alapján
                     const sulyossagObj = window.vbfData.sulyossagi_szintek[hibaData.sulyossag];
                     if (sulyossagObj && sulyossagObj.hatarido) {
-                        // Keresés a select opciók között
                         const optionToSelect = Array.from(deadlineInput.options).find(opt => opt.value === sulyossagObj.hatarido || opt.text.includes(sulyossagObj.hatarido));
                         if (optionToSelect) optionToSelect.selected = true;
                     }
                 }
             } else {
+                defectRow.setAttribute('data-severity', 'egyedi');
                 descInput.value = "";
                 standardInput.value = "";
             }
+            if (typeof window.applyDefectFilter === 'function') window.applyDefectFilter();
         });
 
         const uploadArea = defectRow.querySelector('.image-upload-area');
@@ -97,30 +100,16 @@ export function initDefects() {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (evt) {
-                    const img = new Image();
-                    img.onload = function () {
-                        const canvas2 = document.createElement('canvas');
-                        const ctx = canvas2.getContext('2d');
-                        const MAX_WIDTH = 800; // Optimal for reports
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                        canvas2.width = width;
-                        canvas2.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Use WebP compression instead of JPEG for much better size vs quality ratio
-                        const dataUrl = canvas2.toDataURL('image/webp', 0.7);
-
-                        imgPreview.src = dataUrl;
+                    const dataUrl = evt.target.result;
+                    const compress = typeof window.VBF_compressImage === 'function'
+                        ? window.VBF_compressImage(dataUrl, { maxWidth: 720, maxHeight: 720, quality: 0.6 })
+                        : Promise.resolve(dataUrl);
+                    compress.then(function (compressed) {
+                        imgPreview.src = compressed;
                         imgPreview.style.display = 'block';
                         uploadTxt.style.display = 'none';
-                        defectRow.setAttribute('data-photo', dataUrl);
-                    };
-                    img.src = evt.target.result;
+                        defectRow.setAttribute('data-photo', compressed);
+                    });
                 };
                 reader.readAsDataURL(file);
             }
@@ -273,4 +262,113 @@ export function initDefects() {
             }
         });
     }
+
+    // Egy mérési sorból hibajegyzék-bejegyzés („Hiba” gomb a sorban)
+    window.getDefectDetailsFromRow = function (tr) {
+        if (!tr || !tr.closest) return null;
+        const table = tr.closest('table');
+        const tableId = table?.id || '';
+        const extract = (fn) => fn(tr);
+        switch (tableId) {
+            case 'table-rpe': return extract((tr) => {
+                const loc = tr.querySelector('.meas-loc')?.value || '';
+                const val = tr.querySelector('.meas-val')?.value || '';
+                return { desc: `A védővezető folytonossága nem megfelelő. Mért érték: ${val} Ω (Követelmény: <= 1.0 Ω). Javaslat: Kötések ellenőrzése, utánahúzása, szükség esetén a vezeték cseréje.`, loc, standard: 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§' };
+            });
+            case 'table-insulation': return extract((tr) => {
+                const circ = tr.querySelector('.meas-circuit')?.value || '';
+                const ln = tr.querySelector('.meas-ln')?.value || '';
+                const lpe = tr.querySelector('.meas-lpe')?.value || '';
+                const npe = tr.querySelector('.meas-npe')?.value || '';
+                return { desc: `Szigetelési ellenállás érték határértéken kívül. Mért értékek [MΩ]: L-N: ${ln}, L-PE: ${lpe}, N-PE: ${npe} (Követelmény: >= 1.0 MΩ, 500V DC mérőfeszültség). Javaslat: Vezetékrendszer és kötődobozok szigetelésvizsgálata, rágás/sérülés keresése.`, loc: circ, standard: 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); MEE Kézikönyv M6; TvMI 7.7:2026.02.01 §4.3' };
+            });
+            case 'table-loop': return extract((tr) => {
+                const circ = tr.querySelector('.meas-circuit')?.value || '';
+                const loc = tr.querySelector('.meas-loc')?.value || '';
+                const device = tr.querySelector('.meas-device')?.value || '';
+                const val = tr.querySelector('.meas-zs')?.value || '';
+                const curve = device.toUpperCase().match(/[A-Z]+/)?.[0] || '';
+                const In = parseFloat(device.match(/[0-9.]+/)?.[0]);
+                let maxZsStr = '';
+                if (curve && !isNaN(In)) {
+                    let Ia = 0;
+                    if (curve === 'B') Ia = In * 5; else if (curve === 'C') Ia = In * 10; else if (curve === 'D') Ia = In * 20;
+                    if (Ia > 0) maxZsStr = ` (Határérték: Zs <= ${((230 * 0.95) / Ia).toFixed(2)} Ω, ${curve}${In}A, Ia=${Ia}A)`;
+                }
+                return { desc: `A hurokellenállás értéke nem biztosítja a ${device} kikapcsoló szerv előírt időn belüli kioldását. Mért Zs érték: ${val} Ω${maxZsStr}. Képlet: Zs <= (U0x0.95)/Ia. Javaslat: Keresztmetszet-növelés vagy ÁVK (RCD) beépítése javasolt a kiegészítő védelemhez.`, loc: `${circ} (${loc})`, standard: 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4; MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§' };
+            });
+            case 'table-rcd': return extract((tr) => {
+                const circ = tr.querySelector('.meas-circuit')?.value || '';
+                const idn = tr.querySelector('.meas-idn')?.value || '';
+                const t1 = tr.querySelector('.meas-t1')?.value || '';
+                return { desc: `Az ÁVK (FI-relé) kioldási ideje vagy kioldó árama nem megfelelő. Kioldási idő (1xIdn): ${t1} ms (Követelmény: <= 300 ms általános, <= 40 ms perszonális védelem), Névleges áram: ${idn} mA. Javaslat: Az ÁVK azonnali cseréje és az áramkör felülvizsgálata!`, loc: circ, standard: 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1; MEE Kézikönyv M5; TvMI 7.7:2026.02.01 §4.4' };
+            });
+            case 'table-eph': return extract((tr) => {
+                const node = tr.querySelector('.meas-loc')?.value || '';
+                const conn = tr.querySelector('.meas-elem')?.value || '';
+                const val = tr.querySelector('.meas-val')?.value || '';
+                return { desc: `A ${conn} és a ${node} EPH csomópont közötti földelővezető vagy összekötő vezető folytonossága / ellenállása nem megfelelő. Mért Rpe érték: ${val} Ω. Javaslat: Földelési / EPH kötés javítása elengedhetetlen!`, loc: `Csomópont: ${node}, Eszköz: ${conn}`, standard: 'MSZ HD 60364-5-54:2011 §544 (EPH rendszer); MSZ HD 60364-4-41:2017 §411.3.1.2; 40/2017. (XII.4.) NGM 6.§' };
+            });
+            case 'table-tools': return extract((tr) => {
+                const name = tr.querySelector('.meas-name')?.value || '';
+                const id = tr.querySelector('.meas-id')?.value || '';
+                const val = tr.querySelector('.meas-val')?.value || '';
+                return { desc: `A ${name} megnevezésű kéziszerszám / berendezés szigetelési ellenállása nem megfelelő. Mért érték: ${val} MΩ (Követelmény: >= 2.0 MΩ, II. érintésvédelmi osztály). Javaslat: Eszköz javítása vagy selejtezése!`, loc: `Eszköz: ${name}, Azonosító: ${id}`, standard: 'MSZ EN 60745-1 (Kéziszerszámok biztonsága); MEE Kézikönyv M3-M4; MSZ 1585:2021' };
+            });
+            case 'table-selv': return extract((tr) => {
+                const loc = tr.querySelector('.meas-loc')?.value || '';
+                const v = tr.querySelector('.meas-v')?.value || '';
+                return { desc: `SELV/PELV áramkör érintésvédelmi vagy szigetelési paraméterei nem megfelelőek. Szekunder feszültség: ${v} V (Követelmény: max. 50V AC / 120V DC). Javaslat: Biztonsági transzformátor vagy leválasztó áramkör felülvizsgálata!`, loc, standard: 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV); MSZ EN 61558-2-6 (Biztonsági transzformátorok); MEE Kézikönyv M2' };
+            });
+            default: return null;
+        }
+    };
+
+    window.addDefectFromMeasurementRow = function (tr) {
+        const details = window.getDefectDetailsFromRow(tr);
+        if (!details || !btnAddDefect || !defectList) return;
+        btnAddDefect.click();
+        const lastDefect = defectList.lastElementChild;
+        if (lastDefect) {
+            const descInput = lastDefect.querySelector('.desc-input');
+            const locInput = lastDefect.querySelector('.loc-input');
+            const stdInput = lastDefect.querySelector('.standard-input');
+            if (descInput) descInput.value = details.desc;
+            if (locInput) locInput.value = details.loc || '';
+            if (stdInput) stdInput.value = details.standard || '';
+            const attrPhoto = tr.getAttribute('data-photo');
+            if (attrPhoto) {
+                lastDefect.setAttribute('data-photo', attrPhoto);
+                const imgPreview = lastDefect.querySelector('.img-preview');
+                const uploadTxt = lastDefect.querySelector('.upload-txt');
+                if (imgPreview && uploadTxt) { imgPreview.src = attrPhoto; imgPreview.style.display = 'block'; uploadTxt.style.display = 'none'; }
+            }
+        }
+        const tabBtn = document.querySelector('.nav-tab[data-target="tab-defects"]');
+        if (tabBtn) tabBtn.click();
+    };
+
+    window.refreshDefectLocationDatalist = function () {
+        const dl = document.getElementById('defectLocationDatalist');
+        if (!dl) return;
+        const seen = new Set();
+        document.querySelectorAll('#table-rpe .meas-loc, #table-insulation .meas-circuit, #table-loop .meas-loc, #table-loop .meas-circuit, #table-rcd .meas-circuit, #table-eph .meas-loc, #table-tools .meas-name, #table-selv .meas-loc').forEach(el => {
+            const s = (el.value || '').trim();
+            if (s) seen.add(s);
+        });
+        dl.innerHTML = '';
+        seen.forEach(s => { const opt = document.createElement('option'); opt.value = s; dl.appendChild(opt); });
+    };
+
+    window.applyDefectFilter = function () {
+        const sel = document.getElementById('defectFilterSelect');
+        const filter = (sel && sel.value) ? sel.value.trim() : '';
+        document.querySelectorAll('#defectList .defect-card').forEach(card => {
+            const severity = (card.getAttribute('data-severity') || 'egyedi').toLowerCase();
+            const show = !filter || severity === filter;
+            card.style.display = show ? '' : 'none';
+        });
+    };
+    const defectFilterSelect = document.getElementById('defectFilterSelect');
+    if (defectFilterSelect) defectFilterSelect.addEventListener('change', () => { window.applyDefectFilter(); });
 }

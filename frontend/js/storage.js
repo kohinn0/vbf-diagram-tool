@@ -34,6 +34,10 @@ export const Storage = {
                 offlineDot.style.background = '#ef4444'; // Piros
                 offlineText.innerText = 'Offline';
                 offlineText.style.color = '#ef4444';
+            } else if (queue.length > 0) {
+                offlineDot.style.background = '#f59e0b'; // Borostyán
+                offlineText.innerText = queue.length === 1 ? 'Offline mentve, szinkronizálás vár' : `${queue.length} mentés vár szinkronizálásra`;
+                offlineText.style.color = '#f59e0b';
             } else {
                 offlineDot.style.background = '#10b981'; // Zöld
                 offlineText.innerText = 'Online';
@@ -47,6 +51,17 @@ export const Storage = {
                 if (offlineCountSpan) offlineCountSpan.innerText = queue.length;
             } else {
                 btnSyncOffline.style.display = 'none';
+            }
+        }
+
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        if (offlineIndicator) {
+            if (queue.length > 0) {
+                offlineIndicator.title = queue.length === 1
+                    ? '1 db mentés vár szinkronizálásra'
+                    : `${queue.length} db mentés vár szinkronizálásra`;
+            } else {
+                offlineIndicator.title = navigator.onLine ? 'Online' : 'Offline';
             }
         }
     },

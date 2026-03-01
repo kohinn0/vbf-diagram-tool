@@ -52,6 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const trigger = document.getElementById('navHelpTrigger');
         const wrapper = document.querySelector('.nav-help-dropdown');
         const btnStartTour = document.getElementById('btnStartTour');
+        const btnShowKeyboardShortcuts = document.getElementById('btnShowKeyboardShortcuts');
+        const keyboardModal = document.getElementById('keyboardShortcutsModal');
+        const btnCloseKeyboardShortcuts = document.getElementById('btnCloseKeyboardShortcuts');
+        const closeHelp = () => {
+            wrapper?.classList.remove('is-open');
+            trigger?.setAttribute('aria-expanded', 'false');
+        };
         if (!trigger || !wrapper) return;
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -59,15 +66,49 @@ document.addEventListener('DOMContentLoaded', () => {
             trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
         });
         document.addEventListener('click', () => {
-            wrapper.classList.remove('is-open');
-            trigger.setAttribute('aria-expanded', 'false');
+            closeHelp();
         });
         if (btnStartTour) {
-            btnStartTour.addEventListener('click', () => {
-                wrapper.classList.remove('is-open');
-                trigger.setAttribute('aria-expanded', 'false');
+            btnStartTour.addEventListener('click', () => closeHelp());
+        }
+        if (btnShowKeyboardShortcuts && keyboardModal) {
+            btnShowKeyboardShortcuts.addEventListener('click', () => {
+                closeHelp();
+                keyboardModal.style.display = 'flex';
+                keyboardModal.setAttribute('aria-hidden', 'false');
             });
         }
+        if (btnCloseKeyboardShortcuts && keyboardModal) {
+            btnCloseKeyboardShortcuts.addEventListener('click', () => {
+                keyboardModal.style.display = 'none';
+                keyboardModal.setAttribute('aria-hidden', 'true');
+            });
+        }
+        if (keyboardModal) {
+            keyboardModal.addEventListener('click', (e) => {
+                if (e.target === keyboardModal) {
+                    keyboardModal.style.display = 'none';
+                    keyboardModal.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+    })();
+
+    (function initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            const inInput = e.target.closest('input, textarea, select, [contenteditable="true"]');
+            if (inInput) return;
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                const btn = document.getElementById('btnSaveCloud');
+                if (btn && btn.offsetParent) btn.click();
+            }
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                const btn = document.getElementById('btnExportWord');
+                if (btn && btn.offsetParent) btn.click();
+            }
+        });
     })();
     initDefects();
     initCanvas();
@@ -87,6 +128,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Offline rendszerek
     Storage.initOfflineSystem();
+
+    // Utolsó jegyzőkönyv folytatása: ha van mentett id és be vagy jelentkezve, kérdezzük meg
+    setTimeout(() => {
+        const lastId = localStorage.getItem('vbf_last_report_id');
+        if (lastId && !window.currentSavedReportId && window.currentToken && confirm('Folytatod az utolsó jegyzőkönyvet?')) {
+            const id = parseInt(lastId, 10);
+            if (!isNaN(id) && typeof window.loadReport === 'function') window.loadReport(id);
+            return;
+        }
+        // Piszkozat: ha nincs betöltött jegyzőkönyv, és van mentett piszkozat
+        try {
+            const draft = localStorage.getItem('vbf_draft');
+            if (draft && !window.currentSavedReportId && typeof window.loadDraftIntoUI === 'function' && confirm('Van mentett piszkozat. Betöltöd?')) {
+                window.loadDraftIntoUI();
+            }
+        } catch (_) {}
+    }, 800);
 
     // A Canvas inicializálása továbbra is be van töltve (még) a hagyományos módon,
     // így hagytuk neki, hogy lefusson a régi DOMContentLoaded logikában.

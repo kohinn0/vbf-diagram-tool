@@ -156,13 +156,41 @@ export function initReports() {
         return `${shortT}-${y}-${padId}`;
     }
 
-    window.fetchReports = async function () {
-        const reportListContainer = document.getElementById('reportListContainer');
-        if (!reportListContainer || !window.currentToken) {
-            if (reportListContainer) reportListContainer.innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';
+    function renderReportCards(reports, container) {
+        if (!container) return;
+        container.innerHTML = '';
+        if (!reports || reports.length === 0) {
+            container.innerHTML = '<p>Még nincs elmentett jegyzőkönyved.</p>';
             return;
         }
+        reports.forEach(rep => {
+            const docId = formatDocId(rep.report_type, rep.id, rep.created_at);
+            const card = document.createElement('div');
+            card.className = 'report-card panel-glass';
+            card.innerHTML = `
+                <h4>[${docId}] ${rep.title}</h4>
+                <p class="meta">Típus: ${rep.report_type.toUpperCase()}<br>Létrehozva: ${new Date(rep.created_at).toLocaleDateString()}</p>
+                <div class="actions">
+                    <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
+                    <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
+                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: #10b981; color: white;">Email Küldése ✉️</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
 
+    window.fetchReports = async function () {
+        const reportListContainer = document.getElementById('reportListContainer');
+        const searchInput = document.getElementById('reportSearchInput');
+        const searchHint = document.getElementById('reportSearchHint');
+        if (!reportListContainer || !window.currentToken) {
+            if (reportListContainer) reportListContainer.innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';
+            if (searchInput) searchInput.style.display = 'none';
+            return;
+        }
+        if (searchInput) searchInput.style.display = '';
         reportListContainer.innerHTML = '<p>Betöltés...</p>';
 
         try {
@@ -170,33 +198,45 @@ export function initReports() {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             const reports = await res.json();
+            window._reportListCache = reports || [];
 
-            if (reports.length === 0) {
-                reportListContainer.innerHTML = '<p>Még nincs elmentett jegyzőkönyved.</p>';
-                return;
-            }
+            const q = (searchInput && searchInput.value) ? searchInput.value.trim().toLowerCase() : '';
+            const filtered = q
+                ? window._reportListCache.filter(rep => {
+                    const title = (rep.title || '').toLowerCase();
+                    const cust = (rep.client_data && rep.client_data.customerName || '').toLowerCase();
+                    const addr = (rep.client_data && rep.client_data.siteAddress || '').toLowerCase();
+                    return title.includes(q) || cust.includes(q) || addr.includes(q);
+                })
+                : window._reportListCache;
 
-            reportListContainer.innerHTML = '';
-            reports.forEach(rep => {
-                const docId = formatDocId(rep.report_type, rep.id, rep.created_at);
-                const card = document.createElement('div');
-                card.className = 'report-card panel-glass';
-                card.innerHTML = `
-                    <h4>[${docId}] ${rep.title}</h4>
-                    <p class="meta">Típus: ${rep.report_type.toUpperCase()}<br>Létrehozva: ${new Date(rep.created_at).toLocaleDateString()}</p>
-                    <div class="actions">
-                        <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
-                        <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
-                        <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: #10b981; color: white;">Email Küldése ✉️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
-                    </div>
-                `;
-                reportListContainer.appendChild(card);
-            });
+            renderReportCards(filtered, reportListContainer);
+            if (searchHint) searchHint.textContent = filtered.length < (window._reportListCache.length)
+                ? `${filtered.length} / ${window._reportListCache.length} találat` : '';
         } catch (err) {
             reportListContainer.innerHTML = '<p style="color:red">Hiba a betöltés során.</p>';
         }
     };
+
+    const reportSearchInput = document.getElementById('reportSearchInput');
+    if (reportSearchInput) {
+        reportSearchInput.addEventListener('input', () => {
+            if (!window._reportListCache) return;
+            const q = reportSearchInput.value.trim().toLowerCase();
+            const filtered = q
+                ? window._reportListCache.filter(rep => {
+                    const title = (rep.title || '').toLowerCase();
+                    const cust = (rep.client_data && rep.client_data.customerName || '').toLowerCase();
+                    const addr = (rep.client_data && rep.client_data.siteAddress || '').toLowerCase();
+                    return title.includes(q) || cust.includes(q) || addr.includes(q);
+                })
+                : window._reportListCache;
+            const container = document.getElementById('reportListContainer');
+            renderReportCards(filtered, container);
+            const searchHint = document.getElementById('reportSearchHint');
+            if (searchHint) searchHint.textContent = filtered.length < window._reportListCache.length ? `${filtered.length} / ${window._reportListCache.length} találat` : '';
+        });
+    }
 
     function validateReportBeforeSave() {
         const errors = [];
@@ -332,6 +372,98 @@ export function initReports() {
         return nextDate.toISOString().split('T')[0];
     }
 
+    function buildReportPayload() {
+        const clientDataObj = {
+            type: document.getElementById('docType')?.value || '',
+            customerName: document.getElementById('customerName')?.value || '',
+            siteAddress: document.getElementById('siteAddress')?.value || '',
+            siteHrsz: document.getElementById('siteHrsz')?.value || '',
+            buildingPurpose: document.getElementById('buildingPurpose')?.value || '',
+            inspectorName: document.getElementById('inspectorName')?.value || '',
+            inspectorLicense: document.getElementById('inspectorLicense')?.value || '',
+            instrumentType: document.getElementById('instrumentType')?.value || '',
+            instrumentCal: document.getElementById('instrumentCal')?.value || '',
+            reportResult: document.getElementById('reportResult')?.value || '',
+            ephGasRequired: document.getElementById('ephGasRequired')?.value || 'Nem',
+            ephGasMeter: document.getElementById('ephGasMeter')?.value || '',
+            ephPenSep: document.getElementById('ephPenSep')?.value || '',
+            ephEarthMethod: document.getElementById('ephEarthMethod')?.value || '',
+            ephRaValue: document.getElementById('ephRaValue')?.value || '',
+            ephConductor: document.getElementById('ephConductor')?.value || '',
+            visualChecks: {
+                id_marks: document.getElementById('check_id_marks')?.checked || false,
+                protection: document.getElementById('check_protection')?.checked || false,
+                fire: document.getElementById('check_fire')?.checked || false,
+                conduction: document.getElementById('check_conduction')?.checked || false,
+                connection: document.getElementById('check_connection')?.checked || false,
+                access: document.getElementById('check_access')?.checked || false
+            },
+            buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
+            standardReference: 'TvMI 7.7:2026.02.01',
+            meeQualification: document.getElementById('reportResult')?.value || '',
+            nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
+            siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
+        };
+        const canvasJson = window.canvas ? window.canvas.toJSON(['vbfData']) : null;
+        let diagramImage = null;
+        if (window.canvas && window.canvas.getObjects().length > 0) {
+            try {
+                diagramImage = window.canvas.toDataURL({ format: 'jpeg', quality: 0.85, multiplier: 1.2 });
+            } catch (_) {}
+            if (!diagramImage) diagramImage = window.canvas.toDataURL({ format: 'png', multiplier: 1 });
+        }
+        const defectsArr = [];
+        document.querySelectorAll('#defectList .defect-card').forEach(card => {
+            defectsArr.push({
+                templateId: card.querySelector('.tpl-select')?.value || '',
+                description: card.querySelector('.desc-input')?.value || '',
+                deadline: card.querySelector('.deadline-input')?.value || '',
+                standard: card.querySelector('.standard-input')?.value || '',
+                location: card.querySelector('.loc-input')?.value || '',
+                photo: card.getAttribute('data-photo') || ''
+            });
+        });
+        return {
+            title: `${clientDataObj.type} - ${clientDataObj.siteAddress || 'Új Jegyzőkönyv'}`,
+            report_type: (clientDataObj.type || 'vbf').toLowerCase(),
+            client_data: clientDataObj,
+            diagram_data: canvasJson,
+            diagram_image: diagramImage,
+            defects_data: defectsArr,
+            measurements_data: [(window.VBF && window.VBF.measurements) ? window.VBF.measurements.collectAll() : {}]
+        };
+    }
+
+    async function compressReportPayloadImages(payload) {
+        const compress = window.VBF_compressImage;
+        if (!compress) return payload;
+        if (payload.diagram_image) {
+            payload.diagram_image = await compress(payload.diagram_image, { maxWidth: 1200, maxHeight: 1200, quality: 0.85 });
+        }
+        if (payload.defects_data) {
+            for (const d of payload.defects_data) {
+                if (d.photo && d.photo.startsWith('data:image')) {
+                    d.photo = await compress(d.photo, { maxWidth: 720, quality: 0.6 });
+                }
+            }
+        }
+        const m0 = payload.measurements_data && payload.measurements_data[0];
+        if (m0) {
+            const photoKeys = ['rpe', 'insulation', 'loop', 'rcd', 'tools', 'selv', 'eph'];
+            for (const key of photoKeys) {
+                const arr = m0[key];
+                if (Array.isArray(arr)) {
+                    for (const row of arr) {
+                        if (row.photo && row.photo.startsWith('data:image')) {
+                            row.photo = await compress(row.photo, { maxWidth: 720, quality: 0.6 });
+                        }
+                    }
+                }
+            }
+        }
+        return payload;
+    }
+
     async function saveReportToCloud(silent = false) {
         if (!window.currentToken) {
             if (!silent) alert('Előbb jelentkezz be!');
@@ -372,63 +504,8 @@ export function initReports() {
         }
 
         try {
-            const clientDataObj = {
-                type: document.getElementById('docType')?.value || '',
-                customerName: document.getElementById('customerName')?.value || '',
-                siteAddress: document.getElementById('siteAddress')?.value || '',
-                siteHrsz: document.getElementById('siteHrsz')?.value || '',
-                buildingPurpose: document.getElementById('buildingPurpose')?.value || '',
-                inspectorName: document.getElementById('inspectorName')?.value || '',
-                inspectorLicense: document.getElementById('inspectorLicense')?.value || '',
-                instrumentType: document.getElementById('instrumentType')?.value || '',
-                instrumentCal: document.getElementById('instrumentCal')?.value || '',
-                reportResult: document.getElementById('reportResult')?.value || '',
-                ephGasRequired: document.getElementById('ephGasRequired')?.value || 'Nem',
-                ephGasMeter: document.getElementById('ephGasMeter')?.value || '',
-                ephPenSep: document.getElementById('ephPenSep')?.value || '',
-                ephEarthMethod: document.getElementById('ephEarthMethod')?.value || '',
-                ephRaValue: document.getElementById('ephRaValue')?.value || '',
-                ephConductor: document.getElementById('ephConductor')?.value || '',
-                visualChecks: {
-                    id_marks: document.getElementById('check_id_marks')?.checked || false,
-                    protection: document.getElementById('check_protection')?.checked || false,
-                    fire: document.getElementById('check_fire')?.checked || false,
-                    conduction: document.getElementById('check_conduction')?.checked || false,
-                    connection: document.getElementById('check_connection')?.checked || false,
-                    access: document.getElementById('check_access')?.checked || false
-                },
-                buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
-                standardReference: 'TvMI 7.7:2026.02.01',
-                meeQualification: document.getElementById('reportResult')?.value || '',
-                nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
-                siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
-            };
-
-            const canvasJson = window.canvas ? window.canvas.toJSON(['vbfData']) : null;
-            const diagramImage = (window.canvas && window.canvas.getObjects().length > 0) ? window.canvas.toDataURL({ format: 'png', multiplier: 2 }) : null;
-
-            const defectsArr = [];
-            document.querySelectorAll('#defectList .defect-card').forEach(card => {
-                defectsArr.push({
-                    templateId: card.querySelector('.tpl-select')?.value || '',
-                    description: card.querySelector('.desc-input')?.value || '',
-                    deadline: card.querySelector('.deadline-input')?.value || '',
-                    standard: card.querySelector('.standard-input')?.value || '',
-                    location: card.querySelector('.loc-input')?.value || '',
-                    photo: card.getAttribute('data-photo') || ''
-                });
-            });
-
-            const payload = {
-                title: `${clientDataObj.type} - ${clientDataObj.siteAddress || 'Új Jegyzőkönyv'}`,
-                report_type: clientDataObj.type.toLowerCase(),
-                client_data: clientDataObj,
-                diagram_data: canvasJson,
-                diagram_image: diagramImage,
-                defects_data: defectsArr,
-                measurements_data: [(window.VBF && window.VBF.measurements) ? window.VBF.measurements.collectAll() : {}]
-            };
-
+            let payload = buildReportPayload();
+            payload = await compressReportPayloadImages(payload);
             const isUpdate = !!window.currentSavedReportId;
             const reqMethod = isUpdate ? 'PUT' : 'POST';
             const reqUrl = isUpdate ? `${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}` : `${window.API_BASE_URL}/api/reports`;
@@ -453,6 +530,10 @@ export function initReports() {
             const data = await res.json();
             if (res.ok) {
                 window.currentSavedReportId = data.id;
+                try {
+                    localStorage.setItem('vbf_last_report_id', String(data.id));
+                    localStorage.removeItem('vbf_draft');
+                } catch (_) {}
                 const savedTitle = document.getElementById('documentTitle')?.value?.trim() || data.title || 'Jegyzőkönyv';
                 if (window.updateHeaderReportContext) window.updateHeaderReportContext(savedTitle, 'saved');
                 if (!silent && window.showToast) window.showToast('✅ Jegyzőkönyv sikeresen mentve a felhőbe!');
@@ -576,7 +657,11 @@ export function initReports() {
                     const cards = defectList.querySelectorAll('.defect-card');
                     if (cards.length === 0) return;
                     const lastCard = cards[cards.length - 1];
-                    if (d.templateId) lastCard.querySelector('.tpl-select').value = d.templateId;
+                    if (d.templateId) {
+                        lastCard.querySelector('.tpl-select').value = d.templateId;
+                        const tipikus = window.vbfData && window.vbfData.tipikus_hibak && window.vbfData.tipikus_hibak.find(h => h.id === d.templateId);
+                        lastCard.setAttribute('data-severity', (tipikus && tipikus.sulyossag) ? tipikus.sulyossag : 'egyedi');
+                    } else lastCard.setAttribute('data-severity', 'egyedi');
                     lastCard.querySelector('.desc-input').value = d.description || '';
                     lastCard.querySelector('.deadline-input').value = d.deadline || '';
                     lastCard.querySelector('.standard-input').value = d.standard || '';
@@ -628,6 +713,7 @@ export function initReports() {
             const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
             const rep = await res.json();
             window.currentSavedReportId = rep.id;
+            try { localStorage.setItem('vbf_last_report_id', String(rep.id)); } catch (_) {}
             if (btnExportWord) btnExportWord.style.display = 'inline-block';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
             if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
@@ -667,6 +753,7 @@ export function initReports() {
             if (res.ok) {
                 if (window.currentSavedReportId === id) {
                     window.currentSavedReportId = null;
+                    try { localStorage.removeItem('vbf_last_report_id'); } catch (_) {}
                     if (btnExportWord) btnExportWord.style.display = 'none';
                     if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
                     if (btnEmailReport) btnEmailReport.style.display = 'none';
@@ -711,6 +798,77 @@ export function initReports() {
             if (window.QRCode) new window.QRCode(document.getElementById("qrcode"), { text: `VBF-REPORT-${id}`, width: 120, height: 120, colorDark: "#000", colorLight: "#fff" });
         }
     };
+
+    // Piszkozat: helyi mentés 2,5 percenként; helyreállítás induláskor
+    window.saveDraftToLocalStorage = function () {
+        try {
+            const payload = buildReportPayload();
+            localStorage.setItem('vbf_draft', JSON.stringify({ payload, savedAt: Date.now() }));
+        } catch (_) {}
+    };
+    window.loadDraftIntoUI = function () {
+        try {
+            const raw = localStorage.getItem('vbf_draft');
+            if (!raw) return false;
+            const { payload } = JSON.parse(raw);
+            const rep = {
+                title: payload.title,
+                report_type: payload.report_type || 'vbf',
+                client_data: payload.client_data || {},
+                defects_data: payload.defects_data || [],
+                measurements_data: payload.measurements_data || [{}],
+                diagram_data: payload.diagram_data || null
+            };
+            window.currentSavedReportId = null;
+            window.loadReportIntoUI(rep);
+            if (window.updateHeaderReportContext) window.updateHeaderReportContext(rep.title || 'Piszkozat', 'modified');
+            return true;
+        } catch (_) { return false; }
+    };
+    setInterval(function () {
+        if (document.getElementById('customerName') && !window.currentSavedReportId) window.saveDraftToLocalStorage();
+    }, 2.5 * 60 * 1000);
+
+    // Sablonok: előre kitöltött értékek „Új sablonból” indításhoz
+    window.VBF_REPORT_TEMPLATES = [
+        { id: 'lako', name: 'Lakóépület', docType: 'VBF_LAKO', buildingPurpose: 'Lakóépület', buildingOtsz: 'AK', instrumentType: 'Metrel MI 3152', nextYears: 5 },
+        { id: 'iroda', name: 'Iroda / Kereskedelmi', docType: 'VBF_LAKO', buildingPurpose: 'Iroda, kereskedelmi épület', buildingOtsz: 'KK', instrumentType: 'Metrel MI 3152', nextYears: 5 },
+        { id: 'uzem', name: 'Ipari / Üzem', docType: 'VBF_LAKO', buildingPurpose: 'Ipari, üzemi épület', buildingOtsz: 'MK', instrumentType: 'Metrel MI 3152', nextYears: 3 },
+        { id: 'eph', name: 'EPH felülvizsgálat', docType: 'EPH', buildingPurpose: '', buildingOtsz: '', instrumentType: 'Metrel MI 3152', nextYears: 5 }
+    ];
+    window.applyReportTemplate = function (templateId) {
+        const t = window.VBF_REPORT_TEMPLATES.find(x => x.id === templateId);
+        if (!t) return;
+        window.currentSavedReportId = null;
+        if (document.getElementById('docType')) document.getElementById('docType').value = t.docType || 'VBF_LAKO';
+        if (document.getElementById('buildingPurpose')) document.getElementById('buildingPurpose').value = t.buildingPurpose || '';
+        if (document.getElementById('buildingOtsz')) document.getElementById('buildingOtsz').value = t.buildingOtsz || '';
+        if (document.getElementById('instrumentType')) document.getElementById('instrumentType').value = t.instrumentType || '';
+        if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = `Sablon: ${t.name}`;
+        document.querySelectorAll('.data-table tbody').forEach(tb => { if (tb) tb.innerHTML = ''; });
+        const defectList = document.getElementById('defectList');
+        if (defectList) defectList.innerHTML = '';
+        if (window.canvas && window.canvas.clear) window.canvas.clear();
+        if (window.updateHeaderReportContext) window.updateHeaderReportContext(`Sablon: ${t.name}`, 'modified');
+        if (window.showToast) window.showToast(`Sablon „${t.name}" betöltve. Töltsd ki a mezőket!`, 'success');
+    };
+    document.getElementById('btnNewReportEmpty')?.addEventListener('click', () => {
+        window.currentSavedReportId = null;
+        document.querySelectorAll('.data-table tbody').forEach(tb => { if (tb) tb.innerHTML = ''; });
+        const defectList = document.getElementById('defectList');
+        if (defectList) defectList.innerHTML = '';
+        if (window.canvas && window.canvas.clear) window.canvas.clear();
+        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
+        });
+        if (window.updateHeaderReportContext) window.updateHeaderReportContext('Új jegyzőkönyv', null);
+        if (window.showToast) window.showToast('Üres jegyzőkönyv kész.', 'success');
+    });
+    document.getElementById('reportTemplateSelect')?.addEventListener('change', function () {
+        const v = this.value;
+        if (v) { window.applyReportTemplate(v); this.value = ''; }
+    });
 
     if (window.updateHeaderReportContext) {
         if (window.currentSavedReportId) {

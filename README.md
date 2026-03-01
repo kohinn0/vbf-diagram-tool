@@ -52,6 +52,13 @@ A projekt teljes egészében, minden függőségével (PDF motorok, adatbázis) 
    *   A frontend applikáció (Web kliens) elérhető: [http://localhost](http://localhost) vagy az adott gép / NAS IP címén (pl: `http://192.168.1.100`)
    *   A backend API elérhető (FastAPI Docs Swagger): [http://localhost:8001/docs](http://localhost:8001/docs)
 
+4. **Frissítés (kód / image újraépítése)**:
+   ```bash
+   git pull
+   docker-compose up -d --build
+   ```
+   A `--build` újraépíti a frontend és backend image-eket a legfrissebb kódból, majd újraindítja a konténereket. Az adatbázis (SQLite a `vbf_data` volume-on) megmarad. Ha csak a konténereket akarod újraindítani build nélkül: `docker-compose up -d`.
+
 *Alapértelmezett első belépés: Készíts egy felhasználót, az legelső regisztráló automatikusan ADMIN jogot kap az egész alkalmazás felett!*
 
 ## 📁 Projekt struktúra (Nagyvonalakban)

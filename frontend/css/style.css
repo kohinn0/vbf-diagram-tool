@@ -600,6 +600,18 @@ a.nav-tab {
     border-bottom-color: var(--primary);
     background: rgba(14, 165, 233, 0.06);
 }
+.tab-badge {
+    display: none;
+    margin-left: 0.35rem;
+    min-width: 1.1rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    background: var(--danger, #ef4444);
+    border-radius: 999px;
+}
 
 .user-controls {
     display: flex;
@@ -923,6 +935,32 @@ a.nav-tab {
     padding: 2.5rem;
     border-radius: var(--radius);
 }
+
+.keyboard-shortcuts-modal { max-width: 420px; }
+.keyboard-shortcuts-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.keyboard-shortcuts-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.keyboard-shortcuts-list li:last-child { border-bottom: none; }
+.keyboard-shortcuts-list kbd {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: var(--surface-light, rgba(255,255,255,0.08));
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+.keyboard-shortcuts-list span { flex: 1; font-size: 0.95rem; }
 
 .app-content-wrapper {
     flex: 1;
