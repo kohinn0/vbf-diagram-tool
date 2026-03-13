@@ -167,9 +167,14 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     db.refresh(db_job)
     return db_job
 
+from routers.auth import limiter as rate_limiter
+
+
 @router.post("/api/padfx/parse")
+@rate_limiter.limit("5/minute")
 async def parse_padfx_file(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    current_user: database.User = Depends(auth.get_current_user),
 ):
     with tempfile.TemporaryDirectory() as temp_dir:
         input_file = os.path.join(temp_dir, file.filename)

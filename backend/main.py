@@ -57,12 +57,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Setup CORS - Outermost layer (dev: engedünk mindent)
+# Setup CORS - Outermost layer
+# DEV: engedünk mindent; PROD: opcionálisan szigorítható env változóval
+_env = os.getenv("ENV", "").lower()
+_cors_origins_raw = os.getenv("CORS_ALLOW_ORIGINS", "")
+if _cors_origins_raw:
+    allow_origins = [o.strip() for o in _cors_origins_raw.split(",") if o.strip()]
+else:
+    # Ha nincs explicit lista, akkor:
+    # - fejlesztésben: "*"
+    # - egyébként: biztonsági okból továbbra is "*" marad, de env‑vel szigorítható
+    allow_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # fejlesztéshez: bárhonnan
+    allow_origins=allow_origins,
     allow_credentials=False,
-    allow_methods=["*"],   
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )

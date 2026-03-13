@@ -1014,7 +1014,9 @@ def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] 
         pfx_path = "signer.pfx"
     if pfx_pass is None:
         import os as _os
-        pfx_pass = (_os.environ.get("VBF_PFX_PASSWORD") or "").encode("utf-8") or b"password"
+        # Biztonság: ha nincs jelszó beállítva, ne használjunk gyenge defaultot,
+        # inkább próbáljuk meg aláírás nélkül visszaadni a PDF-et.
+        pfx_pass = (_os.environ.get("VBF_PFX_PASSWORD") or "").encode("utf-8")
 
     # Generate the standard DOCX (share_url → QR borítólapra)
     docx_stream = generate_docx_stream(report, db, share_url=share_url)
@@ -1047,6 +1049,11 @@ def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] 
             import io as pyhanko_io
 
             if not os.path.exists(pfx_path):
+                pdf_out = pyhanko_io.BytesIO(pdf_bytes)
+                pdf_out.seek(0)
+                return pdf_out
+            # Ha nincs jelszó megadva, ne próbáljunk aláírni: térjünk vissza a sima PDF-fel
+            if not pfx_pass:
                 pdf_out = pyhanko_io.BytesIO(pdf_bytes)
                 pdf_out.seek(0)
                 return pdf_out

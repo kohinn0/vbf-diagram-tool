@@ -300,12 +300,19 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
 
 @router.post("/api/payments/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(auth.get_db)):
+    # Prod védelem: ha nincs valós webhook secret beállítva, ne engedjük a webhookot működni
+    if STRIPE_WEBHOOK_SECRET == "whsec_fake" and os.getenv("TESTING") != "1":
+        raise HTTPException(
+            status_code=500,
+            detail="Stripe webhook secret nincs konfigurálva. Állítsd be a STRIPE_WEBHOOK_SECRET környezeti változót."
+        )
+
     payload = await request.body()
     sig_header = request.headers.get("Stripe-Signature", "")
 
     try:
-        if STRIPE_WEBHOOK_SECRET == "whsec_fake":
-            # For local testing without real signature validation
+        if STRIPE_WEBHOOK_SECRET == "whsec_fake" and os.getenv("TESTING") == "1":
+            # Lokális / teszt környezet: engedjük a szignó nélküli eventet
             event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
         else:
             event = stripe.Webhook.construct_event(

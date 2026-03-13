@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, User
 
 # Élesben kötelező: SECRET_KEY és JWT_EXPIRE_MINUTES env (pl. 1440 = 1 nap)
-SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-vbf-key-change-in-production")
+_raw_secret = os.getenv("SECRET_KEY")
+_env = os.getenv("ENV", "").lower()
+if not _raw_secret:
+    # Dev fallback: csak nem‑prod környezetben engedélyezzük a gyenge defaultot
+    if _env in ("production", "prod") and os.getenv("TESTING") != "1":
+        raise RuntimeError("SECRET_KEY nincs beállítva. Prod környezetben kötelező erős SECRET_KEY‑t megadni env‑ben.")
+    _raw_secret = "super-secret-vbf-key-change-in-production"
+SECRET_KEY = _raw_secret
 ALGORITHM = "HS256"
 _access_expire = os.getenv("JWT_EXPIRE_MINUTES", "")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(_access_expire) if _access_expire.isdigit() else (60 * 24 * 7)  # default 7 nap (dev)

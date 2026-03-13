@@ -425,7 +425,14 @@ def bootstrap_admin(db: Session = Depends(auth.get_db)):
     """
     DEV SEGÍTSÉG: ismert jelszavú admin felhasználó létrehozása / resetelése.
     Ne hagyd így éles környezetben!
+
+    Biztonsági okokból ez az endpoint csak akkor aktív, ha az ENABLE_DEV_BOOTSTRAP_ADMIN=1
+    környezeti változó be van állítva. Prod környezetben így nem kihasználható backdoor.
     """
+    import os
+    if os.getenv("ENABLE_DEV_BOOTSTRAP_ADMIN") != "1":
+        # Szándékosan 404-et adunk vissza, hogy ne derüljön ki az endpoint létezése
+        raise HTTPException(status_code=404, detail="Not found")
     username = "admin"
     plain_password = "TesztJelszo123"
 
