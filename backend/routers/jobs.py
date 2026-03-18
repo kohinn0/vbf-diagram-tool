@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request # <--- Add hozzá a Request-et
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
@@ -173,9 +173,11 @@ from routers.auth import limiter as rate_limiter
 @router.post("/api/padfx/parse")
 @rate_limiter.limit("5/minute")
 async def parse_padfx_file(
+    request: Request, # <--- EZT ADTAM HOZZÁ, ez kötelező a limiternek!
     file: UploadFile = File(...),
     current_user: database.User = Depends(auth.get_current_user),
 ):
+    # A függvény többi része maradhat változatlan...
     with tempfile.TemporaryDirectory() as temp_dir:
         input_file = os.path.join(temp_dir, file.filename)
         # Read file contents
