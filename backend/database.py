@@ -135,6 +135,10 @@ class CompanySettings(Base):
     logo_path = Column(String, nullable=True)  # relative path to logo
     signature_path = Column(String, nullable=True)  # aláírás kép (díszítés DOCX-ben)
     pfx_path = Column(String, nullable=True)  # hitelesítő tanúsítvány .pfx/.p12 (PDF aláíráshoz)
+    docx_header_text = Column(Text, nullable=True)   # egyéni fejléc szöveg (pl. "Cégnév | 1234 Bp.")
+    docx_footer_text = Column(Text, nullable=True)  # egyéni lábléc szöveg (pl. "www.ceg.hu")
+    docx_primary_color = Column(String(32), nullable=True)  # hex pl. #1e3a5f (címek, táblázat fejléc)
+    docx_embed_diagram = Column(Boolean, default=True)  # True = rajz a DOCX-ben, False = csak Rajz PDF külön
     owner_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True)  # legacy: super admin saját
     company_id = Column(Integer, ForeignKey("companies.id"), unique=True, nullable=True)  # céghez kötött
     owner = relationship("User", backref="company_settings")
@@ -253,6 +257,30 @@ class PendingOrder(Base):
     paid_at = Column(DateTime, nullable=True)
 
 
+class MeasurementTemplate(Base):
+    """Céges / user egyedi mérési sablon (rpe, loop, insulation, rcd)."""
+    __tablename__ = "measurement_templates"
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    name = Column(String(128), nullable=False)
+    template_json = Column(JSON, nullable=False)  # { rpe: [], loop: [], insulation: [], rcd: [] }
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReportAuditLog(Base):
+    """Jegyzőkönyv audit napló: ki nyitotta, exportálta, finalizálta (5.2)."""
+    __tablename__ = "report_audit_log"
+    id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String(64), nullable=False, index=True)  # opened, exported_docx, exported_pdf, exported_diagram_pdf, finalized
+    meta = Column(JSON, nullable=True)  # opcionális: ip, user_agent
+    created_at = Column(DateTime, default=datetime.utcnow)
+    report = relationship("Report", backref="audit_logs")
+    user = relationship("User", backref="report_audit_entries")
+
+
 class ReportShareToken(Base):
     """Jegyzőkönyv megosztás: read-only link token alapján."""
     __tablename__ = "report_share_tokens"
@@ -320,6 +348,12 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
             if "pfx_path" not in cols3:
                 conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN pfx_path VARCHAR"))
                 conn.commit()
+            for col_name, col_type in [("docx_header_text", "TEXT"), ("docx_footer_text", "TEXT"), ("docx_primary_color", "VARCHAR(32)"), ("docx_embed_diagram", "INTEGER")]:
+                rcx = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+                col_list = [row[1] for row in rcx.fetchall()]
+                if col_name not in col_list:
+                    conn.execute(__import__("sqlalchemy").text(f"ALTER TABLE company_settings ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
             # SaaS: companies plan + limits
             r4 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(companies)"))
             cols4 = [row[1] for row in r4.fetchall()]

@@ -3,7 +3,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
+from starlette.requests import Request
 import os
+import re
 import sys
 import io
 import zipfile
@@ -15,6 +17,7 @@ import smtplib
 from email.message import EmailMessage
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
+from security import rate_limit
 
 router = APIRouter()
 
@@ -32,6 +35,8 @@ def _reports_scope(db, current_user):
 
 @router.get("/api/reports", response_model=List[schemas.ReportResponse])
 def get_reports(skip: int = 0, limit: int = 100, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    skip = max(0, min(skip, 10000))
+    limit = max(1, min(limit, 500))
     reports = _reports_scope(db, current_user).offset(skip).limit(limit).all()
     return reports
 
@@ -90,6 +95,10 @@ def get_report(report_id: int, db: Session = Depends(auth.get_db), current_user:
             raise HTTPException(status_code=404, detail="Report not found")
     elif report.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        _log_report_audit(db, report_id, current_user.id, "opened")
+    except Exception:
+        pass
     return report
 
 def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data: dict, db: Session):
@@ -228,6 +237,10 @@ def finalize_report(report_id: int, db: Session = Depends(auth.get_db), current_
     db_report.finalized_at = datetime.utcnow()
     db.commit()
     db.refresh(db_report)
+    try:
+        _log_report_audit(db, report_id, current_user.id, "finalized")
+    except Exception:
+        pass
     return db_report
 
 from fastapi.responses import StreamingResponse
@@ -238,6 +251,10 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
     report = _report_access(db, report_id, current_user)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        _log_report_audit(db, report_id, current_user.id, "exported_docx")
+    except Exception:
+        pass
 
     share_url = None
     if report.status == "FINAL":
@@ -254,8 +271,13 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
     rep_type = report.report_type.upper() if report.report_type else "VBF"
     short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
     year = report.created_at.year if report.created_at else datetime.utcnow().year
-    
-    filename = f"{short_rep_type}-{year}-{report.id:03d}.docx"
+    c_data = getattr(report, "client_data", None) or {}
+    if not isinstance(c_data, dict):
+        c_data = {}
+    customer = (c_data.get("customerName") or c_data.get("siteAddress") or "").strip()
+    safe = re.sub(r"[^\w\s\-]", "", customer)
+    safe = re.sub(r"\s+", "_", safe).strip("_")[:35] if customer else ""
+    filename = f"{short_rep_type}-{year}-{report.id:03d}_{safe}.docx" if safe else f"{short_rep_type}-{year}-{report.id:03d}.docx"
     
     headers = {
         'Content-Disposition': f'attachment; filename="{filename}"',
@@ -272,6 +294,10 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
     report = _report_access(db, report_id, current_user)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        _log_report_audit(db, report_id, current_user.id, "exported_pdf")
+    except Exception:
+        pass
 
     share_url = None
     if report.status == "FINAL":
@@ -288,12 +314,16 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
         stream = generator.generate_signed_pdf_stream(report, db, share_url=share_url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-        
     rep_type = report.report_type.upper() if report.report_type else "VBF"
     short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
     year = report.created_at.year if report.created_at else datetime.utcnow().year
-    
-    filename = f"{short_rep_type}-{year}-{report.id:03d}.pdf"
+    c_data = getattr(report, "client_data", None) or {}
+    if not isinstance(c_data, dict):
+        c_data = {}
+    customer = (c_data.get("customerName") or c_data.get("siteAddress") or "").strip()
+    safe = re.sub(r"[^\w\s\-]", "", customer)
+    safe = re.sub(r"\s+", "_", safe).strip("_")[:35] if customer else ""
+    filename = f"{short_rep_type}-{year}-{report.id:03d}_{safe}.pdf" if safe else f"{short_rep_type}-{year}-{report.id:03d}.pdf"
     
     headers = {
         'Content-Disposition': f'attachment; filename="{filename}"',
@@ -304,6 +334,67 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
         media_type="application/pdf", 
         headers=headers
     )
+
+
+@router.get("/api/reports/{report_id}/export/diagram-pdf")
+def export_report_diagram_pdf(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Egyoldalas A4 PDF csak az egyvonalas rajz képből (aláíratlan)."""
+    report = _report_access(db, report_id, current_user)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        _log_report_audit(db, report_id, current_user.id, "exported_diagram_pdf")
+    except Exception:
+        pass
+    try:
+        stream = generator.generate_diagram_pdf_stream(report)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    rep_type = report.report_type.upper() if report.report_type else "VBF"
+    short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
+    year = report.created_at.year if report.created_at else datetime.utcnow().year
+    c_data = getattr(report, "client_data", None) or {}
+    if not isinstance(c_data, dict):
+        c_data = {}
+    customer = (c_data.get("customerName") or c_data.get("siteAddress") or "").strip()
+    safe = re.sub(r"[^\w\s\-]", "", customer)
+    safe = re.sub(r"\s+", "_", safe).strip("_")[:35] if customer else ""
+    filename = f"{short_rep_type}-{year}-{report.id:03d}_rajz.pdf" if not safe else f"{short_rep_type}-{year}-{report.id:03d}_{safe}_rajz.pdf"
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Access-Control-Expose-Headers": "Content-Disposition",
+    }
+    return StreamingResponse(content=stream, media_type="application/pdf", headers=headers)
+
+
+@router.get("/api/reports/{report_id}/audit-log", response_model=List[schemas.ReportAuditLogEntry])
+def get_report_audit_log(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Jegyzőkönyv audit napló (5.2): megnyitás, export, finalize – csak jogosult user/cég admin."""
+    report = _report_access(db, report_id, current_user)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    rows = (
+        db.query(database.ReportAuditLog, database.User.username)
+        .outerjoin(database.User, database.ReportAuditLog.user_id == database.User.id)
+        .filter(database.ReportAuditLog.report_id == report_id)
+        .order_by(database.ReportAuditLog.created_at.desc())
+        .all()
+    )
+    return [
+        schemas.ReportAuditLogEntry(
+            id=e.id,
+            report_id=e.report_id,
+            user_id=e.user_id,
+            action=e.action,
+            meta=e.meta,
+            created_at=e.created_at,
+            username=username,
+        )
+        for e, username in rows
+    ]
+
 
 @router.delete("/api/reports/{report_id}")
 def delete_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
@@ -329,6 +420,23 @@ def _report_access(db, report_id: int, current_user: database.User):
     if report.owner_id == current_user.id:
         return report
     return None
+
+
+def _log_report_audit(db: Session, report_id: int, user_id: int, action: str, meta: dict = None):
+    """Audit napló bejegyzés (5.2). opened: max 1 / user / report / nap."""
+    if action == "opened":
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        exists = db.query(database.ReportAuditLog).filter(
+            database.ReportAuditLog.report_id == report_id,
+            database.ReportAuditLog.user_id == user_id,
+            database.ReportAuditLog.action == "opened",
+            database.ReportAuditLog.created_at >= today_start,
+        ).first()
+        if exists:
+            return
+    entry = database.ReportAuditLog(report_id=report_id, user_id=user_id, action=action, meta=meta)
+    db.add(entry)
+    db.commit()
 
 
 @router.post("/api/reports/{report_id}/clone", response_model=schemas.ReportResponse)
@@ -383,6 +491,8 @@ def export_reports_zip(body: schemas.ReportExportZipRequest, db: Session = Depen
     """Több jegyzőkönyv exportálása egy ZIP fájlba (DOCX formátumban)."""
     if not body.report_ids or len(body.report_ids) > 50:
         raise HTTPException(status_code=400, detail="1–50 jegyzőkönyv megadása szükséges.")
+    if any(not isinstance(rid, int) or rid <= 0 or rid >= 2**31 for rid in body.report_ids):
+        raise HTTPException(status_code=400, detail="Érvénytelen report_id érték.")
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -445,6 +555,73 @@ def revoke_report_share(report_id: int, db: Session = Depends(auth.get_db), curr
     return {"message": "Megosztási link visszavonva."}
 
 
+def _measurement_templates_scope(db, current_user: database.User):
+    """Céges vagy user saját mérési sablonok lekérdezése."""
+    q = db.query(database.MeasurementTemplate)
+    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+        return q
+    if current_user.company_id:
+        return q.filter(database.MeasurementTemplate.company_id == current_user.company_id)
+    return q.filter(database.MeasurementTemplate.owner_id == current_user.id)
+
+
+@router.get("/api/measurement-templates", response_model=List[schemas.MeasurementTemplateResponse])
+def list_measurement_templates(db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Céges / user egyedi mérési sablonok listája."""
+    return _measurement_templates_scope(db, current_user).order_by(database.MeasurementTemplate.created_at.desc()).all()
+
+
+@router.post("/api/measurement-templates", response_model=schemas.MeasurementTemplateResponse)
+def create_measurement_template(body: schemas.MeasurementTemplateCreate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Új mérési sablon létrehozása (céges vagy user saját)."""
+    t = database.MeasurementTemplate(
+        name=body.name,
+        template_json=body.template_json,
+        company_id=current_user.company_id if current_user.company_id else None,
+        owner_id=current_user.id if not current_user.company_id else None,
+    )
+    db.add(t)
+    db.commit()
+    db.refresh(t)
+    return t
+
+
+@router.put("/api/measurement-templates/{template_id}", response_model=schemas.MeasurementTemplateResponse)
+def update_measurement_template(template_id: int, body: schemas.MeasurementTemplateUpdate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Mérési sablon módosítása."""
+    t = db.query(database.MeasurementTemplate).filter(database.MeasurementTemplate.id == template_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Sablon nem található.")
+    if current_user.role not in ("SUPER_ADMIN", "ADMIN"):
+        if current_user.company_id and t.company_id != current_user.company_id:
+            raise HTTPException(status_code=404, detail="Sablon nem található.")
+        if not current_user.company_id and t.owner_id != current_user.id:
+            raise HTTPException(status_code=404, detail="Sablon nem található.")
+    if body.name is not None:
+        t.name = body.name
+    if body.template_json is not None:
+        t.template_json = body.template_json
+    db.commit()
+    db.refresh(t)
+    return t
+
+
+@router.delete("/api/measurement-templates/{template_id}")
+def delete_measurement_template(template_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Mérési sablon törlése."""
+    t = db.query(database.MeasurementTemplate).filter(database.MeasurementTemplate.id == template_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Sablon nem található.")
+    if current_user.role not in ("SUPER_ADMIN", "ADMIN"):
+        if current_user.company_id and t.company_id != current_user.company_id:
+            raise HTTPException(status_code=404, detail="Sablon nem található.")
+        if not current_user.company_id and t.owner_id != current_user.id:
+            raise HTTPException(status_code=404, detail="Sablon nem található.")
+    db.delete(t)
+    db.commit()
+    return {"message": "Sablon törölve."}
+
+
 @router.post("/api/reports/import", response_model=schemas.ReportResponse)
 def import_report(body: schemas.ReportImportRequest, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     """Jegyzőkönyv importálása JSON adatokból (mentés visszaállítás, más rendszerből)."""
@@ -491,8 +668,9 @@ def import_report(body: schemas.ReportImportRequest, db: Session = Depends(auth.
 
 
 @router.get("/api/public/report/{token}")
-def get_public_report(token: str, format: str = "json", db: Session = Depends(auth.get_db)):
-    """Publikus read-only hozzáférés jegyzőkönyvhöz token alapján. ?format=docx|pdf|json"""
+@rate_limit("public_report", limit=60, window_seconds=60)
+async def get_public_report(request: Request, token: str, format: str = "json", db: Session = Depends(auth.get_db)):
+    """Publikus read-only hozzáférés jegyzőkönyvhöz token alapján. ?format=docx|pdf|json. Rate limit: 60/perc/IP."""
     share_row = db.query(database.ReportShareToken).filter(database.ReportShareToken.token == token).first()
     if not share_row:
         raise HTTPException(status_code=404, detail="Érvénytelen vagy lejárt megosztási link.")
@@ -506,43 +684,42 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
     if not report:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
+    c_data = getattr(report, "client_data", None) or {}
+    if not isinstance(c_data, dict):
+        c_data = {}
+    customer = (c_data.get("customerName") or c_data.get("siteAddress") or "").strip()
+    safe = re.sub(r"[^\w\s\-]", "", customer)
+    safe = re.sub(r"\s+", "_", safe).strip("_")[:35] if customer else ""
+    rep_type = report.report_type.upper() if report.report_type else "VBF"
+    short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
+    year = report.created_at.year if report.created_at else datetime.utcnow().year
+    fn_base = f"{short_rep_type}-{year}-{report.id:03d}_{safe}" if safe else f"{short_rep_type}-{year}-{report.id:03d}"
+
     if format == "docx":
         base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
         share_url = f"{base_url.rstrip('/')}/api/public/report/{token}?format=docx"
         stream = generator.generate_docx_stream(report, db, share_url=share_url)
-        rep_type = report.report_type.upper() if report.report_type else "VBF"
-        short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
-        year = report.created_at.year if report.created_at else datetime.utcnow().year
-        fn = f"{short_rep_type}-{year}-{report.id:03d}.docx"
         return StreamingResponse(
             stream,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": f'attachment; filename="{fn}"'}
+            headers={"Content-Disposition": f'attachment; filename="{fn_base}.docx"'}
         )
     if format == "pdf":
         base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
         pdf_share_url = f"{base_url.rstrip('/')}/api/public/report/{token}?format=pdf"
         try:
             stream = generator.generate_signed_pdf_stream(report, db, share_url=pdf_share_url)
-            rep_type = report.report_type.upper() if report.report_type else "VBF"
-            short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
-            year = report.created_at.year if report.created_at else datetime.utcnow().year
-            fn = f"{short_rep_type}-{year}-{report.id:03d}.pdf"
             return StreamingResponse(
                 stream,
                 media_type="application/pdf",
-                headers={"Content-Disposition": f'attachment; filename="{fn}"'}
+                headers={"Content-Disposition": f'attachment; filename="{fn_base}.pdf"'}
             )
         except Exception:
             stream = generator.generate_docx_stream(report, db, share_url=pdf_share_url)
-            rep_type = report.report_type.upper() if report.report_type else "VBF"
-            short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
-            year = report.created_at.year if report.created_at else datetime.utcnow().year
-            fn = f"{short_rep_type}-{year}-{report.id:03d}.docx"
             return StreamingResponse(
                 stream,
                 media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                headers={"Content-Disposition": f'attachment; filename="{fn}"'}
+                headers={"Content-Disposition": f'attachment; filename="{fn_base}.docx"'}
             )
 
     # format == "json" (default): read-only adatok

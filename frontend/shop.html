@@ -109,6 +109,22 @@
                     <input type="text" id="adminCompAddress" placeholder="1111 Bp., Pelikán u. 2.">
                     <label style="margin-top: 10px;">Bankszámlaszám</label>
                     <input type="text" id="adminCompBank" placeholder="11773000-12345678">
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <label style="color: var(--accent);">📄 DOCX sablon (jegyzőkönyv megjelenés)</label>
+                    <label style="margin-top: 8px; font-size: 0.9rem;">Fejléc szöveg <span style="color: var(--text-muted);">(pl. {rep_id} = azonosító)</span></label>
+                    <input type="text" id="adminDocxHeader" placeholder="Cégnév | Azonosító: {rep_id}" style="margin-top: 4px;">
+                    <label style="margin-top: 10px; font-size: 0.9rem;">Lábléc szöveg</label>
+                    <input type="text" id="adminDocxFooter" placeholder="www.ceged.hu | 1234 Bp., Utca 1." style="margin-top: 4px;">
+                    <label style="margin-top: 10px; font-size: 0.9rem;">Címek színe (hex)</label>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                        <input type="color" id="adminDocxColor" value="#1e3a5f" style="width: 48px; height: 32px; padding: 2px; cursor: pointer;">
+                        <input type="text" id="adminDocxColorHex" placeholder="#1e3a5f" maxlength="7" style="width: 100px;">
+                    </div>
+                    <label style="margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                        <input type="checkbox" id="adminDocxEmbedDiagram" checked>
+                        Rajz beágyazása a Word (DOCX) dokumentumba
+                    </label>
+                    <p style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted);">Kikapcsolva: a rajz nem kerül a DOCX-be, csak a „Rajz PDF” export tartalmazza.</p>
                     <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Céges Adatok mentése</button>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
                     <label>Céges Logó</label>

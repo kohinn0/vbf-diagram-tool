@@ -1,6 +1,35 @@
 from pydantic import BaseModel
 from typing import Optional, List, Any, Dict
 from datetime import datetime
+from enum import Enum
+
+
+# --- Enums ---
+
+class UserRole(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ADMIN = "ADMIN"
+    COMPANY_ADMIN = "COMPANY_ADMIN"
+    TECH = "TECH"
+
+
+class SubscriptionPlan(str, Enum):
+    FREE = "FREE"
+    PRO = "PRO"
+    ENTERPRISE = "ENTERPRISE"
+
+
+class ReportStatus(str, Enum):
+    DRAFT = "DRAFT"
+    FINAL = "FINAL"
+
+
+class DefectSeverity(str, Enum):
+    INFO = "INFO"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
 
 # --- Token Schemas ---
 class Token(BaseModel):
@@ -21,7 +50,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     is_active: bool
-    role: str
+    role: UserRole
     company_id: Optional[int] = None
     company_name: Optional[str] = None  # kitöltve a backendben joinnal
     subscription_expires: Optional[datetime] = None
@@ -30,11 +59,11 @@ class UserResponse(UserBase):
         from_attributes = True
 
 class UserUpdate(BaseModel):
-    is_active: Optional[bool] = None
-    role: Optional[str] = None
+    """
+    Admin által módosítható adatok felhasználón: erősen limitált mezők.
+    Kritikus mezők (szerepkör, aktiválás, előfizetés) külön admin folyamatokon keresztül kezelendők.
+    """
     email: Optional[str] = None
-    company_id: Optional[int] = None
-    subscription_expires: Optional[datetime] = None
 
 
 class PasswordChangeRequest(BaseModel):
@@ -56,6 +85,96 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+# --- Report & Measurement Schemas (embedded JSON) ---
+
+
+class Defect(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    severity: Optional[DefectSeverity] = None
+    photo: Optional[str] = None
+
+
+class RpeMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    point: Optional[str] = None
+    location: Optional[str] = None
+    val: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class LoopMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    circuit: Optional[str] = None
+    device: Optional[str] = None
+    location: Optional[str] = None
+    zs: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class RcdMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    circuit: Optional[str] = None
+    type: str = "A"
+    idn: Optional[str] = None
+    test_05: Optional[str] = None
+    t1: Optional[str] = None
+    t5: Optional[str] = None
+    ramp: Optional[str] = None
+    uc: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class InsulationMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    circuit: Optional[str] = None
+    ln: Optional[str] = None
+    lpe: Optional[str] = None
+    npe: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class ToolMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    name: Optional[str] = None
+    serial: Optional[str] = None
+    next_calibration: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class SelvMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    circuit: Optional[str] = None
+    description: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class EhpContMeasurementData(BaseModel):
+    node_id: Optional[str] = None
+    point: Optional[str] = None
+    location: Optional[str] = None
+    val: Optional[str] = None
+    pass_status: str = "Igen"
+    photo: Optional[str] = None
+
+
+class MeasurementsBlock(BaseModel):
+    rpe: Optional[List[RpeMeasurementData]] = None
+    insulation: Optional[List[InsulationMeasurementData]] = None
+    loop: Optional[List[LoopMeasurementData]] = None
+    rcd: Optional[List[RcdMeasurementData]] = None
+    tools: Optional[List[ToolMeasurementData]] = None
+    selv: Optional[List[SelvMeasurementData]] = None
+    eph_cont: Optional[List[EhpContMeasurementData]] = None
+
+
 # --- Report Schemas ---
 class ReportBase(BaseModel):
     title: str
@@ -63,8 +182,8 @@ class ReportBase(BaseModel):
     client_data: Optional[Dict[str, Any]] = None
     diagram_data: Optional[Dict[str, Any]] = None
     diagram_image: Optional[str] = None
-    defects_data: Optional[List[Dict[str, Any]]] = None
-    measurements_data: Optional[List[Dict[str, Any]]] = None
+    defects_data: Optional[List[Defect]] = None
+    measurements_data: Optional[MeasurementsBlock] = None
 
 class ReportCreate(ReportBase):
     pass
@@ -74,7 +193,7 @@ class ReportUpdate(ReportBase):
 
 class ReportResponse(ReportBase):
     id: int
-    status: str
+    status: ReportStatus
     owner_id: int
     created_at: datetime
     updated_at: datetime
@@ -95,13 +214,48 @@ class ReportImportRequest(BaseModel):
     diagram_data: Optional[Dict[str, Any]] = None
     diagram_image: Optional[str] = None
     defects_data: Optional[List[Dict[str, Any]]] = None
-    measurements_data: Optional[Dict[str, Any]] = None  # dict formátum (rpe, loop, stb.)
+    measurements_data: Optional[MeasurementsBlock] = None  # strukturált formátum (rpe, loop, stb.)
 
 
 class ReportShareResponse(BaseModel):
     share_url: str
     token: str
     expires_at: Optional[datetime] = None
+
+
+class MeasurementTemplateCreate(BaseModel):
+    name: str
+    template_json: Dict[str, Any]  # { rpe: [], loop: [], insulation: [], rcd: [] }
+
+class MeasurementTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    template_json: Optional[Dict[str, Any]] = None
+
+class MeasurementTemplateResponse(BaseModel):
+    id: int
+    company_id: Optional[int] = None
+    owner_id: Optional[int] = None
+    name: str
+    template_json: Dict[str, Any]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ReportAuditLogEntry(BaseModel):
+    """Egy audit bejegyzés (5.2)."""
+    id: int
+    report_id: int
+    user_id: Optional[int] = None
+    action: str
+    meta: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    username: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 
 # --- Company (cégenkénti szűrés) ---
 class CompanyBase(BaseModel):
@@ -115,14 +269,14 @@ class CompanyCreate(CompanyBase):
 class CompanyUpdate(BaseModel):
     """Super admin: csomag és limitek frissítése."""
     name: Optional[str] = None
-    plan: Optional[str] = None
+    plan: Optional[SubscriptionPlan] = None
     reports_per_month_limit: Optional[int] = None
     max_users: Optional[int] = None
 
 
 class CompanyResponse(CompanyBase):
     id: int
-    plan: Optional[str] = "FREE"
+    plan: Optional[SubscriptionPlan] = SubscriptionPlan.FREE
     reports_per_month_limit: Optional[int] = None
     max_users: Optional[int] = None
 
@@ -136,12 +290,12 @@ class UsageResponse(BaseModel):
     reports_limit: Optional[int] = None  # None = korlátlan
     users_count: int = 0
     users_limit: Optional[int] = None
-    plan: str = "FREE"
+    plan: SubscriptionPlan = SubscriptionPlan.FREE
 
 
 # --- Előfizetési csomagok (admin szerkesztheti: ár, tartalom) ---
 class SubscriptionPlanResponse(BaseModel):
-    plan_key: str
+    plan_key: SubscriptionPlan
     display_name: str
     price_monthly: Optional[int] = None   # HUF
     price_yearly: Optional[int] = None
@@ -168,7 +322,11 @@ class SubscriptionPlanUpdate(BaseModel):
 class BankTransferRequest(BaseModel):
     email: str
     customer_name: str
-    plan_type: str = "yearly"  # monthly | yearly
+    class PlanType(str, Enum):
+        MONTHLY = "monthly"
+        YEARLY = "yearly"
+
+    plan_type: PlanType = PlanType.YEARLY
     buyer_address: str  # Kötelező számlázási cím
     buyer_zip: Optional[str] = None
     buyer_city: Optional[str] = None
@@ -222,6 +380,10 @@ class CompanySettingsBase(BaseModel):
     logo_path: Optional[str] = None
     signature_path: Optional[str] = None
     pfx_path: Optional[str] = None
+    docx_header_text: Optional[str] = None
+    docx_footer_text: Optional[str] = None
+    docx_primary_color: Optional[str] = None
+    docx_embed_diagram: Optional[bool] = True  # rajz beágyazása a DOCX-be (False = csak Rajz PDF)
 
 class CompanySettingsCreate(CompanySettingsBase):
     pass

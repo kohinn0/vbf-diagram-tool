@@ -8,17 +8,22 @@ import { API } from './api.js';
 export const Storage = {
     initOfflineSystem() {
         const _this = this;
-        window.addEventListener('online', () => _this.updateOfflineUI());
+        window.addEventListener('online', () => {
+            _this.updateOfflineUI();
+            const queue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
+            if (queue.length > 0) {
+                setTimeout(() => _this.syncOfflineQueue(null), 1500);
+            }
+        });
         window.addEventListener('offline', () => _this.updateOfflineUI());
 
-        // Initial check
         this.updateOfflineUI();
 
-        // Gomb esemény rögzítése (ha van ilyen elem a HTML-ben)
         const btnSyncOffline = document.getElementById('btnSyncOffline');
         if (btnSyncOffline) {
             btnSyncOffline.addEventListener('click', () => this.syncOfflineQueue(btnSyncOffline));
         }
+        window.Storage = this;
     },
 
     updateOfflineUI() {
@@ -31,8 +36,8 @@ export const Storage = {
 
         if (offlineDot && offlineText) {
             if (!navigator.onLine) {
-                offlineDot.style.background = '#ef4444'; // Piros
-                offlineText.innerText = 'Offline';
+                offlineDot.style.background = '#ef4444';
+                offlineText.innerText = 'Offline – változtatások helyben mentve';
                 offlineText.style.color = '#ef4444';
             } else if (queue.length > 0) {
                 offlineDot.style.background = '#f59e0b'; // Borostyán
@@ -71,9 +76,10 @@ export const Storage = {
         const token = window.currentToken || localStorage.getItem('vbf_token');
         if (!token) return alert("Be kell jelentkezned a szinkronizáláshoz!");
 
-        if (btnSyncOffline) {
-            btnSyncOffline.disabled = true;
-            btnSyncOffline.innerText = "Syncing...";
+        const btn = btnSyncOffline || document.getElementById('btnSyncOffline');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Szinkronizálás...";
         }
 
         let queue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
@@ -91,7 +97,6 @@ export const Storage = {
             delete payload._endpoint;
 
             try {
-                // Determine base URL dynamically or fallback to localhost
                 const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
                 const res = await fetch(`${baseUrl}${endpoint}`, {
                     method: method,
@@ -103,6 +108,11 @@ export const Storage = {
                 });
                 if (res.ok) {
                     successCount++;
+                    const data = await res.json().catch(() => ({}));
+                    if (method === 'POST' && data.id != null) {
+                        window.currentSavedReportId = data.id;
+                        try { localStorage.setItem('vbf_last_report_id', String(data.id)); } catch (_) {}
+                    }
                 } else {
                     payload._offline_id = oldId;
                     payload._method = method;
@@ -120,9 +130,10 @@ export const Storage = {
         localStorage.setItem('vbf_offline_queue', JSON.stringify(failedQueue));
         this.updateOfflineUI();
 
-        if (btnSyncOffline) {
-            btnSyncOffline.disabled = false;
-            btnSyncOffline.innerHTML = `🔄 Szinkronizálás (<span id="offlineCount">${failedQueue.length}</span>)`;
+        const btn = btnSyncOffline || document.getElementById('btnSyncOffline');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `🔄 Szinkronizálás (<span id="offlineCount">${failedQueue.length}</span>)`;
         }
 
         if (successCount > 0) {

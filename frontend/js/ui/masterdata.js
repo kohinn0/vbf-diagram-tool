@@ -274,14 +274,20 @@ export function initMasterData() {
         const id = parseInt(e.target.value);
         if (!id) return;
         const c = customersData.find(x => x.id === id);
-        if (c) applyCustomerToReport(c);
+        if (c) {
+            applyCustomerToReport(c);
+            if (window.showToast) window.showToast('Ügyfél adatok betöltve.', 'success');
+        }
     });
 
     document.getElementById('loadInspectorSelect')?.addEventListener('change', (e) => {
         const id = parseInt(e.target.value);
         if (!id) return;
         const i = inspectorsData.find(x => x.id === id);
-        if (i) applyInspectorToReport(i);
+        if (i) {
+            applyInspectorToReport(i);
+            if (window.showToast) window.showToast('Felülvizsgáló adatok betöltve.', 'success');
+        }
     });
 
     if (window.currentToken) {

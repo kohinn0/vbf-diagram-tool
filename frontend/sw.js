@@ -1,38 +1,40 @@
 /**
- * VBF Service Worker — Offline PWA támogatás
+ * VBF Service Worker — Offline PWA támogatás (4.1)
  * Terepi felülvizsgálatokhoz: amikor nincs internet.
- * 
+ *
  * Stratégia:
- * - Statikus fájlok: Cache-first (app.html, css, js)
- * - API kérések: Network-first, fallback offline queue-ra
+ * - Statikus fájlok: NetworkFirst (online: friss, offline: cache)
+ * - API kérések: Nincs cache; offline esetén POST/PUT → offline queue
  */
 
-const CACHE_NAME = 'vbf-cache-v3';
+const CACHE_NAME = 'vbf-cache-v4';
 const STATIC_ASSETS = [
     '/app.html',
     '/css/style.css',
+    '/css/dashboard.css',
+    '/css/sitetree.css',
     '/js/app.js',
+    '/js/main.js',
     '/js/data.js',
     '/js/sanitize.js',
     '/js/validation.js',
     '/index.html',
+    '/manifest.json',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js',
 ];
 
-// Install: Cache statikus fájlokat
+// Install: előcache-eljük a statikus fájlokat (offline fallback)
 self.addEventListener('install', (event) => {
-    console.log('[SW] Install — Statikus tartalom cache-elése');
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(STATIC_ASSETS))
+            .then(cache => cache.addAll(STATIC_ASSETS).catch(() => {}))
             .then(() => self.skipWaiting())
     );
 });
 
-// Activate: Régi cache-ek törlése
+// Activate: régi cache-ek törlése
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activate — Régi cache törlése');
     event.waitUntil(
         caches.keys()
             .then(keys => Promise.all(
@@ -42,63 +44,57 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Cache-first statikus, Network-first API
+// Fetch: API nincs cache-elve; statikus NetworkFirst
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // API kérések → Network-first (Csak saját origin-en belüli API-kra!)
+    // API kérések — soha ne cache-eljük, csak network (vagy offline queue)
     if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
         event.respondWith(
             fetch(event.request)
-                .then(response => {
-                    // API válasz cache-elése (GET request case)
-                    if (event.request.method === 'GET' && response.ok) {
-                        const cloned = response.clone();
-                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-                    }
-                    return response;
-                })
+                .then(response => response)
                 .catch(async () => {
-                    // Offline → próbáljuk a cache-ből
                     const cached = await caches.match(event.request);
                     if (cached) return cached;
-
-                    // Ha POST/PUT → offline queue-ba mentjük
                     if (event.request.method !== 'GET') {
-                        // Klónozzuk a requestet és mentjük IndexedDB-be
-                        const body = await event.request.clone().text();
-                        await saveToOfflineQueue({
-                            url: event.request.url,
-                            method: event.request.method,
-                            headers: Object.fromEntries(event.request.headers.entries()),
-                            body: body,
-                            timestamp: Date.now()
-                        });
-                        return new Response(JSON.stringify({
-                            offline: true,
-                            message: 'A kérés elmentve — internet visszatérésekor automatikusan szinkronizálódik.'
-                        }), {
-                            status: 200,
-                            headers: { 'Content-Type': 'application/json' }
-                        });
+                        try {
+                            const body = await event.request.clone().text();
+                            await saveToOfflineQueue({
+                                url: event.request.url,
+                                method: event.request.method,
+                                headers: Object.fromEntries(event.request.headers.entries()),
+                                body: body,
+                                timestamp: Date.now()
+                            });
+                            return new Response(JSON.stringify({
+                                offline: true,
+                                message: 'A kérés elmentve — internet visszatérésekor automatikusan szinkronizálódik.'
+                            }), {
+                                status: 200,
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                        } catch (e) {
+                            return new Response(JSON.stringify({ offline: true, error: 'Queue mentés sikertelen' }), {
+                                status: 503,
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                        }
                     }
-
                     return new Response('Offline — adat nem elérhető', { status: 503 });
                 })
         );
         return;
     }
 
-    // Statikus tartalom → Cache-first
+    // Statikus tartalom: NetworkFirst (először hálózat, hiba esetén cache)
     event.respondWith(
-        caches.match(event.request)
-            .then(cached => cached || fetch(event.request)
-                .then(response => {
-                    const cloned = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-                    return response;
-                })
-            )
+        fetch(event.request)
+            .then(response => {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(event.request))
     );
 });
 
@@ -119,11 +115,15 @@ function openDB() {
     });
 }
 
-async function saveToOfflineQueue(data) {
-    const db = await openDB();
-    const tx = db.transaction('queue', 'readwrite');
-    tx.objectStore('queue').add(data);
-    return tx.complete;
+function saveToOfflineQueue(data) {
+    return openDB().then(db => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('queue', 'readwrite');
+            tx.objectStore('queue').add(data);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    });
 }
 
 async function processOfflineQueue() {

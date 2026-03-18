@@ -22,15 +22,56 @@ router = APIRouter(prefix="/api/padfx", tags=["padfx"])
 
 import shutil
 
+
+def _safe_extract_zip(zf, dest_dir: str) -> None:
+    """Zip slip védelem: csak olyan fájlokat bontunk ki, amelyek célja a dest_dir alatt van."""
+    dest_real = os.path.realpath(dest_dir)
+    dest_prefix = dest_real.rstrip(os.sep) + os.sep
+    for info in zf.infolist():
+        name = (info.filename or "").strip().replace("\\", "/").lstrip("/")
+        if not name:
+            continue
+        target = os.path.normpath(os.path.join(dest_dir, name))
+        target_real = os.path.realpath(target)
+        if not (target_real == dest_real or target_real.startswith(dest_prefix)):
+            raise ValueError(f"Zip slip: tiltott útvonal a zip-ben: {info.filename}")
+        zf.extract(info, dest_dir)
+
+
 @router.post("/parse")
 async def parse_padfx_file(
     file: UploadFile = File(...),
     current_user: database.User = Depends(get_current_user)
 ):
     print(f"[PADFX] Fájl fogadva: {file.filename}")
+    fname = (file.filename or "").strip().lower()
+    content_type = (file.content_type or "").lower()
+
+    # CSV (Fluke / Megger stb.) — 5.1
+    if fname.endswith(".csv") or "csv" in content_type:
+        try:
+            body = await file.read()
+            text = body.decode("utf-8", errors="replace")
+            if "\t" in text.split("\n")[0] and "," not in text.split("\n")[0]:
+                text = text.replace("\t", ";")
+            extracted = analyzer2.parse_fluke_csv(text)
+            print(f"[PADFX] CSV feldolgozás: {len(extracted)} mérés.")
+            return JSONResponse(status_code=200, content={
+                "status": "success",
+                "is_sqlite": False,
+                "format": "csv",
+                "measurements": extracted,
+            })
+        except Exception as ex:
+            print(f"[PADFX] CSV hiba: {ex}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"CSV feldolgozási hiba: {str(ex)}"})
+
     td = tempfile.mkdtemp()
     try:
-        tf_path = os.path.join(td, file.filename)
+        _base = (file.filename or "").strip()
+        _base = os.path.basename(_base)
+        _base = "".join(c if c.isalnum() or c in "._-" else "_" for c in _base)[:200] or "upload"
+        tf_path = os.path.join(td, _base)
         with open(tf_path, "wb") as f:
             f.write(await file.read())
             
@@ -38,7 +79,7 @@ async def parse_padfx_file(
         if zipfile.is_zipfile(tf_path):
             print(f"[PADFX] Ez egy ZIP fájl, kicsomagolás...")
             with zipfile.ZipFile(tf_path, 'r') as zf:
-                zf.extractall(td)
+                _safe_extract_zip(zf, td)
         
         # Keressünk SQLite vagy XML fájlt a TemporaryDirectory-ban (és alkönyvtáraiban)
         sqlite_file = None

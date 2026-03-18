@@ -13,6 +13,9 @@ import stripe
 
 router = APIRouter()
 
+# Max feltöltött kép méret (logo, aláírás) – DoS védelem
+MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
 
 def _is_super_admin(user: database.User) -> bool:
     return user.role in ("SUPER_ADMIN", "ADMIN")
@@ -383,12 +386,14 @@ def upload_company_logo(file: UploadFile = File(...), db: Session = Depends(auth
     from PIL import Image
     import io
 
+    image_data = file.file.read(MAX_IMAGE_UPLOAD_BYTES + 1)
+    if len(image_data) > MAX_IMAGE_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="A logo mérete maximum 10 MB lehet.")
     os.makedirs("data/logos", exist_ok=True)
     sid = current_admin.company_id or current_admin.id
     filename = f"logo_{sid}.webp"
     file_path = f"data/logos/{filename}"
     try:
-        image_data = file.file.read()
         image = Image.open(io.BytesIO(image_data))
         image.thumbnail((500, 500))
         image.save(file_path, "WEBP", quality=80, method=4)
@@ -410,12 +415,14 @@ def upload_company_signature(
     from PIL import Image
     import io
 
+    image_data = file.file.read(MAX_IMAGE_UPLOAD_BYTES + 1)
+    if len(image_data) > MAX_IMAGE_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Az aláírás kép mérete maximum 10 MB lehet.")
     os.makedirs("data/signatures", exist_ok=True)
     sid = current_admin.company_id or current_admin.id
     filename = f"signature_{sid}.webp"
     file_path = f"data/signatures/{filename}"
     try:
-        image_data = file.file.read()
         image = Image.open(io.BytesIO(image_data))
         # Aláírás általában vízszintes, max szélesség megőrzése
         w, h = image.size

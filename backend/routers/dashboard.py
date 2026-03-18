@@ -160,6 +160,65 @@ async def get_dashboard_stats(
     }
 
 
+@router.get("/api/dashboard/my-reminders")
+def get_my_reminders(
+    days: int = 90,
+    db: Session = Depends(auth.get_db),
+    current_user: database.User = Depends(auth.get_current_user),
+):
+    """
+    Kalibrálás emlékeztető + közelgő következő vizsgálatok a bejelentkezett user számára.
+    Minden szerepkör használhatja (saját / cég / minden report scope szerint).
+    """
+    now = datetime.utcnow()
+    base = _dashboard_reports_query(db, current_user)
+
+    # Kalibrálás: legutóbb frissített report client_data.instrumentCal
+    calibration = None
+    latest = base.order_by(database.Report.updated_at.desc()).first()
+    if latest and latest.client_data and isinstance(latest.client_data, dict):
+        cal_str = (latest.client_data.get("instrumentCal") or "").strip()
+        if cal_str:
+            try:
+                cal_date = datetime.strptime(cal_str, "%Y-%m-%d")
+                delta = (cal_date - now).days
+                calibration = {
+                    "instrument_cal": cal_str,
+                    "days_left": delta,
+                    "expired": delta < 0,
+                }
+            except (ValueError, TypeError):
+                pass
+
+    # Közelgő következő vizsgálatok (FINAL reportok, nextInspectionDate a megadott napon belül)
+    cutoff = now + timedelta(days=days)
+    reports = base.filter(database.Report.status == "FINAL").all()
+    upcoming = []
+    for rep in reports:
+        cd = rep.client_data or {}
+        next_str = (cd.get("nextInspectionDate") or "").strip()
+        if not next_str:
+            continue
+        try:
+            next_date = datetime.strptime(next_str, "%Y-%m-%d")
+        except (ValueError, TypeError):
+            continue
+        days_until = (next_date - now).days
+        if next_date <= cutoff:  # lejárt vagy közelgő
+            upcoming.append({
+                "report_id": rep.id,
+                "title": rep.title or f"Jegyzőkönyv #{rep.id}",
+                "next_inspection_date": next_str,
+                "days_left": days_until,
+            })
+    upcoming.sort(key=lambda x: x["days_left"])
+
+    return {
+        "calibration": calibration,
+        "upcoming_inspections": upcoming[:20],
+    }
+
+
 @router.get("/api/dashboard/upcoming-inspections")
 async def get_upcoming_inspections(
     days: int = 90,

@@ -33,9 +33,11 @@ export function initPadfx() {
 
                 if (data.status === 'success') {
                     if (data.is_sqlite) {
-                        alert('✅ Sikeresen kicsomagoltuk a Metrel SQLite adatbázist a szerveren!\n\nKérlek ellenőrizd a böngésző F12 Konszolját, mert oda kiírtam a táblák neveit és a minta adatokat. Kérlek másold ki és küldd el az AI-nak a struktúrát (például Dataset vagy Measurements táblát), hogy be tudjam fejezni a programozást!');
+                        alert('✅ Sikeresen kicsomagoltuk a Metrel SQLite adatbázist a szerveren!\n\nKérlek ellenőrizd a böngésző F12 Konszolját, mert oda kiírtam a táblák neveit és a minta adatokat.');
                     } else if (data.measurements) {
-                        alert(`✅ Sikeres Metrel kicsomagolás!\n\n${data.measurements.length} db mérést azonosítottam a fájlban. Most automatikusan betöltöm azokat a megfelelő Jegyzőkönyv táblázatokba!`);
+                        const fmt = data.format === 'csv' ? 'CSV (Fluke/Megger)' : 'Metrel PADFX';
+                        if (window.showToast) window.showToast(`${fmt}: ${data.measurements.length} mérés betöltve.`, 'success');
+                        else alert(`✅ ${fmt} feldolgozva!\n\n${data.measurements.length} db mérés betöltve a táblázatokba.`);
 
                         let rpeCount = 0;
                         let zsCount = 0;
@@ -107,16 +109,19 @@ export function initPadfx() {
                         });
 
                         if (data.measurements.length === 0) {
-                            alert('⚠️ A fájlt sikeresen beolvastam, de nem találtam benne validált Metrel mérési adatokat!');
+                            if (window.showToast) window.showToast('A fájlban nem találhatók felismerhető mérési adatok.', 'warning');
+                            else alert('⚠️ A fájlban nem találhatók felismerhető mérési adatok (Rpe, Zs, RCD, Riso oszlopok).');
                         }
                     }
                 } else {
-                    alert('Hiba történt a PADFX fájl feldolgozása során: ' + (data.message || 'Ismeretlen hiba'));
+                    if (window.showToast) window.showToast(data.message || 'Import hiba', 'error');
+                    else alert('Hiba: ' + (data.message || 'Ismeretlen hiba'));
                 }
             } catch (err) {
-                alert('Hiba a fájl feltöltésekor: ' + err.message);
+                if (window.showToast) window.showToast('Feltöltés hiba: ' + err.message, 'error');
+                else alert('Hiba a fájl feltöltésekor: ' + err.message);
             } finally {
-                btnLoadPadfx.innerText = 'Metrel PADFX Import 📥';
+                btnLoadPadfx.innerText = 'Mérési fájl import (PADFX / CSV) 📥';
                 e.target.value = '';
             }
         });

@@ -75,6 +75,8 @@
                     <button class="btn btn-danger btn-small" id="btnFinalize" style="display: none;"><span aria-hidden="true">🔒</span> Zárás</button>
                     <button class="btn btn-accent btn-small" id="btnExportWord" style="display: none;">Word</button>
                     <button class="btn btn-accent btn-small" id="btnExportPdfReport" style="display: none;">PDF</button>
+                    <button class="btn btn-accent btn-small" id="btnExportDiagramPdf" style="display: none;" title="Csak az egyvonalas rajz egy oldalas PDF-je">Rajz PDF</button>
+                    <button class="btn btn-secondary btn-small" id="btnAuditLog" style="display: none;" title="Napló: megnyitás, export, zárás">Napló</button>
                     <button class="btn btn-accent btn-small" id="btnEmailReport" style="display: none;">Küldés</button>
                 </div>
             </div>
@@ -280,6 +282,11 @@
 
     <!-- Main Content Area -->
     <div class="app-content-wrapper">
+        <!-- Kalibrálás / emlékeztető banner (csak bejelentkezés után, ha van adat) -->
+        <div id="remindersBanner" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; align-items: center; gap: 0.5rem;">
+            <span id="remindersBannerText"></span>
+            <button type="button" id="remindersBannerDismiss" style="margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; opacity: 0.8;" title="Elrejtés">✕</button>
+        </div>
         <!-- 1. TAB: RAJZOLÓ (Eredeti funkció) -->
         <div id="tab-diagram" class="tab-pane active">
             <div class="app-container">
@@ -305,6 +312,17 @@
                         </div>
                     </div>
 
+                    <div class="tool-section">
+                        <h3>Rajz sablon</h3>
+                        <div style="margin-bottom: 0.5rem;">
+                            <select id="diagramTemplateSelect" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main); font-size: 0.9rem;">
+                                <option value="">— válassz sablont —</option>
+                                <option value="single">Egyetlen elosztó</option>
+                                <option value="main_plus_3">Főelosztó + 3 alosztó</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnLoadDiagramTemplate" style="width: 100%;">Sablon betöltése</button>
+                    </div>
                     <div class="tool-section">
                         <h3>Műveletek</h3>
                         <button class="btn btn-primary" id="btnExportPdf">Rajz Exportálása PDF-be</button>
@@ -362,15 +380,27 @@
             <div class="form-container panel-glass"
                 style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
                 <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Felhőbe Mentett Jegyzőkönyvek</h2>
+                <!-- Közelgő következő vizsgálatok -->
+                <div id="upcomingInspectionsBlock" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 8px;">
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--accent);">📅 Közelgő következő vizsgálatok</h3>
+                    <div id="upcomingInspectionsList"></div>
+                </div>
                 <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
                     <span style="color: var(--text-muted); font-size: 0.9rem;">Új jegyzőkönyv:</span>
                     <button type="button" class="btn btn-secondary btn-small" id="btnNewReportEmpty">Új üres</button>
-                    <select id="reportTemplateSelect" class="btn btn-secondary btn-small" style="width: auto; min-width: 180px;">
+                    <select id="reportTemplateSelect" class="btn btn-secondary btn-small" style="width: auto; min-width: 200px;">
                         <option value="">Új sablonból...</option>
-                        <option value="lako">Lakóépület</option>
-                        <option value="iroda">Iroda / Kereskedelmi</option>
-                        <option value="uzem">Ipari / Üzem</option>
-                        <option value="eph">EPH felülvizsgálat</option>
+                        <optgroup label="Teljes jegyzőkönyv (ügyfél + méréssablon)">
+                            <option value="full_lakas">Lakás</option>
+                            <option value="full_iroda">Iroda</option>
+                            <option value="full_garazs">Garázs</option>
+                        </optgroup>
+                        <optgroup label="Csak űrlap sablon">
+                            <option value="lako">Lakóépület</option>
+                            <option value="iroda">Iroda / Kereskedelmi</option>
+                            <option value="uzem">Ipari / Üzem</option>
+                            <option value="eph">EPH felülvizsgálat</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
@@ -493,8 +523,8 @@
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                    <!-- Megrendelő és Helyszín -->
-                    <div>
+                    <!-- Megrendelő és Helyszín (első / egyetlen helyszín) -->
+                    <div id="singleSiteSection">
                         <h3
                             style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
                             🏢 Helyszín és Megrendelő</h3>
@@ -506,16 +536,20 @@
                             </select>
                         </div>
                         <div class="prop-group">
-                            <label>Megrendelő Neve / Cégneve</label>
+                            <label>Megrendelő Neve / Cégneve <span class="required-star" title="Kötelező mező">*</span></label>
                             <input type="text" id="customerName" placeholder="Pl. Kovács Kft. vagy Gipsz Jakab">
                         </div>
                         <div class="prop-group">
-                            <label>Vizsgált Objektum Címe</label>
+                            <label>Vizsgált Objektum Címe <span class="required-star" title="Kötelező mező">*</span></label>
                             <input type="text" id="siteAddress" placeholder="Pl. 1011 Bp., Fő utca 1.">
                         </div>
                         <div class="prop-group">
                             <label>Helyrajzi Szám (HRSZ) / Épület azonosító (OTSZ)</label>
                             <input type="text" id="siteHrsz" placeholder="Pl. 12345/6 / A Épület">
+                        </div>
+                        <div class="prop-group">
+                            <label>Vizsgálat dátuma</label>
+                            <input type="date" id="inspectionDate" title="A helyszíni vizsgálat napja (a DOCX/PDF-ben és az összefoglalóban megjelenik)">
                         </div>
                         <div class="prop-group">
                             <label>Épület Rendeltetése és OTSZ Kockázati Osztály</label>
@@ -530,6 +564,32 @@
                                     <option value="NA">Nem besorolható</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="prop-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label>Bejövő fázisok</label>
+                                <select id="supplyPhases" style="width:100%; background: rgba(0,0,0,0.5);" title="A rajzon és a jegyzőkönyvben megjelenik">
+                                    <option value="3">3 fázis (3×230/400 V)</option>
+                                    <option value="1">1 fázis (1×230 V)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Villamos rendszer (MSZ HD 60364)</label>
+                                <select id="supplySystem" style="width:100%; background: rgba(0,0,0,0.5);" title="TN-S, TN-C-S, TT, IT">
+                                    <option value="">— válassz —</option>
+                                    <option value="TN-S">TN-S</option>
+                                    <option value="TN-C-S">TN-C-S</option>
+                                    <option value="TT">TT</option>
+                                    <option value="IT">IT</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Több helyszín: további helyszínek listája -->
+                        <div class="prop-group" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <label style="color: var(--text-muted); font-size: 0.9rem;">📍 Több helyszín (egy jegyzőkönyvben)</label>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ha ugyanazzal a jegyzőkönyvvel több objektumot is rögzítesz, add hozzá őket itt.</p>
+                            <div id="multiSitesList"></div>
+                            <button type="button" class="btn btn-secondary btn-small" id="btnAddSite" style="margin-top: 0.5rem;">➕ Helyszín hozzáadása</button>
                         </div>
                     </div>
 
@@ -546,7 +606,7 @@
                             </select>
                         </div>
                         <div class="prop-group">
-                            <label>Felülvizsgáló Cég / Személy Neve</label>
+                            <label>Felülvizsgáló Cég / Személy Neve <span class="required-star" title="Kötelező mező">*</span></label>
                             <input type="text" id="inspectorName" placeholder="Zöldfülű Vill Kft.">
                         </div>
                         <div class="prop-group">
@@ -631,37 +691,135 @@
                 <div id="sectionVisual"
                     style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                     <h3 style="margin-bottom: 1rem; color: #10b981;">👁️ Szemrevételezéses Ellenőrzések (MEEVET)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">MF: Megfelelő · NEM: Nem felel meg · NA: A vizsgálat nem alkalmazható (MSZ HD 60364-6:2017)</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="visualChecklist">
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_id_marks" checked> <label for="check_id_marks">Azonosító
-                                jelek, feliratok megléte</label>
+                        <div class="prop-group">
+                            <label for="check_id_marks">Azonosító jelek, feliratok megléte</label>
+                            <select id="check_id_marks" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_protection" checked> <label for="check_protection">Áramütés
-                                elleni védelem kialakítása</label>
+                        <div class="prop-group">
+                            <label for="check_protection">Áramütés elleni védelem kialakítása</label>
+                            <select id="check_protection" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_fire" checked> <label for="check_fire">Tűzvédelmi
-                                óvintézkedések, hőhatás elleni védelem</label>
+                        <div class="prop-group">
+                            <label for="check_fire">Tűzvédelmi óvintézkedések, hőhatás elleni védelem</label>
+                            <select id="check_fire" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_conduction" checked> <label for="check_conduction">Vezetők
-                                megfelelő megválasztása, terhelhetőség</label>
+                        <div class="prop-group">
+                            <label for="check_conduction">Vezetők megfelelő megválasztása, terhelhetőség</label>
+                            <select id="check_conduction" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_connection" checked> <label
-                                for="check_connection">Csatlakozások, kötések megfelelősége</label>
+                        <div class="prop-group">
+                            <label for="check_connection">Csatlakozások, kötések megfelelősége</label>
+                            <select id="check_connection" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
-                        <div class="prop-group checkbox-group">
-                            <input type="checkbox" id="check_access" checked> <label
-                                for="check_access">Karbantarthatóság, hozzáférhetőség</label>
+                        <div class="prop-group">
+                            <label for="check_access">Karbantarthatóság, hozzáférhetőség</label>
+                            <select id="check_access" class="visual-check-select" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="ok">Megfelelő</option>
+                                <option value="fail">Nem felel meg</option>
+                                <option value="na">Nem alkalmazható</option>
+                            </select>
                         </div>
+                    </div>
+                    <div class="prop-group" style="margin-top: 1rem;">
+                        <label for="visualNotes">Megjegyzés (szemrevételezés, pl. kivételek, nem vizsgált pontok)</label>
+                        <textarea id="visualNotes" rows="2" placeholder="Opcionális megjegyzés a DOCX/PDF-be kerül."
+                            style="width:100%; padding: 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main); resize: vertical;"></textarea>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.95rem;">Egyéb műszeres ellenőrzések (MSZ HD 60364-6)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="prop-group">
+                                <label for="polarityCheck">Polaritás (N/PE, foglalatok) — 6.4.3.6</label>
+                                <select id="polarityCheck" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                    <option value="na">Nem alkalmazható</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="phaseSequenceCheck">Fázissorrend (L1–L2–L3) — 6.4.3.9</label>
+                                <select id="phaseSequenceCheck" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="na">Nem alkalmazható (1 fázis)</option>
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="voltageDropCheck">Feszültségesés — 6.4.3.11</label>
+                                <select id="voltageDropCheck" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="na">Nem alkalmazható</option>
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                    <option value="attachment">Mellékletben</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.95rem;">OTSZ előírások (54/2014. BM rendelet)</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Opcionális: tűzvédelmi szempontú ellenőrzések</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                            <div class="prop-group">
+                                <label for="otsz_risk_class">Kockázati osztály</label>
+                                <select id="otsz_risk_class" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="">—</option>
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                    <option value="na">NA</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="otsz_sealing">Átvezetések tömítése</label>
+                                <select id="otsz_sealing" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="">—</option>
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                    <option value="na">NA</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="otsz_safety_lighting">Biztonsági világítás</label>
+                                <select id="otsz_safety_lighting" style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <option value="">—</option>
+                                    <option value="ok">Megfelelő</option>
+                                    <option value="fail">Nem felel meg</option>
+                                    <option value="na">NA</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prop-group" style="margin-top: 1rem;">
+                        <label for="inspectionScope">Vizsgálat kiterjedése, kivételek (nem vizsgált részek)</label>
+                        <textarea id="inspectionScope" rows="2" placeholder="Opcionális: pl. „A vizsgálat kiterjedt a főelosztóra és a lakási áramkörökre; a közös helyiségek nem voltak tárgyai.”"
+                            style="width:100%; padding: 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main); resize: vertical;"></textarea>
                     </div>
                 </div>
 
                 <div
                     style="margin-top: 2rem; background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
-                    <h3 style="margin-bottom: 1rem;">📝 Összefoglaló Minősítés</h3>
+                    <h3 style="margin-bottom: 1rem;">📝 Összefoglaló Minősítés <span class="required-star" title="Kötelező mező">*</span></h3>
                     <div class="prop-group">
                         <label>A Vizsgált Berendezés / Rendszer Állapota:</label>
                         <select id="reportResult"
@@ -724,9 +882,9 @@
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                     <h2 style="margin: 0; color: var(--accent);">🔬 Mérési Adatok (Kézi bevitel)</h2>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="file" id="inputPadfx" accept=".padfx,.xml" style="display: none;" />
+                        <input type="file" id="inputPadfx" accept=".padfx,.xml,.csv,.zip" style="display: none;" />
                         <button class="btn btn-primary" id="btnLoadPadfx"
-                            style="background-color: var(--accent); color: white;">Metrel PADFX Import 📥</button>
+                            style="background-color: var(--accent); color: white;" title="Metrel PADFX (XML/ZIP) vagy Fluke/Megger CSV">Mérési fájl import (PADFX / CSV) 📥</button>
                         <button type="button" class="btn btn-secondary" id="btnExportMeasurementsCsv">Mérések export CSV 📊</button>
                     </div>
                 </div>
@@ -759,6 +917,25 @@
 
                 <!-- VBF MÉRÉSEK -->
                 <div id="vbf-measurements">
+                    <div class="prop-group" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                        <label style="color: var(--accent); font-weight: 600;">📋 Mérési sablon betöltése</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.5rem;">
+                            <select id="measurementTemplateSelect" style="min-width: 220px; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">
+                                <option value="">— válassz sablont —</option>
+                                <option value="lakas_alap">Lakás alap (3 áramkör + RCD)</option>
+                                <option value="iroda_alap">Iroda / kisker (6 áramkör + RCD)</option>
+                                <option value="garazs">Garázs / melléképület (2 áramkör)</option>
+                            </select>
+                            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem;">
+                                <input type="radio" name="templateMode" value="append" checked> Hozzáfűz
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem;">
+                                <input type="radio" name="templateMode" value="replace"> Felülír
+                            </label>
+                            <button type="button" class="btn btn-primary btn-small" id="btnLoadMeasurementTemplate">Betöltés</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="btnSaveAsMeasurementTemplate" title="Aktuális mérések mentése céges sablonként">Mentés sablonként</button>
+                        </div>
+                    </div>
                     <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                         1. Védővezető folytonosság (Rpe)</h3>
                     <table class="data-table" id="table-rpe"
@@ -833,6 +1010,28 @@
                         <tbody></tbody>
                     </table>
                     <button class="btn btn-secondary btn-small" id="btnAddRcd">+ RCD Mérés</button>
+
+                    <h3 style="margin-top: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        📊 Mérési eredmények – grafikonok</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Olvasható megjelenítés a fenti táblázatok alapján. A grafikonok frissítéséhez kattints a „Grafikonok frissítése” gombra.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="panel-glass" style="flex: 1; min-width: 280px; max-width: 480px; padding: 1rem; border-radius: 8px;">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem;">Zs – Hurokellenállás [Ω]</h4>
+                            <canvas id="chartZs" height="220"></canvas>
+                        </div>
+                        <div class="panel-glass" style="flex: 1; min-width: 280px; max-width: 480px; padding: 1rem; border-radius: 8px;">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem;">Riso – Szigetelési ellenállás [MΩ]</h4>
+                            <canvas id="chartRiso" height="220"></canvas>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="panel-glass" style="flex: 1; min-width: 280px; max-width: 480px; padding: 1rem; border-radius: 8px;">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem;">RCD – Idn [mA] és kioldási idő [ms]</h4>
+                            <canvas id="chartRcd" height="220"></canvas>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" id="btnRefreshMeasurementCharts">Grafikonok frissítése</button>
+
                     <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                         5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
                     <table class="data-table" id="table-tools"
@@ -957,6 +1156,17 @@
     </div>
 
     <!-- QR Scan Modal -->
+    <!-- Audit napló modal (5.2) -->
+    <div id="auditLogModal" class="modal-overlay" style="display: none;" aria-hidden="true">
+        <div class="modal-content panel-glass" style="max-width: 560px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Jegyzőkönyv napló</h3>
+                <button type="button" class="btn btn-secondary btn-small" id="auditLogModalClose" aria-label="Bezárás">×</button>
+            </div>
+            <div id="auditLogContent"><p>Betöltés...</p></div>
+        </div>
+    </div>
+
     <div id="qrModal" class="modal-overlay" style="display: none;">
         <div class="modal-content panel-glass" style="max-width: 400px; text-align: center;">
             <h2 style="margin-bottom: 1.5rem;">QR Kód Beolvasása</h2>

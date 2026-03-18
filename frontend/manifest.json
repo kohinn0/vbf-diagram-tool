@@ -1,9 +1,10 @@
 {
   "name": "VBF Érintésvédelmi Rendszer",
   "short_name": "VBF",
-  "description": "VBF és EPH jegyzőkönyv szerkesztő (villamos biztonsági felülvizsgálat, EPH). MSZ HD 60364-6, TvMI 7. A VVF modul később kerül bele.",
+  "description": "VBF és EPH jegyzőkönyv szerkesztő (villamos biztonsági felülvizsgálat, EPH). MSZ HD 60364-6, TvMI 7.",
   "start_url": "/app.html",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "theme_color": "#0e1726",
   "background_color": "#0e1726",
@@ -12,6 +13,18 @@
     {
       "src": "/img/logo.svg",
       "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/logo.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     }

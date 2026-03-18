@@ -7,7 +7,16 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import sys
 import os
+import logging
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+logger = logging.getLogger("vbf")
+
+try:
+    from PIL import Image as PilImage
+except ImportError:
+    PilImage = None
 
 import database
 from database import Report
@@ -17,9 +26,48 @@ import qrcode
 from datetime import datetime
 from typing import Optional
 
+
+def _resize_image_bytes(raw_bytes: bytes, max_width_px: int = 1280) -> io.BytesIO:
+    """
+    Képeket méretezzük át egy ésszerű szélességre (pl. 1280px),
+    hogy a DOCX/PDF mérete és memóriaigénye ne szálljon el nagy felbontású fotóknál.
+    """
+    buf = io.BytesIO(raw_bytes)
+    if not PilImage:
+        buf.seek(0)
+        return buf
+    try:
+        img = PilImage.open(buf)
+        w, h = img.size
+        if w > max_width_px:
+            new_h = int(h * max_width_px / w)
+            img = img.resize((max_width_px, new_h))
+        out = io.BytesIO()
+        img.save(out, format="PNG")
+        out.seek(0)
+        return out
+    except Exception as e:
+        logger.warning(f"Kép átméretezése sikertelen, eredeti méretet használjuk: {e}")
+        buf.seek(0)
+        return buf
+
+
+def _hex_to_rgb(hex_str: Optional[str]):
+    """Hex szín (pl. #1e3a5f vagy 1e3a5f) -> (r, g, b) vagy None."""
+    if not hex_str or not isinstance(hex_str, str):
+        return None
+    s = hex_str.strip().lstrip("#")
+    if len(s) != 6:
+        return None
+    try:
+        return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+    except ValueError:
+        return None
+
+
 # ─── Premium dokumentum stílusok ───
-def _apply_premium_styles(doc, section, header_para):
-    """Margók, alap betűtípus, címsorok és fejléc megjelenése."""
+def _apply_premium_styles(doc, section, header_para, primary_rgb=None, footer_text=None):
+    """Margók, alap betűtípus, címsorok, fejléc és opcionális egyéni lábléc megjelenése."""
     # Margók: széles, professzionális
     section.left_margin = Cm(1.8)
     section.right_margin = Cm(1.8)
@@ -32,35 +80,101 @@ def _apply_premium_styles(doc, section, header_para):
         normal.font.size = Pt(11)
         normal.paragraph_format.space_after = Pt(6)
         normal.paragraph_format.line_spacing = 1.15
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Word 'Normal' stílus beállítása sikertelen: {e}")
+    _rgb = primary_rgb or (31, 41, 55)
     # Heading 1: szakaszcímek
     try:
         h1 = doc.styles['Heading 1']
         h1.font.name = 'Calibri'
         h1.font.size = Pt(14)
         h1.font.bold = True
-        h1.font.color.rgb = RGBColor(31, 41, 55)
+        h1.font.color.rgb = RGBColor(*_rgb)
         h1.paragraph_format.space_before = Pt(16)
         h1.paragraph_format.space_after = Pt(8)
-    except Exception:
-        pass
-    # Heading 2: alszakaszok
+    except Exception as e:
+        logger.warning(f"Word 'Heading 1' stílus beállítása sikertelen: {e}")
+    # Heading 2: alszakaszok (kicsit világosabb árnyalat)
+    _rgb2 = (min(55, _rgb[0] + 24), min(65, _rgb[1] + 24), min(81, _rgb[2] + 26)) if primary_rgb else (55, 65, 81)
     try:
         h2 = doc.styles['Heading 2']
         h2.font.name = 'Calibri'
         h2.font.size = Pt(12)
         h2.font.bold = True
-        h2.font.color.rgb = RGBColor(55, 65, 81)
+        h2.font.color.rgb = RGBColor(*_rgb2)
         h2.paragraph_format.space_before = Pt(10)
         h2.paragraph_format.space_after = Pt(4)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Word 'Heading 2' stílus beállítása sikertelen: {e}")
     # Fejléc: kisebb, szürke
     for run in header_para.runs:
         run.font.size = Pt(9)
         run.font.color.rgb = RGBColor(107, 114, 128)
         run.font.name = 'Calibri'
+
+    # Lábléc: opcionális egyéni szöveg (balra), majd oldalszám (középen)
+    try:
+        footer = section.footer
+        if (footer_text or "").strip():
+            p_left = footer.add_paragraph((footer_text or "").strip())
+            p_left.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            for r in p_left.runs:
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(107, 114, 128)
+                r.font.name = 'Calibri'
+        if (footer_text or "").strip():
+            footer_para = footer.add_paragraph()
+        else:
+            footer_para = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+        footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        footer_para.add_run("Oldal ")
+        page_run = footer_para.add_run("1")
+        fld_begin = OxmlElement('w:fldChar')
+        fld_begin.set(qn('w:fldCharType'), 'begin')
+        page_run._r.append(fld_begin)
+        instr = OxmlElement('w:instrText')
+        instr.set(qn('xml:space'), 'preserve')
+        instr.text = 'PAGE'
+        page_run._r.append(instr)
+        fld_sep = OxmlElement('w:fldChar')
+        fld_sep.set(qn('w:fldCharType'), 'separate')
+        page_run._r.append(fld_sep)
+        fld_end = OxmlElement('w:fldChar')
+        fld_end.set(qn('w:fldCharType'), 'end')
+        page_run._r.append(fld_end)
+        for r in footer_para.runs:
+            r.font.size = Pt(9)
+            r.font.color.rgb = RGBColor(107, 114, 128)
+            r.font.name = 'Calibri'
+    except Exception as e:
+        logger.warning(f"Lábléc (oldalszám) beállítása sikertelen: {e}")
+
+
+def _visual_label(val):
+    """Szemrevételezés / ellenőrzés érték → Megfelelő / Nem felel meg / Nem alkalmazható."""
+    if val in (True, 'ok', 'true'):
+        return "Megfelelő"
+    if val == 'na':
+        return "Nem alkalmazható"
+    return "Nem felel meg"
+
+
+def _voltage_drop_label(val):
+    """Feszültségesés 6.4.3.11: ok/fail/na/attachment."""
+    if val == 'attachment':
+        return "Mellékletben"
+    return _visual_label(val)
+
+
+def _add_std_ref(doc, text: str):
+    """Szabványhivatkozás beillesztése kis, szürke, dőlt betűvel."""
+    p = doc.add_paragraph()
+    run = p.add_run(text)
+    run.font.size = Pt(9)
+    run.font.color.rgb = RGBColor(107, 114, 128)
+    run.font.italic = True
+    run.font.name = 'Calibri'
+    p.paragraph_format.space_after = Pt(4)
 
 
 def _style_table_header(table):
@@ -79,8 +193,8 @@ def _style_table_header(table):
                     run.bold = True
                     run.font.size = Pt(10)
                     run.font.name = 'Calibri'
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Tábla fejléc stílus beállítása sikertelen: {e}")
 
 
 def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = None) -> io.BytesIO:
@@ -103,17 +217,23 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     else:
         rep_id_str = f"{short_rep_type}-TERVEZET"
 
+    primary_rgb = _hex_to_rgb(settings.docx_primary_color) if settings and getattr(settings, "docx_primary_color", None) else None
+
     section = doc.sections[0]
     header = section.header
     if not header.paragraphs:
         header_para = header.add_paragraph()
     else:
         header_para = header.paragraphs[0]
-        
     company_name = settings.company_name if settings and settings.company_name else "VBF Program"
-    header_para.text = f"{company_name} | Azonosító: {rep_id_str}"
+    if settings and getattr(settings, "docx_header_text", None) and (settings.docx_header_text or "").strip():
+        header_text = (settings.docx_header_text or "").strip().replace("{rep_id}", rep_id_str).replace("{azonosito}", rep_id_str)
+        header_para.text = header_text
+    else:
+        header_para.text = f"{company_name} | Azonosító: {rep_id_str}"
     header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    _apply_premium_styles(doc, section, header_para)
+    footer_text = (settings.docx_footer_text or "").strip() if settings and getattr(settings, "docx_footer_text", None) else None
+    _apply_premium_styles(doc, section, header_para, primary_rgb, footer_text=footer_text)
 
     # Insert Logo at the top if exists
     if settings and settings.logo_path and os.path.exists(settings.logo_path):
@@ -166,7 +286,14 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     sub_run.font.name = 'Calibri'
     sub_run.font.color.rgb = RGBColor(100, 116, 139)
     sub_run.italic = True
-    subtitle_para.paragraph_format.space_after = Pt(12)
+    subtitle_para.paragraph_format.space_after = Pt(6)
+    legend_para = doc.add_paragraph()
+    legend_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    legend_run = legend_para.add_run("Jelmagyarázat: MF = Megfelelő, NEM = Nem felel meg, NA = Nem alkalmazható")
+    legend_run.font.size = Pt(9)
+    legend_run.font.color.rgb = RGBColor(107, 114, 128)
+    legend_run.font.name = 'Calibri'
+    legend_para.paragraph_format.space_after = Pt(12)
 
     # ── Összefoglaló kártya (1 oldal) ──
     c_data = report.client_data or {}
@@ -189,10 +316,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     card_run.font.color.rgb = RGBColor(55, 65, 81)
     card_p.paragraph_format.space_after = Pt(8)
     
-    card_table = doc.add_table(rows=6, cols=2)
-    card_table.style = 'Table Grid'
-    _style_table_header(card_table)
-    rows = [
+    card_rows = [
         ('Ügyfél / Megrendelő', c_data.get('customerName', 'N/A')),
         ('Vizsgálat helyszíne', c_data.get('siteAddress', 'N/A')),
         ('Vizsgálat dátuma', c_data.get('inspectionDate', report.created_at.strftime('%Y-%m-%d') if report.created_at else 'N/A')),
@@ -200,7 +324,18 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         ('Eredmény', r_val),
         ('Kritikus (A) / Súlyos (B) hibák', f'{cnt_a} / {cnt_b} db'),
     ]
-    for i, (label, val) in enumerate(rows):
+    if (report.title or '').strip():
+        card_rows.insert(2, ('Dokumentum címe', (report.title or '').strip()))
+    sp = c_data.get('supplyPhases', '')
+    if sp:
+        card_rows.insert(4, ('Bejövő fázisok', '1 fázis (1×230 V)' if sp == '1' else '3 fázis (3×230/400 V)'))
+    ss = (c_data.get('supplySystem') or '').strip()
+    if ss:
+        card_rows.insert(5 if sp else 4, ('Villamos rendszer', ss))
+    card_table = doc.add_table(rows=len(card_rows), cols=2)
+    card_table.style = 'Table Grid'
+    _style_table_header(card_table)
+    for i, (label, val) in enumerate(card_rows):
         card_table.rows[i].cells[0].text = label
         card_table.rows[i].cells[1].text = str(val)
     doc.add_paragraph()
@@ -298,9 +433,15 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p_intro = doc.add_paragraph(preamble_text)
     p_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
+    c_data = report.client_data or {}
+    scope_text = (c_data.get('inspectionScope') or '').strip() if isinstance(c_data.get('inspectionScope'), str) else ''
+    if scope_text:
+        doc.add_paragraph('1.3. Vizsgálat kiterjedése, kivételek:').bold = True
+        doc.add_paragraph(scope_text)
+        doc.add_paragraph()
+
     # Client Data – Multi-vizsgálat: több helyszín egy jegyzőkönyvben
     doc.add_heading('2. Alapadatok és Helyszín', level=1)
-    c_data = report.client_data or {}
     sites = c_data.get('sites') or []
     if isinstance(sites, list) and len(sites) > 1:
         for i, site in enumerate(sites, 1):
@@ -319,6 +460,14 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
             otsz_disp = f" [{otsz_names.get(b_otsz, b_otsz)}]" if b_otsz else ''
             p.add_run(f'Épület rendeltetése (OTSZ): {b_purpose}{otsz_disp}\n')
+            sp = c_data.get('supplyPhases', '')
+            if sp:
+                p.add_run('Bejövő fázisok: ').bold = True
+                p.add_run('1 fázis (1×230 V)' if sp == '1' else '3 fázis (3×230/400 V)' + '\n')
+            ss = (c_data.get('supplySystem') or '').strip()
+            if ss:
+                p.add_run('Villamos rendszer: ').bold = True
+                p.add_run(ss + '\n')
             if site.get('nextInspectionDate'):
                 p.add_run('Következő vizsgálat: ').bold = True
                 p.add_run(site.get('nextInspectionDate') + '\n')
@@ -337,6 +486,14 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         otsz_names = {'AK': 'Alacsony Kockázat', 'KK': 'Közepes Kockázat', 'MK': 'Magas Kockázat'}
         otsz_display = f" [{otsz_names.get(building_otsz, building_otsz)}]" if building_otsz else ''
         p.add_run(f"{building_purpose}{otsz_display}" + '\n')
+        supply_phases = c_data.get('supplyPhases', '')
+        if supply_phases:
+            p.add_run('Bejövő fázisok: ').bold = True
+            p.add_run(('1 fázis (1×230 V)' if supply_phases == '1' else '3 fázis (3×230/400 V)') + '\n')
+        supply_sys = (c_data.get('supplySystem') or '').strip()
+        if supply_sys:
+            p.add_run('Villamos rendszer (MSZ HD 60364): ').bold = True
+            p.add_run(supply_sys + '\n')
         next_insp = c_data.get('nextInspectionDate', '')
         if next_insp:
             p.add_run('Következő kötelező felülvizsgálat (OTSZ): ').bold = True
@@ -357,8 +514,31 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p2.add_run('Kalibrálás érvényessége: ').bold = True
     p2.add_run(c_data.get('instrumentCal', 'N/A') + '\n')
 
+    # OTSZ előírások ellenőrzése (opcionális, 54/2014. BM)
+    otsz_checks = c_data.get('otszChecks') or {}
+    otsz_risk = otsz_checks.get('riskClass') or ''
+    otsz_seal = otsz_checks.get('sealing') or ''
+    otsz_light = otsz_checks.get('safetyLighting') or ''
+    if otsz_risk or otsz_seal or otsz_light:
+        doc.add_heading('4. OTSZ előírások ellenőrzése (54/2014. BM rendelet)', level=1)
+        doc.add_paragraph('Jelmagyarázat: MF = Megfelelő, NEM = Nem felel meg, NA = Nem alkalmazható.')
+        otsz_table = doc.add_table(rows=4, cols=2)
+        otsz_table.style = 'Table Grid'
+        _style_table_header(otsz_table)
+        otsz_table.rows[0].cells[0].text = 'Ellenőrzés'
+        otsz_table.rows[0].cells[1].text = 'Minősítés'
+        otsz_table.rows[1].cells[0].text = 'Kockázati (tűzveszélyességi) osztály megfelelősége'
+        otsz_table.rows[1].cells[1].text = _visual_label(otsz_risk) if otsz_risk else '—'
+        otsz_table.rows[2].cells[0].text = 'Gépészeti és villamos átvezetések tömítése (27.§)'
+        otsz_table.rows[2].cells[1].text = _visual_label(otsz_seal) if otsz_seal else '—'
+        otsz_table.rows[3].cells[0].text = 'Biztonsági világítás (56.–58., 113., 134., 146.–153.§)'
+        otsz_table.rows[3].cells[1].text = _visual_label(otsz_light) if otsz_light else '—'
+        doc.add_paragraph()
+        section_num = 5
+    else:
+        section_num = 4
+
     # Visual Checklist (MEEVET / MSZ HD 60364-6)
-    section_num = 4
     visual = c_data.get('visualChecks', {})
     if isinstance(visual, dict) and visual:
         doc.add_heading(f'{section_num}. Szemrevételezéses Ellenőrzések (6.4.2 MSZ HD 60364-6)', level=1)
@@ -370,23 +550,32 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         v_hdr[1].text = 'Minősítés'
         
         checks = [
-            ('Azonosító jelek, feliratok megléte', visual.get('id_marks', False)),
-            ('Áramütés elleni védelem kialakítása', visual.get('protection', False)),
-            ('Tűzvédelmi óvintézkedések', visual.get('fire', False)),
-            ('Vezetők kiválasztása, terhelhetőség', visual.get('conduction', False)),
-            ('Csatlakozások, kötések megfelelősége', visual.get('connection', False)),
-            ('Karbantarthatóság, hozzáférhetőség', visual.get('access', False))
+            ('Azonosító jelek, feliratok megléte', visual.get('id_marks', 'ok')),
+            ('Áramütés elleni védelem kialakítása', visual.get('protection', 'ok')),
+            ('Tűzvédelmi óvintézkedések', visual.get('fire', 'ok')),
+            ('Vezetők kiválasztása, terhelhetőség', visual.get('conduction', 'ok')),
+            ('Csatlakozások, kötések megfelelősége', visual.get('connection', 'ok')),
+            ('Karbantarthatóság, hozzáférhetőség', visual.get('access', 'ok'))
         ]
         for label, val in checks:
             v_row = v_table.add_row().cells
             v_row[0].text = label
-            v_row[1].text = "Megfelelő" if val else "Nem felel meg / Nem vizsgált"
+            v_row[1].text = _visual_label(val)
         doc.add_paragraph()
+        notes = visual.get('notes', '').strip() if isinstance(visual.get('notes'), str) else ''
+        if notes:
+            doc.add_paragraph('Megjegyzés (szemrevételezés):').bold = True
+            doc.add_paragraph(notes)
         section_num += 1
 
-    # Single-line Diagram (Egyvonalas rajz)
+    # Single-line Diagram (Egyvonalas rajz) — kihagyható, ha céges beállítás: docx_embed_diagram = False
+    embed_diagram = getattr(settings, 'docx_embed_diagram', True) if settings else True
+    if embed_diagram in (False, 0):
+        embed_diagram = False
+    else:
+        embed_diagram = True
     diagram_b64 = getattr(report, 'diagram_image', None)
-    if diagram_b64 and diagram_b64.startswith('data:image'):
+    if embed_diagram and diagram_b64 and diagram_b64.startswith('data:image'):
         doc.add_page_break()
         doc.add_heading(f'{section_num}. Egyvonalas Rajz (Áramkör Áttekintés)', level=1)
         doc.add_paragraph(
@@ -400,7 +589,8 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             else:
                 b64_str = diagram_b64
                 
-            img_bytes = io.BytesIO(base64.b64decode(b64_str))
+            raw = base64.b64decode(b64_str)
+            img_bytes = _resize_image_bytes(raw, max_width_px=1920)
             
             # Add image with center alignment
             diag_p = doc.add_paragraph()
@@ -440,6 +630,15 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         
         p3.add_run('EPH Fővezeték Keresztmetszete: ').bold = True
         p3.add_run(c_data.get('ephConductor', 'N/A') + ' mm²\n')
+        p_eph_note = doc.add_paragraph()
+        p_eph_note.add_run(
+            'Az EPH rendszer célja a megérinthető fémrészek és a védővezető közötti potenciálkülönbség '
+            'megfelelő határon tartása (MSZ HD 60364-4-41 §411.3.1.2); normál körülmények között '
+            'a megengedett érintési feszültség 25 V AC (vagy 60 V DC) alatti tartása ajánlott.'
+        )
+        for r in p_eph_note.runs:
+            r.font.italic = True
+            r.font.size = Pt(10)
         section_num += 1
     
     # Measurements
@@ -456,6 +655,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             rpe_list = meas_data.get('rpe', [])
             if rpe_list:
                 doc.add_heading(f'{section_num}.{sub_num} Védővezető folytonosság (Rpe)', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.2 (vezetők folytonossága)')
                 table = doc.add_table(rows=1, cols=4)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -477,6 +677,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             ins_list = meas_data.get('insulation', [])
             if ins_list:
                 doc.add_heading(f'{section_num}.{sub_num} Szigetelési ellenállás (500V DC)', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.3 (szigetelési ellenállás); mérőfeszültség 500 V DC, min. 1 MΩ')
                 table = doc.add_table(rows=1, cols=5)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -500,6 +701,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             loop_list = meas_data.get('loop', [])
             if loop_list:
                 doc.add_heading(f'{section_num}.{sub_num} Hurokellenállás (Zs) és Hibavédelem', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.7 (táplálás önműködő lekapcsolása); Zs ≤ (U₀×0,95)/Ia')
                 table = doc.add_table(rows=1, cols=5)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -523,6 +725,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             rcd_list = meas_data.get('rcd', [])
             if rcd_list:
                 doc.add_heading(f'{section_num}.{sub_num} FI-relé (ÁVK) részletes vizsgálat', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.7 (ÁVK vizsgálat). 0,5×IΔn: kioldás nem megengedett; 1× és 5×IΔn: kioldási idő ≤ 300 ms (ált.) vagy ≤ 40 ms (perszonális védelem).')
                 table = doc.add_table(rows=1, cols=9)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -554,6 +757,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             tools_list = meas_data.get('tools', [])
             if tools_list:
                 doc.add_heading(f'{section_num}.{sub_num} Kéziszerszámok vizsgálata', level=2)
+                _add_std_ref(doc, 'MEE Kézikönyv M3–M4; MSZ EN 60745-1 (kéziszerszámok); szig. ell. ≥ 2 MΩ II. osztály')
                 table = doc.add_table(rows=1, cols=4)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -575,6 +779,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             selv_list = meas_data.get('selv', [])
             if selv_list:
                 doc.add_heading(f'{section_num}.{sub_num} SELV / PELV / Elválasztás', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.4 (SELV, PELV, villamos elválasztás); MSZ HD 60364-4-41 §414')
                 table = doc.add_table(rows=1, cols=6)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -595,11 +800,33 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
                     row[5].text = r.get('pass', '')
                 sub_num += 1
                 doc.add_paragraph()
+
+            # Polaritás (6.4.3.6), Fázissorrend (6.4.3.9), Feszültségesés (6.4.3.11)
+            polarity = c_data.get('polarityCheck') or 'na'
+            phase_seq = c_data.get('phaseSequenceCheck') or 'na'
+            voltage_drop = c_data.get('voltageDropCheck') or 'na'
+            if polarity != 'na' or phase_seq != 'na' or voltage_drop != 'na':
+                doc.add_heading(f'{section_num}.{sub_num} Polaritás, fázissorrend, feszültségesés', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-6:2017 6.4.3.6 (polaritás), 6.4.3.9 (fázissorrend), 6.4.3.11 (feszültségesés)')
+                aux_table = doc.add_table(rows=4, cols=2)
+                aux_table.style = 'Table Grid'
+                _style_table_header(aux_table)
+                aux_table.rows[0].cells[0].text = 'Ellenőrzés'
+                aux_table.rows[0].cells[1].text = 'Minősítés'
+                aux_table.rows[1].cells[0].text = 'Polaritás (N/PE, foglalatok) — 6.4.3.6'
+                aux_table.rows[1].cells[1].text = _visual_label(polarity)
+                aux_table.rows[2].cells[0].text = 'Fázissorrend (L1–L2–L3) — 6.4.3.9'
+                aux_table.rows[2].cells[1].text = _visual_label(phase_seq)
+                aux_table.rows[3].cells[0].text = 'Feszültségesés — 6.4.3.11'
+                aux_table.rows[3].cells[1].text = _voltage_drop_label(voltage_drop)
+                sub_num += 1
+                doc.add_paragraph()
                 
         elif rep_type == "EPH":
             eph_list = meas_data.get('eph_cont', [])
             if eph_list:
                 doc.add_heading(f'{section_num}.{sub_num} EPH Bekötések Folytonossága', level=2)
+                _add_std_ref(doc, 'MSZ HD 60364-5-54:2011 §544 (EPH); MSZ HD 60364-4-41 §411.3.1.2; 40/2017. (XII.4.) NGM 6.§')
                 table = doc.add_table(rows=1, cols=7)
                 table.style = 'Table Grid'
                 _style_table_header(table)
@@ -627,19 +854,28 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         meas_photos = []
         for m_key in ['rpe', 'insulation', 'loop', 'rcd', 'tools', 'selv', 'eph_cont']:
             items = meas_data.get(m_key, [])
-            if not isinstance(items, list): continue
+            if not isinstance(items, list):
+                continue
             for m_row in items:
-                if not isinstance(m_row, dict): continue
+                if not isinstance(m_row, dict):
+                    continue
                 p_data = m_row.get('photo')
                 if p_data and isinstance(p_data, str) and p_data.startswith('data:image'):
                     desc = "Mérés Kép"
-                    if m_key == 'rpe': desc = f"Védővezető Rpe - {m_row.get('loc', '')}"
-                    elif m_key == 'insulation': desc = f"Szigetelés - {m_row.get('circuit', '')}"
-                    elif m_key == 'loop': desc = f"Hurokellenállás - {m_row.get('circuit', '')} ({m_row.get('loc', '')})"
-                    elif m_key == 'rcd': desc = f"Fi-Relé - {m_row.get('circ', '')}"
-                    elif m_key == 'tools': desc = f"Kéziszerszám - {m_row.get('name', '')}"
-                    elif m_key == 'selv': desc = f"SELV - {m_row.get('loc', '')}"
-                    elif m_key == 'eph_cont': desc = f"EPH - {m_row.get('elem', '')} ({m_row.get('loc', '')})"
+                    if m_key == 'rpe':
+                        desc = f"Védővezető Rpe - {m_row.get('loc', '')}"
+                    elif m_key == 'insulation':
+                        desc = f"Szigetelés - {m_row.get('circuit', '')}"
+                    elif m_key == 'loop':
+                        desc = f"Hurokellenállás - {m_row.get('circuit', '')} ({m_row.get('loc', '')})"
+                    elif m_key == 'rcd':
+                        desc = f"Fi-Relé - {m_row.get('circ', '')}"
+                    elif m_key == 'tools':
+                        desc = f"Kéziszerszám - {m_row.get('name', '')}"
+                    elif m_key == 'selv':
+                        desc = f"SELV - {m_row.get('loc', '')}"
+                    elif m_key == 'eph_cont':
+                        desc = f"EPH - {m_row.get('elem', '')} ({m_row.get('loc', '')})"
                     meas_photos.append((desc, p_data))
                     
         if meas_photos:
@@ -647,7 +883,8 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             for desc, photo_data in meas_photos:
                 try:
                     b64_str = photo_data.split(',')[1]
-                    img_bytes = io.BytesIO(base64.b64decode(b64_str))
+                    raw = base64.b64decode(b64_str)
+                    img_bytes = _resize_image_bytes(raw, max_width_px=1280)
                     doc.add_paragraph(f"{desc}:").bold = True
                     doc.add_paragraph().add_run().add_picture(img_bytes, width=Cm(12))
                 except Exception as e:
@@ -670,102 +907,55 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     if not d_data:
         doc.add_paragraph("A vizsgálat során nem tártunk fel hibát vagy hiányosságot.")
     else:
-        # MEE severity keyword detection (mirror of frontend logic)
-        critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 
-                       'tűzveszély', 'védővezető hiány', 'beégett', 'érinthető feszültség']
-        serious_kw = ['szigetelés', 'rcd nem', 'ávk nem', 'fi-relé nem', 'hurokellenállás',
-                      'túlterhelés', 'zárlat', 'hurokimpedancia', 'nem old ki']
-        maintenance_kw = ['dobozfedél', 'fedél hiány', 'csatlakozó laza', 'felirat hiány',
-                          'jelölés hiány', 'kötés laza', 'sorkapocs', 'burkolat sérült']
-        renovation_kw = ['vezetékszínezés', 'régi szabvány', 'elavult', 'korszerűtlen',
-                         'alumínium vezető', 'téves színezés', 'nullázás']
-        
         for idx, defect in enumerate(d_data, 1):
-            desc_lower = defect.get('description', '').lower()
-            
-            # Determine MEE severity
-            if any(kw in desc_lower for kw in critical_kw):
-                severity = '(A)'
-                sev_name = 'Közvetlen élet- és tűzveszély'
+            # A súlyosságot és MEE-kategóriát a domain logika tölti ki a report.defects_data-ban.
+            # A generátor csak megjeleníti ezeket.
+            mee_code = defect.get("meeCode") or defect.get("mee_code") or ""
+            mee_title = defect.get("meeTitle") or defect.get("mee_title") or ""
+
+            # Prezentációs szín (nem jogi logika): severity érték alapján egyszerű mapping.
+            sev_raw = (defect.get("severity") or "").upper()
+            if sev_raw in ("CRITICAL", "HIGH"):
                 sev_color = RGBColor(255, 0, 0)
-            elif any(kw in desc_lower for kw in serious_kw):
-                severity = '(B)'
-                sev_name = 'Súlyos hiba (soron kívül javítandó)'
+            elif sev_raw == "MEDIUM":
                 sev_color = RGBColor(255, 80, 0)
-            elif any(kw in desc_lower for kw in maintenance_kw):
-                severity = '(C)'
-                sev_name = 'Karbantartási hiba'
+            elif sev_raw == "LOW":
                 sev_color = RGBColor(255, 140, 0)
-            elif any(kw in desc_lower for kw in renovation_kw):
-                severity = '(D)'
-                sev_name = 'Felújításkor javítandó'
-                sev_color = RGBColor(128, 128, 0)
             else:
-                severity = '(C)'
-                sev_name = 'Karbantartási hiba'
-                sev_color = RGBColor(255, 140, 0)
-            
-            doc.add_heading(f"Hiba #{idx} — {severity} {sev_name}", level=2)
+                sev_color = RGBColor(128, 128, 128)
+
+            heading_label = f"Hiba #{idx}"
+            if mee_code or mee_title:
+                heading_label += f" — {mee_code} {mee_title}".strip()
+            doc.add_heading(heading_label, level=2)
             dp = doc.add_paragraph()
-            
+
             # Severity badge
-            sev_run = dp.add_run(f"[{severity}] ")
-            sev_run.bold = True
-            sev_run.font.color.rgb = sev_color
-            
+            badge = mee_code or sev_raw or ""
+            if badge:
+                sev_run = dp.add_run(f"[{badge}] ")
+                sev_run.bold = True
+                sev_run.font.color.rgb = sev_color
+
             dp.add_run("Leírás és Javaslat:\n").bold = True
             dp.add_run(defect.get('description', 'N/A') + "\n\n")
 
-            # Ajánlott javítási szöveg (MSZ alapján) – automatikus
+            # Ajánlott javítási szöveg: domain által előre kitöltve (repairSuggestion),
+            # itt csak fallbackelünk egy általános szöveggel.
             repair_text = defect.get('repairSuggestion', '')
             if not repair_text or not str(repair_text).strip():
-                if any(kw in desc_lower for kw in ['védővezető', 'rpe', 'folytonosság', 'pe hiány']):
-                    repair_text = 'A védővezető folytonosságának helyreállítása szükséges. Ellenőrizze a csatlakozások megfelelőségét, a PE vezeték épségét. MSZ HD 60364-6:2017 §61.3.2; VMBSZ 40/2017. (XII.4.) NGM rendelet.'
-                elif any(kw in desc_lower for kw in ['szigetelés', 'riso', 'insulation']):
-                    repair_text = 'Szigetelési ellenállás mérés és vizuális ellenőrzés. Serült vezeték cseréje, nedves/károsodott részek javítása. MSZ HD 60364-6:2017 §61.3.3; TvMI 7.7:2026.02.01.'
-                elif any(kw in desc_lower for kw in ['hurok', 'hurokellenállás', 'hurokimpedancia', 'zs']):
-                    repair_text = 'A hurokimpedancia csökkentése: hibavédelmi berendezés csere, vezetékkeresztmetszet növelés, csatlakozások ellenőrzése. MSZ HD 60364-4-41 §411.4.'
-                elif any(kw in desc_lower for kw in ['rcd', 'ávk', 'fi-relé', 'kioldás', 'nem old']):
-                    repair_text = 'FI-relé (ÁVK) cseréje vagy javítása. Ellenőrizze a bekötést és a kioldási időket. MSZ HD 60364-6:2017 §61.3.7; MSZ EN 61008-1.'
-                elif any(kw in desc_lower for kw in ['tűz', 'égett', 'ív', 'beégett']):
-                    repair_text = 'A károsodott berendezés azonnali cseréje. Tűzvédelmi szabályok betartása (OTSZ 54/2014. BM rendelet).'
-                elif any(kw in desc_lower for kw in ['dobozfedél', 'fedél hiány', 'burkolat']):
-                    repair_text = 'Hiányzó fedél vagy burkolat pótlása. MSZ HD 60364-6 szerinti szemrevételezés.'
-                elif any(kw in desc_lower for kw in ['csatlakozó laza', 'kötés laza', 'sorkapocs']):
-                    repair_text = 'Csatlakozások meghúzása, megfelelő szorítónyomat. Ellenőrizze a hőnyomokat.'
-                elif any(kw in desc_lower for kw in ['felirat hiány', 'jelölés hiány']):
-                    repair_text = 'Azonosító feliratok, jelölők kialakítása. MSZ HD 60364-6 azonosíthatósági követelmények.'
-                else:
-                    repair_text = 'A hibához illeszkedő szakszerű javítás végrehajtása. MSZ HD 60364-6:2017 és VMBSZ megfelelés.'
+                repair_text = 'A hibához illeszkedő szakszerű javítás végrehajtása a vonatkozó szabványok szerint.'
             dp.add_run("Javasolt javítási lépések (MSZ alapján): ").bold = True
             dp.add_run(repair_text + "\n\n")
 
             dp.add_run("Pontos Helyszín: ").bold = True
             dp.add_run(defect.get('location', 'N/A') + "\n")
             
-            # Szabvány hivatkozás - automatikus kitöltés, ha nincs megadva
+            # Szabvány hivatkozás - domain által megadva, itt csak általános fallback.
             dp.add_run("Szabvány hivatkozás: ").bold = True
             std_ref = defect.get('standard', '') or ''
             if not std_ref.strip():
-                # Automatikus szabványhivatkozás a hiba tartalom alapján
-                if any(kw in desc_lower for kw in ['védővezető', 'rpe', 'folytonosság']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§'
-                elif any(kw in desc_lower for kw in ['szigetelés', 'riso', 'insulation']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); MEE Kézikönyv M6; TvMI 7.7:2026.02.01 §4.3'
-                elif any(kw in desc_lower for kw in ['hurok', 'hurokellenállás', 'hurokimpedancia', 'zs']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4; MEE Kézikönyv M1'
-                elif any(kw in desc_lower for kw in ['rcd', 'ávk', 'fi-relé', 'kioldás']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1; MEE Kézikönyv M5'
-                elif any(kw in desc_lower for kw in ['eph', 'potenciál', 'földelés']):
-                    std_ref = 'MSZ HD 60364-5-54:2011 §544 (EPH rendszer); MSZ HD 60364-4-41:2017 §411.3.1.2'
-                elif any(kw in desc_lower for kw in ['tűz', 'égett', 'ív']):
-                    std_ref = 'TvMI 7.7:2026.02.01 (Tűzvédelmi felülvizsgálat); 54/2014. (XII.5.) BM rendelet (OTSZ)'
-                elif any(kw in desc_lower for kw in ['selv', 'pelv', 'törpe']):
-                    std_ref = 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV); MEE Kézikönyv M2'
-                elif any(kw in desc_lower for kw in ['szerszám', 'kéziszerszám']):
-                    std_ref = 'MSZ EN 60745-1 (Kéziszerszámok biztonsága); MEE Kézikönyv M3-M4'
-                else:
-                    std_ref = 'MSZ HD 60364-6:2017 (Villamos berendezések hitelesítése); 40/2017. (XII.4.) NGM rendelet (VMBSZ)'
+                std_ref = 'MSZ HD 60364-6:2017 (Villamos berendezések felülvizsgálata); vonatkozó VMBSZ/OTSZ előírások.'
             dp.add_run(std_ref + "\n")
             
             dp.add_run("Javasolt javítási határidő: ").bold = True
@@ -774,11 +964,12 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             
             # Photo insertion
             photo_data = defect.get('photo')
-            if photo_data and photo_data.startswith('data:image'):
+            if photo_data and isinstance(photo_data, str) and photo_data.startswith('data:image'):
                 try:
                     # remove data:image/jpeg;base64, prefix
                     b64_str = photo_data.split(',')[1]
-                    img_bytes = io.BytesIO(base64.b64decode(b64_str))
+                    raw = base64.b64decode(b64_str)
+                    img_bytes = _resize_image_bytes(raw, max_width_px=1280)
                     doc.add_paragraph("Fényképes dokumentáció:").bold = True
                     doc.add_paragraph().add_run().add_picture(img_bytes, width=Cm(12))
                 except Exception as e:
@@ -835,21 +1026,26 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     # ═══════════════════════════════════════════════════════
     doc.add_heading(f'{section_num}. Digitális Integritás és Nyomonkövethetőség', level=1)
     
-    # Payload for hashing
+    # Payload for hashing (valódi mérési számok report.measurements_data-ból)
+    meas_for_hash = report.measurements_data[0] if report.measurements_data and len(report.measurements_data) > 0 else {}
+    if not isinstance(meas_for_hash, dict):
+        meas_for_hash = {}
     integrity_data = {
         'report_id': rep_id_str,
-        'client': c_data.get('clientName', ''),
+        'title': (report.title or '').strip(),
+        'client': c_data.get('customerName', c_data.get('clientName', '')),
         'address': c_data.get('siteAddress', ''),
+        'inspection_date': (c_data.get('inspectionDate') or '').strip(),
         'inspector': c_data.get('inspectorName', ''),
         'instrument': c_data.get('instrumentType', ''),
         'calibration': c_data.get('instrumentCal', ''),
         'result': r_val,
         'issued': datetime.now().isoformat(),
         'measurement_count': {
-            'rpe': len(c_data.get('rpeData', [])),
-            'riso': len(c_data.get('insulationData', [])),
-            'loop': len(c_data.get('loopData', [])),
-            'rcd': len(c_data.get('rcdData', [])),
+            'rpe': len(meas_for_hash.get('rpe', [])),
+            'riso': len(meas_for_hash.get('insulation', [])),
+            'loop': len(meas_for_hash.get('loop', [])),
+            'rcd': len(meas_for_hash.get('rcd', [])),
         },
         'defect_count': len(d_data),
     }
@@ -920,37 +1116,56 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     )
     hash_note.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     
-    # Következő felülvizsgálat dátuma (OTSZ alapján)
+    # Következő felülvizsgálat dátuma (client_data.nextInspectionDate vagy OTSZ alapján)
+    next_insp_str = (c_data.get('nextInspectionDate') or '').strip()
+    next_date = None
+    if next_insp_str:
+        try:
+            next_date = datetime.strptime(next_insp_str, '%Y-%m-%d')
+        except ValueError:
+            next_date = None
     otsz_class = c_data.get('buildingOtsz', '')
     otsz_cycles = {'AK': 6, 'KK': 3, 'MK': 1, 'NAK': 6}
-    if otsz_class and otsz_class in otsz_cycles:
+    if next_date is None and otsz_class and otsz_class in otsz_cycles:
         years = otsz_cycles[otsz_class]
         next_date = datetime.now().replace(year=datetime.now().year + years)
+    if next_date:
         next_p = doc.add_paragraph()
         next_p.add_run(f"\n📅 KÖVETKEZŐ KÖTELEZŐ FELÜLVIZSGÁLAT: ").bold = True
         next_run = next_p.add_run(f"{next_date.strftime('%Y-%m-%d')}")
         next_run.bold = True
         next_run.font.size = Pt(14)
         next_run.font.color.rgb = RGBColor(255, 80, 0)
-        next_p.add_run(f"\n(OTSZ osztály: {otsz_class} → {years} évente, 54/2014. BM rendelet)")
+        if otsz_class and otsz_class in otsz_cycles:
+            next_p.add_run(f"\n(OTSZ osztály: {otsz_class} → {otsz_cycles[otsz_class]} évente, 54/2014. BM rendelet)")
+        else:
+            next_p.add_run("\n(megadott / számított dátum)")
     
+    # Végső példány megjegyzés (véglegesített jegyzőkönyv)
+    if getattr(report, 'status', None) == 'FINAL':
+        final_p = doc.add_paragraph()
+        final_run = final_p.add_run('Végső példány — véglegesített jegyzőkönyv. Módosítás tilos.')
+        final_run.bold = True
+        final_run.font.color.rgb = RGBColor(180, 0, 0)
+        final_run.font.size = Pt(11)
+        final_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_paragraph()
+
     # Aláírás: feltöltött kép (ha van), különben szöveges placeholder
     sig = doc.add_paragraph("\n\n..................................................\nAláírás és Bélyegző")
     sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     if settings and getattr(settings, 'signature_path', None) and os.path.exists(settings.signature_path):
-        try:
-            from PIL import Image as PilImage
-            import io as _io
-            sig_img = PilImage.open(settings.signature_path)
-            sig_buf = _io.BytesIO()
-            sig_img.save(sig_buf, format='PNG')
-            sig_buf.seek(0)
-            sig_para = doc.add_paragraph()
-            sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            sig_run = sig_para.add_run()
-            sig_run.add_picture(sig_buf, width=Cm(4.5))
-        except Exception as e:
-            print(f"Aláírás kép beillesztési hiba: {e}")
+            try:
+                import io as _io
+                with open(settings.signature_path, "rb") as f:
+                    raw = f.read()
+                sig_buf = _resize_image_bytes(raw, max_width_px=800)
+                sig_para = doc.add_paragraph()
+                sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                sig_run = sig_para.add_run()
+                sig_run.add_picture(sig_buf, width=Cm(4.5))
+            except Exception as e:
+                logger.warning(f"Aláírás kép beillesztési hiba: {e}")
     
     # --- Függelék: Villanyszerelői Javítási Nyilatkozat (Opcionális panel) ---
     if "NEM MEGFELELŐ" in r_val or "FELTÉTELESEN" in r_val:
@@ -976,17 +1191,15 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         j_sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         if settings and getattr(settings, 'signature_path', None) and os.path.exists(settings.signature_path):
             try:
-                from PIL import Image as PilImage
                 import io as _io
-                sig_img = PilImage.open(settings.signature_path)
-                sig_buf = _io.BytesIO()
-                sig_img.save(sig_buf, format='PNG')
-                sig_buf.seek(0)
+                with open(settings.signature_path, "rb") as f:
+                    raw = f.read()
+                sig_buf = _resize_image_bytes(raw, max_width_px=800)
                 j_sig_para = doc.add_paragraph()
                 j_sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                 j_sig_para.add_run().add_picture(sig_buf, width=Cm(4.5))
             except Exception as e:
-                print(f"Javítás aláírás kép beillesztési hiba: {e}")
+                logger.warning(f"Javítás aláírás kép beillesztési hiba: {e}")
 
     stream = io.BytesIO()
     doc.save(stream)
@@ -995,6 +1208,65 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
 
 import tempfile
 import os
+import sys
+
+
+def generate_diagram_pdf_stream(report: Report) -> io.BytesIO:
+    """
+    Egyoldalas A4 PDF csak a rajz képből (diagram_image base64).
+    A teljes jegyzőkönyv PDF-től külön, aláíratlan.
+    """
+    diagram_b64 = getattr(report, "diagram_image", None)
+    if not diagram_b64 or not str(diagram_b64).strip().startswith("data:image"):
+        raise ValueError("Nincs rajz kép a jegyzőkönyvben (diagram_image). Előbb mentsd a rajzot a jegyzőkönyvbe.")
+    if "," in diagram_b64:
+        b64_str = diagram_b64.split(",", 1)[1]
+    else:
+        b64_str = diagram_b64
+    raw = base64.b64decode(b64_str)
+    img_bytes = _resize_image_bytes(raw, max_width_px=1920)
+
+    doc = Document()
+    section = doc.sections[0]
+    section.page_width = Cm(21.0)
+    section.page_height = Cm(29.7)
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run()
+    r.add_picture(img_bytes, width=Cm(16))
+
+    docx_io = io.BytesIO()
+    doc.save(docx_io)
+    docx_io.seek(0)
+
+    with tempfile.TemporaryDirectory() as td:
+        docx_path = os.path.join(td, "diagram.docx")
+        pdf_path = os.path.join(td, "diagram.pdf")
+        with open(docx_path, "wb") as f:
+            f.write(docx_io.getvalue())
+        try:
+            if sys.platform == "win32":
+                from docx2pdf import convert
+                convert(docx_path, pdf_path)
+            else:
+                import subprocess
+                subprocess.run(
+                    ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", td, docx_path],
+                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            out = io.BytesIO(pdf_bytes)
+            out.seek(0)
+            return out
+        except Exception as e:
+            logger.warning(f"Rajz PDF konverzió hiba: {e}")
+            raise RuntimeError(f"Rajz PDF generálás sikertelen: {e}") from e
+
 
 def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] = None, pfx_pass: Optional[bytes] = None, share_url: Optional[str] = None) -> io.BytesIO:
     # PFX: először megadott path/jelszó, majd céges beállítások, végül alapértelmezett
@@ -1014,9 +1286,10 @@ def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] 
         pfx_path = "signer.pfx"
     if pfx_pass is None:
         import os as _os
-        # Biztonság: ha nincs jelszó beállítva, ne használjunk gyenge defaultot,
-        # inkább próbáljuk meg aláírás nélkül visszaadni a PDF-et.
-        pfx_pass = (_os.environ.get("VBF_PFX_PASSWORD") or "").encode("utf-8")
+        env_pass = _os.environ.get("VBF_PFX_PASSWORD")
+        if not env_pass:
+            raise RuntimeError("VBF_PFX_PASSWORD is not set – PDF aláírás nem végezhető biztonságosan.")
+        pfx_pass = env_pass.encode("utf-8")
 
     # Generate the standard DOCX (share_url → QR borítólapra)
     docx_stream = generate_docx_stream(report, db, share_url=share_url)
@@ -1049,11 +1322,6 @@ def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] 
             import io as pyhanko_io
 
             if not os.path.exists(pfx_path):
-                pdf_out = pyhanko_io.BytesIO(pdf_bytes)
-                pdf_out.seek(0)
-                return pdf_out
-            # Ha nincs jelszó megadva, ne próbáljunk aláírni: térjünk vissza a sima PDF-fel
-            if not pfx_pass:
                 pdf_out = pyhanko_io.BytesIO(pdf_bytes)
                 pdf_out.seek(0)
                 return pdf_out

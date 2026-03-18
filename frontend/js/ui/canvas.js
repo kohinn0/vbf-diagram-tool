@@ -29,6 +29,57 @@ export function initCanvas() {
     // Globális hozzáférés (legacy modulokhoz, pl. autodiagram.js)
     window.canvas = canvas;
 
+    // ═══════════════════════════════════════════
+    // Rajz sablonok (3.1) — Egyetlen elosztó / Főelosztó + 3 alosztó
+    // ═══════════════════════════════════════════
+    function buildDiagramTemplate(id) {
+        const objs = [];
+        const fillPanel = 'rgba(30, 41, 59, 0.95)';
+        const strokePanel = '#3b82f6';
+        const fillText = '#e2e8f0';
+        const strokeLine = '#64748b';
+
+        if (id === 'single') {
+            objs.push(new fabric.Rect({ left: 40, top: 40, width: 220, height: 100, fill: fillPanel, stroke: strokePanel, strokeWidth: 1.5 }));
+            objs.push(new fabric.Text('Egyetlen elosztó', { left: 95, top: 72, fontSize: 14, fill: fillText, fontFamily: 'sans-serif' }));
+        } else if (id === 'main_plus_3') {
+            objs.push(new fabric.Rect({ left: 40, top: 30, width: 240, height: 55, fill: fillPanel, stroke: strokePanel, strokeWidth: 1.5 }));
+            objs.push(new fabric.Text('Főelosztó', { left: 125, top: 45, fontSize: 13, fill: fillText, fontFamily: 'sans-serif' }));
+            [1, 2, 3].forEach((i, idx) => {
+                const y = 100 + idx * 82;
+                objs.push(new fabric.Rect({ left: 50, top: y, width: 200, height: 65, fill: fillPanel, stroke: strokePanel, strokeWidth: 1 }));
+                objs.push(new fabric.Text('Alosztó ' + i, { left: 105, top: y + 22, fontSize: 12, fill: fillText, fontFamily: 'sans-serif' }));
+                objs.push(new fabric.Line([130, 85, 150, y], { stroke: strokeLine, strokeWidth: 1.5, selectable: false, evented: false }));
+            });
+        }
+        if (objs.length === 0) return null;
+        const version = typeof fabric.version !== 'undefined' ? fabric.version : '5.3.0';
+        return { version, objects: objs.map(o => o.toObject()) };
+    }
+
+    const diagramTemplates = {
+        single: buildDiagramTemplate('single'),
+        main_plus_3: buildDiagramTemplate('main_plus_3'),
+    };
+
+    document.getElementById('btnLoadDiagramTemplate')?.addEventListener('click', () => {
+        const sel = document.getElementById('diagramTemplateSelect');
+        const templateId = sel && sel.value ? sel.value.trim() : '';
+        if (!templateId || !diagramTemplates[templateId]) {
+            if (window.showToast) window.showToast('Válassz rajz sablont!', 'warning');
+            else alert('Válassz rajz sablont!');
+            return;
+        }
+        const hasContent = canvas.getObjects().length > 0;
+        if (hasContent && !confirm('Felülírja a jelenlegi rajzot? A meglévő elemek elvesznek.')) return;
+        canvas.loadFromJSON(diagramTemplates[templateId], () => {
+            canvas.renderAll();
+            if (typeof canvas.calcOffset === 'function') canvas.calcOffset();
+            if (window.showToast) window.showToast('Sablon betöltve.', 'success');
+            else alert('Sablon betöltve.');
+        });
+    });
+
     // Handle responsive resize
     window.addEventListener('resize', () => {
         canvas.setWidth(wrapper.clientWidth);

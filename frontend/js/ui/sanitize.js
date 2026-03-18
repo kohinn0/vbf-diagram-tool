@@ -36,7 +36,17 @@ export function initSanitize() {
         },
 
         /**
-         * Attributum value sanitizálás (href, src, stb.)
+         * Szöveg escape HTML-be (td, div, span): & < > "
+         * XSS védelem innerHTML-nél; használat: escHtml(userInput)
+         */
+        escHtml(str) {
+            if (str == null || str === undefined) return '';
+            const s = String(str);
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        },
+
+        /**
+         * Attributum value sanitizálás (href, src, value="...")
          * Megakadályozza a javascript: és data: URL injection-t
          */
         attr(str) {
@@ -45,7 +55,7 @@ export function initSanitize() {
             if (/^\s*(javascript|data|vbscript):/i.test(str)) {
                 return '';
             }
-            return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**

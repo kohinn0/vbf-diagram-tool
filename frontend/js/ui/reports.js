@@ -29,6 +29,8 @@ export function initReports() {
     const btnSaveCloud = document.getElementById('btnSaveCloud');
     const btnExportWord = document.getElementById('btnExportWord');
     const btnExportPdfReport = document.getElementById('btnExportPdfReport');
+    const btnExportDiagramPdf = document.getElementById('btnExportDiagramPdf');
+    const btnAuditLog = document.getElementById('btnAuditLog');
     const btnEmailReport = document.getElementById('btnEmailReport');
     const docTypeSelect = document.getElementById('docType');
     const sectionEPH = document.getElementById('sectionEPH');
@@ -163,12 +165,13 @@ export function initReports() {
             container.innerHTML = '<p>Még nincs elmentett jegyzőkönyved.</p>';
             return;
         }
+        const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         reports.forEach(rep => {
             const docId = formatDocId(rep.report_type, rep.id, rep.created_at);
             const card = document.createElement('div');
             card.className = 'report-card panel-glass';
             card.innerHTML = `
-                <h4>[${docId}] ${rep.title}</h4>
+                <h4>[${escH(docId)}] ${escH(rep.title)}</h4>
                 <p class="meta">Típus: ${rep.report_type.toUpperCase()}<br>Létrehozva: ${new Date(rep.created_at).toLocaleDateString()}</p>
                 <div class="actions">
                     <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
@@ -213,10 +216,68 @@ export function initReports() {
             renderReportCards(filtered, reportListContainer);
             if (searchHint) searchHint.textContent = filtered.length < (window._reportListCache.length)
                 ? `${filtered.length} / ${window._reportListCache.length} találat` : '';
+            window.fetchAndShowReminders && window.fetchAndShowReminders();
         } catch (err) {
             reportListContainer.innerHTML = '<p style="color:red">Hiba a betöltés során.</p>';
         }
     };
+
+    window.fetchAndShowReminders = async function () {
+        if (!window.currentToken) return;
+        const banner = document.getElementById('remindersBanner');
+        const bannerText = document.getElementById('remindersBannerText');
+        const upcomingBlock = document.getElementById('upcomingInspectionsBlock');
+        const upcomingList = document.getElementById('upcomingInspectionsList');
+        if (!banner || !bannerText) return;
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/dashboard/my-reminders?days=90`, {
+                headers: { 'Authorization': `Bearer ${window.currentToken}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (sessionStorage.getItem('remindersBannerDismissed')) {
+                banner.style.display = 'none';
+            } else if (data.calibration) {
+                const cal = data.calibration;
+                if (cal.expired) {
+                    banner.style.display = 'flex';
+                    banner.style.background = 'rgba(239, 68, 68, 0.2)';
+                    banner.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+                    banner.style.color = '#fecaca';
+                    bannerText.textContent = `⚠️ A műszer kalibrálása lejárt (${cal.instrument_cal}). Lejárt kalibrálású mérés érvénytelen – időben újrakalibrálj!`;
+                } else if (cal.days_left <= 30) {
+                    banner.style.display = 'flex';
+                    banner.style.background = 'rgba(245, 158, 11, 0.2)';
+                    banner.style.border = '1px solid rgba(245, 158, 11, 0.5)';
+                    banner.style.color = '#fde68a';
+                    bannerText.textContent = `📅 Kalibrálás hamarosan lejár: ${cal.instrument_cal} (${cal.days_left} nap). Érdemes időben újrakalibrálni.`;
+                } else {
+                    banner.style.display = 'none';
+                }
+            } else {
+                banner.style.display = 'none';
+            }
+            if (upcomingBlock && upcomingList && data.upcoming_inspections && data.upcoming_inspections.length > 0) {
+                upcomingBlock.style.display = 'block';
+                upcomingList.innerHTML = data.upcoming_inspections.map(item => {
+                    const label = item.days_left < 0
+                        ? `Lejárt (${-item.days_left} napja)`
+                        : item.days_left === 0
+                            ? 'Ma jár le'
+                            : `${item.days_left} nap`;
+                    const safeTitle = (item.title || '').replace(/</g, '&lt;');
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding: 0.35rem 0;"><span>${safeTitle} – ${item.next_inspection_date}</span><span style="color: var(--accent); font-weight: 600;">${label}</span><button type="button" class="btn btn-secondary btn-small" onclick="window.loadReport && window.loadReport(${item.report_id})">Megnyitás</button></div>`;
+                }).join('');
+            } else if (upcomingBlock) {
+                upcomingBlock.style.display = 'none';
+            }
+        } catch (_) { /* ignore */ }
+    };
+
+    document.getElementById('remindersBannerDismiss')?.addEventListener('click', () => {
+        const banner = document.getElementById('remindersBanner');
+        if (banner) { banner.style.display = 'none'; sessionStorage.setItem('remindersBannerDismissed', '1'); }
+    });
 
     const reportSearchInput = document.getElementById('reportSearchInput');
     if (reportSearchInput) {
@@ -277,6 +338,18 @@ export function initReports() {
         const buildingOtsz = document.getElementById('buildingOtsz')?.value || '';
         if (isVBF && !buildingPurpose) warnings.push('🏢 Az "Épület Rendeltetése" mező üres — ez határozza meg a következő felülvizsgálat dátumát.');
         if (isVBF && !buildingOtsz) warnings.push('🏗️ OTSZ kockázati osztály (AK/KK/MK) nincs kiválasztva — jogilag ez határozza meg a kötelező felülvizsgálati időközöket.');
+
+        const inspectionDate = document.getElementById('inspectionDate')?.value?.trim() || '';
+        if (!inspectionDate) warnings.push('📅 A "Vizsgálat dátuma" üres — a dokumentumban a mentés dátuma jelenik meg.');
+
+        const nextDateStr = document.getElementById('buildingOtsz')?.value ? calculateNextInspectionDate(document.getElementById('buildingOtsz').value) : '';
+        if (isVBF && nextDateStr) {
+            const nextDate = new Date(nextDateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            nextDate.setHours(0, 0, 0, 0);
+            if (nextDate < today) warnings.push('📅 A következő vizsgálat dátuma (OTSZ alapján) a múltban van — érdemes frissíteni az OTSZ osztályt vagy a vizsgálat dátumát.');
+        }
 
         const inspectorName = document.getElementById('inspectorName')?.value?.trim() || '';
         const inspectorLicense = document.getElementById('inspectorLicense')?.value?.trim() || '';
@@ -378,6 +451,7 @@ export function initReports() {
             customerName: document.getElementById('customerName')?.value || '',
             siteAddress: document.getElementById('siteAddress')?.value || '',
             siteHrsz: document.getElementById('siteHrsz')?.value || '',
+            inspectionDate: document.getElementById('inspectionDate')?.value || '',
             buildingPurpose: document.getElementById('buildingPurpose')?.value || '',
             inspectorName: document.getElementById('inspectorName')?.value || '',
             inspectorLicense: document.getElementById('inspectorLicense')?.value || '',
@@ -391,19 +465,66 @@ export function initReports() {
             ephRaValue: document.getElementById('ephRaValue')?.value || '',
             ephConductor: document.getElementById('ephConductor')?.value || '',
             visualChecks: {
-                id_marks: document.getElementById('check_id_marks')?.checked || false,
-                protection: document.getElementById('check_protection')?.checked || false,
-                fire: document.getElementById('check_fire')?.checked || false,
-                conduction: document.getElementById('check_conduction')?.checked || false,
-                connection: document.getElementById('check_connection')?.checked || false,
-                access: document.getElementById('check_access')?.checked || false
+                id_marks: document.getElementById('check_id_marks')?.value || 'ok',
+                protection: document.getElementById('check_protection')?.value || 'ok',
+                fire: document.getElementById('check_fire')?.value || 'ok',
+                conduction: document.getElementById('check_conduction')?.value || 'ok',
+                connection: document.getElementById('check_connection')?.value || 'ok',
+                access: document.getElementById('check_access')?.value || 'ok',
+                notes: document.getElementById('visualNotes')?.value?.trim() || ''
             },
+            polarityCheck: document.getElementById('polarityCheck')?.value || 'na',
+            phaseSequenceCheck: document.getElementById('phaseSequenceCheck')?.value || 'na',
+            voltageDropCheck: document.getElementById('voltageDropCheck')?.value || 'na',
+            otszChecks: {
+                riskClass: document.getElementById('otsz_risk_class')?.value || '',
+                sealing: document.getElementById('otsz_sealing')?.value || '',
+                safetyLighting: document.getElementById('otsz_safety_lighting')?.value || ''
+            },
+            inspectionScope: document.getElementById('inspectionScope')?.value?.trim() || '',
+            supplyPhases: document.getElementById('supplyPhases')?.value || '3',
+            supplySystem: (document.getElementById('supplySystem')?.value || '').trim(),
             buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
             standardReference: 'TvMI 7.7:2026.02.01',
             meeQualification: document.getElementById('reportResult')?.value || '',
             nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
             siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
         };
+        const extraSites = [];
+        document.querySelectorAll('#multiSitesList .site-card').forEach(card => {
+            const name = (card.querySelector('.site-name')?.value || '').trim();
+            const customerName = (card.querySelector('.site-customerName')?.value || '').trim();
+            const siteAddress = (card.querySelector('.site-siteAddress')?.value || '').trim();
+            const siteHrsz = (card.querySelector('.site-siteHrsz')?.value || '').trim();
+            const buildingPurpose = (card.querySelector('.site-buildingPurpose')?.value || '').trim();
+            const buildingOtsz = (card.querySelector('.site-buildingOtsz')?.value || '').trim();
+            const nextInspectionDate = (card.querySelector('.site-nextInspectionDate')?.value || '').trim();
+            if (name || siteAddress || customerName) {
+                extraSites.push({
+                    name: name || siteAddress || 'Helyszín',
+                    customerName: customerName || clientDataObj.customerName,
+                    siteAddress: siteAddress || '',
+                    siteHrsz: siteHrsz || '',
+                    buildingPurpose: buildingPurpose || '',
+                    buildingOtsz: buildingOtsz || '',
+                    nextInspectionDate: nextInspectionDate || calculateNextInspectionDate(buildingOtsz)
+                });
+            }
+        });
+        if (extraSites.length > 0) {
+            clientDataObj.sites = [
+                {
+                    name: clientDataObj.siteAddress || 'Helyszín 1',
+                    customerName: clientDataObj.customerName,
+                    siteAddress: clientDataObj.siteAddress,
+                    siteHrsz: clientDataObj.siteHrsz,
+                    buildingPurpose: clientDataObj.buildingPurpose,
+                    buildingOtsz: clientDataObj.buildingOtsz,
+                    nextInspectionDate: clientDataObj.nextInspectionDate
+                },
+                ...extraSites
+            ];
+        }
         const canvasJson = window.canvas ? window.canvas.toJSON(['vbfData']) : null;
         let diagramImage = null;
         if (window.canvas && window.canvas.getObjects().length > 0) {
@@ -518,7 +639,12 @@ export function initReports() {
                 payload._endpoint = isUpdate ? `/api/reports/${window.currentSavedReportId}` : `/api/reports`;
                 offlineQueue.push(payload);
                 localStorage.setItem('vbf_offline_queue', JSON.stringify(offlineQueue));
-                if (!silent) window.showToast ? window.showToast('Kapcsolat megszakadt, mentve offline tárolóba.') : alert('Offilne mentve!');
+                // Draft is local copy so reopening app offline shows last saved state (4.2)
+                try {
+                    localStorage.setItem('vbf_draft', JSON.stringify({ payload, savedAt: Date.now(), offline: true }));
+                } catch (_) {}
+                if (!silent) window.showToast ? window.showToast('Offline mód – mentve helyben. Szinkronizálás online visszatéréskor.') : alert('Offline mentve!');
+                if (typeof window.Storage !== 'undefined' && window.Storage.updateOfflineUI) window.Storage.updateOfflineUI();
                 return true;
             }
 
@@ -539,6 +665,8 @@ export function initReports() {
                 if (!silent && window.showToast) window.showToast('✅ Jegyzőkönyv sikeresen mentve a felhőbe!');
                 if (btnExportWord) btnExportWord.style.display = 'inline-block';
                 if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
+                if (btnExportDiagramPdf) btnExportDiagramPdf.style.display = 'inline-block';
+                if (btnAuditLog) btnAuditLog.style.display = 'inline-block';
                 if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
                 window.showReportQr(data.id);
                 window.fetchReports();
@@ -611,6 +739,73 @@ export function initReports() {
         finally { btnExportPdfReport.innerText = 'PDF Aláírva 📜'; btnExportPdfReport.disabled = false; }
     });
 
+    if (btnExportDiagramPdf) btnExportDiagramPdf.addEventListener('click', async () => {
+        const saved = await saveReportToCloud(true);
+        if (!saved) return alert('Hiba automatikus mentés során.');
+        if (!window.currentSavedReportId || !window.currentToken) return alert('Előbb mentsd el a jegyzőkönyvet.');
+        btnExportDiagramPdf.innerText = 'Generálás...';
+        btnExportDiagramPdf.disabled = true;
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${window.currentSavedReportId}/export/diagram-pdf`, {
+                headers: { 'Authorization': `Bearer ${window.currentToken}` }
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                const msg = errData.detail || res.status === 404 ? 'Nincs rajz a jegyzőkönyvben. Rajzolj és ments el előbb.' : 'Hiba a Rajz PDF generálás során.';
+                throw new Error(msg);
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            let filename = 'VBF_rajz.pdf';
+            const disp = res.headers.get('Content-Disposition');
+            if (disp && disp.indexOf('filename=') !== -1) filename = disp.split('filename=')[1].replace(/"/g, '').trim();
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            if (window.showToast) window.showToast('Rajz PDF letöltve.', 'success');
+        } catch (err) { if (window.showToast) window.showToast(err.message, 'error'); else alert(err.message); }
+        finally { btnExportDiagramPdf.innerText = 'Rajz PDF'; btnExportDiagramPdf.disabled = false; }
+    });
+
+    if (btnAuditLog) btnAuditLog.addEventListener('click', async () => {
+        const id = window.currentSavedReportId;
+        if (!id || !window.currentToken) return;
+        const modal = document.getElementById('auditLogModal');
+        const content = document.getElementById('auditLogContent');
+        if (!modal || !content) return;
+        content.innerHTML = '<p>Betöltés...</p>';
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}/audit-log`, {
+                headers: { 'Authorization': `Bearer ${window.currentToken}` }
+            });
+            const list = await res.json();
+            const labels = { opened: 'Megnyitás', exported_docx: 'Word export', exported_pdf: 'PDF export', exported_diagram_pdf: 'Rajz PDF export', finalized: 'Véglegesítés' };
+            if (!list || list.length === 0) {
+                content.innerHTML = '<p>Még nincs naplóbejegyzés.</p>';
+            } else {
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                content.innerHTML = '<table class="data-table" style="width:100%; font-size:0.9rem;"><thead><tr><th>Időpont</th><th>Művelet</th><th>Felhasználó</th></tr></thead><tbody>' +
+                    list.map(e => {
+                        const when = e.created_at ? new Date(e.created_at).toLocaleString('hu-HU') : '—';
+                        const action = labels[e.action] || e.action;
+                        const who = e.username || (e.user_id ? '#' + e.user_id : '—');
+                        return `<tr><td>${escH(when)}</td><td>${escH(action)}</td><td>${escH(who)}</td></tr>`;
+                    }).join('') + '</tbody></table>';
+            }
+        } catch (err) {
+            content.innerHTML = '<p style="color:var(--danger)">Hiba a napló betöltésekor.</p>';
+        }
+    });
+    document.getElementById('auditLogModalClose')?.addEventListener('click', () => {
+        const modal = document.getElementById('auditLogModal');
+        if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
+    });
+
     window.applyPhotoToLastRow = function (tableId, photo) {
         if (!photo) return;
         const tbody = document.querySelector(`#${tableId} tbody`);
@@ -633,13 +828,54 @@ export function initReports() {
         document.getElementById('docType') && (document.getElementById('docType').value = rep.report_type.toUpperCase() || 'VBF');
 
         const c = rep.client_data || {};
-        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor'];
-        fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || ''; });
+        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'inspectionDate', 'buildingPurpose', 'supplyPhases', 'supplySystem', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor'];
+        fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || (f === 'supplyPhases' ? '3' : ''); });
+        if (document.getElementById('polarityCheck')) document.getElementById('polarityCheck').value = c.polarityCheck || 'na';
+        if (document.getElementById('phaseSequenceCheck')) document.getElementById('phaseSequenceCheck').value = c.phaseSequenceCheck || 'na';
+        if (document.getElementById('voltageDropCheck')) document.getElementById('voltageDropCheck').value = c.voltageDropCheck || 'na';
+        const otsz = c.otszChecks || {};
+        if (document.getElementById('otsz_risk_class')) document.getElementById('otsz_risk_class').value = otsz.riskClass || '';
+        if (document.getElementById('otsz_sealing')) document.getElementById('otsz_sealing').value = otsz.sealing || '';
+        if (document.getElementById('otsz_safety_lighting')) document.getElementById('otsz_safety_lighting').value = otsz.safetyLighting || '';
+        if (document.getElementById('inspectionScope')) document.getElementById('inspectionScope').value = c.inspectionScope || '';
 
         const visual = c.visualChecks || {};
         ['id_marks', 'protection', 'fire', 'conduction', 'connection', 'access'].forEach(f => {
-            if (document.getElementById(`check_${f}`)) document.getElementById(`check_${f}`).checked = visual[f] ?? true;
+            const el = document.getElementById(`check_${f}`);
+            if (!el) return;
+            const v = visual[f];
+            if (typeof v === 'boolean') el.value = v ? 'ok' : 'fail';
+            else if (v === 'ok' || v === 'fail' || v === 'na') el.value = v;
+            else el.value = 'ok';
         });
+        if (document.getElementById('visualNotes')) document.getElementById('visualNotes').value = visual.notes || '';
+
+        const sites = c.sites || [];
+        const multiList = document.getElementById('multiSitesList');
+        if (multiList) {
+            multiList.innerHTML = '';
+            if (Array.isArray(sites) && sites.length > 1) {
+                sites.slice(1).forEach(site => {
+                    window.VBF_addSiteCard(multiList, {
+                        name: site.name || site.siteName || '',
+                        customerName: site.customerName || site.customer || '',
+                        siteAddress: site.siteAddress || site.address || '',
+                        siteHrsz: site.siteHrsz || site.hrsz || '',
+                        buildingPurpose: site.buildingPurpose || site.purpose || '',
+                        buildingOtsz: site.buildingOtsz || site.otsz || '',
+                        nextInspectionDate: site.nextInspectionDate || ''
+                    });
+                });
+            }
+        }
+        if (Array.isArray(sites) && sites.length >= 1 && sites[0]) {
+            const s0 = sites[0];
+            if (document.getElementById('customerName')) document.getElementById('customerName').value = s0.customerName || s0.customer || '';
+            if (document.getElementById('siteAddress')) document.getElementById('siteAddress').value = s0.siteAddress || s0.address || '';
+            if (document.getElementById('siteHrsz')) document.getElementById('siteHrsz').value = s0.siteHrsz || s0.hrsz || '';
+            if (document.getElementById('buildingPurpose')) document.getElementById('buildingPurpose').value = s0.buildingPurpose || s0.purpose || '';
+            if (document.getElementById('buildingOtsz')) document.getElementById('buildingOtsz').value = s0.buildingOtsz || s0.otsz || '';
+        }
 
         if (rep.diagram_data && window.canvas) {
             window.canvas.loadFromJSON(rep.diagram_data, () => {
@@ -699,6 +935,8 @@ export function initReports() {
             window.currentSavedReportId = null;
             if (btnExportWord) btnExportWord.style.display = 'none';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
+            if (btnExportDiagramPdf) btnExportDiagramPdf.style.display = 'none';
+            if (btnAuditLog) btnAuditLog.style.display = 'none';
             window.loadReportIntoUI(rep);
             if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = "MÁSOLAT: " + (rep.title || '');
             if (window.updateHeaderReportContext) window.updateHeaderReportContext("MÁSOLAT: " + (rep.title || ''), 'modified');
@@ -716,13 +954,15 @@ export function initReports() {
             try { localStorage.setItem('vbf_last_report_id', String(rep.id)); } catch (_) {}
             if (btnExportWord) btnExportWord.style.display = 'inline-block';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
+            if (btnExportDiagramPdf) btnExportDiagramPdf.style.display = 'inline-block';
+            if (btnAuditLog) btnAuditLog.style.display = 'inline-block';
             if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
             window.loadReportIntoUI(rep);
 
             if (rep.status === 'FINAL') {
                 if (btnSaveCloud) btnSaveCloud.style.display = 'none';
                 if (document.getElementById('btnFinalize')) document.getElementById('btnFinalize').style.display = 'none';
-                document.querySelectorAll('input:not(#manualQrId), select, textarea, button:not(.nav-tab):not(#btnExportWord):not(#btnExportPdfReport):not(#btnEmailReport):not(#btnLoginNav):not(#btnToggleTheme):not(#btnCloseLogin)').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
+                document.querySelectorAll('input:not(#manualQrId), select, textarea, button:not(.nav-tab):not(#btnExportWord):not(#btnExportPdfReport):not(#btnExportDiagramPdf):not(#btnAuditLog):not(#btnEmailReport):not(#btnLoginNav):not(#btnToggleTheme):not(#btnCloseLogin)').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
                 if (!document.getElementById('lockMessage')) {
                     const lockMsg = document.createElement('div');
                     lockMsg.id = 'lockMessage';
@@ -756,6 +996,8 @@ export function initReports() {
                     try { localStorage.removeItem('vbf_last_report_id'); } catch (_) {}
                     if (btnExportWord) btnExportWord.style.display = 'none';
                     if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
+                    if (btnExportDiagramPdf) btnExportDiagramPdf.style.display = 'none';
+                    if (btnAuditLog) btnAuditLog.style.display = 'none';
                     if (btnEmailReport) btnEmailReport.style.display = 'none';
                     if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = '';
                     if (window.updateHeaderReportContext) window.updateHeaderReportContext('', null);
@@ -829,6 +1071,24 @@ export function initReports() {
         if (document.getElementById('customerName') && !window.currentSavedReportId) window.saveDraftToLocalStorage();
     }, 2.5 * 60 * 1000);
 
+    window.VBF_addSiteCard = function (container, data) {
+        if (!container) return;
+        const card = document.createElement('div');
+        card.className = 'site-card';
+        card.style.cssText = 'margin-top: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(0,0,0,0.2);';
+        const otszOpts = '<option value="">OTSZ</option><option value="AK">AK</option><option value="KK">KK</option><option value="MK">MK</option><option value="NA">NA</option>';
+        const esc = (v) => String(v || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        card.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;"><strong style="color: var(--text-muted); font-size: 0.9rem;">Helyszín</strong><button type="button" class="btn btn-secondary btn-small btn-remove-site" style="padding: 0.2rem 0.5rem;">Törlés</button></div><div style="display:grid; gap: 0.5rem;"><div><label class="small">Megnevezés</label><input type="text" class="site-name" placeholder="Pl. Második objektum" value="' + esc(data.name) + '" style="width:100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"></div><div><label class="small">Megrendelő</label><input type="text" class="site-customerName" value="' + esc(data.customerName) + '" style="width:100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"></div><div><label class="small">Cím</label><input type="text" class="site-siteAddress" value="' + esc(data.siteAddress) + '" style="width:100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"></div><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;"><div><label class="small">HRSZ</label><input type="text" class="site-siteHrsz" value="' + esc(data.siteHrsz) + '" style="width:100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"></div><div><label class="small">Rendeltetés / OTSZ</label><div style="display:flex; gap: 4px;"><input type="text" class="site-buildingPurpose" value="' + esc(data.buildingPurpose) + '" placeholder="Pl. Iroda" style="flex:1; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"><select class="site-buildingOtsz" style="width: 70px; padding: 0.4rem; background: rgba(0,0,0,0.5); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);">' + otszOpts + '</select></div></div><div><label class="small">Következő vizsgálat (opc.)</label><input type="date" class="site-nextInspectionDate" value="' + (data.nextInspectionDate || '') + '" style="width:100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main);"></div></div>';
+        const sel = card.querySelector('.site-buildingOtsz');
+        if (sel && data.buildingOtsz) sel.value = data.buildingOtsz;
+        card.querySelector('.btn-remove-site')?.addEventListener('click', () => { card.remove(); });
+        container.appendChild(card);
+    };
+    document.getElementById('btnAddSite')?.addEventListener('click', () => {
+        const multiList = document.getElementById('multiSitesList');
+        if (multiList) window.VBF_addSiteCard(multiList, {});
+    });
+
     // Sablonok: előre kitöltött értékek „Új sablonból” indításhoz
     window.VBF_REPORT_TEMPLATES = [
         { id: 'lako', name: 'Lakóépület', docType: 'VBF_LAKO', buildingPurpose: 'Lakóépület', buildingOtsz: 'AK', instrumentType: 'Metrel MI 3152', nextYears: 5 },
@@ -852,22 +1112,83 @@ export function initReports() {
         if (window.updateHeaderReportContext) window.updateHeaderReportContext(`Sablon: ${t.name}`, 'modified');
         if (window.showToast) window.showToast(`Sablon „${t.name}" betöltve. Töltsd ki a mezőket!`, 'success');
     };
+
+    /** Teljes jegyzőkönyv sablonok: client_data + méréssablon (lakás / iroda / garázs) */
+    window.VBF_FULL_REPORT_TEMPLATES = [
+        { id: 'full_lakas', name: 'Lakás', measurementTemplateId: 'lakas_alap', docType: 'VBF_LAKO', documentTitle: 'VBF – Lakás', buildingPurpose: 'Lakóépület (lakás)', buildingOtsz: 'AK', customerName: '', siteAddress: '', instrumentType: 'Metrel MI 3152', supplyPhases: '1', supplySystem: 'TN-C-S' },
+        { id: 'full_iroda', name: 'Iroda', measurementTemplateId: 'iroda_alap', docType: 'VBF_LAKO', documentTitle: 'VBF – Iroda / kisker', buildingPurpose: 'Iroda, kereskedelmi épület', buildingOtsz: 'KK', customerName: '', siteAddress: '', instrumentType: 'Metrel MI 3152', supplyPhases: '3', supplySystem: 'TN-S' },
+        { id: 'full_garazs', name: 'Garázs', measurementTemplateId: 'garazs', docType: 'VBF_LAKO', documentTitle: 'VBF – Garázs / melléképület', buildingPurpose: 'Garázs, melléképület', buildingOtsz: 'AK', customerName: '', siteAddress: '', instrumentType: 'Metrel MI 3152', supplyPhases: '1', supplySystem: 'TN-C-S' },
+    ];
+    window.applyFullReportTemplate = function (templateId) {
+        const t = (window.VBF_FULL_REPORT_TEMPLATES || []).find(x => x.id === templateId);
+        if (!t) return;
+        window.currentSavedReportId = null;
+        const today = new Date().toISOString().split('T')[0];
+        if (document.getElementById('docType')) document.getElementById('docType').value = t.docType || 'VBF_LAKO';
+        if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = t.documentTitle || t.name;
+        if (document.getElementById('customerName')) document.getElementById('customerName').value = t.customerName || '';
+        if (document.getElementById('siteAddress')) document.getElementById('siteAddress').value = t.siteAddress || '';
+        if (document.getElementById('siteHrsz')) document.getElementById('siteHrsz').value = t.siteHrsz || '';
+        if (document.getElementById('inspectionDate')) document.getElementById('inspectionDate').value = today;
+        if (document.getElementById('buildingPurpose')) document.getElementById('buildingPurpose').value = t.buildingPurpose || '';
+        if (document.getElementById('buildingOtsz')) document.getElementById('buildingOtsz').value = t.buildingOtsz || '';
+        if (document.getElementById('instrumentType')) document.getElementById('instrumentType').value = t.instrumentType || '';
+        if (document.getElementById('supplyPhases')) document.getElementById('supplyPhases').value = t.supplyPhases || '3';
+        if (document.getElementById('supplySystem')) document.getElementById('supplySystem').value = t.supplySystem || '';
+        const multiList = document.getElementById('multiSitesList');
+        if (multiList) multiList.innerHTML = '';
+        document.querySelectorAll('.data-table tbody').forEach(tb => { if (tb) tb.innerHTML = ''; });
+        const defectList = document.getElementById('defectList');
+        if (defectList) defectList.innerHTML = '';
+        if (window.canvas && window.canvas.clear) window.canvas.clear();
+        if (typeof window.applyMeasurementTemplate === 'function' && t.measurementTemplateId) {
+            window.applyMeasurementTemplate(t.measurementTemplateId, 'replace');
+        }
+        if (window.updateHeaderReportContext) window.updateHeaderReportContext(t.documentTitle || t.name, 'modified');
+        if (window.showToast) window.showToast(`Teljes sablon „${t.name}" betöltve. Töltsd ki a megrendelőt és címet!`, 'success');
+    };
+
     document.getElementById('btnNewReportEmpty')?.addEventListener('click', () => {
         window.currentSavedReportId = null;
         document.querySelectorAll('.data-table tbody').forEach(tb => { if (tb) tb.innerHTML = ''; });
         const defectList = document.getElementById('defectList');
         if (defectList) defectList.innerHTML = '';
         if (window.canvas && window.canvas.clear) window.canvas.clear();
-        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult'].forEach(id => {
+        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'inspectionDate', 'buildingPurpose', 'supplyPhases', 'supplySystem', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
+            if (!el) return;
+            if (id === 'docType') el.value = 'VBF_LAKO';
+            else if (id === 'documentTitle') el.value = 'Új jegyzőkönyv';
+            else if (id === 'inspectionDate') el.value = new Date().toISOString().split('T')[0];
+            else el.value = '';
+        });
+        const multiList = document.getElementById('multiSitesList');
+        if (multiList) multiList.innerHTML = '';
+        if (document.getElementById('visualNotes')) document.getElementById('visualNotes').value = '';
+        if (document.getElementById('inspectionScope')) document.getElementById('inspectionScope').value = '';
+        if (document.getElementById('polarityCheck')) document.getElementById('polarityCheck').value = 'na';
+        if (document.getElementById('phaseSequenceCheck')) document.getElementById('phaseSequenceCheck').value = 'na';
+        if (document.getElementById('voltageDropCheck')) document.getElementById('voltageDropCheck').value = 'na';
+        if (document.getElementById('supplyPhases')) document.getElementById('supplyPhases').value = '3';
+        if (document.getElementById('supplySystem')) document.getElementById('supplySystem').value = '';
+        ['otsz_risk_class', 'otsz_sealing', 'otsz_safety_lighting'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+        ['check_id_marks', 'check_protection', 'check_fire', 'check_conduction', 'check_connection', 'check_access'].forEach(id => {
+            const e = document.getElementById(id);
+            if (e) e.value = 'ok';
         });
         if (window.updateHeaderReportContext) window.updateHeaderReportContext('Új jegyzőkönyv', null);
         if (window.showToast) window.showToast('Üres jegyzőkönyv kész.', 'success');
     });
     document.getElementById('reportTemplateSelect')?.addEventListener('change', function () {
         const v = this.value;
-        if (v) { window.applyReportTemplate(v); this.value = ''; }
+        if (!v) return;
+        const fullIds = (window.VBF_FULL_REPORT_TEMPLATES || []).map(x => x.id);
+        if (fullIds.indexOf(v) !== -1) {
+            window.applyFullReportTemplate(v);
+        } else {
+            window.applyReportTemplate(v);
+        }
+        this.value = '';
     });
 
     if (window.updateHeaderReportContext) {

@@ -2,6 +2,243 @@ export function initMeasurements() {
     window.VBF = window.VBF || {};
 
     // ═══════════════════════════════════════════
+    // Mérési sablonok (2.1)
+    // ═══════════════════════════════════════════
+    const MEASUREMENT_TEMPLATES = {
+        lakas_alap: {
+            id: 'lakas_alap',
+            name: 'Lakás alap (3 áramkör + RCD)',
+            rpe: [
+                { point: 1, loc: 'PE sín - Gázcső' },
+                { point: 2, loc: 'PE sín - Vízcső' },
+                { point: 3, loc: 'Konnektor földelés' },
+            ],
+            loop: [
+                { circuit: 'Világítás', device: 'B10', loc: 'E1/1' },
+                { circuit: 'Dugalj szoba', device: 'B16', loc: 'E1/2' },
+                { circuit: 'Dugalj konyha', device: 'B16', loc: 'E1/3' },
+            ],
+            insulation: [
+                { circuit: 'Világítás' },
+                { circuit: 'Dugalj szoba' },
+                { circuit: 'Dugalj konyha' },
+            ],
+            rcd: [
+                { circuit: 'ÁVK fürdő', type: 'A', idn: 30 },
+            ],
+        },
+        iroda_alap: {
+            id: 'iroda_alap',
+            name: 'Iroda / kisker (6 áramkör + RCD)',
+            rpe: [
+                { point: 1, loc: 'PE sín' },
+                { point: 2, loc: 'Konzol földelés' },
+            ],
+            loop: [
+                { circuit: 'Világítás 1', device: 'B10', loc: 'E1/1' },
+                { circuit: 'Világítás 2', device: 'B10', loc: 'E1/2' },
+                { circuit: 'Dugalj 1', device: 'B16', loc: 'E1/3' },
+                { circuit: 'Dugalj 2', device: 'B16', loc: 'E1/4' },
+                { circuit: 'Klíma', device: 'C16', loc: 'E1/5' },
+                { circuit: 'Egyéb', device: 'B16', loc: 'E1/6' },
+            ],
+            insulation: [
+                { circuit: 'Világítás 1' },
+                { circuit: 'Világítás 2' },
+                { circuit: 'Dugalj 1' },
+                { circuit: 'Dugalj 2' },
+                { circuit: 'Klíma' },
+                { circuit: 'Egyéb' },
+            ],
+            rcd: [
+                { circuit: 'ÁVK iroda', type: 'A', idn: 30 },
+            ],
+        },
+        garazs: {
+            id: 'garazs',
+            name: 'Garázs / melléképület (2 áramkör)',
+            rpe: [
+                { point: 1, loc: 'PE sín' },
+            ],
+            loop: [
+                { circuit: 'Világítás', device: 'B10', loc: 'E1/1' },
+                { circuit: 'Dugalj / kapu', device: 'B16', loc: 'E1/2' },
+            ],
+            insulation: [
+                { circuit: 'Világítás' },
+                { circuit: 'Dugalj / kapu' },
+            ],
+            rcd: [],
+        },
+    };
+
+    function esc(s) {
+        if (s == null || s === undefined) return '';
+        const str = String(s);
+        return (window.VBF && window.VBF.sanitize && window.VBF.sanitize.attr) ? window.VBF.sanitize.attr(str) : str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.VBF.companyTemplates = window.VBF.companyTemplates || [];
+
+    function getTplById(templateId) {
+        const builtIn = MEASUREMENT_TEMPLATES[templateId];
+        if (builtIn) return builtIn;
+        if (String(templateId).startsWith('custom_')) {
+            const id = parseInt(templateId.replace('custom_', ''), 10);
+            const ct = (window.VBF.companyTemplates || []).find(t => t.id === id);
+            if (ct && ct.template_json) return { id: 'custom_' + ct.id, name: ct.name, ...ct.template_json };
+        }
+        return null;
+    }
+
+    window.applyMeasurementTemplate = function (templateId, mode) {
+        const tpl = getTplById(templateId);
+        if (!tpl) return;
+        const replace = mode === 'replace';
+        if (replace) {
+            document.querySelectorAll('#table-rpe tbody, #table-loop tbody, #table-insulation tbody, #table-rcd tbody').forEach(tb => { if (tb) tb.innerHTML = ''; });
+        }
+        if (tpl.rpe && tpl.rpe.length) {
+            tpl.rpe.forEach((r, i) => {
+                const point = r.point != null ? r.point : i + 1;
+                window.createRow('table-rpe', `
+                    <td><input type="number" class="meas-point" value="${esc(point)}"></td>
+                    <td><input type="text" class="meas-loc" value="${esc(r.loc)}"></td>
+                    <td><input type="number" step="0.01" class="meas-val" placeholder="0.12" oninput="validateRpe(this.closest('tr'))"></td>
+                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                `);
+            });
+        }
+        if (tpl.loop && tpl.loop.length) {
+            tpl.loop.forEach(r => {
+                window.createRow('table-loop', `
+                    <td><input type="text" class="meas-circuit" value="${esc(r.circuit)}" list="circuitNames"></td>
+                    <td><input type="text" class="meas-device" value="${esc(r.device || 'B16')}" oninput="validateZs(this.closest('tr'))"></td>
+                    <td><input type="text" class="meas-loc" value="${esc(r.loc || '')}"></td>
+                    <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="validateZs(this.closest('tr'))"></td>
+                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                `);
+            });
+        }
+        if (tpl.insulation && tpl.insulation.length) {
+            tpl.insulation.forEach(r => {
+                window.createRow('table-insulation', `
+                    <td><input type="text" class="meas-circuit" value="${esc(r.circuit)}" list="circuitNames"></td>
+                    <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                    <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                    <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                `);
+            });
+        }
+        if (tpl.rcd && tpl.rcd.length) {
+            tpl.rcd.forEach(r => {
+                const typeOpt = (v) => (r.type === v ? '<option selected>' : '<option>') + v + '</option>';
+                window.createRow('table-rcd', `
+                    <td><input type="text" class="meas-circuit" value="${esc(r.circuit)}" list="circuitNames"></td>
+                    <td><select class="meas-type"><option>AC</option>${typeOpt('A')}${typeOpt('B')}${typeOpt('F')}</select></td>
+                    <td><input type="number" class="meas-idn" value="${esc(r.idn != null ? r.idn : 30)}" oninput="validateRcd(this.closest('tr'))"></td>
+                    <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
+                    <td><input type="number" step="1" class="meas-t1" placeholder="24" oninput="validateRcd(this.closest('tr'))"></td>
+                    <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
+                    <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
+                    <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                `);
+            });
+        }
+        if (window.showToast) window.showToast(`Sablon „${tpl.name}” betöltve.`, 'success');
+        else alert(`Sablon „${tpl.name}” betöltve.`);
+    };
+
+    document.getElementById('btnLoadMeasurementTemplate')?.addEventListener('click', () => {
+        const sel = document.getElementById('measurementTemplateSelect');
+        const templateId = sel && sel.value ? sel.value.trim() : '';
+        if (!templateId) {
+            if (window.showToast) window.showToast('Válassz sablont!', 'warning'); else alert('Válassz sablont!');
+            return;
+        }
+        const mode = document.querySelector('input[name="templateMode"]:checked')?.value || 'append';
+        window.applyMeasurementTemplate(templateId, mode);
+    });
+
+    /** Aktuális táblákból sablonstruktúra (rpe, loop, insulation, rcd) — API / Mentés sablonként */
+    window.VBF.getMeasurementTemplateFromTables = function () {
+        const num = (v) => (v === '' || v == null) ? null : (isNaN(Number(v)) ? v : Number(v));
+        return {
+            rpe: Array.from(document.querySelectorAll('#table-rpe tbody tr')).map(tr => ({
+                point: num(tr.querySelector('.meas-point')?.value),
+                loc: (tr.querySelector('.meas-loc')?.value || '').trim(),
+            })),
+            loop: Array.from(document.querySelectorAll('#table-loop tbody tr')).map(tr => ({
+                circuit: (tr.querySelector('.meas-circuit')?.value || '').trim(),
+                device: (tr.querySelector('.meas-device')?.value || 'B16').trim(),
+                loc: (tr.querySelector('.meas-loc')?.value || '').trim(),
+            })),
+            insulation: Array.from(document.querySelectorAll('#table-insulation tbody tr')).map(tr => ({
+                circuit: (tr.querySelector('.meas-circuit')?.value || '').trim(),
+            })),
+            rcd: Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => ({
+                circuit: (tr.querySelector('.meas-circuit')?.value || '').trim(),
+                type: (tr.querySelector('.meas-type')?.value || 'A').trim(),
+                idn: num(tr.querySelector('.meas-idn')?.value) || 30,
+            })),
+        };
+    };
+
+    /** Céges mérési sablonok betöltése és a legördülő frissítése */
+    window.VBF.loadCompanyMeasurementTemplates = function () {
+        const sel = document.getElementById('measurementTemplateSelect');
+        if (!sel) return Promise.resolve();
+        const baseOpts = [
+            '<option value="">— válassz sablont —</option>',
+            '<option value="lakas_alap">Lakás alap (3 áramkör + RCD)</option>',
+            '<option value="iroda_alap">Iroda / kisker (6 áramkör + RCD)</option>',
+            '<option value="garazs">Garázs / melléképület (2 áramkör)</option>',
+        ].join('');
+        return fetch('/api/measurement-templates', { credentials: 'include' })
+            .then(r => (r.ok ? r.json() : []))
+            .catch(() => [])
+            .then(list => {
+                window.VBF.companyTemplates = Array.isArray(list) ? list : [];
+                let html = baseOpts;
+                if (window.VBF.companyTemplates.length) {
+                    html += '<optgroup label="Céges sablonok">';
+                    window.VBF.companyTemplates.forEach(t => {
+                        html += `<option value="custom_${t.id}">${esc(t.name)}</option>`;
+                    });
+                    html += '</optgroup>';
+                }
+                sel.innerHTML = html;
+            });
+    };
+
+    document.getElementById('btnSaveAsMeasurementTemplate')?.addEventListener('click', () => {
+        const name = window.prompt('Sablon neve:', '');
+        if (name == null || !String(name).trim()) return;
+        const template_json = window.VBF.getMeasurementTemplateFromTables();
+        fetch('/api/measurement-templates', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name.trim(), template_json }),
+        })
+            .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+            .then(() => {
+                return window.VBF.loadCompanyMeasurementTemplates();
+            })
+            .then(() => {
+                if (window.showToast) window.showToast('Sablon mentve.', 'success'); else alert('Sablon mentve.');
+            })
+            .catch(() => {
+                if (window.showToast) window.showToast('Sablon mentése sikertelen.', 'error'); else alert('Sablon mentése sikertelen.');
+            });
+    });
+
+    // Betöltés indításkor (céges sablonok a legördülőbe)
+    window.VBF.loadCompanyMeasurementTemplates();
+
+    // ═══════════════════════════════════════════
     // Mérési kép csatolás
     // ═══════════════════════════════════════════
 
@@ -497,4 +734,145 @@ export function initMeasurements() {
         URL.revokeObjectURL(url);
         if (typeof window.showToast === 'function') window.showToast('CSV export kész.', 'success');
     });
+
+    // ═══════════════════════════════════════════
+    // Mérési grafikonok (2.2) — Zs, Riso, RCD
+    // ═══════════════════════════════════════════
+    window.VBF.measurementCharts = {};
+
+    function maxZsFromDevice(deviceStr) {
+        if (!deviceStr || typeof deviceStr !== 'string') return null;
+        const curve = deviceStr.match(/[A-Z]+/)?.[0];
+        const nominalStr = deviceStr.match(/[0-9.]+/)?.[0];
+        const In = parseFloat(nominalStr);
+        if (!curve || isNaN(In)) return null;
+        let Ia = 0;
+        if (curve === 'B') Ia = In * 5;
+        else if (curve === 'C') Ia = In * 10;
+        else if (curve === 'D') Ia = In * 20;
+        if (Ia <= 0) return null;
+        return (230 * 0.95) / Ia;
+    }
+
+    function getChartDataFromTables() {
+        const loop = Array.from(document.querySelectorAll('#table-loop tbody tr')).map(tr => {
+            const circuit = tr.querySelector('.meas-circuit')?.value?.trim() || '—';
+            const device = tr.querySelector('.meas-device')?.value?.trim() || '';
+            const zs = parseFloat(tr.querySelector('.meas-zs')?.value);
+            return { circuit, device, zs: isNaN(zs) ? null : zs, maxZs: maxZsFromDevice(device) };
+        });
+        const insulation = Array.from(document.querySelectorAll('#table-insulation tbody tr')).map(tr => {
+            const circuit = tr.querySelector('.meas-circuit')?.value?.trim() || '—';
+            const ln = parseFloat(tr.querySelector('.meas-ln')?.value);
+            const lpe = parseFloat(tr.querySelector('.meas-lpe')?.value);
+            const npe = parseFloat(tr.querySelector('.meas-npe')?.value);
+            return {
+                circuit,
+                ln: isNaN(ln) ? null : ln,
+                lpe: isNaN(lpe) ? null : lpe,
+                npe: isNaN(npe) ? null : npe,
+            };
+        });
+        const rcd = Array.from(document.querySelectorAll('#table-rcd tbody tr')).map(tr => {
+            const circuit = tr.querySelector('.meas-circuit')?.value?.trim() || '—';
+            const idn = parseFloat(tr.querySelector('.meas-idn')?.value);
+            const t1 = parseFloat(tr.querySelector('.meas-t1')?.value);
+            const t5 = parseFloat(tr.querySelector('.meas-t5')?.value);
+            return {
+                circuit,
+                idn: isNaN(idn) ? null : idn,
+                t1: isNaN(t1) ? null : t1,
+                t5: isNaN(t5) ? null : t5,
+            };
+        });
+        return { loop, insulation, rcd };
+    }
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8' } } },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+            x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { display: false } },
+        },
+    };
+
+    window.refreshMeasurementCharts = function () {
+        if (typeof window.Chart !== 'function') return;
+        const { loop, insulation, rcd } = getChartDataFromTables();
+
+        ['chartZs', 'chartRiso', 'chartRcd'].forEach(id => {
+            const inst = window.VBF.measurementCharts[id];
+            if (inst) { inst.destroy(); window.VBF.measurementCharts[id] = null; }
+        });
+
+        const ctxZs = document.getElementById('chartZs');
+        if (ctxZs && loop.length) {
+            const labels = loop.map(r => r.circuit.substring(0, 14));
+            const zsData = loop.map(r => r.zs);
+            const maxZsData = loop.map(r => r.maxZs);
+            const datasets = [
+                { label: 'Zs [Ω]', data: zsData, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 },
+            ];
+            if (maxZsData.some(m => m != null)) {
+                datasets.push({ label: 'Max Zs (ref.)', data: maxZsData, type: 'line', borderColor: '#f59e0b', borderWidth: 2, borderDash: [4, 2], fill: false, pointRadius: 0 });
+            }
+            window.VBF.measurementCharts.chartZs = new Chart(ctxZs, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: chartOptions,
+            });
+        }
+
+        const ctxRiso = document.getElementById('chartRiso');
+        if (ctxRiso && insulation.length) {
+            const labels = insulation.map(r => r.circuit.substring(0, 14));
+            const ln = insulation.map(r => r.ln);
+            const lpe = insulation.map(r => r.lpe);
+            const npe = insulation.map(r => r.npe);
+            window.VBF.measurementCharts.chartRiso = new Chart(ctxRiso, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'L-N [MΩ]', data: ln, backgroundColor: 'rgba(16, 185, 129, 0.6)', borderColor: '#10b981', borderWidth: 1, borderRadius: 4 },
+                        { label: 'L-PE [MΩ]', data: lpe, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 },
+                        { label: 'N-PE [MΩ]', data: npe, backgroundColor: 'rgba(168, 85, 247, 0.6)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4 },
+                    ],
+                },
+                options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } },
+            });
+        }
+
+        const ctxRcd = document.getElementById('chartRcd');
+        if (ctxRcd && rcd.length) {
+            const labels = rcd.map(r => r.circuit.substring(0, 14));
+            const idnData = rcd.map(r => r.idn);
+            const t1Data = rcd.map(r => r.t1);
+            const t5Data = rcd.map(r => r.t5);
+            window.VBF.measurementCharts.chartRcd = new Chart(ctxRcd, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'IΔn [mA]', data: idnData, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4, yAxisID: 'y' },
+                        { label: 't₁ [ms]', data: t1Data, backgroundColor: 'rgba(245, 158, 11, 0.6)', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 4, yAxisID: 'y1' },
+                        { label: 't₅ [ms]', data: t5Data, backgroundColor: 'rgba(16, 185, 129, 0.6)', borderColor: '#10b981', borderWidth: 1, borderRadius: 4, yAxisID: 'y1' },
+                    ],
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: { ...chartOptions.scales.y, position: 'left', title: { display: true, text: 'IΔn [mA]', color: '#94a3b8' } },
+                        y1: { position: 'right', beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { drawOnChartArea: false }, title: { display: true, text: 't [ms]', color: '#94a3b8' } },
+                    },
+                },
+            });
+        }
+        if (window.showToast) window.showToast('Grafikonok frissítve.', 'success');
+    };
+
+    document.getElementById('btnRefreshMeasurementCharts')?.addEventListener('click', () => window.refreshMeasurementCharts());
 }

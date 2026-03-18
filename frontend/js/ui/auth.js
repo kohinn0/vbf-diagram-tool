@@ -57,6 +57,7 @@ export function initAuth() {
                         if (masterTab) masterTab.style.display = 'inline-block';
                         if (typeof window.fetchAdminUsers === 'function') window.fetchAdminUsers();
                         if (typeof window.fetchCompanySettings === 'function') window.fetchCompanySettings();
+                        if (typeof window.fetchAndShowReminders === 'function') window.fetchAndShowReminders();
                     } else {
                         if (navAdmin) navAdmin.style.display = 'none';
                         if (dashboardTab) dashboardTab.style.display = 'none';
@@ -66,6 +67,7 @@ export function initAuth() {
                         if (navAdminShop) navAdminShop.style.display = 'none';
                         if (cloudTab) cloudTab.style.display = 'inline-block';
                         if (masterTab) masterTab.style.display = 'inline-block';
+                        if (typeof window.fetchAndShowReminders === 'function') window.fetchAndShowReminders();
                     }
                     var exp = userData.subscription_expires;
                     if (exp && userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
@@ -97,6 +99,10 @@ export function initAuth() {
             if (btnSaveCloud) btnSaveCloud.style.display = 'none';
             if (btnExportWord) btnExportWord.style.display = 'none';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
+            const btnExportDiagramPdf = document.getElementById('btnExportDiagramPdf');
+            if (btnExportDiagramPdf) btnExportDiagramPdf.style.display = 'none';
+            const btnAuditLog = document.getElementById('btnAuditLog');
+            if (btnAuditLog) btnAuditLog.style.display = 'none';
             if (btnEmailReport) btnEmailReport.style.display = 'none';
             if (btnFinalize) btnFinalize.style.display = 'none';
             if (navAdmin) navAdmin.style.display = 'none';

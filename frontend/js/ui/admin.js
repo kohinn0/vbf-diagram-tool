@@ -29,6 +29,13 @@ export function initAdmin() {
                 document.getElementById('adminCompTax').value = data.tax_number || '';
                 document.getElementById('adminCompAddress').value = data.address || '';
                 document.getElementById('adminCompBank').value = data.bank_account || '';
+                const hex = (data.docx_primary_color || '#1e3a5f').replace(/^#?/, '#');
+                if (document.getElementById('adminDocxHeader')) document.getElementById('adminDocxHeader').value = data.docx_header_text || '';
+                if (document.getElementById('adminDocxFooter')) document.getElementById('adminDocxFooter').value = data.docx_footer_text || '';
+                if (document.getElementById('adminDocxColorHex')) document.getElementById('adminDocxColorHex').value = hex;
+                if (document.getElementById('adminDocxColor')) document.getElementById('adminDocxColor').value = hex.length === 7 ? hex : '#1e3a5f';
+                const embedDiagramEl = document.getElementById('adminDocxEmbedDiagram');
+                if (embedDiagramEl) embedDiagramEl.checked = data.docx_embed_diagram !== false && data.docx_embed_diagram !== 0;
 
                 if (data.logo_path) {
                     const img = document.getElementById('adminCompLogoPreview');
@@ -53,11 +60,20 @@ export function initAdmin() {
     const btnAdminSaveCompany = document.getElementById('btnAdminSaveCompany');
     if (btnAdminSaveCompany) {
         btnAdminSaveCompany.addEventListener('click', async () => {
+            const hexEl = document.getElementById('adminDocxColorHex');
+            const colorEl = document.getElementById('adminDocxColor');
+            let docxColor = (hexEl && hexEl.value) ? hexEl.value.trim() : '';
+            if (docxColor && !docxColor.startsWith('#')) docxColor = '#' + docxColor;
+            if (colorEl && colorEl.value && !docxColor) docxColor = colorEl.value;
             const data = {
                 company_name: document.getElementById('adminCompName').value,
                 tax_number: document.getElementById('adminCompTax').value,
                 address: document.getElementById('adminCompAddress').value,
-                bank_account: document.getElementById('adminCompBank').value
+                bank_account: document.getElementById('adminCompBank').value,
+                docx_header_text: document.getElementById('adminDocxHeader')?.value?.trim() || null,
+                docx_footer_text: document.getElementById('adminDocxFooter')?.value?.trim() || null,
+                docx_primary_color: docxColor || null,
+                docx_embed_diagram: document.getElementById('adminDocxEmbedDiagram')?.checked !== false
             };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/api/admin/company`, {
@@ -76,6 +92,16 @@ export function initAdmin() {
             } catch (e) {
                 alert('Hálózati hiba: ' + e.message);
             }
+        });
+    }
+
+    const adminDocxColor = document.getElementById('adminDocxColor');
+    const adminDocxColorHex = document.getElementById('adminDocxColorHex');
+    if (adminDocxColor && adminDocxColorHex) {
+        adminDocxColor.addEventListener('input', () => { adminDocxColorHex.value = adminDocxColor.value; });
+        adminDocxColorHex.addEventListener('input', () => {
+            const v = adminDocxColorHex.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(v) || /^[0-9A-Fa-f]{6}$/.test(v)) adminDocxColor.value = v.startsWith('#') ? v : '#' + v;
         });
     }
 
@@ -243,9 +269,12 @@ export function initAdmin() {
                 }
                 const tr = document.createElement('tr');
                 const expiry = u.subscription_expires ? new Date(u.subscription_expires).toISOString().split('T')[0] : '';
-                const safeEmail = (u.email || '').replace(/"/g, '&quot;');
-                const safeCompany = (u.company_name || '').replace(/</g, '&lt;');
-                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" style="width:150px;padding:0.2rem;" placeholder="Email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button class="btn btn-danger btn-small" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const escA = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.attr) ? window.VBF.sanitize.attr(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const safeEmail = escA(u.email || '');
+                const safeCompany = escH(u.company_name || '');
+                const safeUsername = escH(u.username || '');
+                tr.innerHTML = '<td>' + u.id + '</td><td>' + safeUsername + '</td><td><input type="email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" style="width:150px;padding:0.2rem;" placeholder="Email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + escA(expiry) + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button class="btn btn-danger btn-small" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
                 list.appendChild(tr);
             });
         } catch (err) { console.error(err); }
@@ -325,8 +354,9 @@ export function initAdmin() {
                 const priceYr = p.price_yearly != null ? p.price_yearly + ' Ft/év' : '';
                 const repLim = p.reports_per_month_limit != null ? p.reports_per_month_limit + ' jegyzőkönyv/hó' : 'Korlátlan';
                 const userLim = p.max_users != null ? p.max_users + ' felhasználó' : 'Korlátlan';
-                const feats = Array.isArray(p.features) && p.features.length ? '<ul style="margin:8px 0 0 0; padding-left:1.2rem; font-size:0.9rem;">' + p.features.map(f => '<li>' + String(f).replace(/</g, '&lt;') + '</li>').join('') + '</ul>' : '';
-                card.innerHTML = '<div style="font-weight:bold; color: var(--accent); margin-bottom:6px;">' + String(p.display_name).replace(/</g, '&lt;') + '</div>' +
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const feats = Array.isArray(p.features) && p.features.length ? '<ul style="margin:8px 0 0 0; padding-left:1.2rem; font-size:0.9rem;">' + p.features.map(f => '<li>' + escH(f) + '</li>').join('') + '</ul>' : '';
+                card.innerHTML = '<div style="font-weight:bold; color: var(--accent); margin-bottom:6px;">' + escH(p.display_name) + '</div>' +
                     '<div style="font-size:0.95rem;">' + priceMon + (priceYr ? ' · ' + priceYr : '') + '</div>' +
                     '<div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">' + repLim + ' · ' + userLim + '</div>' + feats +
                     '<button type="button" class="btn btn-secondary btn-small" style="margin-top:10px;">Szerkesztés</button>';
@@ -335,7 +365,8 @@ export function initAdmin() {
                 listEl.appendChild(card);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + escH(e.message) + '</p>';
         }
     };
 
@@ -414,7 +445,8 @@ export function initAdmin() {
             orders.forEach(o => {
                 const tr = document.createElement('tr');
                 const created = o.created_at ? new Date(o.created_at).toLocaleDateString('hu-HU') : '';
-                tr.innerHTML = '<td>' + String(o.email).replace(/</g, '&lt;') + '</td><td>' + String(o.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (o.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (o.amount_huf || 0) + ' Ft</td><td>' + created + '</td><td><button type="button" class="btn btn-primary btn-small" data-order-id="' + o.id + '">Jóváhagyás</button></td>';
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                tr.innerHTML = '<td>' + escH(o.email) + '</td><td>' + escH(o.customer_name || '') + '</td><td>' + (o.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (o.amount_huf || 0) + ' Ft</td><td>' + escH(created) + '</td><td><button type="button" class="btn btn-primary btn-small" data-order-id="' + o.id + '">Jóváhagyás</button></td>';
                 tr.querySelector('button').addEventListener('click', async () => {
                     const id = tr.querySelector('button').getAttribute('data-order-id');
                     if (!id || !confirm('Utalás jóváhagyása: a vásárló megkapja a hozzáférési emailt. Folytatod?')) return;
@@ -437,7 +469,8 @@ export function initAdmin() {
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + escH(e.message) + '</p>';
         }
     };
 
@@ -469,7 +502,8 @@ export function initAdmin() {
                 if (canRefund) {
                     actionCell = '<button type="button" class="btn btn-danger btn-small" data-log-id="' + log.id + '">Visszatérítés</button>';
                 }
-                tr.innerHTML = '<td>' + created + '</td><td>' + String(log.email).replace(/</g, '&lt;') + '</td><td>' + String(log.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (log.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (log.amount_huf || 0) + ' Ft</td><td>' + method + '</td><td>' + status + '</td><td>' + actionCell + '</td>';
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                tr.innerHTML = '<td>' + escH(created) + '</td><td>' + escH(log.email) + '</td><td>' + escH(log.customer_name || '') + '</td><td>' + (log.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (log.amount_huf || 0) + ' Ft</td><td>' + escH(method) + '</td><td>' + escH(status) + '</td><td>' + actionCell + '</td>';
                 const btn = tr.querySelector('button');
                 if (btn) {
                     btn.addEventListener('click', async () => {
@@ -495,7 +529,8 @@ export function initAdmin() {
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + escH(e.message) + '</p>';
         }
     };
 

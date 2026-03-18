@@ -18,6 +18,9 @@ export function initCompleteness() {
         const siteAddress = document.getElementById('siteAddress')?.value?.trim();
         checks.push({ label: 'Vizsgált objektum címe', req: true, ok: !!siteAddress, hint: 'Jegyzőkönyv Adatok fül → Cím', fieldId: 'siteAddress' });
 
+        const inspectionDate = document.getElementById('inspectionDate')?.value?.trim();
+        checks.push({ label: 'Vizsgálat dátuma', req: false, ok: !!inspectionDate, hint: 'A helyszíni vizsgálat napja', fieldId: 'inspectionDate' });
+
         const reportId = document.getElementById('documentTitle')?.value?.trim();
         checks.push({ label: 'Dokumentum Címe', req: false, ok: !!reportId, hint: 'Pl. Családi ház', fieldId: 'documentTitle' });
 
@@ -163,12 +166,15 @@ export function initCompleteness() {
 
         const calHelper = document.getElementById('calHelper');
         if (calHelper && instrCal) {
+            const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeCal = escH(instrCal);
+            const safeDays = escH(calDaysLeft);
             if (!calOk) {
-                calHelper.innerHTML = `⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (${instrCal}) a múltban van. "Megfelelő" minősítés NEM adható!`;
+                calHelper.innerHTML = `⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (${safeCal}) a múltban van. "Megfelelő" minősítés NEM adható!`;
             } else if (calExpiringSoon) {
-                calHelper.innerHTML = `⏳ <span style="color:#f59e0b; font-weight:600;">Kalibrálás hamarosan lejár!</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
+                calHelper.innerHTML = `⏳ <span style="color:#f59e0b; font-weight:600;">Kalibrálás hamarosan lejár!</span> — Lejárat: ${safeCal} (${safeDays} nap múlva). Érdemes időben újrakalibrálni.`;
             } else {
-                calHelper.innerHTML = `✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
+                calHelper.innerHTML = `✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${safeCal}`;
             }
         }
     }

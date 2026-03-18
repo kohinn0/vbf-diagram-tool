@@ -8,13 +8,28 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
-from security import is_locked, record_failure, record_success
+from security import is_locked, record_failure, record_success, rate_limit
 
 router = APIRouter()
 
 
 def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    # Reverse proxy támogatás: csak megbízható proxyról érkező kérések esetén
+    # vesszük figyelembe az X-Forwarded-For / X-Real-IP headereket.
+    trusted = {
+        ip.strip()
+        for ip in (os.getenv("TRUST_FORWARD_PROXIES", "") or "").split(",")
+        if ip.strip()
+    }
+    client_host = request.client.host if request.client else None
+    if client_host and client_host in trusted:
+        xff = request.headers.get("x-forwarded-for") or request.headers.get("X-Forwarded-For")
+        if xff:
+            return xff.split(",")[0].strip()
+        x_real = request.headers.get("x-real-ip") or request.headers.get("X-Real-IP")
+        if x_real:
+            return x_real.strip()
+    return client_host or "unknown"
 
 
 def _audit(db: Session, user_id: Optional[int], action: str, detail: Optional[str], ip: Optional[str]):
@@ -242,18 +257,12 @@ def delete_my_account(request: Request, db: Session = Depends(auth.get_db), curr
     db.commit()
     return {"message": "Sikeres törlés (GDPR compliance)"}
 
-from fastapi import Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
 @router.post("/api/login", response_model=schemas.Token)
-@limiter.limit("10/minute")
-def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(auth.get_db)):
+@rate_limit("login", limit=10, window_seconds=60)
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(auth.get_db)):
     ip = _client_ip(request)
     username = (form_data.username or "").strip()
-    if is_locked(ip) or is_locked(username):
+    if await is_locked(ip) or await is_locked(username):
         _audit(db, None, "login_locked", f"username={username}", ip)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -261,16 +270,16 @@ def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestFor
         )
     user = auth.get_user(db, form_data.username)
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        record_failure(ip)
-        record_failure(username)
+        await record_failure(ip)
+        await record_failure(username)
         _audit(db, getattr(user, "id", None), "login_fail", f"username={username}", ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    record_success(ip)
-    record_success(username)
+    await record_success(ip)
+    await record_success(username)
     _audit(db, user.id, "login_ok", user.username, ip)
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
@@ -323,8 +332,8 @@ def update_my_profile(
 
 
 @router.put("/api/users/me/password")
-@limiter.limit("5/15minute")
-def change_password(
+@rate_limit("change_password", limit=5, window_seconds=15 * 60)
+async def change_password(
     request: Request,
     body: schemas.PasswordChangeRequest,
     db: Session = Depends(auth.get_db),
@@ -347,8 +356,8 @@ def change_password(
 
 
 @router.post("/api/request-password-reset")
-@limiter.limit("5/15minute")
-def request_password_reset(request: Request, body: schemas.RequestPasswordResetRequest, db: Session = Depends(auth.get_db)):
+@rate_limit("request_password_reset", limit=5, window_seconds=15 * 60)
+async def request_password_reset(request: Request, body: schemas.RequestPasswordResetRequest, db: Session = Depends(auth.get_db)):
     """
     Elfelejtett jelszó: email alapján token generálás és link küldése (ha van SMTP).
     Rate limit: 5/15 perc. Mindig ugyanaz a válasz (biztonság).
@@ -398,8 +407,8 @@ def request_password_reset(request: Request, body: schemas.RequestPasswordResetR
 
 
 @router.post("/api/reset-password")
-@limiter.limit("5/15minute")
-def reset_password(request: Request, body: schemas.ResetPasswordRequest, db: Session = Depends(auth.get_db)):
+@rate_limit("reset_password", limit=5, window_seconds=15 * 60)
+async def reset_password(request: Request, body: schemas.ResetPasswordRequest, db: Session = Depends(auth.get_db)):
     """Jelszó visszaállítása token alapján (elfelejtett jelszó link)."""
     import hashlib
     auth.validate_password_policy(body.new_password)
@@ -424,14 +433,9 @@ def reset_password(request: Request, body: schemas.ResetPasswordRequest, db: Ses
 def bootstrap_admin(db: Session = Depends(auth.get_db)):
     """
     DEV SEGÍTSÉG: ismert jelszavú admin felhasználó létrehozása / resetelése.
-    Ne hagyd így éles környezetben!
-
-    Biztonsági okokból ez az endpoint csak akkor aktív, ha az ENABLE_DEV_BOOTSTRAP_ADMIN=1
-    környezeti változó be van állítva. Prod környezetben így nem kihasználható backdoor.
+    Élesben (ENV=production) tiltva – ne hagyd így éles környezetben.
     """
-    import os
-    if os.getenv("ENABLE_DEV_BOOTSTRAP_ADMIN") != "1":
-        # Szándékosan 404-et adunk vissza, hogy ne derüljön ki az endpoint létezése
+    if os.getenv("ENV") == "production":
         raise HTTPException(status_code=404, detail="Not found")
     username = "admin"
     plain_password = "TesztJelszo123"

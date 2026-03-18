@@ -1,0 +1,75 @@
+# VBF Tool – Postgres + Redis (SaaS felállás)
+# Használat: docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+# Vagy másold át override-ként: cp docker-compose.postgres.yml docker-compose.override.yml
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vbf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vbf_secret_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-vbf}
+    volumes:
+      - vbf_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vbf} -d ${POSTGRES_DB:-vbf}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - vbf_redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  backend:
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vbf}:${POSTGRES_PASSWORD:-vbf_secret_change_me}@postgres:5432/${POSTGRES_DB:-vbf}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db-backup:
+    image: postgres:15-alpine
+    environment:
+      PGHOST: postgres
+      PGPUSER: ${POSTGRES_USER:-vbf}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-vbf_secret_change_me}
+      PGDATABASE: ${POSTGRES_DB:-vbf}
+    volumes:
+      - vbf_backups:/backups
+    entrypoint: /bin/sh
+    command: >
+      -c "
+        DATE=$$(date +%Y%m%d_%H%M%S) &&
+        echo '[BACKUP] pg_dump start: $$DATE' &&
+        pg_dump -Fc -f /backups/vbf_pg_$$DATE.dump && echo '[BACKUP] ✅ Sikeres: vbf_pg_$$DATE.dump' &&
+        find /backups -name 'vbf_pg_*.dump' -mtime +30 -delete &&
+        ls -lh /backups/
+      "
+    profiles:
+      - backup
+    depends_on:
+      - postgres
+
+volumes:
+  vbf_postgres_data:
+    driver: local
+  vbf_redis_data:
+    driver: local
+  vbf_backups:
+    driver: local

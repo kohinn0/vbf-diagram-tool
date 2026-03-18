@@ -16,12 +16,18 @@ function ensureContainer() {
     return el;
 }
 
+function escToast(msg) {
+    if (msg == null) return '';
+    const s = String(msg);
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function showToast(message, type = 'info') {
     const container = ensureContainer();
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${escToast(message)}</span>`;
     container.appendChild(toast);
 
     requestAnimationFrame(() => toast.classList.add('toast-visible'));

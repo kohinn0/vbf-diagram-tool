@@ -27,19 +27,26 @@ export function initJobs() {
                     job.status === 'IN_PROGRESS' ? '4px solid #f59e0b' : '4px solid #3b82f6';
 
                 const dateStr = job.scheduled_date ? new Date(job.scheduled_date).toLocaleString('hu-HU') : 'Nincs dátum kiosztva';
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const escA = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.attr) ? window.VBF.sanitize.attr(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                const safeTitle = escH(job.title || '');
+                const safeAddress = escH(job.address || '-');
+                const safeDesc = escH(job.description || '-');
+                const safeTitleAttr = escA(job.title || '');
+                const safeAddressAttr = escA(job.address || '');
 
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <h4 style="margin:0; font-size:1.2rem; color:var(--accent);">${job.title}</h4>
+                        <h4 style="margin:0; font-size:1.2rem; color:var(--accent);">${safeTitle}</h4>
                         <span style="font-size: 0.9rem; font-weight: bold; color: ${job.status === 'COMPLETED' ? '#10b981' : job.status === 'IN_PROGRESS' ? '#f59e0b' : '#3b82f6'};">${job.status}</span>
                     </div>
-                    <p style="margin: 0; font-size: 0.9rem;"><strong>Helyszín:</strong> ${job.address || '-'}</p>
-                    <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Időpont:</strong> ${dateStr}</p>
-                    <p style="margin: 0 0 15px 0; font-size: 0.9rem;"><strong>Leírás:</strong> ${job.description || '-'}</p>
+                    <p style="margin: 0; font-size: 0.9rem;"><strong>Helyszín:</strong> ${safeAddress}</p>
+                    <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Időpont:</strong> ${escH(dateStr)}</p>
+                    <p style="margin: 0 0 15px 0; font-size: 0.9rem;"><strong>Leírás:</strong> ${safeDesc}</p>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-secondary btn-small" onclick="updateJobStatus(${job.id}, 'IN_PROGRESS')" style="flex:1;">Kiszállás alatt / Folyamatban</button>
                         <button class="btn btn-primary btn-small" onclick="updateJobStatus(${job.id}, 'COMPLETED')" style="flex:1;">Megtörtént / Kész</button>
-                        <button class="btn btn-accent btn-small" onclick="startJobWork(${job.id}, \`${job.title || ''}\`, \`${job.address || ''}\`)" style="flex: 2; background: #10b981; color: white;">🚀 Munka Kezdése (Jegyzőkönyv)</button>
+                        <button class="btn btn-accent btn-small" data-job-id="${job.id}" data-job-title="${safeTitleAttr}" data-job-address="${safeAddressAttr}" onclick="startJobWork(this)" style="flex: 2; background: #10b981; color: white;">🚀 Munka Kezdése (Jegyzőkönyv)</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -65,7 +72,10 @@ export function initJobs() {
         } catch (e) { console.error(e); }
     };
 
-    window.startJobWork = async function (jobId, jobTitle, jobAddress) {
+    window.startJobWork = async function (btnOrId) {
+        const jobId = typeof btnOrId === 'object' && btnOrId && btnOrId.dataset ? parseInt(btnOrId.dataset.jobId, 10) : parseInt(btnOrId, 10);
+        const jobTitle = typeof btnOrId === 'object' && btnOrId && btnOrId.dataset ? (btnOrId.dataset.jobTitle || '') : '';
+        const jobAddress = typeof btnOrId === 'object' && btnOrId && btnOrId.dataset ? (btnOrId.dataset.jobAddress || '') : '';
         if (!confirm("Ezzel elkezdesz egy új jegyzőkönyvet ehhez a munkához. A jelenlegi rajz törlődik. Folytatod?")) return;
 
         const btnClear = document.getElementById('btnClear');

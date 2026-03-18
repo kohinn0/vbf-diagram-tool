@@ -126,8 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = initAuth();
     window.updateAuthUI = auth.updateAuthUI;
 
-    // Offline rendszerek
+    // Offline rendszerek (4.2)
     Storage.initOfflineSystem();
+    window.addEventListener('offlineSyncComplete', () => {
+        if (typeof window.fetchReports === 'function') window.fetchReports();
+    });
 
     // Utolsó jegyzőkönyv folytatása: ha van mentett id és be vagy jelentkezve, kérdezzük meg
     setTimeout(() => {
@@ -144,6 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.loadDraftIntoUI();
             }
         } catch (_) {}
+        if (window.currentToken && typeof window.fetchAndShowReminders === 'function') {
+            window.fetchAndShowReminders();
+        }
     }, 800);
 
     // A Canvas inicializálása továbbra is be van töltve (még) a hagyományos módon,

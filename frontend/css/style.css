@@ -1,6 +1,11 @@
 /* ==========================================================================
    Design System & Tokens
    ========================================================================== */
+/* Kötelező mező jelölés (jegyzőkönyv űrlap) */
+.required-star { color: var(--danger); font-weight: 700; }
+/* Helyszín kártya és egyéb kis feliratok */
+label.small { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px; }
+
 :root {
     /* Premium Dark Mode Colors (Matched with index.html) */
     --bg-base: #040914;

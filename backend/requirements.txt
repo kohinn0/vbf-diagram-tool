@@ -3,6 +3,10 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 pydantic
+# PostgreSQL (ha DATABASE_URL postgresql://...)
+psycopg2-binary
+# Redis (rate limit, lock)
+redis
 pydantic-settings
 python-multipart
 

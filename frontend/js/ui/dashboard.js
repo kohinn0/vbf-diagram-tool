@@ -28,7 +28,8 @@ export function initDashboard() {
                 this.render(container, statsRes, inspRes);
             } catch (err) {
                 console.error('Dashboard error:', err);
-                container.innerHTML = '<p style="color:var(--danger); text-align:center; padding: 3rem;">Hiba a dashboard betöltésekor: ' + err.message + '</p>';
+                const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                container.innerHTML = '<p style="color:var(--danger); text-align:center; padding: 3rem;">Hiba a dashboard betöltésekor: ' + escH(err.message) + '</p>';
             }
         },
 
@@ -132,20 +133,21 @@ export function initDashboard() {
                 if (allItems.length === 0) {
                     listEl.innerHTML = '<p style="color:var(--text-muted); padding: 1rem;">Nincs közelgő felülvizsgálat a következő 90 napban. 🎉</p>';
                 } else {
+                    const escH = (s) => (window.VBF && window.VBF.sanitize && window.VBF.sanitize.escHtml) ? window.VBF.sanitize.escHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
                     allItems.forEach(item => {
                         const isOverdue = item.status === 'LEJÁRT';
                         const row = document.createElement('div');
                         row.className = `dash-insp-row ${isOverdue ? 'overdue' : 'upcoming'}`;
                         row.innerHTML = `
                             <div class="dash-insp-info">
-                                <strong>${item.site_address || item.title}</strong>
-                                <span class="dash-insp-meta">${item.customer_name || 'Ismeretlen'} · ${(item.report_type || '').toUpperCase()} · ${item.otsz_class || ''}</span>
+                                <strong>${escH(item.site_address || item.title || '')}</strong>
+                                <span class="dash-insp-meta">${escH(item.customer_name || 'Ismeretlen')} · ${escH((item.report_type || '').toUpperCase())} · ${escH(item.otsz_class || '')}</span>
                             </div>
                             <div class="dash-insp-date">
                                 <span class="dash-insp-days ${isOverdue ? 'text-danger' : 'text-warning'}">
                                     ${isOverdue ? Math.abs(item.days_until) + ' napja lejárt!' : item.days_until + ' nap múlva'}
                                 </span>
-                                <span class="dash-insp-date-str">${item.next_inspection_date}</span>
+                                <span class="dash-insp-date-str">${escH(item.next_inspection_date || '')}</span>
                             </div>
                             <button class="btn btn-primary btn-small dash-remind-btn" 
                                     onclick="VBF.dashboard.sendReminder(${item.report_id})"

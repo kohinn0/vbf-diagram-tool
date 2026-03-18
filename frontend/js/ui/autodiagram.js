@@ -83,6 +83,9 @@ export function initAutoDiagram() {
 
             const t0 = performance.now();
 
+            this._supplyPhases = document.getElementById('supplyPhases')?.value || '3';
+            this._supplySystem = (document.getElementById('supplySystem')?.value || '').trim();
+
             // Draw
             this._draw(panels);
 
@@ -133,91 +136,119 @@ export function initAutoDiagram() {
             return panels;
         },
 
-        _buildFromMeasurements() {
-            // Collect unique circuit names from ALL measurement tables
-            const circuitMap = new Map(); // name → {device, tables}
+        /**
+         * Normalize circuit/panel path: trim, collapse separators to " / ", single spaces.
+         * So "Panel A/C1", "Panel A  /  C1", "Panel A → C1" all become "Panel A / C1".
+         */
+        _normPath(s) {
+            if (!s || typeof s !== 'string') return '';
+            return s.trim()
+                .replace(/\s*[\/→>\-]+\s*/g, ' / ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        },
 
-            // Loop impedance table (has circuit + device)
+        _buildFromMeasurements() {
+            const C = this;
+            const circuitMap = new Map(); // normalized key → { device, tables }
+
+            const add = (rawName, device, table) => {
+                const key = C._normPath(rawName);
+                if (!key) return;
+                const existing = circuitMap.get(key) || { device: '', tables: [] };
+                if (device) existing.device = device;
+                if (table && !existing.tables.includes(table)) existing.tables.push(table);
+                circuitMap.set(key, existing);
+            };
+
+            // Loop (circuit + device – device used for MCB label)
             document.querySelectorAll('#table-loop tbody tr').forEach(tr => {
                 const name = tr.querySelector('.meas-circuit')?.value?.trim();
                 const device = tr.querySelector('.meas-device')?.value?.trim();
-                if (name) {
-                    const existing = circuitMap.get(name) || { device: '', tables: [] };
-                    if (device) existing.device = device;
-                    if (!existing.tables.includes('Zs')) existing.tables.push('Zs');
-                    circuitMap.set(name, existing);
-                }
+                if (name) add(name, device, 'Zs');
             });
 
-            // Insulation resistance table
             document.querySelectorAll('#table-insulation tbody tr').forEach(tr => {
                 const name = tr.querySelector('.meas-circuit')?.value?.trim();
-                if (name) {
-                    const existing = circuitMap.get(name) || { device: '', tables: [] };
-                    if (!existing.tables.includes('Riso')) existing.tables.push('Riso');
-                    circuitMap.set(name, existing);
-                }
+                if (name) add(name, null, 'Riso');
             });
 
-            // RCD table (áramkör mező: .meas-circuit – közös konvenció minden táblánál)
             document.querySelectorAll('#table-rcd tbody tr').forEach(tr => {
                 const name = tr.querySelector('.meas-circuit')?.value?.trim();
-                if (name) {
-                    const existing = circuitMap.get(name) || { device: '', tables: [] };
-                    if (!existing.tables.includes('RCD')) existing.tables.push('RCD');
-                    circuitMap.set(name, existing);
-                }
+                if (name) add(name, null, 'RCD');
             });
 
-            // RPE table
             document.querySelectorAll('#table-rpe tbody tr').forEach(tr => {
                 const loc = tr.querySelector('.meas-loc')?.value?.trim();
-                if (loc) {
-                    const existing = circuitMap.get(loc) || { device: '', tables: [] };
-                    if (!existing.tables.includes('Rpe')) existing.tables.push('Rpe');
-                    circuitMap.set(loc, existing);
-                }
+                if (loc) add(loc, null, 'Rpe');
             });
 
             if (circuitMap.size === 0) return [];
 
-            // Group by location prefix if available (e.g. "Panel A / circuit 1")
-            const panelGroups = new Map();
-            const globalLoc = document.getElementById('globalLocation')?.value?.trim() || '';
-            const globalDev = document.getElementById('globalDevice')?.value?.trim() || 'B16';
+            const globalLoc = C._normPath(document.getElementById('globalLocation')?.value || '') || 'Főelosztó';
+            const globalDev = (document.getElementById('globalDevice')?.value || 'B16').trim();
 
-            circuitMap.forEach((data, name) => {
-                // Detect panel from path separator
-                const parts = name.split(/\s*[\/→>]\s*/);
+            // Panels known from full path: shortName → Set(panelName) for unambiguous assignment
+            const panelByShortName = new Map();
+            circuitMap.forEach((_, normKey) => {
+                const parts = normKey.split(' / ').filter(Boolean);
+                if (parts.length >= 2) {
+                    const panelName = parts.slice(0, -1).join(' / ');
+                    const shortName = parts[parts.length - 1];
+                    if (!panelByShortName.has(shortName)) panelByShortName.set(shortName, new Set());
+                    panelByShortName.get(shortName).add(panelName);
+                }
+            });
+
+            // Unique (panelName, circName) → merged { device, tables }; one circuit per panel
+            const panelCircuitMap = new Map();
+            const key = (p, c) => `${p}\0${c}`;
+
+            circuitMap.forEach((data, normKey) => {
+                const parts = normKey.split(' / ').filter(Boolean);
                 let panelName, circName;
                 if (parts.length >= 2) {
                     panelName = parts.slice(0, -1).join(' / ');
                     circName = parts[parts.length - 1];
                 } else {
-                    panelName = globalLoc || 'Főelosztó';
-                    circName = name;
+                    circName = normKey;
+                    const panels = panelByShortName.get(circName);
+                    panelName = (panels && panels.size === 1) ? [...panels][0] : globalLoc;
                 }
 
-                if (!panelGroups.has(panelName)) {
-                    panelGroups.set(panelName, []);
-                }
-                panelGroups.get(panelName).push({
-                    name: circName,
-                    device: data.device || globalDev,
-                    tables: data.tables || []  // forrás: Zs, Riso, RCD, Rpe – duplikátum jelöléshez
-                });
+                const k = key(panelName, circName);
+                const existing = panelCircuitMap.get(k) || { device: '', tables: [] };
+                if (data.device) existing.device = data.device;
+                (data.tables || []).forEach(t => { if (!existing.tables.includes(t)) existing.tables.push(t); });
+                panelCircuitMap.set(k, existing);
             });
 
             const panels = [];
-            panelGroups.forEach((circuits, panelName) => {
+            const byPanel = new Map();
+            panelCircuitMap.forEach((data, k) => {
+                const [panelName, circName] = k.split('\0');
+                if (!byPanel.has(panelName)) byPanel.set(panelName, []);
+                byPanel.get(panelName).push({
+                    name: circName,
+                    device: data.device || globalDev,
+                    tables: data.tables || []
+                });
+            });
+
+            byPanel.forEach((circuits, panelName) => {
                 panels.push({
                     name: panelName,
                     path: panelName,
-                    device: globalDev,
+                    device: circuits[0]?.device || globalDev,
                     circuits
                 });
             });
 
+            // Rendezés: panelok név szerint, áramkörök név szerint (ismételhető rajz)
+            panels.sort((a, b) => a.name.localeCompare(b.name, 'hu'));
+            panels.forEach(p => {
+                p.circuits.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'hu'));
+            });
             return panels;
         },
 
@@ -280,9 +311,11 @@ export function initAutoDiagram() {
          */
         _drawSupplyHeader(x, y) {
             const C = this.C;
+            const phases = this._supplyPhases === '1' ? '1' : '3';
+            const voltageLabel = phases === '1' ? 'Hálózat\n1×230 V' : 'Hálózat\n3×230/400 V';
+            const systemLabel = this._supplySystem ? ` (${this._supplySystem})` : '';
 
-            // Supply label
-            this._addObj(this._text('Hálózat\n3×230/400V', x, y - 10, 11, 'center', C.LABEL_COLOR));
+            this._addObj(this._text(voltageLabel + systemLabel, x, y - 10, 11, 'center', C.LABEL_COLOR));
 
             // Vertical line down
             this._addObj(this._line(x, y + 10, x, y + 25, C.LINE_COLOR, C.LINE_WIDTH));
@@ -328,8 +361,9 @@ export function initAutoDiagram() {
                 this._addObj(this._line(busX1, busY + i, busX2, busY + i, C.BUS_COLOR, 2));
             }
 
-            // Bus label
-            this._addObj(this._text('L1 L2 L3 N', busX2 + 5, busY, 7, 'left', C.BUS_COLOR));
+            // Bus label (fázisok az űrlap szerint)
+            const busLabel = (this._supplyPhases === '1') ? 'L N' : 'L1 L2 L3 N';
+            this._addObj(this._text(busLabel, busX2 + 5, busY, 7, 'left', C.BUS_COLOR));
 
             // Panel RCD on left side
             if (isFirstRow !== false) {

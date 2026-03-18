@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request # <--- Add hozzá a Request-et
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
@@ -167,19 +167,38 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     db.refresh(db_job)
     return db_job
 
-from routers.auth import limiter as rate_limiter
+def _safe_upload_filename(name: str) -> str:
+    """Path traversal ellen: csak alapnév, és csak biztonságos karakterek."""
+    import re
+    base = os.path.basename((name or "").strip())
+    if not base:
+        return "upload"
+    base = re.sub(r"[^\w.\-]", "_", base)[:200]
+    return base or "upload"
+
+
+def _safe_extract_zip(zf: zipfile.ZipFile, dest_dir: str) -> None:
+    """Zip slip védelem: csak olyan fájlokat bontunk ki, amelyek célja a dest_dir alatt van."""
+    dest_real = os.path.realpath(dest_dir)
+    dest_prefix = dest_real.rstrip(os.sep) + os.sep
+    for info in zf.infolist():
+        name = (info.filename or "").strip().replace("\\", "/").lstrip("/")
+        if not name:
+            continue
+        target = os.path.normpath(os.path.join(dest_dir, name))
+        target_real = os.path.realpath(target)
+        if not (target_real == dest_real or target_real.startswith(dest_prefix)):
+            raise ValueError(f"Zip slip: tiltott útvonal a zip-ben: {info.filename}")
+        zf.extract(info, dest_dir)
 
 
 @router.post("/api/padfx/parse")
-@rate_limiter.limit("5/minute")
 async def parse_padfx_file(
-    request: Request, # <--- EZT ADTAM HOZZÁ, ez kötelező a limiternek!
-    file: UploadFile = File(...),
-    current_user: database.User = Depends(auth.get_current_user),
+    file: UploadFile = File(...)
 ):
-    # A függvény többi része maradhat változatlan...
     with tempfile.TemporaryDirectory() as temp_dir:
-        input_file = os.path.join(temp_dir, file.filename)
+        safe_name = _safe_upload_filename(file.filename or "")
+        input_file = os.path.join(temp_dir, safe_name)
         # Read file contents
         content = await file.read()
         with open(input_file, "wb") as f:
@@ -190,7 +209,7 @@ async def parse_padfx_file(
         if zipfile.is_zipfile(input_file):
             try:
                 with zipfile.ZipFile(input_file, 'r') as zf:
-                    zf.extractall(temp_dir)
+                    _safe_extract_zip(zf, temp_dir)
                 padf_path = os.path.join(temp_dir, "DataSource.padf")
                 if not os.path.exists(padf_path):
                     # Try to find any .padf or .padfx or .xml / .sqlite
@@ -199,6 +218,8 @@ async def parse_padfx_file(
                             if f.endswith((".padf", ".sqlite", ".db", ".xml")):
                                 padf_path = os.path.join(root, f)
                                 break
+            except ValueError as e:
+                return {"status": "error", "message": str(e)}
             except Exception as e:
                 return {"status": "error", "message": f"Hiba a kicsomagolás során: {str(e)}"}
         else:
@@ -208,23 +229,26 @@ async def parse_padfx_file(
             return {"status": "error", "message": "Nem találtam a (DataSource.padf vagy XML) adatbázist a fájlban!"}
 
         try:
-            # Try to connect and list tables
+            import re
+            # Csak biztonságos táblanevek (SQL injection ellen: feltöltött DB táblanevei)
+            _safe_table = re.compile(r"^[a-zA-Z0-9_]+$")
             conn = sqlite3.connect(padf_path)
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
             tables = [r[0] for r in cursor.fetchall()]
-            
             schema = {}
             data_sample = {}
             for table_name in tables:
+                if not _safe_table.match(table_name or ""):
+                    continue
                 cursor.execute(f"PRAGMA table_info('{table_name}')")
                 schema[table_name] = [r[1] for r in cursor.fetchall()]
                 try:
-                    cursor.execute(f"SELECT * FROM '{table_name}' LIMIT 5")
+                    esc = table_name.replace('"', '""')
+                    cursor.execute(f'SELECT * FROM "{esc}" LIMIT 5')
                     data_sample[table_name] = cursor.fetchall()
                 except Exception:
                     pass
-                    
             conn.close()
             return {"status": "success", "schema": schema, "data_sample": data_sample, "is_sqlite": True}
         except sqlite3.DatabaseError:
