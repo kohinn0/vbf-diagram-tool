@@ -8,7 +8,7 @@ Ez a dokumentum a Gemini javaslata és a jelenlegi kód alapján összeállítot
 
 ### Jelenlegi állapot
 
-- **database.py** már SQLAlchemy-t használ, és **támogatja a Postgres-t**: ha a `DATABASE_URL` környezeti változó `postgresql://...` formátumú, akkor Postgres lesz az engine (pool_pre_ping=True). SQLite csak akkor fut, ha nincs `DATABASE_URL` (vagy teszt módban in-memory).
+- **database.py** már SQLAlchemy-t használ, és **támogatja a Postgres-t**: ha a `DATABASE_URL` környezeti változó `postgresql://...` formátumú, akkor Postgres lesz az engine (pool_pre_ping=True). SQLite csak akkor fut, ha nincs `DATABASE_URL` (vagy teszt módban in-memory). A táblák létrehozását a `Base.metadata.create_all(bind=engine)` végzi.
 - A **docker-compose.postgres.yml** ezt használja: Postgres 15 Alpine + Redis 7 Alpine, a backend `DATABASE_URL` és `REDIS_HOST`/`REDIS_PORT` beállítással.
 
 ### Használat
@@ -37,6 +37,18 @@ A migráció után a **céges fájlok** (logó, aláírás, PFX) továbbra is a 
 ---
 
 ## 2. LibreOffice kiváltása – WeasyPrint vagy Gotenberg
+
+### Mi van most a kódban?
+
+- A `backend/generator.py` jelenleg DOCX-et állít elő (python-docx), majd PDF-et konvertál:
+  - Windows: `docx2pdf`
+  - Linux (Docker): `libreoffice --headless --convert-to pdf ...`
+- A DOCX-be beépül:
+  - egyvonalas rajz (ha be van állítva és van `diagram_image`),
+  - MEE szerinti fejezetek és méréstáblák,
+  - QR kód és SHA-256 tartalmi lenyomat (digitális integritás),
+  - TvMI 7.7:2026.02.01 és vonatkozó MSZ/OTSZ hivatkozások,
+  - opcionális aláíráskép (céges beállításokból).
 
 ### Jelenlegi állapot
 
@@ -97,6 +109,9 @@ A **docker-compose.postgres.yml** a Postgres + Redis szolgáltatásokat és a ba
 1. **Postgres + Redis:**  
    `docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`  
    Környezet: `.env`-ben `POSTGRES_*` és opcionálisan `REDIS_*`. A backendnek szüksége van a `psycopg2-binary` csomagra (már a requirements.txt-ben).
+   - Kötelező env változók fontos részei:
+     - `DATABASE_URL` (ha Postgres-t használsz; formátum: `postgresql://user:pass@host:5432/db`)
+     - PDF aláíráshoz: `VBF_PFX_PASSWORD` (a PFX jelszava), és a PFX elérési útja a céges beállításokban (`CompanySettings.pfx_path`) vagy `signer.pfx` alapértelmezés.
 
 2. **Migráció (ha van meglévő SQLite adat):**  
    pgloader vagy egyedi script; majd a backend csak `DATABASE_URL`-lal indul.
@@ -108,3 +123,21 @@ A **docker-compose.postgres.yml** a Postgres + Redis szolgáltatásokat és a ba
    Napi pg_dump (profile backup) + script a dump feltöltésére R2/S3-re (vagy Hetzner snapshot).
 
 A `database.py`-ban a Postgresre váltás **csak egy kapcsolati sztring**: a Docker Compose ezt a `docker-compose.postgres.yml`-ban biztosítja.
+
+---
+
+## Melléklet – Gyors `.env` példa (Postgres)
+
+```env
+POSTGRES_USER=vbf
+POSTGRES_PASSWORD=change_me
+POSTGRES_DB=vbf
+
+# Backend
+DATABASE_URL=postgresql://vbf:change_me@postgres:5432/vbf
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# PDF aláírás
+VBF_PFX_PASSWORD=itt_a_pfx_jelszava
+```
