@@ -67,5 +67,40 @@ A projekt teljes egészében, minden függőségével (PDF motorok, adatbázis) 
 *   `backend/`: Microservice orientált FastAPI alkalmazás (`main.py`, `generator.py` API-kkal), SQLite adatbázis relációkkal.
 *   `docker-compose.yml`: DevOps leíró konfiguráció az élesítéshez.
 
+## 🌐 Production reverse proxy (Nginx Proxy Manager)
+
+Ajánlott éles felállás: Nginx Proxy Manager (NPM) a domain és TLS kezeléshez.
+
+1) DNS:
+- `A` rekord: `vbfpremium.hu` → szerver IP (pl. `63.182.17.229`)
+- `CNAME` rekord: `www` → `vbfpremium.hu` (opcionális)
+- Nyisd meg a 80/tcp és 443/tcp portokat a tűzfalon.
+
+2) Konténerek indítása:
+- SQLite-hoz: `docker compose up -d`
+- Postgres + Redis: `docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`
+
+3) NPM Proxy Host beállítás:
+- Domain Names: `vbfpremium.hu`, `www.vbfpremium.hu`
+- Forward Hostname/IP: `127.0.0.1`
+- Forward Port: `8080` (frontend)
+- Websockets: ON, Block Common Exploits: ON
+- Locations: add `/api` → `127.0.0.1:8002` (backend; websockets ON)
+- SSL: Let’s Encrypt tanúsítvány kérése, Force SSL, HTTP/2, HSTS: ON
+- Advanced (ajánlott):
+  ```
+  client_max_body_size 20m;
+  proxy_read_timeout 300s;
+  ```
+
+4) Ellenőrzés:
+- Frontend: `https://vbfpremium.hu/`
+- API Swagger: `https://vbfpremium.hu/api/docs`
+
+5) Kötelező `.env` (részlet):
+- `JWT_SECRET`, `SMTP_*`
+- SQLite esetén nincs teendő; Postgreshez: `DATABASE_URL`, `REDIS_HOST/PORT`
+- Aláírt PDF-hez: `VBF_PFX_PASSWORD` + PFX elérési út céges beállításban (`CompanySettings.pfx_path`) vagy `signer.pfx`
+
 ---
 VBF / EPH Cloud SaaS © 2026. Minden jog fenntartva.
