@@ -32,6 +32,8 @@ services:
       - vbf_data:/app/data
     environment:
       - DATABASE_PATH=/app/data/vbf_database.db
+      - ENV=${ENV}
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - JWT_SECRET=${JWT_SECRET}
