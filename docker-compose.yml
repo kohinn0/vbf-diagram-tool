@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # A KAPUŐR: kezeli a domaint és az SSL-t
   proxy:
@@ -37,6 +35,7 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - JWT_SECRET=${JWT_SECRET}
+      - SECRET_KEY=${SECRET_KEY}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
