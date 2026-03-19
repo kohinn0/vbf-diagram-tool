@@ -932,7 +932,7 @@
         </div>
     </nav>
 
-    <!-- Kosár panel (modal): tartalom + fizetés lépés (kártya / utalás) -->
+    <!-- Kosár panel (modal): tartalom + utalásos számla kérés -->
     <div id="cartPanel" class="modal-overlay" style="display: none;">
         <div id="cartDrawer">
             <div class="cart-drawer-header">
@@ -948,8 +948,8 @@
                 </div>
             </div>
             <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
-                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Fizetési mód</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Add meg az e-mail címed és válassz jelszót a belépéshez, majd válaszd a fizetési módot (kártya vagy utalás).</p>
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Utalásos megrendelés</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Add meg az e-mail címed és válassz jelszót a belépéshez, majd kérj kézi számlát utaláshoz. A hozzáférést a beérkezett utalás után aktiváljuk.</p>
                 <div id="cartRegFields" style="margin-bottom: 1.25rem;">
                     <label style="display:block; margin-bottom: 4px;">Email *</label>
                     <input type="email" id="cartCheckoutEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
@@ -960,8 +960,7 @@
                     <p id="cartCheckoutPasswordHint" style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px 0;">Legalább 8 karakter, tartalmazzon nagybetűt, kisbetűt és számot vagy speciális karaktert.</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <button type="button" id="cartPayCard" class="btn btn-primary" style="flex: 1;">💳 Kártyával fizetek</button>
-                    <button type="button" id="cartPayTransfer" class="btn btn-outline" style="flex: 1;">🏦 Számla kérése (utalás)</button>
+                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Számla kérése (utalás)</button>
                 </div>
                 <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
                     <label style="display:block; margin-bottom: 4px;">Email *</label>
@@ -1052,13 +1051,13 @@
         </div>
         <div style="max-width: 800px; margin: 0 auto;">
             <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem;">
-                Licencet választasz, kártyával vagy utalással fizetsz, és rögtön hozzáférsz a felülethez. A céges vezető kioszthatja a vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon dolgozhatnak – akár offline is. Végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
+                Licencet választasz, utalásos számlát kérsz, és a beérkezett fizetés jóváhagyása után aktiváljuk a hozzáférést. A céges vezető kioszthatja a vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon dolgozhatnak – akár offline is. Végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
             </p>
             <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
                 <div style="text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
                     <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">1️⃣</div>
                     <h4 style="margin-bottom: 0.5rem;">Licenc és regisztráció</h4>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Válaszd a csomagot, fizess kártyával vagy utalással – a belépési adatokat azonnal megkapod.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Válaszd a csomagot, kérj utalásos számlát – a belépési adatok az utalás jóváhagyása után kerülnek kiküldésre.</p>
                 </div>
                 <div style="text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
                     <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">2️⃣</div>
@@ -1124,7 +1123,7 @@
             <h2 class="section-title">Árazás és előfizetés</h2>
             <p class="section-subtitle">Válaszd ki a számodra megfelelő licencet – átláthatóan, rejtett költségek nélkül.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
-                Havi vagy éves fizetés. A havi licenc kipróbáláshoz és kisebb volumenhez ideális; az éves licenccel akár két havi használatot ajándékba kapsz. Kártyával azonnali a hozzáférés, utalással 1–2 munkanap. Számlázási cím megadása kötelező (online szolgáltatás, nincs szállítás).
+                Havi vagy éves csomag. A havi licenc kipróbáláshoz és kisebb volumenhez ideális; az éves licenccel akár két havi használatot ajándékba kapsz. Jelenleg utalásos számlázással dolgozunk, az aktiválás 1-2 munkanap. Számlázási cím megadása kötelező (online szolgáltatás, nincs szállítás).
             </p>
         </div>
 
@@ -1179,7 +1178,7 @@
             </div>
         </div>
 
-        <p style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-top: 1.5rem;">Válaszd ki a csomagot, tedd kosárba, majd a menü kosár ikonjánál folytasd (kártya vagy utalás).</p>
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-top: 1.5rem;">Válaszd ki a csomagot, tedd kosárba, majd a menü kosár ikonjánál kérj utalásos számlát.</p>
     </section>
 
     <section id="partners" class="shop-section" style="padding: 6rem 5%;">
@@ -1242,9 +1241,9 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button type="button" class="faq-question">Kártyával vagy utalással lehet fizetni?</button>
+                <button type="button" class="faq-question">Hogyan tudok fizetni?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Igen, mindkettővel. Kosárba teszed a csomagot, rákattintasz a kosárra, és onnan továbbmész: kártyával online, biztonságosan (Stripe), vagy utalást választasz – akkor a számlázási címet meg kell adnod, és a számlát e-mailben megkapod. Fizetés után rögtön be tudsz lépni.</div>
+                    <div class="faq-answer-inner">Jelenleg utalásos számla alapján. Kosárba teszed a csomagot, megadod a számlázási adatokat, és elkészítjük a számlát. A hozzáférést az utalás jóváírása és admin jóváhagyás után aktiváljuk.</div>
                 </div>
             </div>
             <div class="faq-item">
@@ -1268,7 +1267,7 @@
             <div class="faq-item">
                 <button type="button" class="faq-question">Mikor és hogyan jön meg a számla?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Kártyával fizetve a számla automatikusan készül és e-mailben megkapod. Utalásnál a kosárban megadott címmel készítjük el, és ugyanúgy kiküldjük. Minden vásárláshoz magyar számlát adunk.</div>
+                    <div class="faq-answer-inner">A számlát a kosárban megadott adatok alapján kézzel állítjuk ki, majd e-mailben elküldjük. Minden vásárláshoz magyar számlát adunk.</div>
                 </div>
             </div>
             <div class="faq-item">
@@ -1516,45 +1515,6 @@
             document.getElementById('cartStep2').style.display = 'none';
             document.getElementById('cartStep1').style.display = 'block';
             document.getElementById('cartTransferForm').style.display = 'none';
-        });
-        document.getElementById('cartPayCard')?.addEventListener('click', async function () {
-            var cart = getCart();
-            if (!cart.items.length) return;
-            var planType = cart.items[0].plan_type;
-            var email = document.getElementById('cartCheckoutEmail')?.value?.trim() || '';
-            var password = document.getElementById('cartCheckoutPassword')?.value || '';
-            var passwordConfirm = document.getElementById('cartCheckoutPasswordConfirm')?.value || '';
-            if (!email || email.indexOf('@') < 0) {
-                alert('Kérlek add meg az email címed a regisztrációhoz.');
-                return;
-            }
-            if (!password) {
-                alert('Kérlek állíts be egy jelszót a belépéshez (min. 8 karakter, nagybetű, kisbetű, szám vagy speciális karakter).');
-                return;
-            }
-            if (password !== passwordConfirm) {
-                alert('A két jelszó nem egyezik.');
-                return;
-            }
-            this.disabled = true;
-            this.textContent = 'Feldolgozás...';
-            try {
-                var res = await fetch(API_BASE_URL + '/payments/create-checkout-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan: planType, email: email, password: password })
-                });
-                var data = await res.json().catch(function() { return {}; });
-                if (res.ok && data.url) window.location.href = data.url;
-                else {
-                    var msg = Array.isArray(data.detail) ? (data.detail.map(function(d) { return d.msg || (d.loc && d.loc.length ? d.loc.join('.') + ': ' + (d.msg || '') : ''); }).filter(Boolean).join(' ') || 'Hiba') : (data.detail || 'Hiba');
-                    throw new Error(typeof msg === 'string' ? msg : 'Hiba');
-                }
-            } catch (err) {
-                this.disabled = false;
-                this.textContent = '💳 Kártyával fizetek';
-                alert('A fizetés indítása sikertelen: ' + (err.message || 'Próbáld újra.'));
-            }
         });
         document.getElementById('cartPayTransfer')?.addEventListener('click', function () {
             document.getElementById('cartTransferForm').style.display = 'block';
