@@ -183,10 +183,11 @@ ASZF_HTML = """<!DOCTYPE html>
 
 # Impresszum – szolgáltató adatai (cégnév, székhely, adószám, képviselő)
 def _imprint_html() -> str:
-    company = os.getenv("IMPRINT_COMPANY_NAME", "VBF Premium Szolgáltató")
-    seat = os.getenv("IMPRINT_SEAT", "Magyarország, [székhely címe]")
-    reg_no = os.getenv("IMPRINT_REG_NO", "[Cégjegyzékszám]")
-    tax_no = os.getenv("IMPRINT_TAX_NO", "[Adószám]")
+    company = os.getenv("IMPRINT_COMPANY_NAME", "SZIKORA ZOLTÁN EV")
+    seat = os.getenv("IMPRINT_SEAT", "2091 Etyek, Liliom köz 1, Magyarország")
+    reg_no = os.getenv("IMPRINT_REG_NO", "Egyéni vállalkozó")
+    tax_no = os.getenv("IMPRINT_TAX_NO", "91460028-1-27")
+    hosting = os.getenv("IMPRINT_HOSTING", "Amazon Web Services (AWS)")
     email = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_USER", "kapcsolat@example.com"))
     return f"""<!DOCTYPE html>
 <html lang="hu">
@@ -207,8 +208,9 @@ def _imprint_html() -> str:
 
     <p><strong>Szolgáltató / Üzemeltető:</strong><br>{company}</p>
     <p><strong>Székhely:</strong><br>{seat}</p>
-    <p><strong>Cégjegyzékszám:</strong><br>{reg_no}</p>
+    <p><strong>Nyilvántartási forma:</strong><br>{reg_no}</p>
     <p><strong>Adószám:</strong><br>{tax_no}</p>
+    <p><strong>Tárhelyszolgáltató:</strong><br>{hosting}</p>
     <p><strong>Kapcsolat (e-mail):</strong><br><a href="mailto:{email}">{email}</a></p>
 
     <p>Az oldal üzemeltetője felel a tartalomért és a szolgáltatás nyújtásáért. Jogi és adatvédelmi kérdésekben a fenti e-mail címen vagy a weboldal Kapcsolat űrlapján lehet jelezni.</p>
