@@ -32,6 +32,23 @@ A backend első indulásakor a `Base.metadata.create_all(bind=engine)` létrehoz
   2. **Saját script:** SQLAlchemy-val két engine (SQLite forrás, Postgres cél), táblánként olvasás + insert. A JSON/Text mezők kompatibilisek.
   3. **Export/import:** pl. SQLite → JSON export, majd Postgres-be import a backend API vagy egy egyszeri script alapján.
 
+Ha nem szeretnél külső tool-t (pgloader) használni, a repo tartalmaz egy migrációs scriptet is:
+
+- `backend/migrate_sqlite_to_postgres.py`
+  - Példa futtatás (friss, üres Postgres DB ajánlott):
+    ```bash
+    # 1) Indítsd el a Postgres+Redis szolgáltatásokat
+    docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d postgres redis
+
+    # 2) Futtasd a migrációt a backend konténerből (itt a host: "postgres" biztosan elérhető)
+    docker compose -f docker-compose.yml -f docker-compose.postgres.yml run --rm backend \
+      python backend/migrate_sqlite_to_postgres.py \
+        --sqlite-path /app/data/vbf_database.db \
+        --postgres-url "postgresql://vbf:vbf_secret_change_me@postgres:5432/vbf" \
+        --batch-size 200
+    ```
+  - Ha a céladatbázis még nem üres, előbb töröld le vagy használd a `--force-empty` opciót (csak friss környezetben!).
+
 A migráció után a **céges fájlok** (logó, aláírás, PFX) továbbra is a **vbf_data** volume-on maradnak (`/app/data`); csak az adatbázis költözik Postgres-be.
 
 ---
@@ -114,7 +131,7 @@ A **docker-compose.postgres.yml** a Postgres + Redis szolgáltatásokat és a ba
      - PDF aláíráshoz: `VBF_PFX_PASSWORD` (a PFX jelszava), és a PFX elérési útja a céges beállításokban (`CompanySettings.pfx_path`) vagy `signer.pfx` alapértelmezés.
 
 2. **Migráció (ha van meglévő SQLite adat):**  
-   pgloader vagy egyedi script; majd a backend csak `DATABASE_URL`-lal indul.
+   pgloader vagy a `backend/migrate_sqlite_to_postgres.py` script; majd a backend csak `DATABASE_URL`-lal indul.
 
 3. **PDF (WeasyPrint):**  
    Külön fejlesztési fázis: Jinja2 sablon + WeasyPrint a PDF exportra, DOCX maradhat; később opcionálisan Gotenberg vagy teljes átállás HTML-re.
