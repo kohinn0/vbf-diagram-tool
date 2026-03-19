@@ -16,6 +16,7 @@ router = APIRouter()
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_fake")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_fake")
+CARD_PAYMENTS_ENABLED = (os.getenv("CARD_PAYMENTS_ENABLED", "0") or "").strip().lower() in ("1", "true", "yes", "on")
 
 # Összegek HUF (utalás és Stripe is; admin subscription_plans-ból is tölthető később)
 AMOUNT_MONTHLY_HUF = 12990
@@ -48,6 +49,8 @@ def _get_pro_prices_huf(db: Session):
 @router.get("/api/payments/session-status")
 def session_status(session_id: str = None):
     """Stripe session ellenőrzése: csak paid esetén mutassuk a sikert a frontenden."""
+    if not CARD_PAYMENTS_ENABLED:
+        return {"paid": False, "email": None}
     if not session_id:
         return {"paid": False, "email": None}
     try:
@@ -66,6 +69,11 @@ def session_status(session_id: str = None):
 
 @router.post("/api/payments/create-checkout-session")
 def create_checkout_session(request: Request, body: CheckoutRequest, db: Session = Depends(auth.get_db)):
+    if not CARD_PAYMENTS_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="A bankkártyás fizetés ideiglenesen szünetel. Kérjük válaszd az utalásos számla kérést.",
+        )
     # Determine the host dynamically for success/cancel URLs based on the Referer or Host
     origin = request.headers.get("origin")
     referer = request.headers.get("referer")
@@ -300,6 +308,8 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
 
 @router.post("/api/payments/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(auth.get_db)):
+    if not CARD_PAYMENTS_ENABLED:
+        return {"status": "ignored", "reason": "card_payments_disabled"}
     # Prod védelem: ha nincs valós webhook secret beállítva, ne engedjük a webhookot működni
     if STRIPE_WEBHOOK_SECRET == "whsec_fake" and os.getenv("TESTING") != "1":
         raise HTTPException(
