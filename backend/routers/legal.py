@@ -220,24 +220,28 @@ def _imprint_html() -> str:
 
 
 @router.get("/api/legal/privacy", response_class=HTMLResponse)
+@router.get("/legal/privacy", response_class=HTMLResponse)
 def legal_privacy():
     """Adatkezelési tájékoztató (GDPR)."""
     return HTMLResponse(PRIVACY_HTML)
 
 
 @router.get("/api/legal/terms", response_class=HTMLResponse)
+@router.get("/legal/terms", response_class=HTMLResponse)
 def legal_terms():
     """Felhasználási feltételek."""
     return HTMLResponse(TERMS_HTML)
 
 
 @router.get("/api/legal/aszf", response_class=HTMLResponse)
+@router.get("/legal/aszf", response_class=HTMLResponse)
 def legal_aszf():
     """Általános Szerződési Feltételek (ÁSZF) – előfizetés, vásárlás, visszamondás, panasz."""
     return HTMLResponse(ASZF_HTML)
 
 
 @router.get("/api/legal/imprint", response_class=HTMLResponse)
+@router.get("/legal/imprint", response_class=HTMLResponse)
 def legal_imprint():
     """Impresszum – szolgáltató adatai. Tartalom: IMPRINT_* és ADMIN_EMAIL env változókból."""
     return HTMLResponse(_imprint_html())
