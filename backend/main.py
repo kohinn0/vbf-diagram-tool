@@ -6,15 +6,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from routers import auth, reports, admin, masterdata, jobs, payments, dashboard, legal
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-import os
-import sys
 import logging
 
 # Strukturált logging: szint, idő, üzenet
@@ -36,7 +34,15 @@ try:
 except ImportError:
     pass
 
-app = FastAPI(title="VBF Készítő API", description="Jegyzőkönyv és rajz kezelő rendszer", version="1.0.0")
+is_production = os.getenv("ENV", "").strip().lower() == "production"
+app = FastAPI(
+    title="VBF Készítő API",
+    description="Jegyzőkönyv és rajz kezelő rendszer",
+    version="1.0.0",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
+)
 
 limiter = auth.limiter
 app.state.limiter = limiter
@@ -57,21 +63,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Setup CORS - Outermost layer
-# DEV: engedünk mindent; PROD: opcionálisan szigorítható env változóval
-_env = os.getenv("ENV", "").lower()
-_cors_origins_raw = os.getenv("CORS_ALLOW_ORIGINS", "")
-if _cors_origins_raw:
-    allow_origins = [o.strip() for o in _cors_origins_raw.split(",") if o.strip()]
-else:
-    # Ha nincs explicit lista, akkor:
-    # - fejlesztésben: "*"
-    # - egyébként: biztonsági okból továbbra is "*" marad, de env‑vel szigorítható
-    allow_origins = ["*"]
-
+# Setup CORS - Élesben kötelező a CORS_ORIGINS (pl. https://yourdomain.com)
+_cors_origins = os.getenv("CORS_ORIGINS", "").strip()
+if is_production and not _cors_origins:
+    raise RuntimeError("Production requires CORS_ORIGINS to be set (comma-separated allowed origins).")
+CORS_ORIGINS_LIST = [o.strip() for o in _cors_origins.split(",") if o.strip()] if _cors_origins else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=CORS_ORIGINS_LIST,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +89,6 @@ app.include_router(legal.router)
 app.include_router(padfx.router)
 
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 from sqlalchemy import text
 import database
 
