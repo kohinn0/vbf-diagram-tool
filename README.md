@@ -27,7 +27,7 @@ A felület három, cél szerint szétválasztott rétegben érhető el:
 
 | Réteg | Fájl | Cél |
 |--------|------|-----|
-| **Webshop** | `index.html` | Főoldal: árazás, vásárlás (kártya / utalás), kapcsolat. Regisztráció = vásárlás. |
+| **Webshop** | `index.html` | Főoldal: árazás, vásárlás (utalás), kapcsolat. Regisztráció = vásárlás. |
 | **Cég admin** | `shop.html` | Dashboard (statisztikák, grafikonok), Admin (felhasználók, cégek, csomagok, megrendelések, fizetési előzmények, céges beállítások, munkakiosztás). Csak admin jogosultságúaknak. |
 | **Jegyzőkönyv alkalmazás** | `app.html` | Naptár és feladatok, rajz, jegyzőkönyv adatok, hibajegyzék, mérések, mentett ügyek, törzsadatok. Adminnak innen link a Cég admin felületre. |
 

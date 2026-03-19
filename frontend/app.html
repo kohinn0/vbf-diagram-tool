@@ -132,7 +132,7 @@
                 <input type="password" id="loginPass" placeholder="titkos">
             </div>
             <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
-            <p id="loginRegisterInfo" style="display: none; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">A regisztráció vásárlással (kártya vagy utalás) vagy a céged adminjának meghívásával érhető el. A főoldalon vásárolhatsz, vagy kérj belépési adatot a céged vezetőjétől.</p>
+            <p id="loginRegisterInfo" style="display: none; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">A regisztráció utalásos vásárlással vagy a céged adminjának meghívásával érhető el. A főoldalon kérhetsz számlát, vagy kérj belépési adatot a céged vezetőjétől.</p>
             <p style="margin-top: 0.75rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
             <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
             <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
@@ -1025,7 +1025,7 @@
         })();
     </script>
 
-    <!-- Stripe sikeres visszatérés: session-status ellenőrzés auth.js-ben (csak paid esetén üzenet) -->
+    <!-- Sikeres vásárlás visszatérés: session-status ellenőrzés auth.js-ben -->
 </body>
 
 </html>

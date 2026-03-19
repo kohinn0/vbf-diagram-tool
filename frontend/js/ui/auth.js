@@ -501,7 +501,7 @@ export function initAuth() {
         if (accept) accept.addEventListener('click', () => { localStorage.setItem('cookie_consent', '1'); if (banner) banner.style.display = 'none'; });
     })();
 
-    // Stripe sikeres visszatérés: csak ha a backend paid=true, üzenet, majd URL tisztítása
+    // Sikeres vásárlás visszatérés: csak ha a backend paid=true, üzenet, majd URL tisztítása
     if (params.has('session_id')) {
         const sid = params.get('session_id');
         const base = window.API_BASE_URL || window.location.origin;

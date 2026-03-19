@@ -58,7 +58,7 @@ PRIVACY_HTML = """<!DOCTYPE html>
     <ul>
         <li><strong>Fiók:</strong> felhasználónév, jelszó (titkosítva), e-mail, szerepkör, cég, előfizetés lejárat – szerződés teljesítése.</li>
         <li><strong>Jegyzőkönyvek, rajzok, mérési adatok:</strong> Ön által létrehozott tartalom – szolgáltatás nyújtása.</li>
-        <li><strong>Fizetés:</strong> e-mail, név, cím, adószám (Stripe/utalás); csak tranzakció azonosító és összeg tárolásra kerül nálunk.</li>
+        <li><strong>Fizetés:</strong> e-mail, név, cím, adószám (utalásos számlázás); csak a szükséges megrendelési és számlázási adatok kerülnek tárolásra.</li>
         <li><strong>Kapcsolat űrlap:</strong> név, e-mail, cég, üzenet – kérés teljesítése.</li>
         <li><strong>Napló:</strong> bejelentkezési kísérletek, IP, audit – biztonság, jogi kötelezettség.</li>
     </ul>
@@ -77,7 +77,7 @@ PRIVACY_HTML = """<!DOCTYPE html>
     <p>Jogosult vagy hozzáférésre, helyesbítésre, törlésre, korlátozásra, adathordozhatóságra, tiltakozásra. Bejelentkezés után az alkalmazásban: <strong>Teljes adatcsomag (ZIP)</strong> – minden jegyzőkönyv, fénykép, diagram és egyéb adat egy letölthető ZIP-ben (fiók törlése előtt vagy bármikor kérhető), továbbá <strong>Adataim (JSON)</strong> összefoglaló és <strong>Fiók törlése</strong>. E-mailben is kérheti az exportot vagy a törlést. Panasz: <a href="https://www.naih.hu" target="_blank" rel="noopener">NAIH</a>.</p>
 
     <h2>6. Adatfeldolgozók</h2>
-    <p>Stripe (fizetés, <a href="https://stripe.com/hu/privacy" target="_blank" rel="noopener">adatvédelmi nyilatkozat</a>), Szamlazz.hu (számla), SMTP (e-mail). Nemzetközi: Stripe EU régió.</p>
+    <p>Számlázás: kézi számlakiállítás az üzemeltetőn keresztül. E-mail kommunikáció: SMTP szolgáltató. Szükség esetén további adatfeldolgozók az Impresszumban és az ÁSZF-ben kerülnek feltüntetésre.</p>
 
     <h2>7. Biztonság</h2>
     <p>Jelszó titkosítva (bcrypt), erős jelszókövetelmény, JWT token (lejárat konfigurálható). Bejelentkezés után a jelszót a „Jelszó módosítása” menüpontból lehet megváltoztatni. A bejelentkezési kísérletek rate limit alatt állnak (brute-force védelem). Élesben HTTPS és erős SECRET_KEY használata kötelező.</p>
@@ -160,10 +160,10 @@ ASZF_HTML = """<!DOCTYPE html>
     <p>A szolgáltató adatait az <a href="/api/legal/imprint">Impresszum</a> tartalmazza. A VBF Premium egy felhőalapú (SaaS) szoftver, amely jelenleg villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyvek készítéséhez, tárolásához és exportálásához nyújt eszközöket; a villámvédelmi felülvizsgálati (VVF) modul később kerül bele. A szolgáltatás igénybevétele regisztráció és – a fizetős csomagok esetén – előfizetés / vásárlás alapján történik.</p>
 
     <h2>2. Szerződéskötés</h2>
-    <p>A webshopban (főoldal) kiválasztott csomag kosárba helyezése, a fizetési adatok megadása és a fizetés (kártyás vagy utalásos) végrehajtása, illetve a regisztráció és a fizetés sikeres jóváhagyása a szerződés létrejöttét jelenti. A szolgáltató a fizetés teljesítését követően a megadott e-mail címen értesíti a felhasználót a hozzáférésről. Digitális tartalom (hozzáférés) esetén a teljesítés azonnali.</p>
+    <p>A webshopban (főoldal) kiválasztott csomag kosárba helyezése, a számlázási adatok megadása és az utalásos megrendelés leadása a szerződéskötési folyamat része. A szerződés a fizetés jóváírása és a szolgáltató jóváhagyása után jön létre, ekkor a hozzáférésről e-mail értesítés készül.</p>
 
     <h2>3. Ár és fizetés</h2>
-    <p>Az árak a webshopban, bruttó forintban (Ft) láthatók. A fizetés kártyával (Stripe) vagy banki utalással történhet. Utalás esetén a számla a megadott számlázási cím alapján készül és a megadott e-mailre kerül elküldésre. A hozzáférés az utalás jóváhagyása után kerül aktiválásra (általában 1–2 munkanap). A szolgáltató a 2001. évi CVIII. törvény és a számviteli törvény szerint számlát állít ki.</p>
+    <p>Az árak a webshopban, bruttó forintban (Ft) láthatók. A fizetés jelenleg banki utalással történik. A számla a megadott számlázási cím alapján készül és a megadott e-mailre kerül elküldésre. A hozzáférés az utalás jóváhagyása után kerül aktiválásra (általában 1–2 munkanap). A szolgáltató a 2001. évi CVIII. törvény és a számviteli törvény szerint számlát állít ki.</p>
 
     <h2>4. Visszamondás (fogyasztó)</h2>
     <p>Ha a vásárló fogyasztó (természetes személy, nem üzleti célból), a 45/2014. (II. 26.) Korm. rendelet 29. § (1) bekezdése alapján <strong>14 napon belül</strong> indoklás nélkül elállhat a szerződéstől. Az elállásról az Impresszumban megadott címre vagy e-mailre történő nyilatkozat szükséges. Ha a szolgáltató a 14 nap lejárta előtt megkezdte a digitális szolgáltatás teljesítését (hozzáférés megadása), és a fogyasztó ezt előre hozzájárulással (pl. „Elfogadom, hogy a hozzáférés megadásával a 14 napos elállási jogom elveszik”) elfogadta, az elállás a digitális tartalomra nem érvényes. Céges / üzleti vásárlás esetén a törvény által kivételként megállapított szabályok érvényesek (pl. nincs 14 napos elállás).</p>
