@@ -32,12 +32,18 @@
             font-family: 'Outfit', sans-serif;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            position: relative;
+            width: 100%;
         }
 
         ::-webkit-scrollbar {
@@ -63,6 +69,8 @@
             top: 0;
             left: 0;
             right: 0;
+            width: 100%;
+            max-width: 100vw;
             padding: 1.2rem 5%;
             display: flex;
             justify-content: space-between;
@@ -73,6 +81,7 @@
             z-index: 1000;
             border-bottom: 1px solid var(--glass-border);
             transition: var(--transition);
+            overflow: hidden;
         }
 
         .logo {
@@ -224,15 +233,15 @@
 
         .badge {
             display: inline-block;
-            padding: 0.4rem 1rem;
+            padding: 0.3rem 0.75rem;
             background: rgba(14, 165, 233, 0.1);
             border: 1px solid rgba(14, 165, 233, 0.3);
             border-radius: 50px;
             color: var(--primary-light);
             font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            letter-spacing: 1px;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
         }
 
@@ -582,13 +591,13 @@
             position: absolute;
             top: -2px;
             right: -2px;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 4px;
+            min-width: 14px;
+            height: 14px;
+            padding: 0 3px;
             background: var(--accent);
             color: #fff;
             border-radius: 50%;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: 700;
             align-items: center;
             justify-content: center;
@@ -609,15 +618,15 @@
         /* Footer */
         footer {
             background: var(--surface-color);
-            padding: 4rem 5% 2rem;
+            padding: 3rem 5% 1.5rem;
             border-top: 1px solid var(--glass-border);
         }
 
         .footer-grid {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 3rem;
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
 
         .footer-logo {
@@ -781,6 +790,89 @@
 
             .footer-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .footer-grid > div:first-child {
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--glass-border);
+            }
+
+            /* Link columns: 3 side by side */
+            .footer-grid > div:not(:first-child) {
+                display: contents;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            /* Override: make the 3 link columns sit in a row */
+            .footer-grid > div:nth-child(2),
+            .footer-grid > div:nth-child(3),
+            .footer-grid > div:nth-child(4) {
+                display: block;
+            }
+
+            /* Wrap the 3 link columns into a sub-grid row */
+            .footer-grid {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .footer-grid > div:first-child {
+                width: 100%;
+                border-bottom: 1px solid var(--glass-border);
+                margin-bottom: 0.5rem;
+            }
+
+            .footer-grid > div:not(:first-child) {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .footer-logo {
+                font-size: 1.4rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .footer-desc {
+                font-size: 0.8rem;
+                line-height: 1.5;
+                margin-bottom: 0.75rem;
+            }
+
+            .footer-title {
+                font-size: 0.85rem;
+                margin-bottom: 0.6rem;
+            }
+
+            .footer-links li {
+                margin-bottom: 0.4rem;
+            }
+
+            .footer-links a {
+                font-size: 0.82rem;
+            }
+
+            .social-links {
+                gap: 0.5rem;
+            }
+
+            .footer-social-title {
+                font-size: 0.82rem;
+            }
+
+            footer {
+                padding: 2rem 5% 1rem;
+            }
+
+            .copyright {
+                padding-top: 1rem;
+                font-size: 0.78rem;
             }
 
             .pricing-grid {
@@ -792,7 +884,7 @@
             }
 
             .hero {
-                padding: 6.75rem 4% 2.5rem;
+                padding: 8.5rem 4% 2.5rem;
             }
 
             .floating-card {
@@ -913,9 +1005,9 @@
 <body>
 
     <nav>
-        <div class="logo">
+        <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" style="text-decoration:none;cursor:pointer;">
             <img src="img/logo.svg" alt="" class="logo-img" width="32" height="32"> VBF Premium
-        </div>
+        </a>
         <div class="nav-links">
             <a href="#features">Funkciók</a>
             <a href="#about">Rólunk</a>
@@ -926,7 +1018,7 @@
             <a href="#faq">GYIK</a>
         </div>
         <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
-            <button type="button" id="btnCart" title="Kosár" style="position: relative; background: var(--surface-light); border: 1px solid var(--glass-border); color: inherit; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center;"><span>🛒</span><span id="cartBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: var(--accent); color: #fff; border-radius: 50%; min-width: 18px; height: 18px; font-size: 11px; font-weight: 700; align-items: center; justify-content: center;">0</span></button>
+            <button type="button" id="btnCart" title="Kosár" style="position: relative; background: var(--surface-light); border: 1px solid var(--glass-border); color: inherit; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center;"><span>🛒</span><span id="cartBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: var(--accent); color: #fff; border-radius: 50%; min-width: 14px; height: 14px; font-size: 9px; font-weight: 700; align-items: center; justify-content: center;">0</span></button>
             <a href="app.html" class="btn btn-outline" style="padding: 0.5rem 1.2rem;">Belépés (Jegyzőkönyv)</a>
             <a href="#shop" class="btn btn-primary" style="padding: 0.5rem 1.2rem;">Vásárlás / Regisztráció</a>
         </div>
@@ -1327,7 +1419,7 @@
                     <div class="footer-social-title">Kövess minket</div>
                     <div class="social-links">
                         <a href="https://instagram.com/vbfpremium" target="_blank" rel="noopener noreferrer" title="VBF Premium Instagram">
-                            <span class="social-icon" aria-hidden="true">📷</span>
+                            <span class="social-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span>
                             <span>Instagram</span>
                         </a>
                     </div>
