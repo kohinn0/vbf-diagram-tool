@@ -996,7 +996,50 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
 import tempfile
 import os
 
-def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] = None, pfx_pass: Optional[bytes] = None, share_url: Optional[str] = None) -> io.BytesIO:
+
+def apply_pdf_watermark(pdf_bytes: bytes, watermark_text: Optional[str] = None) -> bytes:
+    """Átlátszó, ferde vízjel minden oldalra (demó / ingyenes csomag)."""
+    text = (watermark_text or os.environ.get("PDF_WATERMARK_TEXT") or "DEMÓ – VBF Premium").strip()
+    from io import BytesIO as _BIO
+
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.colors import Color
+    from pypdf import PdfReader, PdfWriter
+
+    w, h = A4
+    packet = _BIO()
+    c = canvas.Canvas(packet, pagesize=A4)
+    c.saveState()
+    c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.22))
+    c.setFont("Helvetica-Bold", 34)
+    c.translate(w / 2, h / 2)
+    c.rotate(32)
+    c.drawCentredString(0, 0, text)
+    c.restoreState()
+    c.save()
+    packet.seek(0)
+    wm_reader = PdfReader(packet)
+    wm_page = wm_reader.pages[0]
+
+    reader = PdfReader(_BIO(pdf_bytes))
+    writer = PdfWriter()
+    for page in reader.pages:
+        page.merge_page(wm_page)
+        writer.add_page(page)
+    out = _BIO()
+    writer.write(out)
+    return out.getvalue()
+
+
+def generate_signed_pdf_stream(
+    report: Report,
+    db=None,
+    pfx_path: Optional[str] = None,
+    pfx_pass: Optional[bytes] = None,
+    share_url: Optional[str] = None,
+    watermark: bool = False,
+) -> io.BytesIO:
     # PFX: először megadott path/jelszó, majd céges beállítások, végül alapértelmezett
     if pfx_path is None and db and report.owner_id:
         owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
@@ -1042,6 +1085,12 @@ def generate_signed_pdf_stream(report: Report, db=None, pfx_path: Optional[str] 
 
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
+
+            if watermark:
+                pdf_bytes = apply_pdf_watermark(pdf_bytes)
+                out_plain = io.BytesIO(pdf_bytes)
+                out_plain.seek(0)
+                return out_plain
 
             from pyhanko.sign import signers
             from pyhanko.pdf_utils.reader import PdfFileReader

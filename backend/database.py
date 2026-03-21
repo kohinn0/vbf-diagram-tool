@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, Text, JSON, DateTime
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
 from datetime import datetime
+from typing import Optional
 import os
 
 os.makedirs("data", exist_ok=True)
@@ -251,6 +252,7 @@ class PendingOrder(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)  # PAID után
     created_at = Column(DateTime, default=datetime.utcnow)
     paid_at = Column(DateTime, nullable=True)
+    reminder_sent_at = Column(DateTime, nullable=True)  # határidő emlékeztető elküldve
 
 
 class ReportShareToken(Base):
@@ -298,6 +300,80 @@ class PaymentLog(Base):
     status = Column(String, default="completed", nullable=False)  # completed | refunded
     created_at = Column(DateTime, default=datetime.utcnow)
     refunded_at = Column(DateTime, nullable=True)
+
+
+class DijbekeroSequence(Base):
+    """Díjbekérő sorszám: év -> következő seq (pl. 2026 -> 3)."""
+    __tablename__ = "dijbekero_sequences"
+    year = Column(Integer, primary_key=True)
+    last_seq = Column(Integer, default=0, nullable=False)
+
+
+class DijbekeroPreset(Base):
+    """Díjbekérő sablon: gyors kitöltés (pl. VBF Premium Pro)."""
+    __tablename__ = "dijbekero_presets"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(128), nullable=False)
+    amount_huf = Column(Integer, nullable=True)
+    description = Column(String(256), nullable=True)
+    sort_order = Column(Integer, default=0)
+
+
+class MarketingSubscriber(Base):
+    """Hírlevél / marketing értesítés: önkéntes feliratkozás (landing, regisztráció)."""
+    __tablename__ = "marketing_subscribers"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(200), nullable=True)
+    source = Column(String(64), nullable=True)  # landing | register | ...
+    ip = Column(String(64), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    unsubscribed_at = Column(DateTime, nullable=True)
+
+
+def record_marketing_subscriber(
+    db: Session,
+    email: str,
+    *,
+    name: Optional[str] = None,
+    source: str = "unknown",
+    ip: Optional[str] = None,
+) -> None:
+    email_norm = (email or "").strip().lower()[:255]
+    if not email_norm or "@" not in email_norm:
+        return
+    row = db.query(MarketingSubscriber).filter(MarketingSubscriber.email == email_norm).first()
+    nm = (name or "").strip()[:200] or None
+    src = (source or "unknown").strip()[:64] or "unknown"
+    ip_s = (ip or "").strip()[:64] or None
+    if row:
+        row.unsubscribed_at = None
+        if nm:
+            row.name = nm
+        row.source = src
+        if ip_s:
+            row.ip = ip_s
+    else:
+        db.add(
+            MarketingSubscriber(
+                email=email_norm,
+                name=nm,
+                source=src,
+                ip=ip_s,
+            )
+        )
+    db.commit()
+
+
+def marketing_unsubscribe_email(db: Session, email: str) -> None:
+    email_norm = (email or "").strip().lower()[:255]
+    if not email_norm:
+        return
+    row = db.query(MarketingSubscriber).filter(MarketingSubscriber.email == email_norm).first()
+    if row and not row.unsubscribed_at:
+        row.unsubscribed_at = datetime.utcnow()
+        db.commit()
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -357,6 +433,12 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
                     conn.commit()
             except Exception:
                 pass
+            # pending_orders.reminder_sent_at (határidő emlékeztető)
+            r_po = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(pending_orders)"))
+            cols_po = [row[1] for row in r_po.fetchall()]
+            if "reminder_sent_at" not in cols_po:
+                conn.execute(__import__("sqlalchemy").text("ALTER TABLE pending_orders ADD COLUMN reminder_sent_at DATETIME"))
+                conn.commit()
             # password_reset_tokens tábla (elfelejtett jelszó)
             try:
                 r6 = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='password_reset_tokens'"))
@@ -384,7 +466,7 @@ def _seed_subscription_plans():
         db = SessionLocal()
         if db.query(SubscriptionPlan).count() == 0:
             for i, (key, defaults) in enumerate([
-                ("FREE", {"display_name": "Ingyenes", "reports": 5, "users": 2, "features": ["5 jegyzőkönyv/hó", "2 felhasználó", "Word/PDF export"]}),
+                ("FREE", {"display_name": "Ingyenes", "reports": 5, "users": 2, "features": ["5 jegyzőkönyv/hó", "2 felhasználó", "Word export", "PDF vízjellel (demó)"]}),
                 ("PRO", {"display_name": "Pro", "reports": 50, "users": 10, "features": ["50 jegyzőkönyv/hó", "10 felhasználó", "PDF aláírás", "Email küldés"]}),
                 ("ENTERPRISE", {"display_name": "Céges", "reports": None, "users": None, "features": ["Korlátlan jegyzőkönyv", "Korlátlan felhasználó", "Minden funkció"]}),
             ]):
@@ -429,3 +511,32 @@ def get_effective_plan_limits(db, company):
         if users is None:
             users = defaults.get("max_users")
     return reports, users
+
+
+def pdf_export_requires_watermark(db: Session, report_owner: Optional[User]) -> bool:
+    """
+    True = PDF vízjellel, digitális aláírás nélkül (ingyenes / demó cég, vagy lejárt PRO).
+    """
+    if not report_owner:
+        return True
+    if report_owner.role in ("SUPER_ADMIN", "ADMIN"):
+        return False
+    db.refresh(report_owner, ["company"])
+    company = report_owner.company
+    if not company:
+        return True
+    plan = (company.plan or "FREE").upper()
+    if plan == "FREE":
+        return True
+    if plan == "ENTERPRISE":
+        return False
+    if plan == "PRO":
+        exp = getattr(report_owner, "subscription_expires", None)
+        if exp and exp < datetime.utcnow():
+            return True
+        return False
+    return True
+
+
+def user_pdf_export_watermarked(db: Session, user: User) -> bool:
+    return pdf_export_requires_watermark(db, user)

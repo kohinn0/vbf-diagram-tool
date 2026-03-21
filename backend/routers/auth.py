@@ -23,35 +23,6 @@ def _audit(db: Session, user_id: Optional[int], action: str, detail: Optional[st
     db.commit()
 
 
-@router.post("/api/register", response_model=schemas.UserResponse)
-def register(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
-    auth.validate_password_policy(user.password)
-    is_first = db.query(database.User).count() == 0
-    if not is_first:
-        raise HTTPException(status_code=403, detail="Public registration is disabled. Administrator must create your account.")
-    
-    db_user = auth.get_user(db, username=user.username)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
-    hashed_password = auth.get_password_hash(user.password)
-    
-    # First user is super admin (bootstrapping)
-    is_first = db.query(database.User).count() == 0
-    sub_expiry = datetime.utcnow() + timedelta(days=365) if is_first else None
-    role = "ADMIN" if is_first else "TECH"  # ADMIN = super admin (backward compat)
-
-    db_user = database.User(
-        username=user.username,
-        hashed_password=hashed_password,
-        role=role,
-        subscription_expires=sub_expiry,
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
 def _data_url_to_ext(data_url: str) -> str:
     if not data_url or not isinstance(data_url, str) or not data_url.startswith("data:image/"):
         return ".jpg"
@@ -242,7 +213,6 @@ def delete_my_account(request: Request, db: Session = Depends(auth.get_db), curr
     db.commit()
     return {"message": "Sikeres törlés (GDPR compliance)"}
 
-from fastapi import Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -278,10 +248,130 @@ def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestFor
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+@router.post("/api/register", response_model=schemas.UserResponse)
+@limiter.limit("8/minute")
+def register(request: Request, user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
+    """
+    Első felhasználó: rendszer bootstrap (ADMIN).
+    További felhasználók: nyilvános demó – saját FREE cég + COMPANY_ADMIN, vízjeles PDF.
+    """
+    auth.validate_password_policy(user.password)
+    username = (user.username or "").strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Felhasználónév kötelező.")
+    if auth.get_user(db, username):
+        raise HTTPException(status_code=400, detail="Ez a felhasználónév már foglalt.")
+
+    hashed_password = auth.get_password_hash(user.password)
+    is_first = db.query(database.User).count() == 0
+    ip = _client_ip(request)
+
+    if is_first:
+        db_user = database.User(
+            username=username,
+            email=(user.email or "").strip().lower()[:255] or None,
+            hashed_password=hashed_password,
+            role="ADMIN",
+            subscription_expires=datetime.utcnow() + timedelta(days=365),
+            is_active=True,
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user, ["company"])
+        if user.marketing_opt_in and user.email and "@" in user.email:
+            database.record_marketing_subscriber(
+                db, user.email, name=None, source="register_bootstrap", ip=ip
+            )
+        _audit(db, db_user.id, "register", f"bootstrap_admin username={username}", ip)
+    else:
+        if not user.email or "@" not in user.email.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Érvényes e-mail cím kötelező a demó regisztrációhoz.",
+            )
+        email_norm = user.email.strip().lower()[:255]
+        if db.query(database.User).filter(database.User.email == email_norm).first():
+            raise HTTPException(
+                status_code=400,
+                detail="Ezzel az e-mail címmel már van fiók. Jelentkezz be, vagy használj másik e-mailt.",
+            )
+        cname = (user.company_name or "").strip()[:200] or f"{username} (demó)"
+        company = database.Company(name=cname, plan="FREE")
+        db.add(company)
+        db.flush()
+        db_user = database.User(
+            username=username,
+            email=email_norm,
+            hashed_password=hashed_password,
+            role="COMPANY_ADMIN",
+            company_id=company.id,
+            is_active=True,
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user, ["company"])
+        if user.marketing_opt_in:
+            database.record_marketing_subscriber(
+                db, email_norm, name=cname, source="register", ip=ip
+            )
+        _audit(db, db_user.id, "register", f"demo username={username} company_id={company.id}", ip)
+
+    return schemas.UserResponse(
+        id=db_user.id,
+        username=db_user.username,
+        email=db_user.email,
+        is_active=db_user.is_active,
+        role=db_user.role,
+        company_id=db_user.company_id,
+        company_name=db_user.company.name if db_user.company else None,
+        subscription_expires=db_user.subscription_expires,
+        company_plan=db_user.company.plan if db_user.company else None,
+        pdf_export_watermarked=database.user_pdf_export_watermarked(db, db_user),
+    )
+
+
+@router.post("/api/marketing/subscribe")
+@limiter.limit("5/15minute")
+def marketing_subscribe(
+    request: Request,
+    body: schemas.MarketingSubscribeRequest,
+    db: Session = Depends(auth.get_db),
+):
+    if not body.consent:
+        raise HTTPException(
+            status_code=400,
+            detail="A feliratkozáshoz jelöld be a hozzájárulást.",
+        )
+    email = (body.email or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Adj meg érvényes e-mail címet.")
+    src = (body.source or "landing").strip()[:64] or "landing"
+    database.record_marketing_subscriber(
+        db, email, name=body.name, source=src, ip=_client_ip(request)
+    )
+    _audit(db, None, "marketing_subscribe", email[:120], _client_ip(request))
+    return {"message": "Köszönjük a feliratkozást."}
+
+
+@router.post("/api/marketing/unsubscribe")
+@limiter.limit("10/minute")
+def marketing_unsubscribe(
+    request: Request,
+    body: schemas.MarketingUnsubscribeRequest,
+    db: Session = Depends(auth.get_db),
+):
+    database.marketing_unsubscribe_email(db, body.email)
+    return {
+        "message": "Ha szerepeltél a marketing listánkon, a leiratkozás rögzítve. Egyébként nincs teendő."
+    }
+
+
 @router.get("/api/users/me", response_model=schemas.UserResponse)
 def read_users_me(db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db.refresh(current_user, ["company"])
     company_name = current_user.company.name if current_user.company else None
+    plan = current_user.company.plan if current_user.company else None
     return schemas.UserResponse(
         id=current_user.id,
         username=current_user.username,
@@ -291,6 +381,8 @@ def read_users_me(db: Session = Depends(auth.get_db), current_user: database.Use
         company_id=current_user.company_id,
         company_name=company_name,
         subscription_expires=current_user.subscription_expires,
+        company_plan=plan,
+        pdf_export_watermarked=database.user_pdf_export_watermarked(db, current_user),
     )
 
 
@@ -310,6 +402,7 @@ def update_my_profile(
     db.commit()
     db.refresh(current_user, ["company"])
     company_name = current_user.company.name if current_user.company else None
+    plan = current_user.company.plan if current_user.company else None
     return schemas.UserResponse(
         id=current_user.id,
         username=current_user.username,
@@ -319,6 +412,8 @@ def update_my_profile(
         company_id=current_user.company_id,
         company_name=company_name,
         subscription_expires=current_user.subscription_expires,
+        company_plan=plan,
+        pdf_export_watermarked=database.user_pdf_export_watermarked(db, current_user),
     )
 
 

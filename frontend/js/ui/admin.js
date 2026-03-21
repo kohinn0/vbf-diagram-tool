@@ -208,11 +208,14 @@ export function initAdmin() {
         if (companiesSection) companiesSection.style.display = isSuperAdmin() ? 'block' : 'none';
         if (plansSection) plansSection.style.display = isSuperAdmin() ? 'block' : 'none';
         if (pendingOrdersSection) pendingOrdersSection.style.display = isSuperAdmin() ? 'block' : 'none';
+        const dijbekeroSection = document.getElementById('adminDijbekeroSection');
+        if (dijbekeroSection) dijbekeroSection.style.display = isSuperAdmin() ? 'block' : 'none';
         if (isSuperAdmin()) {
             window.fetchAdminCompanies();
             if (window.fetchAdminPlans) window.fetchAdminPlans();
             if (window.fetchAdminPendingOrders) window.fetchAdminPendingOrders();
             if (window.fetchAdminPaymentHistory) window.fetchAdminPaymentHistory();
+            if (window.loadAdminDijbekeroPresets) window.loadAdminDijbekeroPresets();
         }
         if (companyWrap) companyWrap.style.display = 'none';
         if (roleSelect) {
@@ -498,6 +501,154 @@ export function initAdmin() {
             listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
         }
     };
+
+    const DIJBEKERO_STORAGE_KEY = 'dijbekero_last';
+    const saveDijbekeroToStorage = (data) => {
+        try { localStorage.setItem(DIJBEKERO_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+    };
+    const loadDijbekeroFromStorage = () => {
+        try {
+            const s = localStorage.getItem(DIJBEKERO_STORAGE_KEY);
+            return s ? JSON.parse(s) : null;
+        } catch (_) { return null; }
+    };
+
+    const dijbekeroFetch = async (sendToEmail) => {
+        const amountVal = document.getElementById('dijbekeroAmount')?.value?.trim();
+        const amount = amountVal ? parseInt(amountVal, 10) : null;
+        const body = {
+            amount_huf: (amount != null && !isNaN(amount)) ? amount : null,
+            description: document.getElementById('dijbekeroDesc')?.value?.trim() || null,
+            due_date: document.getElementById('dijbekeroDue')?.value?.trim() || null,
+            vevo_nev: document.getElementById('dijbekeroVevoNev')?.value?.trim() || null,
+            vevo_cim: document.getElementById('dijbekeroVevoCim')?.value?.trim() || null,
+            send_to_email: sendToEmail || null
+        };
+        const statusEl = document.getElementById('dijbekeroStatus');
+        if (statusEl) statusEl.textContent = sendToEmail ? 'Küldés…' : 'Generálás…';
+        const res = await fetch(`${window.API_BASE_URL}/api/admin/dijbekero-pdf`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.currentToken}`
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            const d = await res.json().catch(() => ({}));
+            if (statusEl) statusEl.textContent = d.detail || 'Hiba történt.';
+            return;
+        }
+        saveDijbekeroToStorage({
+            amount_huf: body.amount_huf,
+            description: body.description,
+            due_date: body.due_date,
+            vevo_nev: body.vevo_nev,
+            vevo_cim: body.vevo_cim,
+            email: document.getElementById('dijbekeroEmail')?.value?.trim() || ''
+        });
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+            const json = await res.json();
+            if (statusEl) statusEl.textContent = json.message || 'Elküldve.';
+            return;
+        }
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'dijbekero.pdf';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        if (statusEl) statusEl.textContent = 'PDF letöltve.';
+    };
+
+    document.getElementById('btnDijbekeroPdf')?.addEventListener('click', async () => {
+        try { await dijbekeroFetch(null); } catch (e) {
+            document.getElementById('dijbekeroStatus').textContent = 'Hiba: ' + String(e.message);
+        }
+    });
+
+    document.getElementById('btnDijbekeroEmail')?.addEventListener('click', async () => {
+        const email = document.getElementById('dijbekeroEmail')?.value?.trim();
+        if (!email || !email.includes('@')) {
+            const statusEl = document.getElementById('dijbekeroStatus');
+            if (statusEl) statusEl.textContent = 'Érvényes email címet adj meg.';
+            return;
+        }
+        try { await dijbekeroFetch(email); } catch (e) {
+            document.getElementById('dijbekeroStatus').textContent = 'Hiba: ' + String(e.message);
+        }
+    });
+
+    document.getElementById('btnDijbekeroDuplikatum')?.addEventListener('click', () => {
+        const d = loadDijbekeroFromStorage();
+        if (!d) {
+            document.getElementById('dijbekeroStatus').textContent = 'Még nincs mentett adat. Először tölts le vagy küldj egy díjbekérőt.';
+            return;
+        }
+        const id = (n) => document.getElementById(n);
+        if (id('dijbekeroAmount')) id('dijbekeroAmount').value = d.amount_huf ?? '';
+        if (id('dijbekeroDesc')) id('dijbekeroDesc').value = d.description ?? '';
+        if (id('dijbekeroDue')) id('dijbekeroDue').value = d.due_date ?? '';
+        if (id('dijbekeroVevoNev')) id('dijbekeroVevoNev').value = d.vevo_nev ?? '';
+        if (id('dijbekeroVevoCim')) id('dijbekeroVevoCim').value = d.vevo_cim ?? '';
+        if (id('dijbekeroEmail')) id('dijbekeroEmail').value = d.email ?? '';
+        document.getElementById('dijbekeroStatus').textContent = 'Utolsó adatok betöltve.';
+    });
+
+    const loadDijbekeroPresets = async () => {
+        const sel = document.getElementById('dijbekeroPresetSelect');
+        if (!sel) return;
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/admin/dijbekero-presets`, {
+                headers: { 'Authorization': `Bearer ${window.currentToken}` }
+            });
+            const presets = res.ok ? await res.json() : [];
+            sel.innerHTML = '<option value="">— Válassz sablont —</option>' +
+                presets.map(p => `<option value="${p.id}" data-amount="${p.amount_huf ?? ''}" data-desc="${(p.description || '').replace(/"/g, '&quot;')}">${(p.name || 'Sablon').replace(/</g, '&lt;')}</option>`).join('');
+        } catch (_) { sel.innerHTML = '<option value="">— Válassz sablont —</option>'; }
+    };
+
+    document.getElementById('dijbekeroPresetSelect')?.addEventListener('change', function () {
+        const opt = this.selectedOptions?.[0];
+        if (!opt || !opt.value) return;
+        const id = (n) => document.getElementById(n);
+        if (id('dijbekeroAmount')) id('dijbekeroAmount').value = opt.dataset.amount ?? '';
+        if (id('dijbekeroDesc')) id('dijbekeroDesc').value = (opt.dataset.desc || '').replace(/&quot;/g, '"');
+    });
+
+    document.getElementById('btnDijbekeroSavePreset')?.addEventListener('click', async () => {
+        const name = prompt('Sablon neve:', document.getElementById('dijbekeroDesc')?.value?.trim() || '');
+        if (!name || !name.trim()) return;
+        const amountVal = document.getElementById('dijbekeroAmount')?.value?.trim();
+        const amount = amountVal ? parseInt(amountVal, 10) : null;
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/admin/dijbekero-presets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.currentToken}`
+                },
+                body: JSON.stringify({
+                    name: name.trim(),
+                    amount_huf: (amount != null && !isNaN(amount)) ? amount : null,
+                    description: document.getElementById('dijbekeroDesc')?.value?.trim() || null
+                })
+            });
+            if (res.ok) {
+                await loadDijbekeroPresets();
+                document.getElementById('dijbekeroStatus').textContent = 'Sablon mentve.';
+            } else {
+                document.getElementById('dijbekeroStatus').textContent = 'Hiba a mentés során.';
+            }
+        } catch (e) {
+            document.getElementById('dijbekeroStatus').textContent = 'Hiba: ' + String(e.message);
+        }
+    });
+
+    if (typeof window.loadAdminDijbekeroPresets === 'undefined') {
+        window.loadAdminDijbekeroPresets = loadDijbekeroPresets;
+    }
 
     window.updateUser = async function (id, data) {
         try {

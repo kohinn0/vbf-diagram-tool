@@ -284,8 +284,10 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
         base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
         share_url = f"{base_url.rstrip('/')}/api/public/report/{share_row.token}?format=pdf"
 
+    owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+    use_watermark = database.pdf_export_requires_watermark(db, owner)
     try:
-        stream = generator.generate_signed_pdf_stream(report, db, share_url=share_url)
+        stream = generator.generate_signed_pdf_stream(report, db, share_url=share_url, watermark=use_watermark)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
@@ -522,8 +524,10 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
     if format == "pdf":
         base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
         pdf_share_url = f"{base_url.rstrip('/')}/api/public/report/{token}?format=pdf"
+        owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+        use_watermark = database.pdf_export_requires_watermark(db, owner)
         try:
-            stream = generator.generate_signed_pdf_stream(report, db, share_url=pdf_share_url)
+            stream = generator.generate_signed_pdf_stream(report, db, share_url=pdf_share_url, watermark=use_watermark)
             rep_type = report.report_type.upper() if report.report_type else "VBF"
             short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
             year = report.created_at.year if report.created_at else datetime.utcnow().year

@@ -8,6 +8,7 @@ import { initDefects } from './ui/defects.js';
 import { initCanvas } from './ui/canvas.js';
 import { initPadfx } from './ui/padfx.js';
 import { initAuth } from './ui/auth.js';
+import { initCart } from './ui/cart.js';
 import { initAdmin } from './ui/admin.js';
 import { initJobs } from './ui/jobs.js';
 import { initMasterData } from './ui/masterdata.js';
@@ -123,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSiteTree();
     initAutoDiagram();
     initTour();
+    initCart();
     const auth = initAuth();
     window.updateAuthUI = auth.updateAuthUI;
 

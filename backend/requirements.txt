@@ -16,6 +16,8 @@ slowapi
 python-docx
 docx2pdf
 pyhanko
+pypdf
+reportlab
 Pillow
 openpyxl
 qrcode[pil]

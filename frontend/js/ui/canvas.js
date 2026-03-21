@@ -29,12 +29,19 @@ export function initCanvas() {
     // Globális hozzáférés (legacy modulokhoz, pl. autodiagram.js)
     window.canvas = canvas;
 
-    // Handle responsive resize
-    window.addEventListener('resize', () => {
-        canvas.setWidth(wrapper.clientWidth);
-        canvas.setHeight(wrapper.clientHeight);
-        canvas.renderAll();
-    });
+    // Handle responsive resize: ResizeObserver tracks wrapper size, window resize as fallback
+    function resizeCanvas() {
+        const w = wrapper.clientWidth;
+        const h = wrapper.clientHeight;
+        if (w > 0 && h > 0) {
+            canvas.setWidth(w);
+            canvas.setHeight(h);
+            canvas.renderAll();
+        }
+    }
+    const ro = new ResizeObserver(() => resizeCanvas());
+    ro.observe(wrapper);
+    window.addEventListener('resize', resizeCanvas);
 
     // Grid snapping (opcionális, be lehet állítani egy 20px-es rácshoz)
     const gridSize = 20;

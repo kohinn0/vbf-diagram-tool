@@ -18,6 +18,25 @@ export function initAuth() {
     const dashboardTab = document.getElementById('navDashboard');
     const reportListContainer = document.getElementById('reportListContainer');
 
+    function setLoginModalMode(mode) {
+        const pl = document.getElementById('panelLogin');
+        const pr = document.getElementById('panelRegister');
+        const tabL = document.getElementById('tabLoginMode');
+        const tabR = document.getElementById('tabRegisterMode');
+        if (!pl || !pr) return;
+        if (mode === 'register') {
+            pl.style.display = 'none';
+            pr.style.display = 'block';
+            if (tabL) { tabL.classList.remove('btn-primary'); tabL.classList.add('btn-secondary'); }
+            if (tabR) { tabR.classList.remove('btn-secondary'); tabR.classList.add('btn-primary'); }
+        } else {
+            pl.style.display = 'block';
+            pr.style.display = 'none';
+            if (tabL) { tabL.classList.add('btn-primary'); tabL.classList.remove('btn-secondary'); }
+            if (tabR) { tabR.classList.add('btn-secondary'); tabR.classList.remove('btn-primary'); }
+        }
+    }
+
     function updateAuthUI() {
         if (window.currentToken && window.currentUser) {
             if (userInfoSpan) userInfoSpan.innerText = `Szia, ${window.currentUser}!`;
@@ -81,6 +100,18 @@ export function initAuth() {
                             }
                         }
                     }
+                    var pdfBan = document.getElementById('pdfWatermarkBanner');
+                    if (pdfBan) {
+                        if (userData.pdf_export_watermarked && !sessionStorage.getItem('vbf_pdf_wm_banner_dismissed')) {
+                            pdfBan.style.display = 'flex';
+                        } else {
+                            pdfBan.style.display = 'none';
+                        }
+                    }
+                    if (btnExportPdfReport) {
+                        btnExportPdfReport.innerText = userData.pdf_export_watermarked ? 'PDF (vízjel) 📜' : 'PDF aláírva 📜';
+                    }
+                    if (typeof window.vbfCartOnUserLoaded === 'function') window.vbfCartOnUserLoaded(userData);
                 })
                 .catch(err => console.error("Admin check failed", err));
 
@@ -113,6 +144,7 @@ export function initAuth() {
             if (reportListContainer) {
                 reportListContainer.innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';
             }
+            if (typeof window.vbfCartOnUserLoggedOut === 'function') window.vbfCartOnUserLoggedOut();
         }
     }
 
@@ -126,7 +158,65 @@ export function initAuth() {
                 window.currentUser = null;
                 updateAuthUI();
             } else {
+                setLoginModalMode('login');
                 if (loginModal) loginModal.style.display = 'flex';
+            }
+        });
+    }
+
+    document.getElementById('tabLoginMode')?.addEventListener('click', () => { setLoginModalMode('login'); });
+    document.getElementById('tabRegisterMode')?.addEventListener('click', () => { setLoginModalMode('register'); });
+
+    const btnSubmitRegister = document.getElementById('btnSubmitRegister');
+    if (btnSubmitRegister) {
+        btnSubmitRegister.addEventListener('click', async () => {
+            const regUser = document.getElementById('regUser')?.value?.trim();
+            const regEmail = document.getElementById('regEmail')?.value?.trim();
+            const regCompany = document.getElementById('regCompany')?.value?.trim();
+            const regPass = document.getElementById('regPass')?.value;
+            const regMarketing = document.getElementById('regMarketing')?.checked;
+            const registerError = document.getElementById('registerError');
+            if (registerError) registerError.textContent = '';
+            if (!regUser || !regEmail || !regPass) {
+                if (registerError) registerError.textContent = 'Felhasználónév, e-mail és jelszó kötelező.';
+                return;
+            }
+            const base = window.API_BASE_URL || '';
+            btnSubmitRegister.disabled = true;
+            try {
+                const res = await fetch(`${base}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: regUser,
+                        email: regEmail,
+                        password: regPass,
+                        company_name: regCompany || null,
+                        marketing_opt_in: !!regMarketing
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    let msg = 'Regisztráció sikertelen.';
+                    if (typeof data.detail === 'string') msg = data.detail;
+                    else if (Array.isArray(data.detail)) {
+                        msg = data.detail.map((x) => (x.msg || JSON.stringify(x))).join(' ');
+                    }
+                    if (registerError) registerError.textContent = msg;
+                    return;
+                }
+                const token = await API.login(regUser, regPass);
+                window.currentToken = token;
+                window.currentUser = regUser;
+                localStorage.setItem('vbf_token', window.currentToken);
+                localStorage.setItem('vbf_user', window.currentUser);
+                updateAuthUI();
+                if (loginModal) loginModal.style.display = 'none';
+                if (window.showToast) window.showToast('Sikeres regisztráció!', 'success');
+            } catch (err) {
+                if (registerError) registerError.textContent = err.message || 'Hiba.';
+            } finally {
+                btnSubmitRegister.disabled = false;
             }
         });
     }
@@ -159,6 +249,11 @@ export function initAuth() {
     document.getElementById('expiryBannerDismiss')?.addEventListener('click', () => {
         sessionStorage.setItem('vbf_expiry_banner_dismissed', '1');
         var b = document.getElementById('expiryBanner');
+        if (b) b.style.display = 'none';
+    });
+    document.getElementById('pdfWatermarkBannerDismiss')?.addEventListener('click', () => {
+        sessionStorage.setItem('vbf_pdf_wm_banner_dismissed', '1');
+        var b = document.getElementById('pdfWatermarkBanner');
         if (b) b.style.display = 'none';
     });
     var profileModal = document.getElementById('profileModal');
@@ -431,6 +526,8 @@ export function initAuth() {
         btnCloseLogin.addEventListener('click', () => {
             if (loginModal) loginModal.style.display = 'none';
             if (loginError) loginError.innerText = '';
+            const re = document.getElementById('registerError');
+            if (re) re.textContent = '';
         });
     }
 
@@ -483,10 +580,17 @@ export function initAuth() {
 
     // Főoldalról / demó / regisztráció link: nincs token → bejelentkezési ablak
     const params = new URLSearchParams(window.location.search);
-    if (!window.currentToken && (params.get('from') === 'landing' || params.get('demo') === '1' || params.get('register') === '1')) {
+    if (!window.currentToken && (params.get('from') === 'landing' || params.get('register') === '1')) {
+        if (params.get('register') === '1') {
+            setLoginModalMode('register');
+            const registerInfo = document.getElementById('loginRegisterInfo');
+            if (registerInfo) registerInfo.style.display = 'block';
+        } else {
+            setLoginModalMode('login');
+            const registerInfo = document.getElementById('loginRegisterInfo');
+            if (registerInfo) registerInfo.style.display = 'none';
+        }
         if (loginModal) loginModal.style.display = 'flex';
-        const registerInfo = document.getElementById('loginRegisterInfo');
-        if (registerInfo) registerInfo.style.display = params.get('register') === '1' ? 'block' : 'none';
         history.replaceState({}, '', window.location.pathname);
     }
     // Cookie banner (app oldal): ha még nincs elfogadva, megjelenítés + Elfogadom

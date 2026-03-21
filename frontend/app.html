@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/sitetree.css">
+    <link rel="stylesheet" href="css/cart-drawer.css">
     <link rel="manifest" href="manifest.json">
     <!-- Google Fonts for Modern Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
@@ -99,6 +100,7 @@
                     <a href="#" id="linkDataExport" title="Összefoglaló JSON">Adataim</a>
                     <a href="#" id="linkDeleteAccount" class="nav-link-danger">Fiók törlés</a>
                 </div>
+                <button type="button" class="btn btn-secondary btn-small nav-util-btn" id="btnCart" title="Előfizetés – kosár" aria-label="Kosár"><span aria-hidden="true">🛒</span><span id="cartBadge">0</span></button>
                 <button class="btn btn-secondary btn-small nav-util-btn" id="btnLoginNav">Belépés</button>
                 <button class="btn btn-secondary btn-small nav-util-btn" id="btnToggleTheme" title="Téma váltása" aria-label="Téma váltása">☀️</button>
             </div>
@@ -119,23 +121,118 @@
         </div>
     </div>
 
+    <!-- Kosár (ugyanaz a localStorage kulcs, mint a főoldalon: vbf_cart) -->
+    <div id="cartPanel" class="cart-drawer-overlay" style="display: none;" aria-hidden="true">
+        <div id="cartDrawer">
+            <div class="cart-drawer-header">
+                <h2>🛒 Kosár</h2>
+                <button type="button" id="cartPanelClose" class="cart-close-btn" aria-label="Bezárás">×</button>
+            </div>
+            <div id="cartStep1" class="cart-step">
+                <div id="cartEmpty" class="cart-empty-msg">
+                    <p>A kosár üres.</p>
+                    <p style="margin-top: 0.75rem;"><a href="index.html#shop">Főoldal – árazás és kosárba tétel</a></p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem;">Gyors választás (csomagok a szerverről):</p>
+                    <div id="cartAppPlanButtons" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;"></div>
+                </div>
+                <div id="cartContent" class="cart-content" style="display: none;">
+                    <ul id="cartItemsList" class="cart-items-list"></ul>
+                    <p id="cartTotal" class="cart-total-line"></p>
+                    <button type="button" id="btnCartCheckout" class="btn btn-primary cart-btn-full">Tovább a fizetéshez</button>
+                </div>
+            </div>
+            <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Utalásos megrendelés</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Új előfizetés és hosszabbítás ugyanitt: jóváhagyás után az új időszak a még érvényes PRO lejáratra <strong>ráépül</strong>.</p>
+                <p id="cartLoggedInNote" style="display: none; font-size: 0.88rem; color: var(--primary-light); margin-bottom: 1rem; padding: 0.65rem 0.75rem; background: rgba(14, 165, 233, 0.08); border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.2);"></p>
+                <div id="cartGuestRegBlock" style="margin-bottom: 1.25rem;">
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Nincs bejelentkezve: add meg a számlázási adatokat lent. Érdemes ugyanazt az e-mailt használni, mint a fiókodnál.</p>
+                </div>
+                <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártya (Stripe)</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali fizetés. Bejelentkezve a jelszómezőket hagyd üresen. Vendégként opcionális jelszó új fiókhoz (e-mail kötelező hozzá); egyébként ideiglenes jelszót kapsz e-mailben.</p>
+                    <label style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
+                    <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Jelszó (opcionális)</label>
+                    <input type="password" id="cartStripePassword" placeholder="Új fiókhoz, vagy üres" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
+                    <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a biztonságos fizetéshez (Stripe)</button>
+                    <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
+                    <p style="text-align: center; font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0 0;">— vagy utalással —</p>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Számla kérése (utalás)</button>
+                </div>
+                <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
+                    <label style="display:block; margin-bottom: 4px;">Email *</label>
+                    <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
+                    <input type="text" id="cartName" placeholder="Kovács Kft." style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
+                    <input type="text" id="cartAddress" required placeholder="Irányítószám, város, utca, házszám" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Adószám (opcionális)</label>
+                    <input type="text" id="cartTax" placeholder="12345678-2-41" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <button type="button" id="btnCartRequestInvoice" class="btn btn-primary" style="width: 100%;">Számla kérése utaláshoz</button>
+                    <p id="cartTransferStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
+                </div>
+                <button type="button" id="cartBackToStep1" class="btn btn-secondary" style="margin-top: 1rem;">← Vissza a kosárhoz</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Modal -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass">
-            <h2 style="margin-bottom: 2rem;">Bejelentkezés</h2>
-            <div class="prop-group">
-                <label>Felhasználónév</label>
-                <input type="text" id="loginUser" placeholder="admin">
+        <div class="modal-content panel-glass" style="max-width: 440px;">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary btn-small" id="tabLoginMode">Belépés</button>
+                <button type="button" class="btn btn-secondary btn-small" id="tabRegisterMode">Regisztráció (demó)</button>
             </div>
-            <div class="prop-group">
-                <label>Jelszó</label>
-                <input type="password" id="loginPass" placeholder="titkos">
+            <p id="loginRegisterInfo" style="display: none; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">Bárki regisztrálhat demó fiókot: saját cég (ingyenes csomag), PDF vízjellel. Teljes előfizetés a főoldalon. A hírlevélhez jelöld be az opciót a regisztrációnál vagy a főoldali űrlapon.</p>
+
+            <div id="panelLogin">
+                <h2 style="margin-bottom: 1.25rem;">Bejelentkezés</h2>
+                <div class="prop-group">
+                    <label>Felhasználónév</label>
+                    <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+                </div>
+                <div class="prop-group">
+                    <label>Jelszó</label>
+                    <input type="password" id="loginPass" placeholder="titkos" autocomplete="current-password">
+                </div>
+                <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem; min-height: 1.2em;"></div>
+                <p style="margin-top: 0.5rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
+                <button type="button" class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
             </div>
-            <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
-            <p id="loginRegisterInfo" style="display: none; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">A regisztráció utalásos vásárlással vagy a céged adminjának meghívásával érhető el. A főoldalon kérhetsz számlát, vagy kérj belépési adatot a céged vezetőjétől.</p>
-            <p style="margin-top: 0.75rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-            <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
-            <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
+
+            <div id="panelRegister" style="display: none;">
+                <h2 style="margin-bottom: 0.75rem;">Demó regisztráció</h2>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Létrejön egy saját céged (ingyenes csomag). A PDF export vízjellel készül; előfizetéssel teljes értékű.</p>
+                <div class="prop-group">
+                    <label>Felhasználónév *</label>
+                    <input type="text" id="regUser" placeholder="kovacsbela" autocomplete="username">
+                </div>
+                <div class="prop-group">
+                    <label>E-mail *</label>
+                    <input type="email" id="regEmail" placeholder="email@pelda.hu" autocomplete="email">
+                </div>
+                <div class="prop-group">
+                    <label>Cégnév (opcionális)</label>
+                    <input type="text" id="regCompany" placeholder="Pl. Villanyszerelő Bt.">
+                </div>
+                <div class="prop-group">
+                    <label>Jelszó *</label>
+                    <input type="password" id="regPass" placeholder="min. 8 karakter, nagy+kis+szám" autocomplete="new-password">
+                </div>
+                <label style="font-size: 0.82rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer;">
+                    <input type="checkbox" id="regMarketing" style="margin-top: 3px;">
+                    <span>Szeretnék hírlevelet, újdonságokat (marketing). <a href="index.html#contact" target="_blank" rel="noopener" style="color: var(--accent);">Leiratkozás</a> bármikor.</span>
+                </label>
+                <div id="registerError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem; min-height: 1.2em;"></div>
+                <button type="button" class="btn btn-primary" id="btnSubmitRegister">Fiók létrehozása</button>
+            </div>
+
+            <button type="button" class="btn btn-secondary" id="btnCloseLogin" style="margin-top: 1rem;">Mégse</button>
         </div>
     </div>
 
@@ -215,6 +312,12 @@
     <div id="expiryBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: #fff; padding: 0.6rem 1rem; font-size: 0.9rem; z-index: 9998; box-shadow: 0 2px 8px rgba(0,0,0,0.2); align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
         <span id="expiryBannerText"></span>
         <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
+    </div>
+
+    <!-- Demó / FREE: PDF vízjel tájékoztató -->
+    <div id="pdfWatermarkBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #0369a1, #0ea5e9); color: #fff; padding: 0.55rem 1rem; font-size: 0.86rem; z-index: 9997; box-shadow: 0 2px 8px rgba(0,0,0,0.15); align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <span id="pdfWatermarkBannerText">Demó / ingyenes csomag: a letöltött PDF vízjellel készül, nem minősül teljes értékű hiteles dokumentumnak. Teljes PDF az előfizetéssel.</span>
+        <button type="button" id="pdfWatermarkBannerDismiss" style="background: rgba(255,255,255,0.22); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
     </div>
 
     <!-- Jelszó visszaállítás (app.html?reset=TOKEN) -->

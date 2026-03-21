@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query, Body, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 import stripe
+
+import dijbekero as dijbekero_mod
 
 router = APIRouter()
 
@@ -26,12 +28,15 @@ def _admin_user_scope_query(db: Session, current_admin: database.User):
     return q.filter(database.User.company_id == current_admin.company_id)
 
 
-def _user_response(u: database.User) -> schemas.UserResponse:
+def _user_response(db: Session, u: database.User) -> schemas.UserResponse:
+    db.refresh(u, ["company"])
     return schemas.UserResponse(
         id=u.id, username=u.username, email=u.email, is_active=u.is_active,
         role=u.role, company_id=u.company_id,
         company_name=u.company.name if u.company else None,
         subscription_expires=u.subscription_expires,
+        company_plan=u.company.plan if u.company else None,
+        pdf_export_watermarked=database.user_pdf_export_watermarked(db, u),
     )
 
 
@@ -46,6 +51,24 @@ def list_pending_orders(
         database.PendingOrder.status == "PENDING"
     ).order_by(database.PendingOrder.created_at.desc()).all()
     return orders
+
+
+@router.get(
+    "/api/admin/marketing-subscribers",
+    response_model=List[schemas.MarketingSubscriberAdminResponse],
+)
+def admin_list_marketing_subscribers(
+    active_only: bool = True,
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    """Marketing / hírlevél feliratkozók exportálható listája (főadmin)."""
+    q = db.query(database.MarketingSubscriber).order_by(
+        database.MarketingSubscriber.created_at.desc()
+    )
+    if active_only:
+        q = q.filter(database.MarketingSubscriber.unsubscribed_at == None)
+    return q.limit(5000).all()
 
 
 @router.post("/api/admin/pending-orders/{order_id}/mark-paid")
@@ -135,6 +158,168 @@ def refund_payment(
     log.refunded_at = datetime.utcnow()
     db.commit()
     return {"status": "ok", "message": "Visszatérítés elküldve, hozzáférés visszavonva."}
+
+
+# ─── Díjbekérő PDF (NAV-kötés nélkül – csak super admin) ───
+@router.post("/api/admin/dijbekero-pdf")
+def generate_dijbekero_pdf_endpoint(
+    body: Optional[schemas.DijbekeroRequest] = Body(default=None),
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    """Díjbekérő PDF letöltése. Céges adatok: IMPRINT_* env. Logó: Céges adatok vagy IMPRINT_LOGO_PATH."""
+    if current_admin.role not in ("SUPER_ADMIN", "ADMIN"):
+        raise HTTPException(status_code=403, detail="Csak főadmin hozhat létre díjbekérőt.")
+    logo_path = os.getenv("IMPRINT_LOGO_PATH")
+    if not logo_path and current_admin.company_id:
+        settings = db.query(database.CompanySettings).filter(
+            database.CompanySettings.company_id == current_admin.company_id
+        ).first()
+        if settings and settings.logo_path and os.path.exists(settings.logo_path):
+            logo_path = settings.logo_path
+    if not logo_path:
+        settings = db.query(database.CompanySettings).filter(
+            database.CompanySettings.owner_id == current_admin.id
+        ).first()
+        if settings and settings.logo_path and os.path.exists(settings.logo_path):
+            logo_path = settings.logo_path
+    if not logo_path:
+        settings = db.query(database.CompanySettings).filter(
+            database.CompanySettings.logo_path.isnot(None),
+        ).first()
+        if settings and settings.logo_path and os.path.exists(settings.logo_path):
+            logo_path = settings.logo_path
+    b = body or schemas.DijbekeroRequest()
+    sorszam = dijbekero_mod.get_next_sorszam(db)
+    db.commit()
+    pdf_bytes = dijbekero_mod.generate_dijbekero_pdf(
+        amount_huf=b.amount_huf,
+        description=(b.description or "").strip() or None,
+        due_date=(b.due_date or "").strip() or None,
+        vevo_nev=(b.vevo_nev or "").strip() or None,
+        vevo_cim=(b.vevo_cim or "").strip() or None,
+        logo_path=logo_path,
+        sorszam=sorszam,
+    )
+    send_to = (b.send_to_email or "").strip()
+    if send_to and "@" in send_to:
+        try:
+            dijbekero_mod.send_dijbekero_email(
+                to_email=send_to,
+                pdf_bytes=pdf_bytes,
+                amount_huf=b.amount_huf,
+                description=(b.description or "").strip() or None,
+                due_date=(b.due_date or "").strip() or None,
+                vevo_nev=(b.vevo_nev or "").strip() or None,
+                sorszam=sorszam,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"Email küldés sikertelen: {str(e)}")
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"message": f"Díjbekérő {sorszam} elküldve a következő címre: {send_to}", "sorszam": sorszam})
+    from io import BytesIO
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=dijbekero-{sorszam}.pdf"},
+    )
+
+
+# ─── Díjbekérő sablonok (preset) ───
+@router.get("/api/admin/dijbekero-presets", response_model=List[schemas.DijbekeroPresetResponse])
+def list_dijbekero_presets(
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    presets = db.query(database.DijbekeroPreset).order_by(database.DijbekeroPreset.sort_order, database.DijbekeroPreset.id).all()
+    return presets
+
+
+@router.post("/api/admin/dijbekero-presets", response_model=schemas.DijbekeroPresetResponse)
+def create_dijbekero_preset(
+    body: schemas.DijbekeroPresetCreate,
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    max_order = db.query(database.DijbekeroPreset).count()
+    preset = database.DijbekeroPreset(
+        name=(body.name or "").strip()[:128] or "Sablon",
+        amount_huf=body.amount_huf,
+        description=(body.description or "").strip()[:256] or None,
+        sort_order=max_order,
+    )
+    db.add(preset)
+    db.commit()
+    db.refresh(preset)
+    return preset
+
+
+@router.delete("/api/admin/dijbekero-presets/{preset_id}")
+def delete_dijbekero_preset(
+    preset_id: int,
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    db.query(database.DijbekeroPreset).filter(database.DijbekeroPreset.id == preset_id).delete()
+    db.commit()
+    return {"ok": True}
+
+
+# ─── Határidő emlékeztető (cron hívja, pl. naponta) ───
+@router.post("/api/internal/dijbekero-reminders")
+def run_dijbekero_reminders(
+    request: Request,
+    db: Session = Depends(auth.get_db),
+):
+    """PENDING megrendelések emlékeztetője (3+ napja nincs befizetés). Cron: X-Cron-Secret header."""
+    secret = (os.getenv("DIJBEKERO_REMINDER_CRON_SECRET", "") or "").strip()
+    if not secret:
+        raise HTTPException(status_code=501, detail="Emlékeztető nincs konfigurálva.")
+    provided = (request.headers.get("X-Cron-Secret") or request.query_params.get("secret") or "").strip()
+    if provided != secret:
+        raise HTTPException(status_code=403, detail="Érvénytelen secret.")
+
+    threshold = datetime.utcnow() - timedelta(days=3)
+    orders = (
+        db.query(database.PendingOrder)
+        .filter(
+            database.PendingOrder.status == "PENDING",
+            database.PendingOrder.created_at < threshold,
+            database.PendingOrder.reminder_sent_at == None,
+        )
+        .all()
+    )
+    import smtplib
+    from email.message import EmailMessage
+    smtp_server = os.getenv("SMTP_SERVER", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    sent = 0
+    if smtp_server and smtp_user and smtp_pass:
+        for order in orders:
+            try:
+                msg = EmailMessage()
+                msg["Subject"] = "VBF Tervező – emlékeztető: utalásos megrendelés"
+                msg["From"] = smtp_user
+                msg["To"] = order.email
+                plan_label = "havi" if order.plan_type == "monthly" else "éves"
+                msg.set_content(
+                    f"Kedves {order.customer_name}!\n\n"
+                    f"Emlékeztetünk: a {plan_label} előfizetésed ({order.amount_huf} Ft) utalását még nem kaptuk meg.\n\n"
+                    "Ha már utaltál, kérjük vedd fel velünk a kapcsolatot. Ha még nem, kérjük a számla szerinti adatok alapján végezd az utalást.\n\n"
+                    "Üdvözlettel,\nA VBF Csapat"
+                )
+                with smtplib.SMTP(smtp_server, smtp_port) as server:
+                    server.starttls()
+                    server.login(smtp_user, smtp_pass)
+                    server.send_message(msg)
+                order.reminder_sent_at = datetime.utcnow()
+                sent += 1
+            except Exception:
+                pass
+    db.commit()
+    return {"ok": True, "reminders_sent": sent, "orders_found": len(orders)}
 
 
 # ─── Előfizetési csomagok (ár, tartalom – csak super admin) ───
@@ -230,7 +415,7 @@ def update_company(
 def admin_get_users(db: Session = Depends(auth.get_db), current_admin: database.User = Depends(auth.get_current_admin)):
     from sqlalchemy.orm import joinedload
     users = _admin_user_scope_query(db, current_admin).options(joinedload(database.User.company)).all()
-    return [_user_response(u) for u in users]
+    return [_user_response(db, u) for u in users]
 
 
 @router.post("/api/admin/users", response_model=schemas.UserResponse)
@@ -293,7 +478,8 @@ def admin_create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return _user_response(new_user)
+    db.refresh(new_user, ["company"])
+    return _user_response(db, new_user)
 
 
 @router.put("/api/admin/users/{user_id}", response_model=schemas.UserResponse)
@@ -320,8 +506,8 @@ def admin_update_user(
         setattr(db_user, key, value)
 
     db.commit()
-    db.refresh(db_user)
-    return _user_response(db_user)
+    db.refresh(db_user, ["company"])
+    return _user_response(db, db_user)
 
 
 @router.delete("/api/admin/users/{user_id}")

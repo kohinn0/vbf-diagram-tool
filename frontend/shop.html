@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0e1726">
-    <meta name="description" content="VBF Cég admin és Dashboard – Webshop, felhasználók, előfizetések, munkakiosztás.">
+    <meta name="description" content="VBF Cég admin és Dashboard – Felhasználók, előfizetések, munkakiosztás.">
     <title>VBF Cég admin | Dashboard & Admin</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -77,6 +77,37 @@
                 <div id="adminPaymentHistorySection" style="display: none; margin-bottom: 2rem;">
                     <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📋 Fizetési előzmények</h3>
                     <div id="adminPaymentHistoryList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;"><p style="color: var(--text-muted);">Betöltés…</p></div>
+                </div>
+                <div id="adminDijbekeroSection" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📄 Díjbekérő PDF</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">NAV-kötés nélküli fizetési felszólítás a céges adataiddal (Impresszum). Sorszám automatikus, közlemény a PDF-en.</p>
+                    <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; max-width: 520px;">
+                        <label>Sablon (gyors kitöltés)</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <select id="dijbekeroPresetSelect" style="flex: 1; min-width: 180px;">
+                                <option value="">— Válassz sablont —</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-small" id="btnDijbekeroSavePreset">💾 Mentés sablonként</button>
+                        </div>
+                        <label>Összeg (Ft, opcionális)</label>
+                        <input type="number" id="dijbekeroAmount" min="0" placeholder="Pl. 99000" style="width: 100%; margin-bottom: 10px;">
+                        <label>Leírás (opcionális)</label>
+                        <input type="text" id="dijbekeroDesc" placeholder="Pl. VBF Premium Pro – 1 év" style="width: 100%; margin-bottom: 10px;">
+                        <label>Fizetési határidő (opcionális, pl. 2026.04.15)</label>
+                        <input type="text" id="dijbekeroDue" placeholder="2026.04.15" style="width: 100%; margin-bottom: 10px;">
+                        <label>Vevő neve (opcionális)</label>
+                        <input type="text" id="dijbekeroVevoNev" placeholder="Vevő neve" style="width: 100%; margin-bottom: 10px;">
+                        <label>Vevő címe (opcionális)</label>
+                        <input type="text" id="dijbekeroVevoCim" placeholder="Cím" style="width: 100%; margin-bottom: 10px;">
+                        <label>Email címzett (ha küldés)</label>
+                        <input type="email" id="dijbekeroEmail" placeholder="vevo@example.com" style="width: 100%; margin-bottom: 12px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" id="btnDijbekeroPdf">📥 Letöltés</button>
+                            <button type="button" class="btn btn-secondary" id="btnDijbekeroEmail">📧 Küldés emailben</button>
+                            <button type="button" class="btn btn-secondary" id="btnDijbekeroDuplikatum">📋 Duplikátum</button>
+                        </div>
+                        <p id="dijbekeroStatus" style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);"></p>
+                    </div>
                 </div>
                 <div id="adminCompaniesSection" style="display: none; margin-bottom: 2rem;">
                     <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏛️ Cégek</h3>

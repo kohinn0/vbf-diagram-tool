@@ -6,6 +6,7 @@ import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from typing import Optional
 from pydantic import BaseModel
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,6 +28,7 @@ class CheckoutRequest(BaseModel):
     plan: str = "yearly"  # 'monthly' or 'yearly'
     email: str | None = None   # regisztrációhoz: ezzel a címmel jön létre a user
     password: str | None = None  # vásárláskor megadott jelszó → adatbázisba kerül
+    return_page: str = "index"  # "index" | "app" — Stripe visszatérési URL
 
 
 def _amount_huf_for_plan(plan_type: str) -> int:
@@ -44,6 +46,12 @@ def _get_pro_prices_huf(db: Session):
     if yearly <= 0:
         yearly = AMOUNT_YEARLY_HUF
     return monthly, yearly
+
+
+@router.get("/api/payments/card-payments-enabled")
+def card_payments_enabled_endpoint():
+    """Frontend: megjelenjen-e a bankkártyás (Stripe) gomb a kosárban."""
+    return {"enabled": bool(CARD_PAYMENTS_ENABLED)}
 
 
 @router.get("/api/payments/session-status")
@@ -88,6 +96,11 @@ def create_checkout_session(request: Request, body: CheckoutRequest, db: Session
     # Ensure domain url is correctly pointing to frontend
     domain_url = domain_url.replace(":8001", ":8080")
 
+    rp = (body.return_page or "index").strip().lower()
+    if rp not in ("index", "app"):
+        rp = "index"
+    return_html = "app.html" if rp == "app" else "index.html"
+
     monthly_huf, yearly_huf = _get_pro_prices_huf(db)
     if body.plan == "monthly":
         name = 'Villamos Biztonsági Felülvizsgáló (VBF) Tervező - Havi Előfizetés'
@@ -117,8 +130,8 @@ def create_checkout_session(request: Request, body: CheckoutRequest, db: Session
                 "quantity": 1,
             }],
             "mode": "payment",
-            "success_url": domain_url + "/index.html?payment=success&session_id={CHECKOUT_SESSION_ID}",
-            "cancel_url": domain_url + "/index.html",
+            "success_url": domain_url + f"/{return_html}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": domain_url + f"/{return_html}",
             "metadata": {"plan_type": body.plan},
             "allow_promotion_codes": True,
         }
@@ -195,8 +208,37 @@ def request_bank_transfer(
     db.commit()
 
     _send_bank_transfer_info_email(order, pdf_attachment=pdf_bytes)
+
+    if (os.getenv("DIJBEKERO_ON_BANK_TRANSFER", "0") or "").strip().lower() in ("1", "true", "yes", "on"):
+        try:
+            import dijbekero as dijbekero_mod
+            sorszam = dijbekero_mod.get_next_sorszam(db)
+            db.commit()
+            due = (datetime.utcnow() + timedelta(days=14)).strftime("%Y.%m.%d")
+            plan_label = "havi" if order.plan_type == "monthly" else "éves"
+            pdf_d = dijbekero_mod.generate_dijbekero_pdf(
+                amount_huf=order.amount_huf,
+                description=f"VBF Premium – {plan_label} előfizetés",
+                due_date=due,
+                vevo_nev=order.customer_name,
+                vevo_cim=(" ".join(filter(None, [order.buyer_zip, order.buyer_city, order.buyer_address])) or None),
+                sorszam=sorszam,
+            )
+            dijbekero_mod.send_dijbekero_email(
+                to_email=order.email,
+                pdf_bytes=pdf_d,
+                amount_huf=order.amount_huf,
+                description=f"VBF Premium – {plan_label} előfizetés",
+                due_date=due,
+                vevo_nev=order.customer_name,
+                sorszam=sorszam,
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger("vbf").exception("Díjbekérő automatikus küldés hiba: %s", e)
+
     return schemas.BankTransferResponse(
-        message="Köszönjük! A számlát elküldtük az email címedre. A hozzáférés aktiválásra kerül, amint az utalást jóváhagyjuk (általában 1-2 munkanap)."
+        message="Köszönjük! A számlát elküldtük az email címedre. A hozzáférés (új előfizetés vagy meglévő meghosszabbítása) aktiválásra kerül, amint az utalást jóváhagyjuk (általában 1-2 munkanap)."
     )
 
 
@@ -233,17 +275,46 @@ def _send_bank_transfer_info_email(order, pdf_attachment: bytes = None):
         logging.getLogger("vbf").exception("SMTP hiba utalásos email: %s", e)
 
 
+def _plan_duration_timedelta(plan_type: str) -> timedelta:
+    pt = (plan_type or "yearly").lower()
+    if pt == "monthly":
+        return timedelta(days=31)
+    return timedelta(days=365)
+
+
+def _stacked_subscription_expiry_for_company(db: Session, company_id: int, plan_type: str) -> datetime:
+    """
+    Új előfizetés lejárata: ha a cégnél van még érvényes (jövőbeli) lejárat, arra ráépítjük a csomagot;
+    ha lejárt vagy nincs, a mai naptól számolunk. Így hosszabbítás és új vásárlás ugyanazzal a folyamattal intézhető.
+    """
+    now = datetime.utcnow()
+    delta = _plan_duration_timedelta(plan_type)
+    base = now
+    users = (
+        db.query(database.User)
+        .filter(
+            database.User.company_id == company_id,
+            database.User.deleted_at == None,
+            database.User.role.in_(("TECH", "COMPANY_ADMIN")),
+        )
+        .all()
+    )
+    for u in users:
+        exp = getattr(u, "subscription_expires", None)
+        if exp and exp > base:
+            base = exp
+    return base + delta
+
+
 def grant_access_after_payment(db: Session, customer_email: str, customer_name: str, plan_type: str, pdf_attachment: bytes = None, stripe_session_id: str = None):
     """
     Fizetés után (Stripe vagy utalás jóváhagyás): cég + user PRO hozzáférés, email.
+    Meglévő aktív előfizetés esetén a cég összes TECH / COMPANY_ADMIN userének lejárata ugyanarra a
+    meghosszabbított dátumra kerül (ráépítés a legkésőbbi érvényes lejáratra).
     Ha stripe_session_id megvan és van hozzá pending jelszó, azt használjuk (adatbázisba kerül).
     Csak backendről hívandó (webhook vagy admin mark-paid).
     """
     plan_key = "PRO"
-    if plan_type == "monthly":
-        new_sub_expiry = datetime.utcnow() + timedelta(days=31)
-    else:
-        new_sub_expiry = datetime.utcnow() + timedelta(days=365)
 
     db_user = db.query(database.User).filter(database.User.email == customer_email).first()
     company = None
@@ -265,11 +336,32 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
 
     if db_user:
         db_user.company_id = company.id
-        db_user.subscription_expires = new_sub_expiry
         if db_user.role in ("TECH", "COMPANY_ADMIN"):
             db_user.role = "COMPANY_ADMIN"
+        db.flush()
+
+        new_sub_expiry = _stacked_subscription_expiry_for_company(db, company.id, plan_type)
+        crew = (
+            db.query(database.User)
+            .filter(
+                database.User.company_id == company.id,
+                database.User.deleted_at == None,
+                database.User.role.in_(("TECH", "COMPANY_ADMIN")),
+            )
+            .all()
+        )
+        for u in crew:
+            u.subscription_expires = new_sub_expiry
         db.commit()
-        _send_access_email(db_user.username, customer_email, None, plan_type, is_new=False, pdf_attachment=pdf_attachment)
+        _send_access_email(
+            db_user.username,
+            customer_email,
+            None,
+            plan_type,
+            is_new=False,
+            pdf_attachment=pdf_attachment,
+            subscription_valid_until=new_sub_expiry,
+        )
     else:
         import string
         import random
@@ -292,6 +384,7 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
         while db.query(database.User).filter(database.User.username == username).first():
             username = f"{base_username}{counter}"
             counter += 1
+        new_sub_expiry = _stacked_subscription_expiry_for_company(db, company.id, plan_type)
         new_user = database.User(
             username=username,
             email=customer_email,
@@ -303,7 +396,15 @@ def grant_access_after_payment(db: Session, customer_email: str, customer_name: 
         )
         db.add(new_user)
         db.commit()
-        _send_access_email(username, customer_email, temp_password, plan_type, is_new=True, pdf_attachment=pdf_attachment)
+        _send_access_email(
+            username,
+            customer_email,
+            temp_password,
+            plan_type,
+            is_new=True,
+            pdf_attachment=pdf_attachment,
+            subscription_valid_until=new_sub_expiry,
+        )
 
 
 @router.post("/api/payments/webhook")
@@ -367,7 +468,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(auth.get_db)):
     return {"status": "success"}
 
 
-def _send_access_email(username: str, to_email: str, password: str, plan_type: str, is_new: bool, pdf_attachment: bytes = None):
+def _send_access_email(
+    username: str,
+    to_email: str,
+    password: Optional[str],
+    plan_type: str,
+    is_new: bool,
+    pdf_attachment: bytes = None,
+    subscription_valid_until: Optional[datetime] = None,
+):
     import smtplib
     from email.message import EmailMessage
     smtp_server = os.getenv("SMTP_SERVER", "")
@@ -380,6 +489,12 @@ def _send_access_email(username: str, to_email: str, password: str, plan_type: s
     msg['Subject'] = "Sikeres előfizetés: VBF Tervező hozzáférés"
     msg['From'] = smtp_user
     msg['To'] = to_email
+    valid_suffix = ""
+    if subscription_valid_until:
+        valid_suffix = (
+            f"\nElőfizetés lejárata (céges PRO): "
+            f"{subscription_valid_until.strftime('%Y-%m-%d %H:%M')} UTC körül.\n"
+        )
     if is_new:
         if password:
             content = (
@@ -387,6 +502,7 @@ def _send_access_email(username: str, to_email: str, password: str, plan_type: s
                 f"{'havi' if plan_type == 'monthly' else 'éves'} előfizetést.\n\n"
                 "Belépési adataid (céges vezető):\n"
                 f"Felhasználónév: {username}\nJelszó: {password}\n\n"
+                f"{valid_suffix}"
                 "Kérjük első belépés után változtasd meg a jelszavad!\n\nÜdvözlettel,\nA VBF Csapat"
             )
         else:
@@ -395,12 +511,15 @@ def _send_access_email(username: str, to_email: str, password: str, plan_type: s
                 f"{'havi' if plan_type == 'monthly' else 'éves'} előfizetést.\n\n"
                 "Belépési adataid (céges vezető):\n"
                 f"Felhasználónév: {username}\n"
+                f"{valid_suffix}"
                 "A belépéshez a vásárláskor megadott jelszavadat használd.\n\nÜdvözlettel,\nA VBF Csapat"
             )
     else:
         content = (
-            f"Kedves Felhasználó!\n\nAz előfizetésedet meghosszabbítottuk "
+            f"Kedves Felhasználó!\n\nAz előfizetésedet meghosszabbítottuk / aktiváltuk "
             f"({'havi' if plan_type == 'monthly' else 'éves'} csomag). "
+            "Ha már volt aktív időszakod, az új időt arra ráépítettük (nem veszíted el a hátralévő napokat)."
+            f"{valid_suffix}"
             "A meglévő belépési adataiddal továbbra is használhatod a rendszert.\n\nÜdvözlettel,\nA VBF Csapat"
         )
     msg.set_content(content)

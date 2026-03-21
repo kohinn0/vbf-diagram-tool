@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 
@@ -17,6 +17,32 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    company_name: Optional[str] = None  # demó regisztráció: új cég megjelenített neve
+    marketing_opt_in: bool = Field(default=False, description="Hírlevél / marketing (GDPR hozzájárulás)")
+
+
+class MarketingSubscribeRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    consent: bool = False
+    source: Optional[str] = "landing"
+
+
+class MarketingUnsubscribeRequest(BaseModel):
+    email: str
+
+
+class MarketingSubscriberAdminResponse(BaseModel):
+    id: int
+    email: str
+    name: Optional[str] = None
+    source: Optional[str] = None
+    ip: Optional[str] = None
+    created_at: datetime
+    unsubscribed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class UserResponse(UserBase):
     id: int
@@ -25,6 +51,8 @@ class UserResponse(UserBase):
     company_id: Optional[int] = None
     company_name: Optional[str] = None  # kitöltve a backendben joinnal
     subscription_expires: Optional[datetime] = None
+    company_plan: Optional[str] = None  # FREE | PRO | ENTERPRISE
+    pdf_export_watermarked: bool = True  # True: PDF demó/ingyenes – vízjeles, nincs teljes értékű aláírás
 
     class Config:
         from_attributes = True
@@ -177,6 +205,33 @@ class BankTransferRequest(BaseModel):
 
 class BankTransferResponse(BaseModel):
     message: str  # Csak üzenet, semmilyen token vagy hozzáférés adat
+
+
+class DijbekeroRequest(BaseModel):
+    """Díjbekérő PDF: opcionális mezők. Ha send_to_email megadva, SMTP-val kiküldi sablon e-mailben."""
+    amount_huf: Optional[int] = None
+    description: Optional[str] = None
+    due_date: Optional[str] = None  # pl. 2026.04.15
+    vevo_nev: Optional[str] = None
+    vevo_cim: Optional[str] = None
+    send_to_email: Optional[str] = None  # ha megadva: PDF e-mailben kiküldve a címzettnek
+
+
+class DijbekeroPresetCreate(BaseModel):
+    name: str
+    amount_huf: Optional[int] = None
+    description: Optional[str] = None
+
+
+class DijbekeroPresetResponse(BaseModel):
+    id: int
+    name: str
+    amount_huf: Optional[int] = None
+    description: Optional[str] = None
+    sort_order: int = 0
+
+    class Config:
+        from_attributes = True
 
 
 class PendingOrderResponse(BaseModel):

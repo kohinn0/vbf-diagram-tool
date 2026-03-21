@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VBF Premium – Villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv generátor. Rajzoló, Metrel import, hibagenerátor. A VVF modul később kerül bele.">
-    <title>VBF Premium | VBF &amp; EPH Jegyzőkönyv &amp; Webshop</title>
+    <meta name="description" content="VBF Premium – Villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver magyar villanyszerelőknek. MSZ HD 60364, OTSZ szerinti sablonok. VBF szakértő készítette – szakembertől szakembereknek. Metrel PADFX import, elosztó rajz, hibajegyzék, tableten is működik.">
+    <meta name="keywords" content="VBF jegyzőkönyv, villamos biztonsági felülvizsgálat, EPH jegyzőkönyv, villanyszerelő szoftver, villamos szakember, felülvizsgálati jegyzőkönyv, MSZ HD 60364, Metrel PADFX, elosztó rajz, villamos biztonság">
+    <title>VBF Premium | VBF és EPH Jegyzőkönyv Szoftver – Villamos Szakemberektől</title>
     <link rel="icon" type="image/svg+xml" href="img/logo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -1041,22 +1042,27 @@
             </div>
             <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
                 <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Utalásos megrendelés</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Add meg az e-mail címed és válassz jelszót a belépéshez, majd kérj kézi számlát utaláshoz. A hozzáférést a beérkezett utalás után aktiváljuk.</p>
-                <div id="cartRegFields" style="margin-bottom: 1.25rem;">
-                    <label style="display:block; margin-bottom: 4px;">Email *</label>
-                    <input type="email" id="cartCheckoutEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Jelszó (belépéshez) *</label>
-                    <input type="password" id="cartCheckoutPassword" placeholder="Min. 8 karakter, nagybetű, kisbetű, szám" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Jelszó megerősítése *</label>
-                    <input type="password" id="cartCheckoutPasswordConfirm" placeholder="Ismételd meg a jelszót" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 4px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <p id="cartCheckoutPasswordHint" style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px 0;">Legalább 8 karakter, tartalmazzon nagybetűt, kisbetűt és számot vagy speciális karaktert.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>hosszabbítás</strong> ugyanitt: jóváhagyás után az új időszak a még érvényes PRO lejáratra <strong>ráépül</strong> (nem vesznek el napok). Az utalásos számlához <strong>nem kell jelszót</strong> megadnod – a lenti űrlapon a számlázási adatok elég. A hozzáférés a fizetés jóváhagyása után kerül aktiválásra; érdemes <strong>ugyanazt az e-mail címet</strong> használni, mint a fiókodnál.</p>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 1.25rem 0; line-height: 1.55;">Már be vagy jelentkezve a jegyzőkönyv szerkesztőbe? Nyisd meg az <a href="app.html" style="color: var(--accent);">alkalmazást</a> – ott is eléred ugyanezt a kosarat (azonos böngészőben).</p>
+                <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártya (Stripe)</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali fizetés. Új fiók esetén opcionálisan megadhatsz jelszót (e-mail kötelező hozzá); ha üresen hagyod, ideiglenes jelszót kapsz e-mailben.</p>
+                    <label style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
+                    <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Jelszó (opcionális, új fiókhoz)</label>
+                    <input type="password" id="cartStripePassword" placeholder="Ha kitöltöd, min. 8 karakter, nagy+kis+szám" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
+                    <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a biztonságos fizetéshez (Stripe)</button>
+                    <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
+                    <p style="text-align: center; font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0 0;">— vagy utalással —</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
                     <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Számla kérése (utalás)</button>
                 </div>
                 <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
                     <label style="display:block; margin-bottom: 4px;">Email *</label>
-                    <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <label style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
                     <input type="text" id="cartName" placeholder="Kovács Kft." style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <label style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
@@ -1080,25 +1086,26 @@
 
     <section class="hero">
         <div class="hero-content">
-            <div class="badge">Felhőalapú Jegyzőkönyv – Villanyszerelőknek</div>
-            <p style="max-width: 600px; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--accent); font-weight: 600;">✨ VBF és EPH jegyzőkönyv egy helyen – a VVF modul hamarosan.</p>
-            <h1>Minősítő Iratok.<br>Precízebben, Gyorsabban.</h1>
-            <p style="max-width: 600px; margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-light); font-weight: 600;">Villamos biztonsági (VBF) szakértő készítette – szakembertől szakembereknek.</p>
-            <p style="max-width: 600px; font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">A programot nem külső informatikus, hanem a szakmából jövő kolléga fejlesztette: tudjuk, mire van szükség a terepen és a jegyzőkönyvnél.</p>
+            <div class="badge">👷 VBF szakértő készítette – szakembertől szakembereknek</div>
+            <p style="max-width: 600px; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--accent); font-weight: 600;">✨ VBF és EPH jegyzőkönyv, elosztó rajz, Metrel mérések – minden egy helyen</p>
+            <h1>Villamos Biztonsági Felülvizsgálat.<br>Gyorsabban, Professzionálisan.</h1>
+            <p style="max-width: 600px; margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-light); font-weight: 600;">A programot VBF szakértő készítette – aki maga is terepen dolgozik. Szakembertől szakembereknek.</p>
+            <p style="max-width: 600px; font-size: 1rem; color: var(--text-color); margin-bottom: 1rem; font-weight: 500;">A programot én, mint villamos biztonsági (VBF) és EPH szakértő fejlesztettem – olyan szoftvert, amit a saját felülvizsgálataimhoz használnék. Tudom, mire van szükség a terepen és a jegyzőkönyvnél – mert én is ott vagyok minden nap.</p>
             <p style="max-width: 600px; font-size: 1.15rem; line-height: 1.7;">
-                Egy helyen: jegyzőkönyv, elosztó rajz, Metrel mérések importja és automatikus hibajegyzék. Mindez böngészőben, tableten is – akár offline, később szinkronizálva. 
-                Szabványos formátum (MSZ HD 60364, OTSZ), saját céges logóval és digitálisan aláírt PDF-del. Nincs papírozás, Excel-táblák vagy kézi másolás.
+                <strong>Egy helyen minden:</strong> villamos biztonsági felülvizsgálati jegyzőkönyv (VBF), EPH jegyzőkönyv, egyvonalas elosztó rajz, Metrel PADFX import és automatikus hibajegyzék. Munkakiosztás, naptár, villámvédelem (LPS) blokk. Böngészőben, tableten is – akár offline a terepen, később szinkronizálva.
+                <strong>Szabványos és hiteles:</strong> MSZ HD 60364-6, TvMI 7, OTSZ szerinti sablonok. Saját céges logóval és aláírással. Word és PDF export, QR kód az elosztóra. A demó PDF vízjellel készül; előfizetéssel digitálisan aláírt, vízjel nélküli PDF.
             </p>
             <div class="cta-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <a href="#shop" class="btn btn-accent btn-large"
                     style="font-size: 1.15rem; padding: 1rem 2.5rem;">Licenc Vásárlása</a>
-                <a href="app.html?demo=1" class="btn btn-outline btn-large"
-                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Demó Kipróbálása</a>
+                <a href="app.html?register=1" class="btn btn-outline btn-large"
+                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Demó – regisztráció</a>
             </div>
+            <p style="max-width: 560px; font-size: 0.88rem; color: var(--text-muted); margin-top: 0.75rem;">A demóhoz fiók szükséges; a bemutató videót lent találod. A webshopban előfizethetsz a teljes PDF exportért.</p>
 
             <div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: 12px; max-width: 560px;">
                 <p style="margin: 0; font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">
-                    <strong style="color: var(--primary-light);">Miért bízhatsz bennünk?</strong> A fejlesztő maga is VBF szakértő – a szoftvert szakember kolléga alkotta. Pont azt kapod, amire a felülvizsgálatoknál és a jegyzőkönyvnél tényleg szükséged van.
+                    <strong style="color: var(--primary-light);">Miért bízhatsz bennünk?</strong> A fejlesztő maga is VBF szakértő – terepen dolgozik, vizsgálatokat végez, jegyzőkönyveket ír. Olyan programot csinált, amit maga is használna. Pont azt kapod, amire a villamos biztonsági felülvizsgálatnál és a jegyzőkönyvnél tényleg szükséged van.
                 </p>
             </div>
         </div>
@@ -1115,7 +1122,47 @@
                     <div
                         style="margin-top: 20px; padding: 10px 20px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 5px; border: 1px solid #10b981;">
                         ✅ Saját Céges Logóval</div>
+                    <div
+                        style="margin-top: 10px; padding: 10px 20px; background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border-radius: 5px; border: 1px solid rgba(14, 165, 233, 0.4);">
+                        👷 Szakember készítette</div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="shop-section" style="padding: 4rem 5%; background: linear-gradient(180deg, rgba(14, 165, 233, 0.06) 0%, transparent 100%);">
+        <div class="section-header">
+            <h2 class="section-title">Próbáld Ki Ingyen – VBF Jegyzőkönyv Demó</h2>
+            <p class="section-subtitle">Kipróbálod a teljes jegyzőkönyv-készítőt regisztráció után. Villamos biztonsági felülvizsgálat és EPH – minden funkció a kezedben.</p>
+        </div>
+        <div style="max-width: 880px; margin: 0 auto;">
+            <div id="demoVideoWrap" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); margin-bottom: 1.25rem;">
+                <!-- Ha kész a videó: ide illeszd a YouTube / Vimeo beágyazott iframe-jét (width/height 100%, position absolute, top 0, left 0). -->
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--text-muted); padding: 1.5rem; text-align: center;">
+                    <span style="font-size: 2.5rem; margin-bottom: 0.5rem;">▶</span>
+                    <p style="margin: 0; font-size: 1rem;">A bemutató videó hamarosan itt jelenik meg.</p>
+                </div>
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 1rem;">
+                Regisztráció után a teljes jegyzőkönyv-készítő elérhető; a PDF export demó / ingyenes csomagban <strong style="color: var(--primary-light);">vízjel</strong> formájában készül. Előfizetéssel kapsz aláírt, vízjel nélküli PDF-et.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                <a href="app.html?register=1" class="btn btn-primary">Regisztráció és demó</a>
+                <a href="#shop" class="btn btn-outline">Előfizetés (teljes PDF)</a>
+            </div>
+            <div style="margin-top: 2rem; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); max-width: 520px;">
+                <h3 style="margin: 0 0 0.5rem; font-size: 1.1rem;">Hírlevél &amp; újdonságok</h3>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Tippek, funkciók – nem spamelünk. A feliratkozás önkéntes; leiratkozás később egy kattintással (e-mailben vagy az adatkezelési tájékoztató szerint).</p>
+                <form id="newsletterForm" style="display: flex; flex-direction: column; gap: 0.65rem;">
+                    <input type="email" id="newsletterEmail" required placeholder="E-mail *" style="padding: 10px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <input type="text" id="newsletterName" placeholder="Név (opcionális)" style="padding: 10px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
+                    <label style="font-size: 0.82rem; display: flex; gap: 8px; align-items: flex-start; cursor: pointer;">
+                        <input type="checkbox" id="newsletterConsent" required style="margin-top: 3px;">
+                        <span>Hozzájárulok, hogy a megadott e-mail címre marketing (hírlevél) üzeneteket küldjetek.</span>
+                    </label>
+                    <button type="submit" class="btn btn-primary btn-small" id="newsletterSubmit" style="align-self: flex-start;">Feliratkozom</button>
+                    <p id="newsletterStatus" style="font-size: 0.85rem; min-height: 1.2em; margin: 0; color: var(--accent);"></p>
+                </form>
             </div>
         </div>
     </section>
@@ -1127,10 +1174,11 @@
         </div>
         <div style="max-width: 680px; margin: 0 auto; text-align: center;">
             <p style="font-size: 1.1rem; line-height: 1.75; color: var(--text-muted); margin-bottom: 1rem;">
-                Tudjuk, milyen időrabló, ha mérésről mérésre Excelbe vagy Wordbe gépelsz, otthon összerakod a képeket, és kézzel utánanézel a szabványoknak.
+                Tudjuk, milyen időrabló, ha mérésről mérésre Excelbe vagy Wordbe gépelsz, otthon összerakod a képeket, kézzel utánanézel a szabványoknak – miközben a következő vizsgálat már vár. Én magam is ezt csináltam – ezért vágtam bele a fejlesztésbe.
             </p>
             <p style="font-size: 1.1rem; line-height: 1.75; color: var(--text-muted); margin-bottom: 1.25rem;">
-                Innen indult a VBF Premium: egy olyan megoldás, ami megkönnyíti a munkát, rengeteg időt spórol, és mindent egy helyen tart – mérésekkel, szabványokkal, dokumentumokkal. <strong style="color: var(--text-color);">Szakembertől szakembereknek.</strong>
+                Innen indult a VBF Premium: egy olyan villamos biztonsági jegyzőkönyv-szoftver, ami rengeteg órát spórol, mindent egy helyen tart – mérésekkel, szabványokkal, dokumentumokkal. <strong style="color: var(--text-color);">VBF szakértő készítette – szakembertől szakembereknek.</strong> Magyar fejlesztés, a terepi gyakorlatból született.
+            </p>
             </p>
             <a href="#contact" class="btn btn-outline" style="padding: 0.6rem 1.5rem;">Kapcsolat</a>
         </div>
@@ -1138,12 +1186,12 @@
 
     <section id="how-it-works" class="shop-section" style="padding: 6rem 5%;">
         <div class="section-header">
-            <h2 class="section-title">Hogyan Működik?</h2>
-            <p class="section-subtitle">Licenctől a végleges jegyzőkönyvig – négy egyszerű lépésben.</p>
+            <h2 class="section-title">Hogyan Működik a VBF Premium?</h2>
+            <p class="section-subtitle">Villamos biztonsági felülvizsgálati jegyzőkönyv – licenctől a kész dokumentumig négy lépésben.</p>
         </div>
         <div style="max-width: 800px; margin: 0 auto;">
             <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem;">
-                Licencet választasz, utalásos számlát kérsz, és a beérkezett fizetés jóváhagyása után aktiváljuk a hozzáférést. A céges vezető kioszthatja a vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon dolgozhatnak – akár offline is. Végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
+                Regisztráció, licenc kiválasztása, utalásos számla – a hozzáférés aktiválása után azonnal dolgozhatsz. A céges vezető kiosztja a villamos biztonsági vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon rögzítik a méréseket – akár offline a terepen. Metrel PADFX import, elosztó rajz, hibajegyzék – végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
             </p>
             <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
                 <div style="text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
@@ -1172,9 +1220,9 @@
 
     <section id="features" class="features">
         <div class="section-header">
-            <h2 class="section-title">A Legjobb Eszközök a Munkához</h2>
-            <p class="section-subtitle">Minden funkció azonnal a kezedben – a felülvizsgálatok adminisztrációja percekre csökken.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">MSZ HD 60364, TvMI 7 és OTSZ szerinti sablonok, egyvonalas elosztó rajz, Metrel PADFX import, automatikus hibajegyzék a mérések alapján. A dokumentumok saját logóval és elektronikus aláírással készülnek.</p>
+            <h2 class="section-title">VBF és EPH Jegyzőkönyv – Minden Eszköz Egy Helyen</h2>
+            <p class="section-subtitle">Professzionális villamos biztonsági felülvizsgálati szoftver – a terepi méréstől a kész dokumentumig.</p>
+            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">A VBF Premium az MSZ HD 60364-6, TvMI 7 és OTSZ szerinti sablonokkal dolgozik – villamos szakembereknek tervezve. Egyvonalas elosztó rajz, Metrel PADFX mérésimport, automatikus hibajegyzék a hurok-, szigetelés- és RCD tesztek alapján. Munkakiosztás, naptár, villámvédelem (LPS) blokk. Word és PDF export saját logóval, elektronikus aláírással. QR kód az elosztóra – egyszerűsítve a következő karbantartást.</p>
         </div>
         <div class="feature-grid">
             <div class="feature-card">
@@ -1207,15 +1255,20 @@
                 <h3>Munkakiosztás és naptár</h3>
                 <p>Feladatok kiosztása a technikusoknak; minden munkához ICS naptárbejegyzés megy e-mailben.</p>
             </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Villámvédelem (LPS)</h3>
+                <p>Villámhárító mérések rögzítése – felfogók, levezetők, földelés. A VVF modul bővül.</p>
+            </div>
         </div>
     </section>
 
     <section id="shop" class="shop-section">
         <div class="section-header">
-            <h2 class="section-title">Árazás és előfizetés</h2>
-            <p class="section-subtitle">Válaszd ki a számodra megfelelő licencet – átláthatóan, rejtett költségek nélkül.</p>
+            <h2 class="section-title">VBF Premium Árazás – Licenc Vásárlás</h2>
+            <p class="section-subtitle">Válaszd ki a számodra megfelelő VBF jegyzőkönyv licencet – átláthatóan, rejtett költségek nélkül.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
-                Havi vagy éves csomag. A havi licenc kipróbáláshoz és kisebb volumenhez ideális; az éves licenccel akár két havi használatot ajándékba kapsz. Jelenleg utalásos számlázással dolgozunk, az aktiválás 1-2 munkanap. Számlázási cím megadása kötelező (online szolgáltatás, nincs szállítás).
+                Havi vagy éves csomag – villamos szakembereknek és villanyszerelő cégeknek. A havi licenc kipróbáláshoz és kisebb volumenhez ideális; az éves licenccel akár két havi használatot ajándékba kapsz. Utalásos számlázás, az aktiválás 1–2 munkanap. Online szolgáltatás – nincs szállítás, minden azonnal elérhető.
             </p>
         </div>
 
@@ -1303,17 +1356,20 @@
     <section id="experts" class="shop-section" style="padding: 6rem 5%;">
         <div class="section-header">
             <h2 class="section-title">👷 Minősített Szakemberek</h2>
-            <p class="section-subtitle">Villamos biztonsági (VBF) és EPH szolgáltató szakemberek (a VVF később).</p>
+            <p class="section-subtitle">Villamos biztonsági (VBF), EPH és villámvédelem (VVF) szolgáltató szakemberek.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
                 Minősített VBF és EPH szakemberek – ha vizsgálatra vagy jegyzőkönyvre van szükséged, fordulj hozzájuk. Szakemberként megjelenni szeretnél? Írj nekünk a feltételekért.
             </p>
         </div>
         <div class="feature-grid" id="expertsGrid" style="max-width: 1000px; margin: 0 auto;">
             <div class="feature-card" style="padding: 2rem; text-align: center;">
-                <div style="width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 2rem;">⚡</div>
-                <h3 style="margin-bottom: 0.5rem;">Szakember neve</h3>
+                <div style="width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, var(--primary), var(--accent)); position: relative;">
+                    <img src="img/experts/szikora-zoltan.jpg" alt="Szikora Zoltán" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span style="display: none; position: absolute; inset: 0; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; color: white;">SZ</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Szikora Zoltán</h3>
                 <p style="color: var(--accent); font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem;">VBF · EPH szakértő</p>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Villamos biztonsági (VBF) és EPH felülvizsgálatok, vizsgabizonyítványok.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Villamos biztonsági (VBF) és EPH felülvizsgálatok, vizsgabizonyítványok. A VBF Premium fejlesztője – szakembertől szakembereknek.</p>
                 <a href="#contact" class="btn btn-outline btn-small">Kapcsolatfelvétel</a>
             </div>
         </div>
@@ -1322,10 +1378,16 @@
 
     <section id="faq" class="shop-section" style="padding: 6rem 5%;">
         <div class="section-header">
-            <h2 class="section-title">❓ Gyakori Kérdések (GYIK)</h2>
-            <p class="section-subtitle">Válaszok a leggyakoribb kérdésekre az árazásról, fizetésről és a szolgáltatásról.</p>
+            <h2 class="section-title">❓ VBF Premium – Gyakori Kérdések (GYIK)</h2>
+            <p class="section-subtitle">Válaszok a villamos biztonsági jegyzőkönyv szoftverről – árazás, fizetés, Metrel import, sablonok.</p>
         </div>
         <div class="faq-list">
+            <div class="faq-item">
+                <button type="button" class="faq-question">Mi a VBF Premium, és kinek való?</button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">A VBF Premium egy magyar, felhőalapú villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver – villanyszerelőknek, villamos szakembereknek és villamos biztonsági vizsgálatot végző cégeknek. VBF szakértő készítette: egy helyen jegyzőkönyv, elosztó rajz, Metrel PADFX mérésimport, hibajegyzék. MSZ HD 60364, OTSZ szerinti sablonok. Tableten is működik – akár offline a terepen.</div>
+                </div>
+            </div>
             <div class="faq-item">
                 <button type="button" class="faq-question">Milyen csomagok vannak, és mennyibe kerül?</button>
                 <div class="faq-answer">
@@ -1345,15 +1407,15 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button type="button" class="faq-question">A sablonok megfelelnek az MSZ-nek és az OTSZ-nek?</button>
+                <button type="button" class="faq-question">A VBF és EPH jegyzőkönyv sablonok megfelelnek az MSZ-nek és az OTSZ-nek?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Igen. A VBF és EPH jegyzőkönyvek sablonjai az MSZ HD 60364, TvMI 7 és OTSZ előírásainak megfelelnek. Wordbe és PDF-be ki tudod exportálni, saját logóval és aláírással. A villámvédelmi (VVF) részt később bővítjük.</div>
+                    <div class="faq-answer-inner">Igen. A villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyvek sablonjai az MSZ HD 60364-6, TvMI 7 és OTSZ előírásainak megfelelnek. Wordbe és PDF-be exportálható, saját céges logóval és aláírással. A villámvédelmi (VVF) modul bővül.</div>
                 </div>
             </div>
             <div class="faq-item">
-                <button type="button" class="faq-question">Be tudom tölteni a Metrel mérő méréseit?</button>
+                <button type="button" class="faq-question">Be tudom tölteni a Metrel mérő PADFX méréseit a VBF jegyzőkönyvbe?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Igen. A Metrel PADFX fájlt feltöltöd a felületen, a program felismeri a méréseket és beírja őket a jegyzőkönyvbe. Ha valami nem felel meg, a hibajegyzékhez is automatikusan bekerül.</div>
+                    <div class="faq-answer-inner">Igen. A Metrel PADFX fájlt feltöltöd a felületen, a program felismeri a hurok-, szigetelés- és RCD méréseket, és beírja őket a villamos biztonsági felülvizsgálati jegyzőkönyvbe. Ha valamelyik érték nem felel meg, a hibajegyzékhez automatikusan bekerül a szabványos leírás.</div>
                 </div>
             </div>
             <div class="faq-item">
@@ -1390,7 +1452,7 @@
             <h2 class="section-title">Kapcsolat</h2>
             <p class="section-subtitle">Egyedi árazás, partneri együttműködés, szakemberi hirdetés vagy bármilyen kérdés – írj nekünk.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 640px; margin: 1rem auto 0;">
-                Egyedi árazást kérsz nagyobb csomaghoz? Szeretnél partnerként megjelenni az oldalunkon? Szakemberként hirdetnéd magad villamos biztonsági (VBF) vagy EPH szolgáltatással? (A VVF később.) Bármilyen kérdésed van, írd meg az üzenetben – válaszolunk 1–2 munkanapon belül.
+                Egyedi árazást kérsz nagyobb csomaghoz? Szeretnél partnerként megjelenni az oldalunkon? Szakemberként hirdetnéd magad villamos biztonsági (VBF), EPH vagy villámvédelem (VVF) szolgáltatással? Bármilyen kérdésed van, írd meg az üzenetben – válaszolunk 1–2 munkanapon belül.
             </p>
         </div>
         <div class="cart-total" style="max-width: 500px; margin: 0 auto;">
@@ -1414,7 +1476,7 @@
         <div class="footer-grid">
             <div>
                 <div class="footer-logo"><img src="img/logo.svg" alt="" width="24" height="24" style="vertical-align: middle; margin-right: 6px;"> VBF Premium</div>
-                <p class="footer-desc">Magyar felhőalapú megoldás VBF (villamos biztonsági felülvizsgálat) és EPH jegyzőkönyvekhez. Jelenleg VBF és EPH generátor; a villámvédelmi (VVF) modul később kerül bele. A szoftvert VBF szakértő készítette – szakembertől szakembereknek. Rajzoló, Metrel import, auto-hibagenerátor, elektronikus aláírás. Fejlesztés alatt, még nem éles.</p>
+                <p class="footer-desc">VBF Premium – magyar villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver. VBF szakértő készítette – szakembertől szakembereknek. MSZ HD 60364, OTSZ szerinti sablonok, elosztó rajz, Metrel PADFX import, hibajegyzék, munkakiosztás. Magyar fejlesztés, felhőalapú.</p>
                 <div class="footer-social">
                     <div class="footer-social-title">Kövess minket</div>
                     <div class="social-links">
@@ -1489,6 +1551,17 @@
             }
         })();
 
+        (async function () {
+            try {
+                var r = await fetch(API_BASE_URL + '/payments/card-payments-enabled');
+                var j = await r.json();
+                if (j && j.enabled) {
+                    var w = document.getElementById('cartStripeWrap');
+                    if (w) w.style.display = 'block';
+                }
+            } catch (e) { /* Stripe szekció rejtve marad */ }
+        })();
+
         if (document.getElementById('linkTerms')) document.getElementById('linkTerms').href = API_BASE_URL + '/legal/aszf';
         if (document.getElementById('linkPrivacy')) document.getElementById('linkPrivacy').href = API_BASE_URL + '/legal/privacy';
         if (document.getElementById('linkImprint')) document.getElementById('linkImprint').href = API_BASE_URL + '/legal/imprint';
@@ -1499,6 +1572,45 @@
             var accept = document.getElementById('cookieBannerAccept');
             if (banner && !localStorage.getItem('cookie_consent')) banner.style.display = 'flex';
             if (accept) accept.addEventListener('click', function () { localStorage.setItem('cookie_consent', '1'); if (banner) banner.style.display = 'none'; });
+        })();
+
+        (function () {
+            var form = document.getElementById('newsletterForm');
+            if (!form) return;
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var emailEl = document.getElementById('newsletterEmail');
+                var nameEl = document.getElementById('newsletterName');
+                var consentEl = document.getElementById('newsletterConsent');
+                var status = document.getElementById('newsletterStatus');
+                var btn = document.getElementById('newsletterSubmit');
+                var email = emailEl ? emailEl.value.trim() : '';
+                var name = nameEl ? nameEl.value.trim() : '';
+                if (!consentEl || !consentEl.checked) {
+                    if (status) status.textContent = 'Kérjük, jelöld be a hozzájárulást.';
+                    return;
+                }
+                if (btn) btn.disabled = true;
+                if (status) status.textContent = '';
+                try {
+                    var res = await fetch(API_BASE_URL + '/marketing/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, name: name || null, consent: true, source: 'landing' })
+                    });
+                    var data = await res.json().catch(function () { return {}; });
+                    if (res.ok) {
+                        if (status) { status.textContent = data.message || 'Köszönjük a feliratkozást!'; status.style.color = 'var(--accent)'; }
+                        form.reset();
+                    } else {
+                        var msg = (typeof data.detail === 'string') ? data.detail : (Array.isArray(data.detail) ? data.detail.map(function (x) { return x.msg || x; }).join(' ') : 'Hiba történt.');
+                        if (status) { status.textContent = msg; status.style.color = 'var(--danger, #f87171)'; }
+                    }
+                } catch (err) {
+                    if (status) { status.textContent = 'Hálózati hiba.'; status.style.color = 'var(--danger, #f87171)'; }
+                }
+                if (btn) btn.disabled = false;
+            });
         })();
 
         (function () {
@@ -1610,6 +1722,46 @@
         });
         document.getElementById('cartPayTransfer')?.addEventListener('click', function () {
             document.getElementById('cartTransferForm').style.display = 'block';
+        });
+        document.getElementById('btnCartPayCard')?.addEventListener('click', async function () {
+            var cart = getCart();
+            if (!cart.items.length) return;
+            var email = document.getElementById('cartStripeEmail')?.value?.trim() || null;
+            var pw = document.getElementById('cartStripePassword')?.value || '';
+            var pwc = document.getElementById('cartStripePasswordConfirm')?.value || '';
+            var st = document.getElementById('cartStripeStatus');
+            if (pw && pw !== pwc) {
+                if (st) { st.style.color = '#ef4444'; st.textContent = 'A jelszavak nem egyeznek.'; }
+                return;
+            }
+            if (pw && !email) {
+                if (st) { st.style.color = '#ef4444'; st.textContent = 'Jelszó megadásához e-mail cím is kell.'; }
+                return;
+            }
+            if (st) { st.style.color = ''; st.textContent = 'Átirányítás a fizetéshez…'; }
+            try {
+                var res = await fetch(API_BASE_URL + '/payments/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan: cart.items[0].plan_type,
+                        email: email,
+                        password: pw || null,
+                        return_page: 'index'
+                    })
+                });
+                var data = await res.json().catch(function () { return {}; });
+                if (res.ok && data.url) {
+                    window.location.href = data.url;
+                    return;
+                }
+                if (st) {
+                    st.style.color = '#ef4444';
+                    st.textContent = typeof data.detail === 'string' ? data.detail : 'Nem sikerült elindítani a fizetést.';
+                }
+            } catch (e) {
+                if (st) { st.style.color = '#ef4444'; st.textContent = 'Hálózati hiba.'; }
+            }
         });
         document.getElementById('btnCartRequestInvoice')?.addEventListener('click', async function () {
             var cart = getCart();
