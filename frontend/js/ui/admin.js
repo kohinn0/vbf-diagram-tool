@@ -236,6 +236,7 @@ export function initAdmin() {
         }
         if (isSuperAdmin()) {
             window.fetchAdminCompanies();
+            if (window.fetchAdminInvites) window.fetchAdminInvites();
             if (window.fetchAdminPlans) window.fetchAdminPlans();
             if (window.fetchAdminPendingOrders) window.fetchAdminPendingOrders();
             if (window.fetchAdminPaymentHistory) window.fetchAdminPaymentHistory();
@@ -311,7 +312,7 @@ export function initAdmin() {
             const companies = await res.json();
             const listEl = document.getElementById('adminCompaniesList');
             const sel = document.getElementById('adminNewCompanyId');
-            if (listEl) listEl.textContent = companies.length ? ('Cégek: ' + companies.map(c => c.name).join(', ')) : 'Még nincs cég. Hozz létre egyet alább.';
+            if (listEl) listEl.textContent = companies.length ? ('Cégek: ' + companies.map(c => c.name).join(', ')) : 'Még nincs cég. Hozz létre egyet a fenti űrlapon.';
             if (sel && sel.options.length <= 1) {
                 sel.innerHTML = '<option value="">-- Válassz céget --</option>';
                 companies.forEach(c => sel.appendChild(new Option(c.name, c.id)));
@@ -319,6 +320,76 @@ export function initAdmin() {
             return companies;
         } catch (e) { return []; }
     };
+
+    window.fetchAdminInvites = async function () {
+        const listEl = document.getElementById('adminInvitesList');
+        if (!listEl || !isSuperAdmin()) return;
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/admin/registration-invites`, {
+                headers: { 'Authorization': `Bearer ${window.currentToken}` }
+            });
+            if (!res.ok) {
+                listEl.textContent = 'Meghívók betöltése sikertelen.';
+                return;
+            }
+            const rows = await res.json();
+            if (!Array.isArray(rows) || rows.length === 0) {
+                listEl.textContent = 'Még nincs rögzített meghívó.';
+                return;
+            }
+            const fmt = (r) => {
+                const st = r.used_at ? 'regisztrált' : 'várakozik';
+                const exp = r.expires_at ? new Date(r.expires_at).toLocaleDateString('hu-HU') : '';
+                return r.email + ' (' + st + ', lejárat: ' + exp + ')';
+            };
+            listEl.textContent = 'Meghívott e-mailek: ' + rows.map(fmt).join('; ');
+        } catch (err) {
+            console.error(err);
+            listEl.textContent = 'Meghívók betöltése hiba.';
+        }
+    };
+
+    document.getElementById('btnAdminSendInvite')?.addEventListener('click', async () => {
+        const emailEl = document.getElementById('adminInviteEmail');
+        const em = emailEl?.value?.trim();
+        if (!em || !em.includes('@')) {
+            if (window.showToast) window.showToast('Adj meg érvényes e-mail címet.', 'error');
+            else alert('Adj meg érvényes e-mail címet.');
+            return;
+        }
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/api/admin/registration-invites`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.currentToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: em })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const msg = typeof data.detail === 'string' ? data.detail : 'Meghívó létrehozása sikertelen.';
+                if (window.showToast) window.showToast(msg, 'error');
+                else alert(msg);
+                return;
+            }
+            let toastMsg = data.email_sent ? 'Regisztrációs link elküldve e-mailben.' : (data.detail || 'A meghívó elmentve.');
+            if (!data.email_sent && data.register_url && navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(data.register_url);
+                    toastMsg += ' A teljes link a vágólapra került.';
+                } catch (clipErr) { /* ignore */ }
+            }
+            if (window.showToast) window.showToast(toastMsg, data.email_sent ? 'success' : 'warning');
+            else alert(toastMsg);
+            if (emailEl) emailEl.value = '';
+            await window.fetchAdminInvites();
+        } catch (e) {
+            if (window.showToast) window.showToast(e.message, 'error');
+            else alert(e.message);
+        }
+    });
+
     document.getElementById('btnAdminCreateCompany')?.addEventListener('click', async () => {
         const nameEl = document.getElementById('adminNewCompanyName');
         const name = nameEl?.value?.trim();

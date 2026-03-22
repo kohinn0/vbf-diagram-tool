@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
+import hashlib
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -291,11 +292,39 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(a
                 detail="Érvényes e-mail cím kötelező a demó regisztrációhoz.",
             )
         email_norm = user.email.strip().lower()[:255]
-        if db.query(database.User).filter(database.User.email == email_norm).first():
+        if db.query(database.User).filter(
+            database.User.email == email_norm,
+            database.User.deleted_at == None,
+        ).first():
             raise HTTPException(
                 status_code=400,
                 detail="Ezzel az e-mail címmel már van fiók. Jelentkezz be, vagy használj másik e-mailt.",
             )
+
+        invite_row = None
+        invite_token_raw = (user.invite_token or "").strip()
+        if invite_token_raw:
+            th = hashlib.sha256(invite_token_raw.encode()).hexdigest()
+            invite_row = (
+                db.query(database.RegistrationInvite)
+                .filter(database.RegistrationInvite.token_hash == th)
+                .first()
+            )
+            if not invite_row:
+                raise HTTPException(status_code=400, detail="Érvénytelen meghívó link.")
+            if invite_row.used_at is not None:
+                raise HTTPException(status_code=400, detail="Ezt a meghívót már felhasználták.")
+            if invite_row.expires_at < datetime.utcnow():
+                raise HTTPException(
+                    status_code=400,
+                    detail="A meghívó link lejárt. Kérj újat a főadmintól.",
+                )
+            if invite_row.email != email_norm:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Az e-mail cím nem egyezik a meghívóval. Használd a meghívóban szereplő címet.",
+                )
+
         cname = (user.company_name or "").strip()[:200] or f"{username} (demó)"
         company = database.Company(name=cname, plan="FREE")
         db.add(company)
@@ -311,6 +340,10 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(a
         db.add(db_user)
         db.commit()
         db.refresh(db_user, ["company"])
+        if invite_row:
+            invite_row.used_at = datetime.utcnow()
+            db.add(invite_row)
+            db.commit()
         if user.marketing_opt_in:
             database.record_marketing_subscriber(
                 db, email_norm, name=cname, source="register", ip=ip

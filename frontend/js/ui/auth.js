@@ -53,6 +53,14 @@ export function initAuth() {
             pl.classList.add('is-hidden');
             pr.classList.remove('is-hidden');
             if (titleEl) titleEl.textContent = 'Regisztráció';
+            try {
+                const hasInv = !!sessionStorage.getItem('vbf_reg_invite');
+                const re = document.getElementById('regEmail');
+                if (re && !hasInv) {
+                    re.readOnly = false;
+                    re.removeAttribute('aria-readonly');
+                }
+            } catch (e) { /* ignore */ }
         } else {
             pl.classList.remove('is-hidden');
             pr.classList.add('is-hidden');
@@ -210,18 +218,24 @@ export function initAuth() {
                 return;
             }
             const base = window.API_BASE_URL || '';
+            let inviteTok = null;
+            try {
+                inviteTok = sessionStorage.getItem('vbf_reg_invite');
+            } catch (e) { /* ignore */ }
             btnSubmitRegister.disabled = true;
             try {
+                const payload = {
+                    username: regUser,
+                    email: regEmail,
+                    password: regPass,
+                    company_name: regCompany || null,
+                    marketing_opt_in: !!regMarketing
+                };
+                if (inviteTok) payload.invite_token = inviteTok;
                 const res = await fetch(`${base}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: regUser,
-                        email: regEmail,
-                        password: regPass,
-                        company_name: regCompany || null,
-                        marketing_opt_in: !!regMarketing
-                    })
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
@@ -240,6 +254,14 @@ export function initAuth() {
                 localStorage.setItem('vbf_user', window.currentUser);
                 updateAuthUI();
                 if (loginModal) loginModal.classList.add('is-hidden');
+                try {
+                    sessionStorage.removeItem('vbf_reg_invite');
+                    const re = document.getElementById('regEmail');
+                    if (re) {
+                        re.readOnly = false;
+                        re.removeAttribute('aria-readonly');
+                    }
+                } catch (e2) { /* ignore */ }
                 if (window.showToast) window.showToast('Sikeres regisztráció!', 'success');
             } catch (err) {
                 if (registerError) registerError.textContent = err.message || 'Hiba.';
@@ -612,9 +634,31 @@ export function initAuth() {
 
     // Főoldalról / demó / regisztráció link: nincs token → bejelentkezési ablak
     const params = new URLSearchParams(window.location.search);
+    const urlInviteToken = params.get('invite');
+    const urlInviteEmail = params.get('email');
+    try {
+        if (params.get('register') === '1' && !urlInviteToken) {
+            sessionStorage.removeItem('vbf_reg_invite');
+        }
+        if (urlInviteToken) {
+            sessionStorage.setItem('vbf_reg_invite', urlInviteToken);
+        }
+    } catch (e) { /* ignore */ }
     if (!window.currentToken && (params.get('from') === 'landing' || params.get('register') === '1')) {
         setLoginModalMode(params.get('register') === '1' ? 'register' : 'login');
         if (loginModal) loginModal.classList.remove('is-hidden');
+        if (params.get('register') === '1' && urlInviteEmail) {
+            const re = document.getElementById('regEmail');
+            if (re) {
+                try {
+                    re.value = decodeURIComponent(urlInviteEmail);
+                } catch (e2) {
+                    re.value = urlInviteEmail;
+                }
+                re.readOnly = true;
+                re.setAttribute('aria-readonly', 'true');
+            }
+        }
         history.replaceState({}, '', window.location.pathname);
     }
     // Cookie banner (app oldal): ha még nincs elfogadva, megjelenítés + Elfogadom

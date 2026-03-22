@@ -3795,6 +3795,10 @@ body.shop-page .vbf-shop-admin-wrap {
     margin: 0 auto;
 }
 
+body.shop-page .vbf-admin-invite-details > summary {
+    cursor: pointer;
+}
+
 .modal-content--relative {
     position: relative;
 }

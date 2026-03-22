@@ -127,16 +127,28 @@
                     </div>
                 </div>
                 <div id="adminCompaniesSection" class="vbf-admin-super-section is-hidden">
-                    <h3 class="vbf-admin-section-title">Cégek</h3>
+                    <h3 class="vbf-admin-section-title">Új felhasználó (meghívó)</h3>
                     <div class="prop-group vbf-admin-panel-muted">
+                        <p class="vbf-admin-muted-p vbf-admin-mb-1">Add meg az e-mail címet; a rendszer elmenti a meghívót, és ha van beállítva SMTP, elküldi a regisztrációs linket. A meghívott ugyanezzel az e-maillel tud demó fiókot létrehozni.</p>
                         <div class="vbf-admin-inline-row">
                             <div class="vbf-admin-inline-row__field">
-                                <label for="adminNewCompanyName">Új cég neve</label>
-                                <input type="text" id="adminNewCompanyName" placeholder="Pl. Zöldfülű Vill Kft.">
+                                <label for="adminInviteEmail">E-mail cím</label>
+                                <input type="email" id="adminInviteEmail" placeholder="pelda@ceg.hu" autocomplete="email">
                             </div>
-                            <button type="button" class="btn btn-primary vbf-admin-primary-action" id="btnAdminCreateCompany">Cég létrehozása</button>
+                            <button type="button" class="btn btn-primary vbf-admin-primary-action" id="btnAdminSendInvite">Regisztrációs link küldése</button>
                         </div>
-                        <p id="adminCompaniesList"></p>
+                        <p id="adminInvitesList" class="vbf-admin-muted-p vbf-admin-mt-10"></p>
+                        <details class="vbf-admin-mt-10 vbf-admin-invite-details">
+                            <summary class="vbf-admin-muted-p">Cég létrehozása (haladó – jogosultság hozzárendeléshez)</summary>
+                            <div class="vbf-admin-inline-row vbf-admin-mt-10">
+                                <div class="vbf-admin-inline-row__field">
+                                    <label for="adminNewCompanyName">Új cég neve</label>
+                                    <input type="text" id="adminNewCompanyName" placeholder="Pl. Zöldfülű Vill Kft.">
+                                </div>
+                                <button type="button" class="btn btn-secondary vbf-admin-primary-action" id="btnAdminCreateCompany">Cég létrehozása</button>
+                            </div>
+                            <p id="adminCompaniesList" class="vbf-admin-muted-p vbf-admin-mt-10"></p>
+                        </details>
                     </div>
                 </div>
                 <table class="data-table vbf-admin-table-wrap" id="table-admin-users">

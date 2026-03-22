@@ -319,6 +319,18 @@ class DijbekeroPreset(Base):
     sort_order = Column(Integer, default=0)
 
 
+class RegistrationInvite(Base):
+    """Főadmin által küldött demó regisztrációs meghívó: e-mail + token hash, egyszer használatos."""
+    __tablename__ = "registration_invites"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    used_at = Column(DateTime, nullable=True)
+
+
 class MarketingSubscriber(Base):
     """Hírlevél / marketing értesítés: önkéntes feliratkozás (landing, regisztráció)."""
     __tablename__ = "marketing_subscribers"
@@ -454,6 +466,31 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
                         )
                     """))
                     conn.execute(__import__("sqlalchemy").text("CREATE INDEX ix_password_reset_tokens_token_hash ON password_reset_tokens (token_hash)"))
+                    conn.commit()
+            except Exception:
+                pass
+            # registration_invites (főadmin meghívók)
+            try:
+                r_inv = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='registration_invites'"))
+                if r_inv.fetchone() is None:
+                    conn.execute(__import__("sqlalchemy").text("""
+                        CREATE TABLE registration_invites (
+                            id INTEGER NOT NULL PRIMARY KEY,
+                            email VARCHAR(255) NOT NULL,
+                            token_hash VARCHAR(64) NOT NULL,
+                            expires_at DATETIME NOT NULL,
+                            created_at DATETIME,
+                            created_by_id INTEGER,
+                            used_at DATETIME,
+                            FOREIGN KEY(created_by_id) REFERENCES users(id)
+                        )
+                    """))
+                    conn.execute(__import__("sqlalchemy").text(
+                        "CREATE INDEX ix_registration_invites_email ON registration_invites (email)"
+                    ))
+                    conn.execute(__import__("sqlalchemy").text(
+                        "CREATE INDEX ix_registration_invites_token_hash ON registration_invites (token_hash)"
+                    ))
                     conn.commit()
             except Exception:
                 pass

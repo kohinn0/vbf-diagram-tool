@@ -19,6 +19,29 @@ class UserCreate(UserBase):
     password: str
     company_name: Optional[str] = None  # demó regisztráció: új cég megjelenített neve
     marketing_opt_in: bool = Field(default=False, description="Hírlevél / marketing (GDPR hozzájárulás)")
+    invite_token: Optional[str] = Field(default=None, description="Főadmin meghívó link tokenje (opcionális)")
+
+
+class RegistrationInviteCreate(BaseModel):
+    email: str
+
+
+class RegistrationInviteResponse(BaseModel):
+    id: int
+    email: str
+    created_at: datetime
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RegistrationInviteCreatedResponse(BaseModel):
+    invite: RegistrationInviteResponse
+    email_sent: bool
+    register_url: str
+    detail: Optional[str] = None
 
 
 class MarketingSubscribeRequest(BaseModel):

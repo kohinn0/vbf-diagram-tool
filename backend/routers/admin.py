@@ -3,8 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
+import hashlib
 import os
+import secrets
 import sys
+from urllib.parse import urlencode
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import schemas, auth, database, generator
@@ -385,6 +388,134 @@ def create_company(
     db.commit()
     db.refresh(company)
     return company
+
+
+def _resolve_public_app_url(request: Request) -> str:
+    """Regisztrációs linkhez: PUBLIC_APP_URL env, vagy Referer fejléc (shop / admin oldal)."""
+    env = (os.getenv("PUBLIC_APP_URL") or "").strip().rstrip("/")
+    if env:
+        return env
+    ref = (request.headers.get("referer") or "").strip()
+    if ref:
+        try:
+            from urllib.parse import urlparse
+
+            p = urlparse(ref)
+            if p.scheme and p.netloc:
+                return f"{p.scheme}://{p.netloc}".rstrip("/")
+        except Exception:
+            pass
+    return ""
+
+
+def _send_registration_invite_email(to_email: str, register_url: str) -> bool:
+    import smtplib
+    from email.message import EmailMessage
+
+    smtp_server = os.getenv("SMTP_SERVER", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    if not (smtp_server and smtp_user and smtp_pass):
+        return False
+    msg = EmailMessage()
+    msg["Subject"] = "VBF Premium – regisztrációs meghívó"
+    msg["From"] = smtp_user
+    msg["To"] = to_email
+    msg.set_content(
+        "Kedves Érdeklődő!\n\n"
+        "Meghívót kaptál a VBF Premium demó regisztrációjához. Nyisd meg az alábbi linket, "
+        "adj meg felhasználónevet és jelszót, majd fejezd be a regisztrációt. "
+        "A regisztrációnál ugyanazt az e-mail címet add meg, amelyre a meghívót küldtük.\n\n"
+        f"{register_url}\n\n"
+        "Üdvözlettel,\nVBF Premium"
+    )
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        return True
+    except Exception:
+        return False
+
+
+@router.get("/api/admin/registration-invites", response_model=List[schemas.RegistrationInviteResponse])
+def list_registration_invites(
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    rows = (
+        db.query(database.RegistrationInvite)
+        .order_by(database.RegistrationInvite.id.desc())
+        .limit(100)
+        .all()
+    )
+    return rows
+
+
+@router.post("/api/admin/registration-invites", response_model=schemas.RegistrationInviteCreatedResponse)
+def create_registration_invite(
+    body: schemas.RegistrationInviteCreate,
+    request: Request,
+    db: Session = Depends(auth.get_db),
+    current_admin: database.User = Depends(auth.get_current_super_admin),
+):
+    email_norm = (body.email or "").strip().lower()[:255]
+    if not email_norm or "@" not in email_norm:
+        raise HTTPException(status_code=400, detail="Érvényes e-mail cím szükséges.")
+    if db.query(database.User).filter(
+        database.User.email == email_norm,
+        database.User.deleted_at == None,
+    ).first():
+        raise HTTPException(status_code=400, detail="Ezzel az e-mail címmel már van fiók.")
+
+    db.query(database.RegistrationInvite).filter(
+        database.RegistrationInvite.email == email_norm,
+        database.RegistrationInvite.used_at.is_(None),
+    ).delete(synchronize_session=False)
+
+    token = secrets.token_urlsafe(32)
+    th = hashlib.sha256(token.encode()).hexdigest()
+    exp = datetime.utcnow() + timedelta(days=14)
+    row = database.RegistrationInvite(
+        email=email_norm,
+        token_hash=th,
+        expires_at=exp,
+        created_by_id=current_admin.id,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+
+    q = urlencode({"register": "1", "email": email_norm, "invite": token})
+    base = _resolve_public_app_url(request)
+    register_url = f"{base}/app.html?{q}" if base else f"app.html?{q}"
+    sent = _send_registration_invite_email(email_norm, register_url) if base else False
+
+    detail = None
+    if not base:
+        detail = (
+            "Nincs feloldható alkalmazás-URL (állítsd be a PUBLIC_APP_URL környezeti változót, "
+            "vagy küldj meghívót a böngészőből, hogy a Referer alapján épüljön a link). "
+            "A meghívó elmentve – másold a register_url értékét, és küldd el kézzel."
+        )
+    elif not sent:
+        detail = "Az e-mail küldése nem sikerült (SMTP hiány vagy hiba). A meghívó elmentve – másold ki a linket."
+
+    inv_resp = schemas.RegistrationInviteResponse(
+        id=row.id,
+        email=row.email,
+        created_at=row.created_at,
+        expires_at=row.expires_at,
+        used_at=row.used_at,
+    )
+    return schemas.RegistrationInviteCreatedResponse(
+        invite=inv_resp,
+        email_sent=sent,
+        register_url=register_url,
+        detail=detail,
+    )
 
 
 @router.put("/api/admin/companies/{company_id}", response_model=schemas.CompanyResponse)
