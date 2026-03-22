@@ -14,11 +14,20 @@
     box-shadow: var(--shadow-glass);
 }
 
+/* App: készültség dokk + elrendezés (app.html: body.app-page) */
+:root {
+    --vbf-completeness-dock-w: 272px;
+    /* sticky fejléc + tördelt nav (max ~1120px) alá ne lógjon a dokk */
+    --vbf-dock-top-offset: 5.75rem;
+}
+
 /* ==========================================================================
    Layout Setup
    ========================================================================== */
 .app-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr) 300px;
+    grid-template-rows: minmax(0, 1fr);
     flex: 1;
     min-height: 0;
     width: 100%;
@@ -29,8 +38,8 @@
    Sidebar Styles
    ========================================================================== */
 .sidebar {
-    width: 280px;
-    flex-shrink: 0;
+    grid-column: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     z-index: 10;
@@ -83,7 +92,8 @@
    Main Drawing Area
    ========================================================================== */
 .drawing-area {
-    flex: 1;
+    grid-column: 2;
+    min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -148,11 +158,23 @@
    Properties Panel
    ========================================================================== */
 .properties-panel {
-    width: 300px;
-    flex-shrink: 0;
+    grid-column: 3;
+    min-width: 0;
+    width: auto;
     z-index: 10;
     padding: 1.5rem;
     border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.properties-panel #inspector-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .properties-panel h3 {
@@ -412,6 +434,38 @@
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.55);
+}
+
+.vbf-completeness-panel--docked {
+    padding: 0.9rem 1rem;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+    body.app-page .app-content-wrapper {
+        padding-right: calc(var(--vbf-completeness-dock-w) + max(0.75rem, env(safe-area-inset-right)));
+    }
+
+    .vbf-completeness-dock {
+        position: fixed;
+        top: var(--vbf-dock-top-offset);
+        right: max(0.5rem, env(safe-area-inset-right));
+        width: var(--vbf-completeness-dock-w);
+        max-width: min(
+            var(--vbf-completeness-dock-w),
+            calc(100vw - 1rem - env(safe-area-inset-left) - env(safe-area-inset-right))
+        );
+        z-index: 85;
+        pointer-events: none;
+        max-height: calc(100vh - var(--vbf-dock-top-offset) - 0.75rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .vbf-completeness-dock .vbf-completeness-panel {
+        pointer-events: auto;
+    }
 }
 
 .vbf-completeness-title-row {
@@ -1534,6 +1588,13 @@ body.shop-page .user-controls .btn {
     height: 100%;
 }
 
+body.app-page .measurements-container {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 .form-container h2,
 .measurements-container h2 {
     font-size: 1.35rem;
@@ -1650,6 +1711,26 @@ body.shop-page .user-controls .btn {
     color: var(--text-main);
 }
 
+/* Mérési fül: helyszínfa + tartalom – ne csússzon egymás alá széles nézetben */
+.vbf-meas-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    min-width: 0;
+}
+
+.vbf-meas-layout-tree,
+.vbf-meas-layout-main {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .vbf-meas-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 .vbf-meas-table-scroll {
     margin: 0 0 1rem 0;
     overflow-x: auto;
@@ -1692,11 +1773,79 @@ body.shop-page .user-controls .btn {
     opacity: 0.9;
 }
 
+/* Fejléc és adatsorok ugyanazzal a griddel – oszlopok nem csúsznak el */
 #tab-measurements .vbf-meas-table {
-    table-layout: fixed;
+    display: block;
     width: 100%;
+    min-width: 100%;
     margin-bottom: 0;
     background: color-mix(in srgb, var(--bg-glass) 80%, transparent);
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#tab-measurements .vbf-meas-table thead,
+#tab-measurements .vbf-meas-table tbody {
+    display: block;
+    width: 100%;
+}
+
+#tab-measurements .vbf-meas-table thead tr,
+#tab-measurements .vbf-meas-table tbody tr {
+    display: grid;
+    width: 100%;
+    align-items: center;
+    column-gap: 0.35rem;
+}
+
+#tab-measurements .vbf-meas-table thead tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+#table-rpe.vbf-meas-table thead tr,
+#table-rpe.vbf-meas-table tbody tr {
+    grid-template-columns:
+        4.25rem minmax(5rem, 1.6fr) minmax(5rem, 1fr) minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
+}
+
+#table-insulation.vbf-meas-table thead tr,
+#table-insulation.vbf-meas-table tbody tr {
+    grid-template-columns:
+        minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
+}
+
+#table-loop.vbf-meas-table thead tr,
+#table-loop.vbf-meas-table tbody tr {
+    grid-template-columns:
+        minmax(4rem, 1.5fr) minmax(4rem, 1fr) minmax(3.5rem, 1fr) minmax(5rem, 7rem) minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
+}
+
+#table-rcd.vbf-meas-table thead tr,
+#table-rcd.vbf-meas-table tbody tr {
+    grid-template-columns:
+        minmax(3.5rem, 1.15fr) minmax(2.5rem, 0.55fr) minmax(2.5rem, 0.5fr) minmax(4.75rem, 0.8fr)
+        minmax(2.75rem, 0.45fr) minmax(2.75rem, 0.45fr) minmax(3rem, 0.5fr) minmax(2.75rem, 0.45fr)
+        minmax(5.25rem, 0.7fr) minmax(6.25rem, 1fr);
+}
+
+#table-tools.vbf-meas-table thead tr,
+#table-tools.vbf-meas-table tbody tr {
+    grid-template-columns:
+        minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(5rem, 7rem) minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
+}
+
+#table-selv.vbf-meas-table thead tr,
+#table-selv.vbf-meas-table tbody tr {
+    grid-template-columns:
+        minmax(4rem, 1.3fr) minmax(4.5rem, 0.75fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.9fr)
+        minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
+}
+
+#table-eph.vbf-meas-table thead tr,
+#table-eph.vbf-meas-table tbody tr {
+    grid-template-columns:
+        3.5rem minmax(5rem, 1.2fr) minmax(4rem, 1fr) minmax(4rem, 1fr) minmax(5rem, 1fr) minmax(5.25rem, 7rem)
+        minmax(5.5rem, 6.75rem) minmax(6.5rem, 10rem);
 }
 
 #tab-measurements .vbf-meas-table th,
@@ -1704,6 +1853,7 @@ body.shop-page .user-controls .btn {
     padding: 0.45rem 0.4rem;
     vertical-align: middle;
     box-sizing: border-box;
+    min-width: 0;
 }
 
 #tab-measurements .vbf-meas-table th {
@@ -1740,135 +1890,6 @@ body.shop-page .user-controls .btn {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
-#table-rpe.vbf-meas-table th:nth-child(1),
-#table-rpe.vbf-meas-table td:nth-child(1) {
-    width: 4.5rem;
-}
-
-#table-rpe.vbf-meas-table th:nth-child(3),
-#table-rpe.vbf-meas-table td:nth-child(3) {
-    width: 6.5rem;
-}
-
-#table-rpe.vbf-meas-table th:nth-child(4),
-#table-rpe.vbf-meas-table td:nth-child(4) {
-    width: 7.5rem;
-}
-
-#table-rpe.vbf-meas-table th:nth-child(5),
-#table-rpe.vbf-meas-table td:nth-child(5) {
-    width: 1%;
-    white-space: nowrap;
-}
-
-#table-insulation.vbf-meas-table th:nth-child(1),
-#table-insulation.vbf-meas-table td:nth-child(1) {
-    width: 26%;
-}
-
-#table-insulation.vbf-meas-table th:nth-child(2),
-#table-insulation.vbf-meas-table td:nth-child(2),
-#table-insulation.vbf-meas-table th:nth-child(3),
-#table-insulation.vbf-meas-table td:nth-child(3),
-#table-insulation.vbf-meas-table th:nth-child(4),
-#table-insulation.vbf-meas-table td:nth-child(4) {
-    width: 14%;
-}
-
-#table-insulation.vbf-meas-table th:nth-child(5),
-#table-insulation.vbf-meas-table td:nth-child(5) {
-    width: 7.5rem;
-}
-
-#table-insulation.vbf-meas-table th:nth-child(6),
-#table-insulation.vbf-meas-table td:nth-child(6) {
-    width: 1%;
-    white-space: nowrap;
-}
-
-#table-loop.vbf-meas-table th:nth-child(2),
-#table-loop.vbf-meas-table td:nth-child(2) {
-    width: 6.5rem;
-}
-
-#table-loop.vbf-meas-table th:nth-child(4),
-#table-loop.vbf-meas-table td:nth-child(4) {
-    width: 6rem;
-}
-
-#table-loop.vbf-meas-table th:nth-child(5),
-#table-loop.vbf-meas-table td:nth-child(5) {
-    width: 7.5rem;
-}
-
-#table-loop.vbf-meas-table th:nth-child(6),
-#table-loop.vbf-meas-table td:nth-child(6) {
-    width: 1%;
-    white-space: nowrap;
-}
-
-#table-tools.vbf-meas-table th:nth-child(3),
-#table-tools.vbf-meas-table td:nth-child(3) {
-    width: 7rem;
-}
-
-#table-tools.vbf-meas-table th:nth-child(4),
-#table-tools.vbf-meas-table td:nth-child(4) {
-    width: 7.5rem;
-}
-
-#table-tools.vbf-meas-table th:nth-child(5),
-#table-tools.vbf-meas-table td:nth-child(5) {
-    width: 1%;
-    white-space: nowrap;
-}
-
-#table-selv.vbf-meas-table th:nth-child(2),
-#table-selv.vbf-meas-table td:nth-child(2) {
-    width: 6rem;
-}
-
-#table-selv.vbf-meas-table th:nth-child(3),
-#table-selv.vbf-meas-table td:nth-child(3),
-#table-selv.vbf-meas-table th:nth-child(4),
-#table-selv.vbf-meas-table td:nth-child(4),
-#table-selv.vbf-meas-table th:nth-child(5),
-#table-selv.vbf-meas-table td:nth-child(5) {
-    width: 11%;
-}
-
-#table-selv.vbf-meas-table th:nth-child(6),
-#table-selv.vbf-meas-table td:nth-child(6) {
-    width: 7.5rem;
-}
-
-#table-selv.vbf-meas-table th:nth-child(7),
-#table-selv.vbf-meas-table td:nth-child(7) {
-    width: 1%;
-    white-space: nowrap;
-}
-
-#table-eph.vbf-meas-table th:nth-child(1),
-#table-eph.vbf-meas-table td:nth-child(1) {
-    width: 4rem;
-}
-
-#table-eph.vbf-meas-table th:nth-child(6),
-#table-eph.vbf-meas-table td:nth-child(6) {
-    width: 6.5rem;
-}
-
-#table-eph.vbf-meas-table th:nth-child(7),
-#table-eph.vbf-meas-table td:nth-child(7) {
-    width: 7.5rem;
-}
-
-#table-eph.vbf-meas-table th:nth-child(8),
-#table-eph.vbf-meas-table td:nth-child(8) {
-    width: 1%;
-    white-space: nowrap;
-}
-
 .vbf-meas-pass-native {
     position: absolute;
     width: 1px;
@@ -1884,10 +1905,14 @@ body.shop-page .user-controls .btn {
 .vbf-meas-pass-cell {
     position: relative;
     vertical-align: middle;
+    min-width: 0;
 }
 
 .vbf-meas-pass-pair {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     gap: 0;
     border-radius: var(--btn-radius);
     border: 1px solid var(--border-color);
@@ -1932,17 +1957,17 @@ body.shop-page .user-controls .btn {
 
 .vbf-meas-actions-cell {
     vertical-align: middle;
-    width: 1%;
-    white-space: nowrap;
+    min-width: 0;
     padding: 0.4rem 0.35rem !important;
 }
 
 .vbf-meas-actions-row {
-    display: inline-flex;
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    max-width: 100%;
 }
 
 .vbf-meas-row-btn {
@@ -2123,20 +2148,46 @@ select {
         overflow-x: hidden;
     }
 
+    body.app-page .app-content-wrapper {
+        padding-right: 0;
+        padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+    }
+
     body.shop-page .app-content-wrapper {
         height: auto;
         min-height: auto;
         overflow: visible;
     }
 
+    .vbf-completeness-dock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: min(42vh, 300px);
+        z-index: 95;
+        padding: 0 0.65rem calc(0.35rem + env(safe-area-inset-bottom));
+        pointer-events: none;
+        box-sizing: border-box;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .vbf-completeness-dock .vbf-completeness-panel {
+        pointer-events: auto;
+        border-radius: 12px 12px 0 0;
+    }
+
     /* Tab Layouts */
     .app-container {
+        display: flex;
         flex-direction: column;
         height: auto;
-        display: flex;
     }
 
     .sidebar {
+        grid-column: auto;
         width: 100%;
         min-height: auto;
         border-right: none;
@@ -2145,7 +2196,13 @@ select {
         overflow-y: auto;
     }
 
+    .drawing-area {
+        grid-column: auto;
+        width: 100%;
+    }
+
     .properties-panel {
+        grid-column: auto;
         width: 100%;
         min-height: auto;
         border-left: none;
@@ -2198,8 +2255,8 @@ select {
         grid-template-columns: 1fr !important;
     }
 
-    /* Tables */
-    .data-table {
+    /* Tables (mérési táblák: grid marad, görgetés a .vbf-meas-table-scroll-ban) */
+    .data-table:not(.vbf-meas-table) {
         display: block;
         width: 100%;
         overflow-x: auto;
@@ -2207,8 +2264,8 @@ select {
         white-space: nowrap;
     }
 
-    .data-table th,
-    .data-table td {
+    .data-table:not(.vbf-meas-table) th,
+    .data-table:not(.vbf-meas-table) td {
         padding: 0.5rem;
     }
 

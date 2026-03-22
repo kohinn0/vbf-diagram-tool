@@ -350,9 +350,10 @@
         <button type="button" id="cookieBannerAccept" class="btn btn-primary btn-small">Elfogadom</button>
     </div>
 
-    <!-- Jegyzőkönyv állapota (készültség) – lebegő panel -->
+    <!-- Jegyzőkönyv állapota: asztalon jobb dokk, mobilon alsó sáv -->
+    <aside class="vbf-completeness-dock" aria-label="Jegyzőkönyv állapota">
     <div id="completenessPanel"
-        class="vbf-completeness-panel fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] transition-all duration-300">
+        class="vbf-completeness-panel vbf-completeness-panel--docked transition-all duration-300">
         <div class="vbf-completeness-title-row">
             <div class="vbf-completeness-title-wrap min-w-0 flex-1">
                 <span class="vbf-completeness-warn-dot" id="completenessTitleWarn" aria-hidden="true" title="Kötelező mezők hiányoznak"></span>
@@ -378,6 +379,7 @@
             <div id="checkItems" class="vbf-completeness-list"></div>
         </div>
     </div>
+    </aside>
 
     <!-- Main Content Area -->
     <div class="app-content-wrapper">
@@ -835,7 +837,7 @@
         <!-- 4. TAB: MÉRÉSI ADATOK -->
         <div id="tab-measurements" class="tab-pane">
             <div class="measurements-container panel-glass vbf-meas-page"
-                style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
+                style="margin: 0 auto; overflow-y: auto; height: 100%; min-height: 0; max-width: 100%; padding: 1rem 1rem 4rem; padding-right: max(1rem, env(safe-area-inset-right));">
                 <div class="vbf-meas-page-head">
                     <h2 class="vbf-meas-page-title">Mérési adatok (kézi bevitel)</h2>
                     <div class="vbf-meas-page-actions">
@@ -851,11 +853,14 @@
                     </div>
                 </div>
 
-                <!-- HELYSZÍNFA HIERARCHIA -->
+                <div class="vbf-meas-layout">
+                <div class="vbf-meas-layout-tree">
                 <div id="siteTreePanel"
-                    class="panel-glass mb-8 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-color)] shadow-[var(--shadow-glass)]">
+                    class="panel-glass overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-color)] shadow-[var(--shadow-glass)]">
+                </div>
                 </div>
 
+                <div class="vbf-meas-layout-main min-w-0">
                 <!-- Gyors hozzárendelés: kis képernyőn egymás alatt -->
                 <div
                     class="mb-8 rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,white_3%,transparent)] p-3 sm:p-4 md:p-5">
@@ -1027,6 +1032,9 @@
                     </table>
                     </div>
                     <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddEph">+ EPH bekötés mérés</button>
+                </div>
+
+                </div>
                 </div>
 
             </div>
