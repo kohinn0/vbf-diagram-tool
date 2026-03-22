@@ -52,13 +52,15 @@
                     <span class="nav-section-chevron" aria-hidden="true">▾</span>
                 </button>
             <div class="nav-section-panel" id="navSectionDropdown" role="menu" aria-label="Alkalmazás szekciók">
+                <div class="nav-group-label">Jegyzőkönyv</div>
                 <button type="button" class="nav-tab active" data-target="tab-diagram">Rajz & Alaprajz</button>
-                <button type="button" class="nav-tab" data-target="tab-report">Jegyzőkönyv Adatok <span class="tab-badge" id="tabReportBadge" aria-hidden="true"></span></button>
+                <button type="button" class="nav-tab" data-target="tab-report">Jegyzőkönyv adatok <span class="tab-badge" id="tabReportBadge" aria-hidden="true"></span></button>
                 <button type="button" class="nav-tab" data-target="tab-defects">Hibajegyzék & Képek</button>
-                <button type="button" class="nav-tab" data-target="tab-measurements">Mérési Adatok (Metrel) <span class="tab-badge" id="tabMeasurementsBadge" aria-hidden="true"></span></button>
+                <button type="button" class="nav-tab" data-target="tab-measurements">Mérési adatok (Metrel) <span class="tab-badge" id="tabMeasurementsBadge" aria-hidden="true"></span></button>
                 <button type="button" class="nav-tab" data-target="tab-lps">Villámvédelem</button>
+                <div class="nav-group-label">Szervezet</div>
                 <button type="button" class="nav-tab" data-target="tab-jobs">Naptár & Feladatok</button>
-                <button type="button" class="nav-tab" data-target="tab-cloud">Mentett Ügyek</button>
+                <button type="button" class="nav-tab" data-target="tab-cloud">Mentett ügyek</button>
                 <button type="button" class="nav-tab" data-target="tab-master-data">Törzsadatok</button>
                 <a href="shop.html" id="linkShopAdmin" class="nav-tab nav-tab-link" style="display: none;">Cég admin</a>
             </div>
@@ -123,7 +125,7 @@
     </div>
 
     <!-- Kosár (ugyanaz a localStorage kulcs, mint a főoldalon: vbf_cart) -->
-    <div id="cartPanel" class="cart-drawer-overlay" style="display: none;" aria-hidden="true">
+    <div id="cartPanel" class="cart-drawer-overlay" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Kosár">
         <div id="cartDrawer">
             <div class="cart-drawer-header">
                 <h2>🛒 Kosár</h2>
@@ -183,15 +185,10 @@
     </div>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="modal-overlay" style="display: none;">
+    <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
         <div class="modal-content panel-glass login-modal-inner" style="max-width: 400px; position: relative;">
             <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="font-size: 1.25rem; margin: 0 0 1rem 0; font-weight: 600;">Belépés vagy regisztráció</h2>
-            <div class="login-tabs">
-                <button type="button" id="tabLoginMode" class="is-active">Belépés</button>
-                <button type="button" id="tabRegisterMode">Regisztráció</button>
-            </div>
-            <p id="loginRegisterInfo" class="login-modal-info" style="display: none;">Regisztráció után demó fiók – PDF vízjellel. Teljes verzió: főoldal → licenc kiválasztása → számla kérése → aktiválás után.</p>
+            <h2 id="loginModalTitle" style="font-size: 1.25rem; margin: 0 0 1rem 0; font-weight: 600;">Belépés</h2>
 
             <div id="panelLogin">
                 <div class="prop-group">
@@ -205,9 +202,11 @@
                 <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
                 <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
                 <button type="button" class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Belépés</button>
+                <p style="margin-top: 1rem; text-align: center;"><a href="#" id="linkToRegister" style="font-size: 0.9rem; color: var(--primary-light);">Regisztráció</a></p>
             </div>
 
             <div id="panelRegister" style="display: none;">
+                <p id="loginRegisterInfo" class="login-modal-info" style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">Demó fiók – PDF vízjellel. Teljes verzió: főoldal → licenc → számla → aktiválás.</p>
                 <div class="prop-group">
                     <label>Felhasználónév *</label>
                     <input type="text" id="regUser" placeholder="kovacsbela" autocomplete="username">
@@ -234,6 +233,7 @@
                 </label>
                 <div id="registerError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
                 <button type="button" class="btn btn-primary" id="btnSubmitRegister" style="width: 100%;">Fiók létrehozása</button>
+                <p style="margin-top: 1rem; text-align: center;"><a href="#" id="linkToLogin" style="font-size: 0.9rem; color: var(--primary-light);">Már van fiókom – Belépés</a></p>
             </div>
         </div>
     </div>
@@ -479,9 +479,11 @@
                     <input type="text" id="reportSearchInput" placeholder="Cím, megrendelő, dokumentum..." style="flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main);">
                     <span style="color: var(--text-muted); font-size: 0.85rem;" id="reportSearchHint"></span>
                 </div>
-                <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <p class="empty-state">Jelentkezz be a felhő adatok eléréséhez!</p>
+                <div id="cloudLoginPrompt" class="panel-glass cloud-login-cta" style="display: none; padding: 2rem; text-align: center; border-radius: 12px; border: 1px dashed var(--border-color); margin-bottom: 1.5rem;">
+                    <p style="margin-bottom: 1rem; color: var(--text-muted-strong, var(--text-muted));">A mentett jegyzőkönyvek megtekintéséhez jelentkezz be.</p>
+                    <button type="button" class="btn btn-primary" id="btnCloudLoginPrompt">Belépés vagy regisztráció</button>
                 </div>
+                <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;"></div>
             </div>
         </div>
 
@@ -508,11 +510,10 @@
 
                         <div style="margin-bottom: 1.5rem;">
                             <h4>Új Ügyfél Hozzáadása</h4>
-                            <div class="prop-group"><input type="text" id="mdCustName" placeholder="Cégnév / Név"></div>
-                            <div class="prop-group"><input type="text" id="mdCustAddr" placeholder="Cím"></div>
-                            <div class="prop-group"><input type="text" id="mdCustHrsz" placeholder="HRSZ"></div>
-                            <div class="prop-group"><input type="text" id="mdCustPurpose"
-                                    placeholder="Épület Rendeltetése"></div>
+                            <div class="prop-group"><label for="mdCustName">Cégnév / Név</label><input type="text" id="mdCustName" placeholder="Pl. Kovács Kft."></div>
+                            <div class="prop-group"><label for="mdCustAddr">Cím</label><input type="text" id="mdCustAddr" placeholder="Irányítószám, város, utca"></div>
+                            <div class="prop-group"><label for="mdCustHrsz">Helyrajzi szám</label><input type="text" id="mdCustHrsz" placeholder="HRSZ"></div>
+                            <div class="prop-group"><label for="mdCustPurpose">Épület rendeltetése</label><input type="text" id="mdCustPurpose" placeholder="Pl. Iroda, lakóépület"></div>
                             <button class="btn btn-primary btn-small" id="btnSaveCustomer" style="width: 100%;">➕ Ügyfél
                                 Mentése</button>
                         </div>
@@ -531,13 +532,10 @@
 
                         <div style="margin-bottom: 1.5rem;">
                             <h4>Új Felülvizsgáló / Eszköz</h4>
-                            <div class="prop-group"><input type="text" id="mdInspName" placeholder="Név / Cégnév"></div>
-                            <div class="prop-group"><input type="text" id="mdInspLic" placeholder="Bizonyítvány száma">
-                            </div>
-                            <div class="prop-group"><input type="text" id="mdInspInst"
-                                    placeholder="Műszer Típusa (pl. Metrel)"></div>
-                            <div class="prop-group"><input type="text" id="mdInspCal"
-                                    placeholder="Kalibrálás (pl. 2026.10.12)"></div>
+                            <div class="prop-group"><label for="mdInspName">Név / Cégnév</label><input type="text" id="mdInspName" placeholder="Pl. Nagy János"></div>
+                            <div class="prop-group"><label for="mdInspLic">Vizsgabizonyítvány száma</label><input type="text" id="mdInspLic" placeholder="Regisztrációs szám"></div>
+                            <div class="prop-group"><label for="mdInspInst">Műszer típusa</label><input type="text" id="mdInspInst" placeholder="Pl. Metrel MI 3152"></div>
+                            <div class="prop-group"><label for="mdInspCal">Kalibrálás érvényes</label><input type="text" id="mdInspCal" placeholder="Pl. 2026.10.12"></div>
                             <button class="btn btn-primary btn-small" id="btnSaveInspector" style="width: 100%;">➕
                                 Felülvizsgáló Mentése</button>
                         </div>
@@ -554,7 +552,8 @@
         <div id="tab-report" class="tab-pane">
             <div class="form-container panel-glass"
                 style="max-width: 900px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">📊 Jegyzőkönyv Típusa és Alapadatok</h2>
+                <h2 style="margin-bottom: 1rem; color: var(--accent);">📊 Jegyzőkönyv Típusa és Alapadatok</h2>
+                <p class="workflow-hint" style="margin-bottom: 2rem; font-size: 0.9rem; color: var(--text-muted-strong, var(--text-muted));">Rajz → Adatok → Hibák → Mérések → Mentés</p>
 
                 <div class="prop-group"
                     style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #ffc107;">
@@ -994,29 +993,6 @@
                     <button class="btn btn-secondary btn-small" id="btnAddEph">+ EPH Bekötés Mérés</button>
                 </div>
 
-            </div>
-        </div>
-
-        <!-- 5. TAB: FELHŐ / MENTETT JEGYZŐKÖNYVEK -->
-        <div id="tab-cloud" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Mentett Jegyzőkönyvek</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt láthatod a korábban elmentett munkáidat.
-                    Bármikor visszatöltheted vagy klónozhatod őket.</p>
-
-                <div id="reportListContainer" class="report-grid">
-                    <p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 5. TAB: VILLÁMHÁRÍTÓ MÉRÉSEK (LPS) -->
-        <div id="tab-lps" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">⚡ Villámhárító Mérések (LPS)</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt rögzítheted a villámhárító rendszer
-                    méréseit.</p>
-                <!-- LPS measurement content will go here -->
             </div>
         </div>
 

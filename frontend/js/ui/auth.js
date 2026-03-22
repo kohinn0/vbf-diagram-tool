@@ -21,22 +21,16 @@ export function initAuth() {
     function setLoginModalMode(mode) {
         const pl = document.getElementById('panelLogin');
         const pr = document.getElementById('panelRegister');
-        const tabL = document.getElementById('tabLoginMode');
-        const tabR = document.getElementById('tabRegisterMode');
-        const infoEl = document.getElementById('loginRegisterInfo');
+        const titleEl = document.getElementById('loginModalTitle');
         if (!pl || !pr) return;
         if (mode === 'register') {
             pl.style.display = 'none';
             pr.style.display = 'block';
-            if (tabL) tabL.classList.remove('is-active');
-            if (tabR) tabR.classList.add('is-active');
-            if (infoEl) infoEl.style.display = 'block';
+            if (titleEl) titleEl.textContent = 'Regisztráció';
         } else {
             pl.style.display = 'block';
             pr.style.display = 'none';
-            if (tabL) tabL.classList.add('is-active');
-            if (tabR) tabR.classList.remove('is-active');
-            if (infoEl) infoEl.style.display = 'none';
+            if (titleEl) titleEl.textContent = 'Belépés';
         }
     }
 
@@ -54,6 +48,8 @@ export function initAuth() {
             if (btnSaveCloud) btnSaveCloud.style.display = 'inline-block';
             if (btnFinalize) btnFinalize.style.display = 'inline-block';
 
+            const cloudLoginPrompt = document.getElementById('cloudLoginPrompt');
+            if (cloudLoginPrompt) cloudLoginPrompt.style.display = 'none';
             if (typeof window.fetchReports === 'function') window.fetchReports();
             if (typeof window.fetchJobs === 'function') window.fetchJobs();
 
@@ -144,9 +140,9 @@ export function initAuth() {
 
             window.currentSavedReportId = null;
             if (window.updateHeaderReportContext) window.updateHeaderReportContext('', null);
-            if (reportListContainer) {
-                reportListContainer.innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';
-            }
+            if (reportListContainer) reportListContainer.innerHTML = '';
+            const cloudLoginPrompt = document.getElementById('cloudLoginPrompt');
+            if (cloudLoginPrompt) cloudLoginPrompt.style.display = 'block';
             if (typeof window.vbfCartOnUserLoggedOut === 'function') window.vbfCartOnUserLoggedOut();
         }
     }
@@ -167,8 +163,12 @@ export function initAuth() {
         });
     }
 
-    document.getElementById('tabLoginMode')?.addEventListener('click', () => { setLoginModalMode('login'); });
-    document.getElementById('tabRegisterMode')?.addEventListener('click', () => { setLoginModalMode('register'); });
+    document.getElementById('linkToRegister')?.addEventListener('click', (e) => { e.preventDefault(); setLoginModalMode('register'); });
+    document.getElementById('linkToLogin')?.addEventListener('click', (e) => { e.preventDefault(); setLoginModalMode('login'); });
+    document.getElementById('btnCloudLoginPrompt')?.addEventListener('click', () => {
+        setLoginModalMode('login');
+        if (loginModal) loginModal.style.display = 'flex';
+    });
 
     const btnSubmitRegister = document.getElementById('btnSubmitRegister');
     if (btnSubmitRegister) {
@@ -588,15 +588,7 @@ export function initAuth() {
     // Főoldalról / demó / regisztráció link: nincs token → bejelentkezési ablak
     const params = new URLSearchParams(window.location.search);
     if (!window.currentToken && (params.get('from') === 'landing' || params.get('register') === '1')) {
-        if (params.get('register') === '1') {
-            setLoginModalMode('register');
-            const registerInfo = document.getElementById('loginRegisterInfo');
-            if (registerInfo) registerInfo.style.display = 'block';
-        } else {
-            setLoginModalMode('login');
-            const registerInfo = document.getElementById('loginRegisterInfo');
-            if (registerInfo) registerInfo.style.display = 'none';
-        }
+        setLoginModalMode(params.get('register') === '1' ? 'register' : 'login');
         if (loginModal) loginModal.style.display = 'flex';
         history.replaceState({}, '', window.location.pathname);
     }

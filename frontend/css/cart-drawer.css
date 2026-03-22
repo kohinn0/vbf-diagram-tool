@@ -62,7 +62,7 @@
 }
 
 .cart-close-btn:hover {
-    color: var(--text-color);
+    color: var(--text-main);
 }
 
 .cart-step {

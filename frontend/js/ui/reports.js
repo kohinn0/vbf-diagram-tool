@@ -186,7 +186,7 @@ export function initReports() {
         const searchInput = document.getElementById('reportSearchInput');
         const searchHint = document.getElementById('reportSearchHint');
         if (!reportListContainer || !window.currentToken) {
-            if (reportListContainer) reportListContainer.innerHTML = '<p>Jelentkezz be a jegyzőkönyvek megtekintéséhez.</p>';
+            if (reportListContainer) reportListContainer.innerHTML = '';
             if (searchInput) searchInput.style.display = 'none';
             return;
         }
