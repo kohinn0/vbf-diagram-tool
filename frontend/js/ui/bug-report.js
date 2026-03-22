@@ -1,10 +1,10 @@
-/** Béta: mailto hibabejelentés – URL + böngésző automatikusan a levélben. */
+/** Béta verzió: mailto hibajelentés – URL és böngésző a levélben. */
 const BUG_REPORT_EMAIL = 'info@vbfpremium.hu';
-const BUG_REPORT_SUBJECT = '[VBF Premium béta] Hibabejelentés';
+const BUG_REPORT_SUBJECT = '[VBF Premium – béta verzió] Hibajelentés';
 
 export function buildBugReportMailto() {
     const body = [
-        'Leírás (mit csináltál, mit vártál, mi történt):',
+        'Kérlek írd le röviden: mit csináltál, mit vártál, és mi történt helyette.',
         '',
         '',
         '---',

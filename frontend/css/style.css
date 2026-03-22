@@ -255,7 +255,7 @@
     font-size: 0.82rem;
 }
 
-/* Béta: hibabejelentés (app + shop) */
+/* Béta verzió: hibajelentés gomb (app + shop) */
 .btn-beta-bug {
     border-color: color-mix(in srgb, var(--accent) 42%, var(--border-color)) !important;
     color: var(--accent) !important;
