@@ -1,4 +1,7 @@
-// A belépési pont
+// A belépési pont: tokenek → Tailwind → app shell (style.css + modul importok)
+import '../css/tokens.css';
+import '../css/tw.css';
+import '../css/style.css';
 import { initTabs } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { Storage } from './storage.js';
@@ -20,6 +23,7 @@ import { initSiteTree } from './ui/sitetree.js';
 import { initAutoDiagram } from './ui/autodiagram.js';
 import { initTour } from './ui/tour.js';
 import { initToast } from './ui/toast.js';
+import { initBugReportLinks } from './ui/bug-report.js';
 
 // Más fájlok számára elérhető globális objektumok (a refaktorálás ezen fázisában még szükség lehet rá)
 // Ha üresen hagyjuk, az API modul window.location.origin-t fog használni (Vite proxy).
@@ -30,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toast (korán, hogy showToast mindenhol elérhető legyen)
     initToast();
+    initBugReportLinks();
     // UI Komponensek
     initData();
     initSanitize();

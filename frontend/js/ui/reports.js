@@ -293,7 +293,7 @@ export function initReports() {
         let hasMaintenanceDefect = false;
         let hasRenovationDefect = false;
 
-        const defectCards = document.querySelectorAll('#defectList .defect-card');
+        const defectCards = document.querySelectorAll('#defectList [data-vbf-defect-card]');
         if (defectCards.length > 0) {
             hasAnyDefect = true;
             defectCards.forEach(card => {
@@ -413,7 +413,7 @@ export function initReports() {
             if (!diagramImage) diagramImage = window.canvas.toDataURL({ format: 'png', multiplier: 1 });
         }
         const defectsArr = [];
-        document.querySelectorAll('#defectList .defect-card').forEach(card => {
+        document.querySelectorAll('#defectList [data-vbf-defect-card]').forEach(card => {
             defectsArr.push({
                 templateId: card.querySelector('.tpl-select')?.value || '',
                 description: card.querySelector('.desc-input')?.value || '',
@@ -654,7 +654,7 @@ export function initReports() {
             if (rep.defects_data) {
                 rep.defects_data.forEach(d => {
                     document.getElementById('btnAddDefect')?.click();
-                    const cards = defectList.querySelectorAll('.defect-card');
+                    const cards = defectList.querySelectorAll('[data-vbf-defect-card]');
                     if (cards.length === 0) return;
                     const lastCard = cards[cards.length - 1];
                     if (d.templateId) {

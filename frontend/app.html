@@ -11,10 +11,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>VBF Elektromos Rajzkészítő | Prémium Szerkesztő</title>
     <link rel="icon" type="image/svg+xml" href="img/logo.svg">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/sitetree.css">
-    <link rel="stylesheet" href="css/cart-drawer.css">
     <link rel="manifest" href="manifest.json">
     <!-- Google Fonts for Modern Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
@@ -86,8 +82,10 @@
                 <div class="nav-help-panel" id="navHelpPanel" role="menu">
                     <button type="button" class="nav-help-item" id="btnStartTour">Bemutató</button>
                     <button type="button" class="nav-help-item" id="btnShowKeyboardShortcuts">⌨️ Billentyűk</button>
+                    <button type="button" class="nav-help-item" data-bug-report>🐛 Hibabejelentés (béta)</button>
                 </div>
             </div>
+            <button type="button" class="btn btn-secondary btn-small nav-util-btn btn-beta-bug" data-bug-report title="Hibabejelentés – béta verzió (email)">🐛 Hiba</button>
             <div class="nav-system-group">
                 <div id="offlineIndicator" class="offline-badge">
                     <span id="offlineDot" class="offline-dot"></span>
@@ -343,38 +341,27 @@
     </div>
 
     <!-- Floating Report Completeness Panel -->
-    <div id="completenessPanel" style="
-        position: fixed; bottom: 20px; right: 20px; z-index: 9000;
-        background: var(--bg-glass); backdrop-filter: blur(20px);
-        border: 1px solid var(--border-color); border-radius: 16px;
-        padding: 16px 20px; min-width: 320px; max-width: 380px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        font-family: 'Outfit', sans-serif; transition: all 0.3s ease;
-    ">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-            <span style="font-weight: 700; font-size: 0.95rem; color: var(--accent);">📋 Jegyzőkönyv Készültség</span>
-            <button id="btnToggleChecklist"
+    <div id="completenessPanel" class="fixed z-[9000] inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] md:inset-x-auto md:right-4 md:bottom-4 w-auto max-w-none md:max-w-[23.75rem] min-w-0 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-glass)] p-4 sm:p-5 font-inherit shadow-[var(--shadow-glass)] backdrop-blur-xl transition-all duration-300">
+        <div class="mb-2.5 flex items-center justify-between gap-2">
+            <span class="text-[0.95rem] font-bold text-[var(--accent)]">📋 Jegyzőkönyv Készültség</span>
+            <button type="button" id="btnToggleChecklist"
                 onclick="document.getElementById('checklistDetails').style.display = document.getElementById('checklistDetails').style.display === 'none' ? 'block' : 'none'"
-                style="background: none; border: none; color: var(--text-primary); cursor: pointer; font-size: 1.1rem;"
+                class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[1.1rem] text-[var(--text-main)] hover:text-[var(--primary)]"
                 title="Részletek">▼</button>
         </div>
 
-        <!-- Progress Bar -->
-        <div
-            style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 12px; overflow: hidden; margin-bottom: 8px;">
+        <div class="mb-2 h-3 overflow-hidden rounded-[0.625rem] bg-[color-mix(in_srgb,var(--text-main)_10%,transparent)]">
             <div id="completenessBar"
-                style="height: 100%; border-radius: 10px; transition: width 0.5s ease, background 0.5s ease; width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b);">
+                class="h-full w-0 rounded-[0.625rem] transition-[width,background] duration-500 ease-out bg-gradient-to-r from-[var(--danger)] to-[var(--accent)]">
             </div>
         </div>
-        <div
-            style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+        <div class="mb-2 flex justify-between gap-2 text-[0.8rem] text-[var(--text-muted)]">
             <span id="completenessText">0% kész</span>
-            <span id="completenessStatus" style="font-weight: 600;">❌ Nem menthető</span>
+            <span id="completenessStatus" class="shrink-0 font-semibold text-[var(--text-main)]">❌ Nem menthető</span>
         </div>
 
-        <!-- Checklist Details (collapsed by default) -->
         <div id="checklistDetails"
-            style="display: none; font-size: 0.82rem; line-height: 1.8; border-top: 1px solid var(--border-color); padding-top: 8px; max-height: 300px; overflow-y: auto;">
+            class="hidden max-h-[min(18.75rem,40vh)] overflow-y-auto border-t border-[var(--border-color)] pt-2 text-[0.82rem] leading-relaxed text-[var(--text-muted)]">
             <div id="checkItems"></div>
         </div>
     </div>
@@ -420,24 +407,34 @@
                         <input type="text" id="documentTitle" value="Névtelen Jegyzőkönyv Rajz"
                             placeholder="Diagram neve...">
                         <div class="tools-horizontal">
-                            <button class="tool-btn active" id="toolSelect" title="Kijelölés">👆</button>
-                            <button class="tool-btn" id="toolLine" title="Vezeték húzása">✏️</button>
-                            <button class="tool-btn" id="toolDelete" title="Kijelölt törlése">🗑️</button>
+                            <button type="button"
+                                class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)] data-active:border-transparent data-active:bg-[var(--primary)] data-active:text-white"
+                                id="toolSelect" data-active title="Kijelölés">👆</button>
+                            <button type="button"
+                                class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)] data-active:border-transparent data-active:bg-[var(--primary)] data-active:text-white"
+                                id="toolLine" title="Vezeték húzása">✏️</button>
+                            <button type="button"
+                                class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)] data-active:border-transparent data-active:bg-[var(--primary)] data-active:text-white"
+                                id="toolDelete" title="Kijelölt törlése">🗑️</button>
                             <div
-                                style="width: 1px; height: 24px; background: var(--border-color); margin: 0 5px; align-self: center;">
+                                class="mx-1 h-6 w-px shrink-0 self-center bg-[var(--border-color)]">
                             </div>
-                            <label class="tool-btn" title="Alaprajz betöltése háttérként"
-                                style="cursor: pointer; margin: 0;">
+                            <label
+                                class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)]"
+                                title="Alaprajz betöltése háttérként">
                                 🖼️
-                                <input type="file" id="btnUploadBg" accept="image/*" style="display:none;">
+                                <input type="file" id="btnUploadBg" accept="image/*" class="hidden">
                             </label>
-                            <button class="tool-btn" id="btnClearBg" title="Háttér Törlése">🚫</button>
+                            <button type="button"
+                                class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)] data-active:border-transparent data-active:bg-[var(--primary)] data-active:text-white"
+                                id="btnClearBg" title="Háttér Törlése">🚫</button>
                             <div
-                                style="width: 1px; height: 24px; background: var(--border-color); margin: 0 5px; align-self: center;">
+                                class="mx-1 h-6 w-px shrink-0 self-center bg-[var(--border-color)]">
                             </div>
-                            <button class="tool-btn" id="btnAutodiagram"
-                                title="Egyvonalas rajz automatikus generálása a helyszínfából"
-                                style="font-size: 0.75rem; width: auto; padding: 0 8px; color: var(--accent);">⚡
+                            <button type="button"
+                                class="inline-flex h-9 min-w-9 w-auto shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent px-2 text-[0.75rem] font-medium text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] data-active:border-transparent data-active:bg-[var(--primary)] data-active:text-white"
+                                id="btnAutodiagram"
+                                title="Egyvonalas rajz automatikus generálása a helyszínfából">⚡
                                 Auto</button>
                         </div>
                     </header>
@@ -782,36 +779,37 @@
             </div>
         </div>
 
-        <!-- 3. TAB: HIBAJEGYZÉK -->
+        <!-- 3. TAB: HIBAJEGYZÉK (Tailwind: flex/grid, mobilra fix alsó műveletsáv) -->
         <div id="tab-defects" class="tab-pane">
-            <div class="defects-container panel-glass">
-                <div class="defects-header"
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2>Feltárt Hibák és Hiányosságok</h2>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                        <label for="defectFilterSelect" style="color: var(--text-muted); font-size: 0.9rem;">Szűrés:</label>
-                        <select id="defectFilterSelect" style="padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main);">
+            <div class="flex h-full min-h-0 w-full max-w-[62.5rem] flex-col rounded-xl border border-[var(--border-color)] bg-[var(--bg-panel)]/80 px-3 pt-3 shadow-[var(--shadow-glass)] backdrop-blur-md sm:px-5 sm:pt-5">
+                <h2 class="order-1 mb-3 shrink-0 text-xl font-semibold text-[var(--text-main)] sm:text-[1.35rem] md:mb-2">Feltárt Hibák és Hiányosságok</h2>
+
+                <div id="defectListScroll" class="order-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:order-3 md:pb-4">
+                    <div id="defectList"></div>
+                    <datalist id="defectTemplates">
+                        <option value="A biztosíték tábla nincs megfelelően feliratozva.">
+                        <option value="A PE vezető keresztmetszete nem megfelelő.">
+                        <option value="Szinjelzési hiba (zöld-sárga vezető fázisként használva).">
+                        <option value="EPH csomópont kialakítása hiányos.">
+                    </datalist>
+                    <datalist id="defectLocationDatalist"></datalist>
+                </div>
+
+                <div id="defectsToolbar" class="order-3 fixed inset-x-0 bottom-0 z-40 flex flex-col gap-3 border-t border-[var(--border-color)] bg-[var(--bg-panel)]/95 px-3 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md md:order-2 md:static md:z-auto md:mt-0 md:mb-4 md:flex-row md:flex-wrap md:items-center md:justify-between md:border-t-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-0">
+                    <div class="flex min-w-0 flex-wrap items-center gap-2">
+                        <label for="defectFilterSelect" class="shrink-0 text-sm text-[var(--text-muted)]">Szűrés:</label>
+                        <select id="defectFilterSelect" class="min-h-11 min-w-0 flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-2 py-2 text-sm text-[var(--text-main)] sm:max-w-[14rem] sm:flex-none md:max-w-none">
                             <option value="">Összes hiba</option>
                             <option value="kritikus">Kritikus</option>
                             <option value="sulyos">Súlyos</option>
                             <option value="kozepes">Közepes</option>
                             <option value="egyedi">Egyedi (sablon nélkül)</option>
                         </select>
-                        <button class="btn btn-secondary" style="width: auto; margin:0;" id="btnGenerateDefects">🤖 Automatikus Gyűjtés</button>
-                        <button class="btn btn-primary" style="width: auto; margin:0;" id="btnAddDefect">+ Új Hiba</button>
                     </div>
-                </div>
-                <!-- Template szövegek tárháza (rejtett) -->
-                <datalist id="defectTemplates">
-                    <option value="A biztosíték tábla nincs megfelelően feliratozva.">
-                    <option value="A PE vezető keresztmetszete nem megfelelő.">
-                    <option value="Szinjelzési hiba (zöld-sárga vezető fázisként használva).">
-                    <option value="EPH csomópont kialakítása hiányos.">
-                </datalist>
-                <datalist id="defectLocationDatalist"></datalist>
-
-                <div id="defectList">
-                    <!-- A hibák JS-ből lesznek ide generálva -->
+                    <div class="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                        <button type="button" class="btn btn-secondary !m-0 min-h-11 min-w-0 flex-1 sm:flex-none sm:min-w-[10rem]" id="btnGenerateDefects">🤖 Automatikus Gyűjtés</button>
+                        <button type="button" class="btn btn-primary !m-0 min-h-11 min-w-0 flex-1 sm:flex-none sm:min-w-[10rem]" id="btnAddDefect">+ Új Hiba</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -832,7 +830,9 @@
                 </div>
 
                 <!-- HELYSZÍNFA HIERARCHIA -->
-                <div id="siteTreePanel"></div>
+                <div id="siteTreePanel"
+                    class="panel-glass mb-8 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-color)] shadow-[var(--shadow-glass)]">
+                </div>
 
                 <!-- Gyors hozzárendelés mezők (fa kiválasztásból vagy kézi) -->
                 <div
@@ -1079,7 +1079,7 @@
             <button type="button" id="cookieConsentModalClose" class="btn btn-secondary">Bezárás</button>
         </div>
     </div>
-    <link rel="stylesheet" href="css/cookie-consent.css">
+    <!-- CSS: tokens + Tailwind + style.css → main.js -->
 
     <!-- Main Logic -->
     <script type="module" src="js/main.js"></script>

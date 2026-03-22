@@ -1,3 +1,18 @@
+/** Egy hibasor azonosítója (Tailwind + JS; nincs .defect-card osztály) */
+const VBF_DEFECT_CARD_ATTR = 'data-vbf-defect-card';
+const VBF_DEFECT_ROW_SELECTOR = `#defectList [${VBF_DEFECT_CARD_ATTR}]`;
+
+const VBF_DEFECT_CARD_CLASS =
+    'grid grid-cols-1 gap-4 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-glass)] p-4 mb-4 ' +
+    'md:gap-6 md:p-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]';
+
+const VBF_FIELD_BLOCK = 'flex min-w-0 flex-col gap-2';
+const VBF_FIELD_LABEL = 'text-sm text-[var(--text-muted-strong)]';
+const VBF_INPUT_CLASS =
+    'w-full min-h-11 resize-y rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-main)] font-[inherit] transition-[border-color] duration-200 focus:border-[var(--primary)] focus:outline-none';
+const VBF_SELECT_CLASS =
+    'w-full min-h-11 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-main)] font-[inherit] focus:border-[var(--primary)] focus:outline-none';
+
 export function initDefects() {
     const btnAddDefect = document.getElementById('btnAddDefect');
     const defectList = document.getElementById('defectList');
@@ -13,19 +28,20 @@ export function initDefects() {
         }
 
         const defectRow = document.createElement('div');
-        defectRow.className = 'defect-card';
+        defectRow.setAttribute(VBF_DEFECT_CARD_ATTR, '');
+        defectRow.className = VBF_DEFECT_CARD_CLASS;
         defectRow.innerHTML = `
-            <div class="defect-details">
-                <label>Válassz tipikus hibát a sablonhoz:</label>
-                <select class="tpl-select">
+            <div class="${VBF_FIELD_BLOCK}">
+                <label class="${VBF_FIELD_LABEL}">Válassz tipikus hibát a sablonhoz:</label>
+                <select class="tpl-select ${VBF_SELECT_CLASS}">
                     ${tipikusOptions}
                 </select>
                 
-                <label style="margin-top: 10px;">Jegyzőkönyvbe kerülő szöveg:</label>
-                <textarea rows="4" class="desc-input" placeholder="Ide kerül a hiba leírása..."></textarea>
+                <label class="${VBF_FIELD_LABEL}">Jegyzőkönyvbe kerülő szöveg:</label>
+                <textarea rows="4" class="desc-input ${VBF_INPUT_CLASS}" placeholder="Ide kerül a hiba leírása..."></textarea>
                 
-                <label style="margin-top: 10px;">Javasolt javítási határidő:</label>
-                <select class="deadline-input">
+                <label class="${VBF_FIELD_LABEL}">Javasolt javítási határidő:</label>
+                <select class="deadline-input ${VBF_SELECT_CLASS}">
                     <option value="Azonnali (0 nap)">Azonnali (0 nap)</option>
                     <option value="30 napon belül">30 napon belül</option>
                     <option value="90 napon belül vagy a következő karbantartáskor">90 napon belül vagy a karbantartáskor</option>
@@ -34,22 +50,22 @@ export function initDefects() {
                 </select>
             </div>
             
-            <div class="defect-location">
-                <label>Szabvány hivatkozás:</label>
-                <input type="text" class="standard-input" placeholder="MSZ HD 60364..." style="margin-bottom: 10px;" />
+            <div class="${VBF_FIELD_BLOCK}">
+                <label class="${VBF_FIELD_LABEL}">Szabvány hivatkozás:</label>
+                <input type="text" class="standard-input ${VBF_INPUT_CLASS}" placeholder="MSZ HD 60364..." />
                 
-                <label>Pontos Helyszín (Emelet, Részleg, Vagy Eszköz):</label>
-                <input type="text" class="loc-input" list="defectLocationDatalist" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító..." style="width:100%; padding:0.5rem; min-height:2.5rem;">
+                <label class="${VBF_FIELD_LABEL}">Pontos Helyszín (Emelet, Részleg, Vagy Eszköz):</label>
+                <input type="text" class="loc-input ${VBF_INPUT_CLASS}" list="defectLocationDatalist" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító...">
             </div>
             
-            <div class="defect-image">
-                <label>Fotó csatolása:</label>
-                <div class="image-upload-area" style="cursor:pointer;">
+            <div class="${VBF_FIELD_BLOCK}">
+                <label class="${VBF_FIELD_LABEL}">Fotó csatolása:</label>
+                <div data-vbf-defect-upload class="flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-sm)] border-2 border-dashed border-[var(--border-color)] p-4 text-center text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--primary)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]">
                     <span class="upload-txt">+ Kattints ide kép feltöltéséhez</span>
-                    <img class="img-preview" src="" style="display:none; max-width: 100%; max-height: 150px; border-radius: 4px; margin-top: 10px;" />
+                    <img class="img-preview mt-2 hidden max-h-40 max-w-full rounded" src="" alt="" />
                 </div>
-                <input type="file" class="photo-input" accept="image/*" style="display:none;" />
-                <button type="button" class="btn btn-danger btn-small" onclick="this.closest('.defect-card').remove()" style="margin-top: 10px; width: 100%;">❌ Hiba Törlése</button>
+                <input type="file" class="photo-input hidden" accept="image/*" />
+                <button type="button" class="btn btn-danger btn-small !mt-3 !mb-0 w-full" onclick="this.closest('[${VBF_DEFECT_CARD_ATTR}]').remove()">❌ Hiba Törlése</button>
             </div>
         `;
 
@@ -86,7 +102,7 @@ export function initDefects() {
             if (typeof window.applyDefectFilter === 'function') window.applyDefectFilter();
         });
 
-        const uploadArea = defectRow.querySelector('.image-upload-area');
+        const uploadArea = defectRow.querySelector('[data-vbf-defect-upload]');
         const photoInput = defectRow.querySelector('.photo-input');
         const imgPreview = defectRow.querySelector('.img-preview');
         const uploadTxt = defectRow.querySelector('.upload-txt');
@@ -106,8 +122,8 @@ export function initDefects() {
                         : Promise.resolve(dataUrl);
                     compress.then(function (compressed) {
                         imgPreview.src = compressed;
-                        imgPreview.style.display = 'block';
-                        uploadTxt.style.display = 'none';
+                        imgPreview.classList.remove('hidden');
+                        uploadTxt.classList.add('hidden');
                         defectRow.setAttribute('data-photo', compressed);
                     });
                 };
@@ -363,7 +379,7 @@ export function initDefects() {
     window.applyDefectFilter = function () {
         const sel = document.getElementById('defectFilterSelect');
         const filter = (sel && sel.value) ? sel.value.trim() : '';
-        document.querySelectorAll('#defectList .defect-card').forEach(card => {
+        document.querySelectorAll(VBF_DEFECT_ROW_SELECTOR).forEach(card => {
             const severity = (card.getAttribute('data-severity') || 'egyedi').toLowerCase();
             const show = !filter || severity === filter;
             card.style.display = show ? '' : 'none';

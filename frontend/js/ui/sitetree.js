@@ -290,35 +290,36 @@ export function initSiteTree() {
             container.innerHTML = '';
 
             const header = document.createElement('div');
-            header.className = 'st-header';
+            header.className =
+                'flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-4 py-3 sm:px-5';
             header.innerHTML = `
-                <h3>
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h3 class="m-0 flex items-center gap-2 text-[0.92rem] font-semibold text-[var(--text-main)] sm:text-base">
+                    <svg class="text-[var(--accent)]" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                     Helyszínfa
                 </h3>
-                <button class="btn btn-primary btn-small st-add-root" title="Új épület hozzáadása">+ Épület</button>
+                <button type="button" class="btn btn-primary btn-small !m-0 shrink-0 !min-h-9 !px-3 !py-1 !text-[0.74rem] sm:!text-[0.8rem]" data-vbf-st-add-root title="Új épület hozzáadása">+ Épület</button>
             `;
             container.appendChild(header);
 
             if (this.data.length === 0) {
                 const empty = document.createElement('div');
-                empty.className = 'st-empty';
+                empty.className = 'px-8 py-8 text-center text-[var(--text-muted)]';
                 empty.innerHTML = `
                     <p>Nincs még helyszín megadva.</p>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">Kattints a <strong>+ Épület</strong> gombra az építkezéshez!</p>
+                    <p class="mt-1 text-[0.8rem] opacity-60">Kattints a <strong>+ Épület</strong> gombra az építkezéshez!</p>
                 `;
                 container.appendChild(empty);
             } else {
                 const tree = document.createElement('div');
-                tree.className = 'st-tree';
+                tree.className = 'max-h-[250px] overflow-y-auto overflow-x-hidden py-2 md:max-h-[28rem]';
                 this._renderNodes(tree, this.data, 0);
                 container.appendChild(tree);
             }
 
-            container.querySelector('.st-add-root')?.addEventListener('click', () => {
+            container.querySelector('[data-vbf-st-add-root]')?.addEventListener('click', () => {
                 const name = prompt('Épület neve:', 'Főépület');
                 if (name) this.addBuilding(name.trim());
             });
@@ -327,7 +328,7 @@ export function initSiteTree() {
         _renderNodes(parentEl, nodes, depth) {
             nodes.forEach(node => {
                 const nodeEl = document.createElement('div');
-                nodeEl.className = 'st-node';
+                nodeEl.className = 'relative';
                 nodeEl.setAttribute('data-depth', depth);
                 nodeEl.setAttribute('data-id', node.id);
                 nodeEl.setAttribute('data-type', node.type);
@@ -340,44 +341,49 @@ export function initSiteTree() {
                 const sh = window.VBF && VBF.sanitize ? VBF.sanitize.html : (v) => v;
 
                 const row = document.createElement('div');
-                row.className = `st-row ${isActive ? 'active' : ''} depth-${depth}`;
-                row.style.paddingLeft = (depth * 20 + 8) + 'px';
+                row.className = [
+                    'group flex min-h-12 min-w-0 w-full cursor-pointer items-center gap-1 border-l-[3px] border-transparent py-2 pr-2 transition-colors sm:min-h-[2.4rem]',
+                    'hover:bg-[color-mix(in_srgb,white_4%,transparent)]',
+                    isActive ? 'border-l-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)]' : ''
+                ].filter(Boolean).join(' ');
+                row.style.paddingInlineStart = `${0.5 + depth * 1.25}rem`;
 
                 const toggle = node.children !== undefined
-                    ? `<span class="st-toggle ${node.collapsed ? 'collapsed' : ''}" data-action="toggle" data-id="${node.id}">
+                    ? `<span class="flex h-4 w-4 shrink-0 select-none items-center justify-center text-[0.65rem] text-[var(--text-muted)] transition-transform hover:text-[var(--text-main)] ${node.collapsed ? '-rotate-90' : ''}" data-action="toggle" data-id="${node.id}" role="button" tabindex="0">
                         ${hasChildren ? (node.collapsed ? '▶' : '▼') : '·'}
                        </span>`
-                    : '<span class="st-toggle-space"></span>';
+                    : '<span class="inline-block h-4 w-4 shrink-0"></span>';
 
                 row.innerHTML = `
                     ${toggle}
-                    <span class="st-icon">${this._typeIcon(node.type)}</span>
-                    <span class="st-name" data-action="select" data-id="${node.id}" title="Kattints a kiválasztáshoz">${sh(node.name)}</span>
-                    ${node.type === 'panel' ? `<input class="st-device-input" data-id="${node.id}" value="${sq(node.device || '')}" placeholder="B16" title="Alapértelmezett kikapcsoló" />` : ''}
-                    <span class="st-type-badge">${this._typeName(node.type)}</span>
+                    <span class="shrink-0 text-base leading-none">${this._typeIcon(node.type)}</span>
+                    <span class="min-w-0 flex-1 cursor-pointer truncate text-[0.83rem] text-[var(--text-main)] transition-colors hover:text-[var(--primary)] sm:text-[0.88rem] ${isActive ? 'font-semibold text-[var(--primary)]' : ''}" data-action="select" data-id="${node.id}" title="Kattints a kiválasztáshoz">${sh(node.name)}</span>
+                    ${node.type === 'panel' ? `<input data-vbf-st-device class="w-[3.6rem] shrink-0 rounded border border-[color-mix(in_srgb,var(--text-main)_15%,transparent)] bg-[color-mix(in_srgb,black_30%,transparent)] px-1 py-0.5 text-center text-[0.75rem] font-semibold text-[var(--accent)] focus:border-[var(--primary)] focus:outline-none sm:w-16 sm:text-[0.78rem]" data-id="${node.id}" value="${sq(node.device || '')}" placeholder="B16" title="Alapértelmezett kikapcsoló" />` : ''}
+                    <span class="hidden shrink-0 rounded px-1.5 py-0.5 text-[0.6rem] uppercase tracking-wide text-[var(--text-muted)] opacity-70 sm:inline bg-[color-mix(in_srgb,white_5%,transparent)]">${this._typeName(node.type)}</span>
     
-                    <div class="st-actions">
+                    <div class="flex shrink-0 gap-0.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                         ${node.type === 'circuit' ? `
-                            <div class="st-measure-menu">
-                                <button class="st-btn st-btn-meas" title="Mérés Hozzáadása">+ M</button>
-                                <div class="st-meas-dropdown">
-                                    <button onclick="VBF.siteTree.addMeasurement('${node.id}', 'rpe')">Folytonosság (Rpe)</button>
-                                    <button onclick="VBF.siteTree.addMeasurement('${node.id}', 'loop')">Hurok (Zs)</button>
-                                    <button onclick="VBF.siteTree.addMeasurement('${node.id}', 'rcd')">ÁVK (RCD)</button>
-                                    <button onclick="VBF.siteTree.addMeasurement('${node.id}', 'insulation')">Szigetelés (Riso)</button>
+                            <div class="group/me relative shrink-0">
+                                <button type="button" class="flex h-[34px] w-8 items-center justify-center rounded border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-transparent text-[0.65rem] font-bold leading-none text-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] sm:h-[26px] sm:text-[0.7rem]" title="Mérés Hozzáadása">+M</button>
+                                <div class="absolute right-0 top-[110%] z-[1000] hidden min-w-[9rem] rounded-lg border border-[var(--border-color)] bg-[var(--bg-panel)] py-1 shadow-xl backdrop-blur-md group-hover/me:block">
+                                    <button type="button" class="block w-full border-0 bg-transparent px-4 py-2.5 text-left text-[0.8rem] text-[var(--text-main)] first:rounded-t-lg last:rounded-b-lg hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] hover:text-[var(--primary)]" onclick="VBF.siteTree.addMeasurement('${node.id}', 'rpe')">Folytonosság (Rpe)</button>
+                                    <button type="button" class="block w-full border-0 bg-transparent px-4 py-2.5 text-left text-[0.8rem] text-[var(--text-main)] first:rounded-t-lg last:rounded-b-lg hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] hover:text-[var(--primary)]" onclick="VBF.siteTree.addMeasurement('${node.id}', 'loop')">Hurok (Zs)</button>
+                                    <button type="button" class="block w-full border-0 bg-transparent px-4 py-2.5 text-left text-[0.8rem] text-[var(--text-main)] first:rounded-t-lg last:rounded-b-lg hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] hover:text-[var(--primary)]" onclick="VBF.siteTree.addMeasurement('${node.id}', 'rcd')">ÁVK (RCD)</button>
+                                    <button type="button" class="block w-full border-0 bg-transparent px-4 py-2.5 text-left text-[0.8rem] text-[var(--text-main)] first:rounded-t-lg last:rounded-b-lg hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] hover:text-[var(--primary)]" onclick="VBF.siteTree.addMeasurement('${node.id}', 'insulation')">Szigetelés (Riso)</button>
                                 </div>
                             </div>
                         ` : ''}
-                        ${childType ? `<button class="st-btn st-btn-add" data-action="add" data-id="${node.id}" data-child-type="${childType}" title="+ ${this._typeName(childType)}">+</button>` : ''}
-                        <button class="st-btn st-btn-rename" data-action="rename" data-id="${node.id}" title="Átnevezés">✏️</button>
-                        <button class="st-btn st-btn-delete" data-action="delete" data-id="${node.id}" title="Törlés">🗑️</button>
+                        ${childType ? `<button type="button" class="flex h-[34px] w-[26px] items-center justify-center rounded border border-transparent bg-transparent p-0 text-[0.9rem] font-bold text-[var(--primary)] hover:bg-[color-mix(in_srgb,var(--primary)_15%,transparent)] sm:h-[26px] sm:text-[0.7rem]" data-action="add" data-id="${node.id}" data-child-type="${childType}" title="+ ${this._typeName(childType)}">+</button>` : ''}
+                        <button type="button" class="flex h-[34px] w-[26px] items-center justify-center rounded border border-transparent bg-transparent p-0 text-[0.7rem] text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,white_8%,transparent)] hover:text-[var(--text-main)] sm:h-[26px]" data-action="rename" data-id="${node.id}" title="Átnevezés">✏️</button>
+                        <button type="button" class="flex h-[34px] w-[26px] items-center justify-center rounded border border-transparent bg-transparent p-0 text-[0.7rem] text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] hover:text-[var(--danger)] sm:h-[26px]" data-action="delete" data-id="${node.id}" title="Törlés">🗑️</button>
                     </div>
                 `;
                 nodeEl.appendChild(row);
 
                 if (node.children && !node.collapsed) {
                     const childContainer = document.createElement('div');
-                    childContainer.className = 'st-children';
+                    childContainer.setAttribute('data-vbf-tree-children', '');
+                    childContainer.style.setProperty('--vbf-d', String(depth));
                     this._renderNodes(childContainer, node.children, depth + 1);
                     nodeEl.appendChild(childContainer);
                 }
@@ -426,7 +432,7 @@ export function initSiteTree() {
             });
 
             container.addEventListener('input', (e) => {
-                if (e.target.classList.contains('st-device-input')) {
+                if (e.target.matches('[data-vbf-st-device]')) {
                     const id = e.target.getAttribute('data-id');
                     this.setDevice(id, e.target.value);
                 }

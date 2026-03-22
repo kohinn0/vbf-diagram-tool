@@ -6,29 +6,28 @@
     <meta name="theme-color" content="#0e1726">
     <meta name="description" content="VBF Cég admin és Dashboard – Felhasználók, előfizetések, munkakiosztás.">
     <title>VBF Cég admin | Dashboard & Admin</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body class="shop-page">
-    <nav class="main-nav panel-glass">
-        <a href="index.html" class="nav-brand" style="text-decoration: none; color: inherit;" title="Főoldal">⚡ VBF Premium</a>
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-target="tab-dashboard">📊 Dashboard</button>
-            <button class="nav-tab" data-target="tab-admin" id="navAdminShop" style="display: none;">🔑 Admin</button>
+    <nav class="main-nav panel-glass flex min-h-[3.25rem] w-full max-w-full flex-wrap items-center justify-between gap-3 border-b border-[var(--border-color)] px-[5%] py-3 backdrop-blur-md md:flex-nowrap md:gap-4">
+        <a href="index.html" class="nav-brand inline-flex shrink-0 items-center gap-2 border-0 border-r-0 pr-2 text-[1.1rem] font-bold text-[var(--text-main)] no-underline transition-colors hover:text-[var(--primary)] md:border-r md:border-[var(--border-color)] md:pr-3" title="Főoldal">⚡ VBF Premium</a>
+        <div class="nav-tabs inline-flex min-w-0 max-w-full items-center gap-1 overflow-x-auto">
+            <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">📊 Dashboard</button>
+            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">🔑 Admin</button>
         </div>
-        <div class="user-controls" style="display: flex; gap: 15px; align-items: center; justify-content: flex-end;">
-            <a href="app.html" class="btn btn-outline btn-small" style="white-space: nowrap;">📝 Jegyzőkönyv alkalmazás</a>
-            <a href="#" id="linkProfile" style="color: var(--accent); font-weight: 500; font-size: 0.9rem; text-decoration: none;"></a>
-            <span id="userInfo" style="color: var(--accent); font-weight: 500; font-size: 0.9rem;"></span>
-            <div id="gdprLinks" style="display: none; align-items: center; gap: 8px;">
-                <a href="mailto:info@vbfpremium.hu" style="font-size: 0.8rem; color: var(--primary, #0ea5e9);">info@vbfpremium.hu</a>
-                <a href="#" id="linkChangePassword" style="font-size: 0.8rem; color: var(--text-muted);">Jelszó módosítása</a>
-                <a href="#" id="linkDataExportZip" style="font-size: 0.8rem; color: var(--primary, #0ea5e9);">Teljes adatcsomag (ZIP)</a>
-                <a href="#" id="linkDeleteAccount" style="font-size: 0.8rem; color: var(--danger, #ef4444);">Fiók törlése</a>
+        <div class="user-controls flex w-full min-w-0 flex-wrap items-center justify-start gap-2 border-t border-[var(--border-color)] pt-2 pl-0 md:ml-auto md:w-auto md:flex-nowrap md:justify-end md:border-t-0 md:border-l md:border-[var(--border-color)] md:pt-0 md:pl-4">
+            <button type="button" class="btn btn-secondary btn-small btn-beta-bug !m-0 shrink-0 whitespace-nowrap" data-bug-report title="Hibabejelentés – béta (email)">🐛 Hiba</button>
+            <a href="app.html" class="btn btn-outline btn-small !m-0 shrink-0 whitespace-nowrap">📝 Jegyzőkönyv alkalmazás</a>
+            <a href="#" id="linkProfile" class="text-sm font-medium text-[var(--accent)] no-underline hover:underline"></a>
+            <span id="userInfo" class="text-sm font-medium text-[var(--accent)]"></span>
+            <div id="gdprLinks" class="hidden flex-wrap items-center gap-2 gap-x-3">
+                <a href="mailto:info@vbfpremium.hu" class="text-xs text-[var(--primary)] no-underline hover:underline">info@vbfpremium.hu</a>
+                <a href="#" id="linkChangePassword" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary)]">Jelszó módosítása</a>
+                <a href="#" id="linkDataExportZip" class="text-xs text-[var(--primary)] hover:underline">Teljes adatcsomag (ZIP)</a>
+                <a href="#" id="linkDeleteAccount" class="text-xs text-[var(--danger)] hover:text-[var(--danger-hover)]">Fiók törlése</a>
             </div>
-            <button class="btn btn-secondary btn-small" id="btnLoginNav" style="margin:0; padding: 4px 10px;">Belépés</button>
+            <button type="button" class="btn btn-secondary btn-small !m-0 shrink-0" id="btnLoginNav">Belépés</button>
         </div>
     </nav>
 

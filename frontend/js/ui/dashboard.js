@@ -9,8 +9,8 @@ export function initDashboard() {
             if (!container) return;
 
             container.innerHTML = `
-                <div class="dashboard-loading">
-                    <div class="dash-spinner"></div>
+                <div class="flex flex-col items-center justify-center gap-4 py-16 text-[var(--text-muted)]">
+                    <div class="h-10 w-10 animate-spin rounded-full border-[3px] border-[color-mix(in_srgb,var(--text-main)_10%,transparent)] border-t-[var(--primary)]"></div>
                     <p>Dashboard betöltése...</p>
                 </div>`;
 
@@ -21,14 +21,14 @@ export function initDashboard() {
                 ]);
 
                 if (!statsRes) {
-                    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 3rem;">Jelentkezz be ADMIN fiókkal a Dashboard megtekintéséhez.</p>';
+                    container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--text-muted)]">Jelentkezz be ADMIN fiókkal a Dashboard megtekintéséhez.</p>';
                     return;
                 }
 
                 this.render(container, statsRes, inspRes);
             } catch (err) {
                 console.error('Dashboard error:', err);
-                container.innerHTML = '<p style="color:var(--danger); text-align:center; padding: 3rem;">Hiba a dashboard betöltésekor: ' + err.message + '</p>';
+                container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--danger)]">Hiba a dashboard betöltésekor: ' + err.message + '</p>';
             }
         },
 
@@ -50,18 +50,19 @@ export function initDashboard() {
         render(container, stats, inspections) {
             container.innerHTML = '';
 
-            // ── Header ──
+            const rate = Math.min(100, Math.max(0, Number(stats.result_stats?.pass_rate) || 0));
+            const coneBg = `conic-gradient(#10b981 0deg, #10b981 ${rate * 3.6}deg, rgba(255,255,255,0.08) ${rate * 3.6}deg)`;
+
             const header = document.createElement('div');
-            header.className = 'dash-header';
+            header.className = 'mb-5';
             header.innerHTML = `
-                <h2>📊 Üzleti Dashboard</h2>
-                <p class="dash-subtitle">Átfogó statisztikák és közelgő feladatok</p>
+                <h2 class="mb-1 text-2xl font-bold text-[var(--text-main)]">📊 Üzleti Dashboard</h2>
+                <p class="text-[0.95rem] text-[var(--text-muted)]">Átfogó statisztikák és közelgő feladatok</p>
             `;
             container.appendChild(header);
 
-            // ── KPI Cards ──
             const kpiGrid = document.createElement('div');
-            kpiGrid.className = 'dash-kpi-grid';
+            kpiGrid.className = 'mb-8 grid grid-cols-2 gap-4 lg:auto-rows-fr lg:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]';
             kpiGrid.innerHTML = `
                 ${this._kpiCard('📋', 'Összes jegyzőkönyv', stats.total_reports, 'var(--primary)')}
                 ${this._kpiCard('📅', 'Havi jegyzőkönyvek', stats.monthly_reports, 'var(--accent)')}
@@ -72,57 +73,55 @@ export function initDashboard() {
             `;
             container.appendChild(kpiGrid);
 
-            // ── Charts Row ──
             const chartsRow = document.createElement('div');
-            chartsRow.className = 'dash-charts-row';
+            chartsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             chartsRow.innerHTML = `
-                <div class="dash-chart-card panel-glass">
-                    <h3>📈 Havi trend (utolsó 12 hónap)</h3>
-                    <canvas id="chartMonthlyTrend" height="220"></canvas>
+                <div class="panel-glass rounded-[var(--radius)] p-6">
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📈 Havi trend (utolsó 12 hónap)</h3>
+                    <div class="relative h-[220px] w-full"><canvas id="chartMonthlyTrend"></canvas></div>
                 </div>
-                <div class="dash-chart-card panel-glass">
-                    <h3>🎯 Minősítés megoszlás</h3>
-                    <canvas id="chartQualification" height="220"></canvas>
+                <div class="panel-glass rounded-[var(--radius)] p-6">
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">🎯 Minősítés megoszlás</h3>
+                    <div class="relative h-[220px] w-full"><canvas id="chartQualification"></canvas></div>
                 </div>
             `;
             container.appendChild(chartsRow);
 
-            // ── Defect & Results Row ──
             const analyticsRow = document.createElement('div');
-            analyticsRow.className = 'dash-charts-row';
+            analyticsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             analyticsRow.innerHTML = `
-                <div class="dash-chart-card panel-glass">
-                    <h3>⚠️ Hibakategóriák (MEE)</h3>
-                    <canvas id="chartDefects" height="220"></canvas>
+                <div class="panel-glass rounded-[var(--radius)] p-6">
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">⚠️ Hibakategóriák (MEE)</h3>
+                    <div class="relative h-[220px] w-full"><canvas id="chartDefects"></canvas></div>
                 </div>
-                <div class="dash-chart-card panel-glass">
-                    <h3>📊 Mérési eredmények</h3>
-                    <div class="dash-pass-rate">
-                        <div class="dash-pass-circle" style="--rate: ${stats.result_stats?.pass_rate || 0}%">
-                            <span class="dash-pass-number">${stats.result_stats?.pass_rate || 0}%</span>
-                            <span class="dash-pass-label">Átmenési arány</span>
+                <div class="panel-glass rounded-[var(--radius)] p-6">
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📊 Mérési eredmények</h3>
+                    <div class="flex flex-col items-center gap-8 py-4 lg:flex-row lg:items-center">
+                        <div class="relative flex h-[7.5rem] w-[7.5rem] shrink-0 flex-col items-center justify-center rounded-full" style="background: ${coneBg}">
+                            <div class="absolute inset-[10px] z-0 rounded-full bg-[var(--bg-panel)]"></div>
+                            <span class="relative z-[1] text-2xl font-bold text-[#10b981]">${rate}%</span>
+                            <span class="relative z-[1] text-[0.65rem] uppercase tracking-wide text-[var(--text-muted)]">Átmenési arány</span>
                         </div>
-                        <div class="dash-pass-details">
-                            <div class="dash-pass-item ok">✅ Megfelelt: <strong>${stats.result_stats?.passed || 0}</strong></div>
-                            <div class="dash-pass-item fail">❌ Nem felelt meg: <strong>${stats.result_stats?.failed || 0}</strong></div>
-                            <div class="dash-pass-item total">📏 Összes mérés: <strong>${stats.result_stats?.total_measurements || 0}</strong></div>
+                        <div class="flex w-full min-w-0 flex-col gap-2">
+                            <div class="rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,white_3%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-muted)]">✅ Megfelelt: <strong class="text-[var(--text-main)]">${stats.result_stats?.passed || 0}</strong></div>
+                            <div class="rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,white_3%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-muted)]">❌ Nem felelt meg: <strong class="text-[var(--text-main)]">${stats.result_stats?.failed || 0}</strong></div>
+                            <div class="rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,white_3%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-muted)]">📏 Összes mérés: <strong class="text-[var(--text-main)]">${stats.result_stats?.total_measurements || 0}</strong></div>
                         </div>
                     </div>
                 </div>
             `;
             container.appendChild(analyticsRow);
 
-            // ── Upcoming Inspections ──
             if (inspections) {
                 const inspSection = document.createElement('div');
-                inspSection.className = 'dash-inspections panel-glass';
+                inspSection.className = 'panel-glass mb-8 rounded-[var(--radius)] p-6';
                 inspSection.innerHTML = `
-                    <h3>🔔 Közelgő / lejárt felülvizsgálatok</h3>
-                    <div class="dash-insp-summary">
-                        <span class="dash-badge danger">${inspections.total_overdue || 0} lejárt</span>
-                        <span class="dash-badge warning">${inspections.total_upcoming || 0} közelgő (90 nap)</span>
+                    <h3 class="mb-4 text-[1.1rem] font-semibold text-[var(--text-main)]">🔔 Közelgő / lejárt felülvizsgálatok</h3>
+                    <div class="mb-6 flex flex-wrap gap-3">
+                        <span class="inline-block rounded-full border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] px-3 py-1 text-[0.8rem] font-semibold text-[var(--danger)]">${inspections.total_overdue || 0} lejárt</span>
+                        <span class="inline-block rounded-full border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] px-3 py-1 text-[0.8rem] font-semibold text-[var(--accent)]">${inspections.total_upcoming || 0} közelgő (90 nap)</span>
                     </div>
-                    <div class="dash-insp-list" id="dashInspList"></div>
+                    <div class="flex flex-col gap-2" id="dashInspList"></div>
                 `;
                 container.appendChild(inspSection);
 
@@ -130,24 +129,29 @@ export function initDashboard() {
                 const allItems = [...(inspections.overdue || []), ...(inspections.upcoming || [])];
 
                 if (allItems.length === 0) {
-                    listEl.innerHTML = '<p style="color:var(--text-muted); padding: 1rem;">Nincs közelgő felülvizsgálat a következő 90 napban. 🎉</p>';
+                    listEl.innerHTML = '<p class="p-4 text-[var(--text-muted)]">Nincs közelgő felülvizsgálat a következő 90 napban. 🎉</p>';
                 } else {
                     allItems.forEach(item => {
                         const isOverdue = item.status === 'LEJÁRT';
                         const row = document.createElement('div');
-                        row.className = `dash-insp-row ${isOverdue ? 'overdue' : 'upcoming'}`;
+                        row.className = [
+                            'flex flex-col gap-3 rounded-[var(--radius-sm)] border-l-[3px] p-3 transition-colors hover:bg-[color-mix(in_srgb,white_6%,transparent)] sm:flex-row sm:items-center sm:justify-between',
+                            isOverdue
+                                ? 'border-l-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_5%,transparent)]'
+                                : 'border-l-[var(--accent)] bg-[color-mix(in_srgb,white_3%,transparent)]'
+                        ].join(' ');
                         row.innerHTML = `
-                            <div class="dash-insp-info">
-                                <strong>${item.site_address || item.title}</strong>
-                                <span class="dash-insp-meta">${item.customer_name || 'Ismeretlen'} · ${(item.report_type || '').toUpperCase()} · ${item.otsz_class || ''}</span>
+                            <div class="min-w-0 flex-1">
+                                <strong class="block truncate text-[0.95rem] text-[var(--text-main)]">${item.site_address || item.title}</strong>
+                                <span class="text-[0.8rem] text-[var(--text-muted)]">${item.customer_name || 'Ismeretlen'} · ${(item.report_type || '').toUpperCase()} · ${item.otsz_class || ''}</span>
                             </div>
-                            <div class="dash-insp-date">
-                                <span class="dash-insp-days ${isOverdue ? 'text-danger' : 'text-warning'}">
+                            <div class="shrink-0 text-left sm:text-right">
+                                <span class="block text-[0.85rem] font-semibold ${isOverdue ? 'text-[var(--danger)]' : 'text-[var(--accent)]'}">
                                     ${isOverdue ? Math.abs(item.days_until) + ' napja lejárt!' : item.days_until + ' nap múlva'}
                                 </span>
-                                <span class="dash-insp-date-str">${item.next_inspection_date}</span>
+                                <span class="text-[0.75rem] text-[var(--text-muted)]">${item.next_inspection_date}</span>
                             </div>
-                            <button class="btn btn-primary btn-small dash-remind-btn" 
+                            <button type="button" class="btn btn-primary btn-small !m-0 w-full shrink-0 !min-h-9 sm:mt-0 sm:w-auto" 
                                     onclick="VBF.dashboard.sendReminder(${item.report_id})"
                                     title="Emlékeztető email küldése">
                                 ✉️ Emlékeztető
@@ -158,7 +162,6 @@ export function initDashboard() {
                 }
             }
 
-            // ── Render charts after DOM is ready ──
             requestAnimationFrame(() => {
                 this._renderMonthlyTrend(stats.monthly_trend || []);
                 this._renderQualification(stats.result_stats?.qualification_breakdown || {});
@@ -168,10 +171,11 @@ export function initDashboard() {
 
         _kpiCard(icon, label, value, color) {
             return `
-                <div class="dash-kpi panel-glass">
-                    <div class="dash-kpi-icon" style="color: ${color}">${icon}</div>
-                    <div class="dash-kpi-value" style="color: ${color}">${value || 0}</div>
-                    <div class="dash-kpi-label">${label}</div>
+                <div class="panel-glass relative overflow-hidden rounded-[var(--radius)] p-5 text-center transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg" style="color: ${color}">
+                    <div class="pointer-events-none absolute inset-x-0 top-0 h-[3px] opacity-40" style="background: currentColor"></div>
+                    <div class="mb-2 text-[2rem]">${icon}</div>
+                    <div class="mb-1 text-[2.2rem] font-bold leading-none">${value || 0}</div>
+                    <div class="text-[0.8rem] uppercase tracking-wide text-[var(--text-muted)]">${label}</div>
                 </div>`;
         },
 

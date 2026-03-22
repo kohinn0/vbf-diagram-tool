@@ -81,11 +81,14 @@ export function initCanvas() {
         { id: 'fan', name: 'Ventilátor', svgPath: '<circle cx="16" cy="16" r="12" /><path d="M10 16 L22 16 M16 10 L16 22 M11 11 L21 21 M11 21 L21 11" />' },
     ];
 
+    const symbolItemClass =
+        'flex cursor-grab flex-col items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-glass)] p-4 transition-all hover:border-[var(--primary)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(59,130,246,0.2)] [&_svg]:mb-2 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:stroke-[var(--text-main)] [&_svg]:[stroke-width:2] [&_svg]:fill-none [&_span]:text-center [&_span]:text-[0.75rem] [&_span]:text-[var(--text-muted)]';
+
     const symbolGrid = document.getElementById('symbolGrid');
     if (symbolGrid) {
         symbols.forEach(sym => {
             const div = document.createElement('div');
-            div.className = 'symbol-item';
+            div.className = symbolItemClass;
             div.draggable = true;
             div.innerHTML = `
                 <svg viewBox="0 0 32 32">${sym.svgPath}</svg>
@@ -110,7 +113,7 @@ export function initCanvas() {
     if (archGrid) {
         archSymbols.forEach(sym => {
             const div = document.createElement('div');
-            div.className = 'symbol-item';
+            div.className = symbolItemClass;
             div.draggable = true;
             div.innerHTML = `
                 <svg viewBox="0 0 32 32">${sym.svgPath}</svg>
@@ -266,16 +269,16 @@ export function initCanvas() {
     if (toolSelect && toolLine) {
         toolSelect.addEventListener('click', () => {
             isDrawingLine = false;
-            toolSelect.classList.add('active');
-            toolLine.classList.remove('active');
+            toolSelect.setAttribute('data-active', '');
+            toolLine.removeAttribute('data-active');
             canvas.selection = true;
             canvas.forEachObject(o => o.selectable = true);
         });
 
         toolLine.addEventListener('click', () => {
             isDrawingLine = true;
-            toolLine.classList.add('active');
-            toolSelect.classList.remove('active');
+            toolLine.setAttribute('data-active', '');
+            toolSelect.removeAttribute('data-active');
             canvas.selection = false;
             canvas.forEachObject(o => o.selectable = false);
         });

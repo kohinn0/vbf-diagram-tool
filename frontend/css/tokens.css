@@ -1,0 +1,134 @@
+/* Közös design tokenek – minden oldal (app, shop, főoldal) */
+:root {
+    --bg-base: #040914;
+    --bg-panel: rgba(11, 21, 39, 0.7);
+    --bg-glass: rgba(18, 30, 54, 0.5);
+
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+    --text-muted-strong: #cbd5e1;
+
+    --primary: #0ea5e9;
+    --primary-hover: #0284c7;
+    --secondary: #121e36;
+    --secondary-hover: #1e293b;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+
+    --accent: #f59e0b;
+
+    --border-color: rgba(255, 255, 255, 0.08);
+    --grid-color: rgba(255, 255, 255, 0.04);
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    /* Főoldal / kosár / régi osztálynevek – aliasok (--primary / --secondary alapú) */
+    --bg-color: var(--bg-base);
+    --text-color: var(--text-main);
+    --surface-color: #0b1527;
+    --surface-light: var(--secondary);
+    --glass-bg: var(--bg-panel);
+    --glass-border: var(--border-color);
+    --primary-dark: var(--primary-hover);
+    --primary-light: #38bdf8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: var(--transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.5);
+    background-clip: content-box;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-image: radial-gradient(circle at 50% 0%, #0b1527 0%, var(--bg-base) 60%);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.shop-page {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* Ne örökölje a body flex oszlopát – különben a flex:1 + height:0 miatt a dashboard/Chart „végtelenre” nő */
+    display: block;
+}
+
+/* Főoldal: görgethető, nem flex app-shell */
+body.landing-page {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: block;
+}
+
+/* Helyszínfa: függőleges vezető – mélység a --vbf-d custom property-ből (sitetree.js) */
+[data-vbf-tree-children] {
+    position: relative;
+}
+
+[data-vbf-tree-children]::before {
+    content: '';
+    position: absolute;
+    left: calc(0.55rem + var(--vbf-d, 0) * 1.05rem);
+    top: 0;
+    bottom: 0.5rem;
+    width: 1px;
+    background: color-mix(in srgb, var(--border-color) 85%, transparent);
+    pointer-events: none;
+}
+
+body.light-mode {
+    --bg-base: #f8fafc;
+    --bg-color: var(--bg-base);
+    --bg-panel: rgba(255, 255, 255, 0.85);
+    --bg-glass: rgba(255, 255, 255, 0.6);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-muted-strong: #64748b;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --grid-color: rgba(0, 0, 0, 0.05);
+    --text-color: var(--text-main);
+    --glass-bg: var(--bg-panel);
+    --glass-border: var(--border-color);
+    --surface-light: #e2e8f0;
+    background-image: radial-gradient(circle at 50% 0%, #e2e8f0 0%, var(--bg-base) 60%);
+}

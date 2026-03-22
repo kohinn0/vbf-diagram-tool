@@ -1,108 +1,8 @@
-/* ==========================================================================
-   Design System & Tokens
-   ========================================================================== */
-:root {
-    /* Premium Dark Mode Colors (Matched with index.html) */
-    --bg-base: #040914;
-    --bg-panel: rgba(11, 21, 39, 0.7);
-    --bg-glass: rgba(18, 30, 54, 0.5);
+/* Modul CSS-ek – egy helyről töltődnek (main.js / shop.js); dashboard + sitetree → Tailwind (JS) */
+@import "./cart-drawer.css";
+@import "./cookie-consent.css";
 
-    --text-main: #ffffff;
-    --text-muted: #94a3b8;
-    --text-muted-strong: #cbd5e1;
-
-    --primary: #0ea5e9;
-    --primary-hover: #0284c7;
-    --secondary: #121e36;
-    --secondary-hover: #1e293b;
-    --danger: #ef4444;
-    --danger-hover: #dc2626;
-
-    --accent: #f59e0b;
-    /* Success / Highlight */
-
-    --border-color: rgba(255, 255, 255, 0.08);
-    --grid-color: rgba(255, 255, 255, 0.04);
-
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-/* ==========================================================================
-   Reset & Base Styles
-   ========================================================================== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-/* Premium Custom Scrollbars */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-    transition: var(--transition);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(14, 165, 233, 0.5);
-    /* Primary color with transparency */
-    background-clip: content-box;
-}
-
-/* Firefox support */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) rgba(0, 0, 0, 0.1);
-}
-
-body {
-    font-family: 'Outfit', sans-serif;
-    background-color: var(--bg-base);
-    color: var(--text-main);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    /* Subtle radial gradient background */
-    background-image: radial-gradient(circle at 50% 0%, #0b1527 0%, var(--bg-base) 60%);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Shop/Web nézet: mobilon görgethető, ne vágja le a tartalmat */
-body.shop-page {
-    min-height: 100vh;
-    height: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-body.light-mode {
-    --bg-base: #f8fafc;
-    --bg-panel: rgba(255, 255, 255, 0.85);
-    --bg-glass: rgba(255, 255, 255, 0.6);
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --text-muted-strong: #64748b;
-    --border-color: rgba(0, 0, 0, 0.1);
-    --grid-color: rgba(0, 0, 0, 0.05);
-    background-image: radial-gradient(circle at 50% 0%, #e2e8f0 0%, var(--bg-base) 60%);
-}
-
+/* App / szerkesztő felület komponensei (tokenek: css/tokens.css) */
 /* ==========================================================================
    Utility Classes
    ========================================================================== */
@@ -172,39 +72,7 @@ body.light-mode {
     gap: 0.75rem;
 }
 
-.symbol-item {
-    background: var(--bg-glass);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    transition: var(--transition);
-}
-
-.symbol-item:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.symbol-item svg {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 0.5rem;
-    stroke: var(--text-main);
-    fill: none;
-    stroke-width: 2;
-}
-
-.symbol-item span {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-align: center;
-}
+/* symbol-item → Tailwind (canvas.js) */
 
 /* ==========================================================================
    Main Drawing Area
@@ -257,29 +125,7 @@ body.light-mode {
     border: 1px solid var(--border-color);
 }
 
-.tool-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-main);
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    transition: var(--transition);
-}
-
-.tool-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.tool-btn.active {
-    background: var(--primary);
-    color: white;
-}
+/* tool-btn → Tailwind + data-active (app.html) */
 
 .canvas-container-wrapper {
     flex: 1;
@@ -407,6 +253,19 @@ body.light-mode {
     min-height: 36px;
     padding: 0.45rem 0.8rem !important;
     font-size: 0.82rem;
+}
+
+/* Béta: hibabejelentés (app + shop) */
+.btn-beta-bug {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--border-color)) !important;
+    color: var(--accent) !important;
+    background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+}
+
+.btn-beta-bug:hover {
+    border-color: color-mix(in srgb, var(--accent) 65%, var(--border-color)) !important;
+    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    color: var(--text-main) !important;
 }
 
 .btn-outline {
@@ -928,44 +787,7 @@ a.nav-tab {
     background: rgba(255, 255, 255, 0.06);
 }
 
-/* Toast notifications */
-.toast-container {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    pointer-events: none;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-sm);
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-glass);
-    font-size: 0.9rem;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.toast.toast-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.toast-success { border-left: 4px solid #10b981; }
-.toast-error { border-left: 4px solid var(--danger); }
-.toast-info { border-left: 4px solid var(--primary); }
-
-.toast-icon { font-size: 1.1rem; }
-.toast-message { flex: 1; }
+/* toast → Tailwind (toast.js) */
 
 .modal-overlay {
     position: fixed;
@@ -1100,11 +922,74 @@ a.nav-tab {
     flex-direction: column;
 }
 
+/* Shop: görgethető oldal – ne legyen magasság-kollapsz / Chart.js végtelen canvas */
+body.shop-page .app-content-wrapper {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: block;
+}
+
+body.shop-page .tab-pane {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+}
+
+body.shop-page .tab-pane.active {
+    display: block;
+    flex: none;
+}
+
+body.shop-page .form-container,
+body.shop-page .measurements-container {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Shop: felső fülök + gombok vizuálisan egy vonalban */
+body.shop-page .nav-tabs {
+    padding: 0.2rem;
+    gap: 0.35rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+body.shop-page .nav-tabs .nav-tab {
+    margin: 0;
+    border-bottom: none;
+    min-height: 2.35rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.84rem;
+    border-radius: calc(var(--radius-sm) - 2px);
+}
+
+body.shop-page .nav-tabs .nav-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+body.shop-page .nav-tabs .nav-tab.active {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+body.shop-page .user-controls .btn {
+    min-height: 2.35rem;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.84rem !important;
+    border-radius: var(--radius-sm);
+}
+
 /* ==========================================================================
    Report Forms & Defect List Styles
    ========================================================================== */
 .form-container,
-.defects-container,
 .measurements-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -1115,66 +1000,11 @@ a.nav-tab {
 }
 
 .form-container h2,
-.defects-container h2,
 .measurements-container h2 {
     font-size: 1.35rem;
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text-main);
-}
-
-/* Defect Row */
-.defect-card {
-    background: var(--bg-glass);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    display: grid;
-    grid-template-columns: 1fr 200px 300px;
-    gap: 1.5rem;
-}
-
-.defect-card textarea,
-.defect-card input {
-    width: 100%;
-    background: var(--bg-base);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.75rem;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 0.9rem;
-    resize: vertical;
-}
-
-.defect-card select {
-    width: 100%;
-    background: var(--bg-base);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.75rem;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-}
-
-.image-upload-area {
-    border: 2px dashed var(--border-color);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 1rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.image-upload-area:hover {
-    border-color: var(--primary);
-    background: rgba(59, 130, 246, 0.05);
 }
 
 .file-upload-box {
@@ -1471,7 +1301,6 @@ select {
 
     /* Forms and Containers */
     .form-container,
-    .defects-container,
     .measurements-container {
         padding: 1rem;
         margin: 0;
@@ -1492,13 +1321,6 @@ select {
         grid-template-columns: 1fr !important;
     }
 
-    /* Defect Cards */
-    .defect-card {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1rem;
-    }
-
     /* Tables */
     .data-table {
         display: block;
@@ -1515,7 +1337,6 @@ select {
 
     /* General Typography & Sizes */
     .form-container h2,
-    .defects-container h2,
     .measurements-container h2 {
         font-size: 1.25rem;
         word-wrap: break-word;
@@ -1533,16 +1354,6 @@ select {
         padding: 1.25rem;
     }
 
-    #completenessPanel {
-        left: 10px !important;
-        right: 10px !important;
-        bottom: 10px !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        width: auto !important;
-        padding: 12px !important;
-        z-index: 8000 !important;
-    }
 }
 
 /* Shop admin táblák mobilon használhatóbbak */
@@ -1607,7 +1418,7 @@ select {
         -webkit-overflow-scrolling: touch;
     }
 
-    body.app-page .tools-horizontal .tool-btn {
+    body.app-page .tools-horizontal > * {
         flex: 0 0 auto;
     }
 
@@ -1622,7 +1433,6 @@ select {
     }
 
     body.app-page .form-container,
-    body.app-page .defects-container,
     body.app-page .measurements-container,
     body.shop-page .form-container {
         padding-bottom: calc(1rem + env(safe-area-inset-bottom));
