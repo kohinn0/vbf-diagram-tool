@@ -14,6 +14,7 @@
  * Mezők: input / select háttér var(--bg-input), szöveg var(--text-main).
  * Kerekítés: var(--radius) (8px) + var(--btn-radius) (ugyanaz a tokenből).
  * Panelek: belső térközökhez var(--padding-panel), sorok között var(--gap-small) ahol érdemes.
+ * Szent padding: var(--vbf-panel-padding) / var(--vbf-panel-padding-md) — tokens.css
  * =========================================================================
  */
 
@@ -21,12 +22,60 @@
 /* ==========================================================================
    Utility Classes
    ========================================================================== */
+/* Egységes „kártya” (nem üveg) – új dobozokhoz; meglévő üveg: .panel-glass */
+.vbf-panel {
+    box-sizing: border-box;
+    padding: var(--vbf-panel-padding);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-glass);
+}
+
+@media (min-width: 768px) {
+    .vbf-panel {
+        padding: var(--vbf-panel-padding-md);
+    }
+}
+
 .panel-glass {
     background: var(--bg-panel);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
+    border: 1px solid color-mix(in srgb, var(--text-main) 15%, transparent);
     box-shadow: var(--shadow-glass);
+    box-sizing: border-box;
+    padding: var(--vbf-panel-padding);
+}
+
+@media (min-width: 768px) {
+    .panel-glass {
+        padding: var(--vbf-panel-padding-md);
+    }
+}
+
+/* Szűk sávok: nincs dupla padding (KPI már kap belső ritmust a .panel-glass-tól) */
+.panel-glass.vbf-panel--flush {
+    padding: 0;
+}
+
+.topbar.panel-glass {
+    padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.main-nav.panel-glass {
+    padding-block: 0.75rem;
+    padding-inline: clamp(1rem, 5%, 2rem);
+}
+
+.modal-content.panel-glass {
+    padding: 2.25rem;
+}
+
+@media (max-width: 768px) {
+    .modal-content.panel-glass {
+        padding: 1.5rem;
+    }
 }
 
 /* App: készültség dokk + elrendezés (app.html: body.app-page) */
@@ -58,7 +107,7 @@
     display: flex;
     flex-direction: column;
     z-index: 10;
-    padding: 1rem;
+    padding: 0;
     overflow-y: auto;
 }
 
@@ -177,7 +226,7 @@
     min-width: 0;
     width: auto;
     z-index: 10;
-    padding: 1.5rem;
+    padding: 0;
     border-left: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -2697,6 +2746,12 @@ body.vbf-report-final-locked .app-content-wrapper button:disabled {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    padding-inline: clamp(0.75rem, 3vw, 1.5rem);
+}
+
+body.shop-page .app-content-wrapper {
+    padding-block: clamp(0.75rem, 2.5vw, 1.5rem);
 }
 
 .tab-pane {
@@ -2959,10 +3014,45 @@ body.shop-page .user-controls .btn {
 .measurements-container {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0.75rem var(--padding-panel) 1.25rem;
+    padding: var(--vbf-panel-padding) clamp(1rem, 4vw, var(--padding-panel));
     border-radius: var(--radius);
     overflow-y: auto;
     height: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+
+    .form-container:not(.panel-glass),
+    .measurements-container {
+        padding-top: var(--vbf-panel-padding-md);
+        padding-bottom: var(--vbf-panel-padding-md);
+    }
+}
+
+/* Űrlap + üveg egy elemen: egy padding-forrás (shop admin, mérések lap) */
+.form-container.panel-glass,
+.measurements-container.panel-glass {
+    padding: var(--vbf-panel-padding);
+}
+
+@media (min-width: 768px) {
+
+    .form-container.panel-glass,
+    .measurements-container.panel-glass {
+        padding: var(--vbf-panel-padding-md);
+    }
+}
+
+.measurements-container.panel-glass.vbf-meas-page-full {
+    padding-bottom: 4rem;
+    padding-right: max(var(--vbf-panel-padding), env(safe-area-inset-right));
+}
+
+@media (min-width: 768px) {
+    .measurements-container.panel-glass.vbf-meas-page-full {
+        padding-right: max(var(--vbf-panel-padding-md), env(safe-area-inset-right));
+    }
 }
 
 body.app-page .measurements-container {
@@ -2978,6 +3068,21 @@ body.app-page .measurements-container {
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text-main);
+}
+
+body.app-page .form-container > h2:not(:last-child),
+body.app-page .form-container > h2.section-title-accent:not(:last-child),
+body.app-page .report-tab-title {
+    margin-bottom: 1.25rem;
+}
+
+body.app-page .form-container > h3:first-of-type,
+body.app-page .form-container .vbf-report-section-heading {
+    margin-top: 0;
+}
+
+body.app-page .form-container > h3:not(:last-child) {
+    margin-bottom: 1rem;
 }
 
 .file-upload-box {
@@ -3428,11 +3533,6 @@ select {
 .data-table td {
     padding: 12px 10px;
     /* More spacing for fat fingers */
-}
-
-.panel-glass {
-    border-color: color-mix(in srgb, var(--text-main) 15%, transparent);
-    /* Stronger border for visibility */
 }
 
 /* ==========================================================================

@@ -166,8 +166,15 @@
     justify-content: center;
     flex-direction: column;
     color: var(--text-muted);
-    padding: 1.5rem;
+    padding: var(--vbf-panel-padding);
     text-align: center;
+}
+
+@media (min-width: 768px) {
+    .demo-video-placeholder,
+    .newsletter-box {
+        padding: var(--vbf-panel-padding-md);
+    }
 }
 
 .demo-video-play {
@@ -194,7 +201,7 @@
 
 .newsletter-box {
     margin-top: 2rem;
-    padding: 1.25rem 1.5rem;
+    padding: var(--vbf-panel-padding);
     border-radius: var(--radius);
     border: 1px solid var(--glass-border);
     background: color-mix(in srgb, var(--text-main) 3%, transparent);
@@ -202,7 +209,7 @@
 }
 
 .newsletter-box h3 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.75rem;
     font-size: 1.1rem;
 }
 
@@ -369,15 +376,16 @@
 }
 
 .faq-cta-title {
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 1rem 0;
     font-size: 1.1rem;
     font-weight: 600;
 }
 
 .faq-cta-text {
-    margin: 0 0 1rem 0;
+    margin: 0 0 1.25rem 0;
     color: var(--text-muted);
     font-size: 0.95rem;
+    line-height: 1.65;
 }
 
 .faq-cta-primary {
@@ -389,16 +397,16 @@
     font-size: 1rem;
     line-height: 1.6;
     max-width: 640px;
-    margin: 1rem auto 0;
+    margin: 1.25rem auto 0;
 }
 
 .contact-channels {
-    margin: 0 0 1.5rem 0;
+    margin: 1.25rem 0 0;
     font-size: 1rem;
 }
 
 .contact-beta-row {
-    margin: -0.5rem auto 1.25rem;
+    margin: 1.25rem auto 0;
     max-width: 520px;
     font-size: 0.95rem;
     color: var(--text-muted);
@@ -410,17 +418,21 @@
 
 #contactForm label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 0.375rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
 #contactForm .lp-input-landing {
-    padding: 8px;
-    margin-bottom: 12px;
+    padding: 0.65rem var(--vbf-panel-padding);
+    margin-bottom: 1rem;
+    box-sizing: border-box;
 }
 
 #contactMessage {
     resize: vertical;
-    margin-bottom: 16px;
+    margin-bottom: 1.25rem;
+    min-height: 6rem;
 }
 
 #btnContactSubmit {
@@ -428,7 +440,7 @@
 }
 
 #contactStatus {
-    margin-top: 12px;
+    margin-top: 1rem;
     font-weight: 600;
     color: var(--primary);
     min-height: 1.5em;
@@ -436,7 +448,7 @@
 
 .contact-instagram {
     text-align: center;
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
     font-size: 0.95rem;
     color: var(--text-muted);
 }
@@ -689,7 +701,7 @@
 .expert-photo-wrap {
     width: 80px;
     height: 80px;
-    margin: 0 auto 1rem;
+    margin: 0 auto 1.25rem;
     border-radius: 50%;
     overflow: hidden;
     background: var(--primary);
@@ -725,13 +737,18 @@
     color: var(--text-muted);
     font-size: 0.95rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.75rem;
 }
 
 .expert-bio {
     color: var(--text-muted);
     font-size: 0.9rem;
-    margin-bottom: 1rem;
+    line-height: 1.65;
+    margin: 0 0 1.25rem;
+}
+
+#expertsGrid .partner-card h3 {
+    margin-bottom: 0.625rem;
 }
 
 .form-status--success {

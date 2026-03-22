@@ -115,15 +115,15 @@ export function initDashboard() {
             const chartsRow = document.createElement('div');
             chartsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             chartsRow.innerHTML = `
-                <div class="panel-glass flex flex-col rounded-[var(--radius)] p-6 pt-5">
+                <div class="panel-glass flex flex-col rounded-[var(--radius)]">
                     <h3 class="mb-1 text-base font-semibold text-[var(--text-main)]">Havi trendek</h3>
                     <p class="mb-4 text-[0.8125rem] text-[var(--text-muted)]">Utolsó 12 hónap</p>
-                    <div class="relative min-h-[240px] w-full flex-1 px-1 pb-2"><canvas id="chartMonthlyTrend"></canvas></div>
+                    <div class="relative min-h-[240px] w-full flex-1 px-2 pb-3 pt-1 sm:px-4 sm:pb-4"><canvas id="chartMonthlyTrend"></canvas></div>
                 </div>
-                <div class="panel-glass flex flex-col rounded-[var(--radius)] p-6 pt-5">
+                <div class="panel-glass flex flex-col rounded-[var(--radius)]">
                     <h3 class="mb-1 text-base font-semibold text-[var(--text-main)]">Minősítések megoszlása</h3>
                     <p class="mb-4 text-[0.8125rem] text-[var(--text-muted)]">Jegyzőkönyvek eredménye szerint</p>
-                    <div class="relative flex min-h-[280px] w-full flex-1 items-center justify-center px-2 pb-4"><canvas id="chartQualification"></canvas></div>
+                    <div class="relative flex min-h-[280px] w-full flex-1 items-center justify-center px-3 pb-5 pt-2 sm:px-5 sm:pb-6"><canvas id="chartQualification"></canvas></div>
                 </div>
             `;
             container.appendChild(chartsRow);
@@ -131,12 +131,12 @@ export function initDashboard() {
             const analyticsRow = document.createElement('div');
             analyticsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             analyticsRow.innerHTML = `
-                <div class="panel-glass flex flex-col rounded-[var(--radius)] p-6 pt-5">
+                <div class="panel-glass flex flex-col rounded-[var(--radius)]">
                     <h3 class="mb-1 text-base font-semibold text-[var(--text-main)]">Hibakategóriák</h3>
                     <p class="mb-4 text-[0.8125rem] text-[var(--text-muted)]">MEE szerinti megoszlás</p>
-                    <div class="relative min-h-[260px] w-full flex-1 px-1 pb-3"><canvas id="chartDefects"></canvas></div>
+                    <div class="relative min-h-[260px] w-full flex-1 px-2 pb-4 pt-1 sm:px-4"><canvas id="chartDefects"></canvas></div>
                 </div>
-                <div class="panel-glass rounded-[var(--radius)] p-6 pt-5">
+                <div class="panel-glass rounded-[var(--radius)]">
                     <h3 class="mb-1 text-base font-semibold text-[var(--text-main)]">Mérési statisztikák</h3>
                     <p class="mb-5 text-[0.8125rem] text-[var(--text-muted)]">Átmenési arány és darabszámok</p>
                     <div class="flex flex-col items-center justify-center gap-8 py-2 sm:flex-row sm:items-center sm:justify-center sm:gap-10">
@@ -160,8 +160,8 @@ export function initDashboard() {
                 const empty = allItems.length === 0;
                 const inspSection = document.createElement('div');
                 inspSection.className = empty
-                    ? 'panel-glass mb-8 max-w-2xl rounded-[var(--radius)] p-5'
-                    : 'panel-glass mb-8 rounded-[var(--radius)] p-6';
+                    ? 'panel-glass mb-8 max-w-2xl rounded-[var(--radius)]'
+                    : 'panel-glass mb-8 rounded-[var(--radius)]';
 
                 if (empty) {
                     inspSection.innerHTML = `
@@ -223,7 +223,7 @@ export function initDashboard() {
 
         _kpiCard(iconKind, label, value, color) {
             return `
-                <div class="panel-glass relative overflow-hidden rounded-[var(--radius)] px-6 py-6 text-center transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg" style="color: ${color}">
+                <div class="panel-glass relative overflow-hidden rounded-[var(--radius)] text-center transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg" style="color: ${color}">
                     <div class="pointer-events-none absolute inset-x-0 top-0 h-[3px] opacity-50" style="background: currentColor"></div>
                     <div class="mb-3 flex justify-center opacity-90">${this._kpiSvg(iconKind)}</div>
                     <div class="mb-2 text-[2.35rem] font-bold leading-none tabular-nums tracking-tight">${value ?? 0}</div>
@@ -316,7 +316,7 @@ export function initDashboard() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 12, bottom: 20, left: 12, right: 12 } },
+                    layout: { padding: { top: 18, bottom: 24, left: 18, right: 18 } },
                     plugins: {
                         legend: {
                             position: 'bottom',
@@ -368,7 +368,7 @@ export function initDashboard() {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 6, right: 12, bottom: 6, left: 4 } },
+                    layout: { padding: { top: 14, right: 18, bottom: 14, left: 14 } },
                     plugins: { legend: { display: false } },
                     scales: {
                         x: {

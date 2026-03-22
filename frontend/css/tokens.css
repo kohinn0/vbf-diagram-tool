@@ -23,6 +23,10 @@
     --padding-panel: 24px;
     --gap-small: 12px;
 
+    /* Szent padding: kártyák / üveg panelek egységes belső margója (mobil ≈24px, md+ ≈32px) */
+    --vbf-panel-padding: 1.5rem;
+    --vbf-panel-padding-md: 2rem;
+
     /* --- Régi / kompatibilitási nevek (származtatva, hex nélkül) --- */
     --bg-base: var(--bg-main);
     --bg-color: var(--bg-main);
@@ -199,6 +203,9 @@ body.light-mode {
     --grid-color: color-mix(in srgb, var(--text-main) 4%, transparent);
     --glass-bg: var(--bg-panel);
     --glass-border: var(--border-color);
+
+    --vbf-panel-padding: 1.5rem;
+    --vbf-panel-padding-md: 2rem;
 
     --btn-min-height: 44px;
     --btn-min-height-sm: 36px;
