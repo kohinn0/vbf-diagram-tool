@@ -18,6 +18,79 @@ router = APIRouter()
 logger = logging.getLogger("vbf")
 
 
+def _legal_css() -> str:
+    """Közös CSS a jogi oldalakhoz – VBF témához igazítva (villamos, jegyzőkönyv)."""
+    return """
+    :root { --primary: #0ea5e9; --primary-light: #38bdf8; --accent: #f59e0b; --bg: #040914; --surface: #0b1527; --text: #e2e8f0; --text-muted: #94a3b8; --border: rgba(14,165,233,0.2); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: radial-gradient(ellipse 100% 50% at 50% 0%, rgba(14,165,233,0.08) 0%, transparent 50%),
+                    var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        min-height: 100vh;
+    }
+    .legal-wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .legal-header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .legal-header a { color: var(--primary-light); text-decoration: none; font-weight: 600; }
+    .legal-header a:hover { color: var(--accent); text-decoration: underline; }
+    .legal-header h1 {
+        font-size: 1.6rem;
+        background: linear-gradient(135deg, #fff 0%, var(--primary-light) 50%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .legal-nav { font-size: 0.9rem; color: var(--text-muted); }
+    .legal-nav a { color: var(--primary-light); }
+    .legal-nav a:hover { color: var(--accent); }
+    h2 {
+        font-size: 1.2rem;
+        color: var(--primary-light);
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        padding-left: 12px;
+        border-left: 3px solid var(--accent);
+    }
+    p { margin: 0.75rem 0; color: var(--text); }
+    ul { margin: 0.75rem 0; padding-left: 1.5rem; color: var(--text); }
+    li { margin: 0.35rem 0; }
+    a { color: var(--primary-light); }
+    a:hover { color: var(--accent); }
+    .updated { font-size: 0.9rem; color: var(--text-muted); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .updated a { color: var(--primary-light); }
+    """
+
+
+def _legal_header(title: str, nav_links: str) -> str:
+    """Jogi oldal fejléc – VBF branding, visszalépés."""
+    return f"""
+    <div class="legal-wrap">
+    <header class="legal-header">
+        <a href="/">← VBF Premium</a>
+        <h1>{title}</h1>
+        <p class="legal-nav">{nav_links}</p>
+    </header>
+    <main>
+    """
+
+
+def _legal_footer(links: str) -> str:
+    return f'<p class="updated">{links}</p></main></div>'
+
+
+def _imprint_email() -> str:
+    """Központi e-mail cím az IMPRINT_* / ADMIN_EMAIL env-ből."""
+    return os.getenv("ADMIN_EMAIL", os.getenv("SMTP_USER", "info@vbfpremium.hu"))
+
+
 class ContactRequest(BaseModel):
     name: str = ""
     email: str = ""
@@ -37,29 +110,23 @@ def _privacy_html() -> str:
     company = os.getenv("IMPRINT_COMPANY_NAME", "SZIKORA ZOLTÁN EV")
     seat = os.getenv("IMPRINT_SEAT", "2091 Etyek, Liliom köz 1, Magyarország")
     tax_no = os.getenv("IMPRINT_TAX_NO", "91460028-1-27")
-    email = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_USER", "info@vbfpremium.hu"))
+    email = _imprint_email()
     phone = os.getenv("IMPRINT_PHONE", "+36303419594")
     web = os.getenv("IMPRINT_WEB", "www.vbfpremium.hu")
     hosting = os.getenv("IMPRINT_HOSTING", "Amazon Web Services (AWS) Frankfurt")
 
+    nav = f'<a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>'
+    footer_links = f"Utolsó frissítés: 2026. március. {nav}"
     return f"""<!DOCTYPE html>
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adatkezelési tájékoztató | VBF Premium</title>
-    <style>
-        body {{ font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }}
-        h1 {{ font-size: 1.5rem; margin-bottom: 1rem; }}
-        h2 {{ font-size: 1.15rem; margin-top: 1.5rem; }}
-        p {{ margin: 0.5rem 0; }}
-        ul {{ margin: 0.5rem 0; padding-left: 1.5rem; }}
-        .updated {{ font-size: 0.9rem; color: #6b7280; }}
-    </style>
+    <style>{_legal_css()}</style>
 </head>
 <body>
-    <h1>Adatkezelési tájékoztató (GDPR)</h1>
-    <p class="updated">Utolsó frissítés: 2026. március. A weboldal látogatói és felhasználói részére. A szolgáltatás a GDPR (EU 2016/679) és a magyar adatvédelmi törvény szerint kezeli adatait.</p>
+{_legal_header("Adatkezelési tájékoztató (GDPR)", f"Utolsó frissítés: 2026. március. A weboldal látogatói és felhasználói részére. {nav}")}
 
     <h2>1. Az adatkezelő</h2>
     <p><strong>Szolgáltató, adatkezelő:</strong><br>
@@ -118,28 +185,25 @@ def _privacy_html() -> str:
     <h2>11. Jogszabályok</h2>
     <p>Az adatkezelés alapjául szolgáló jogszabályok: az Európai Parlament és a Tanács (EU) 2016/679 rendelete (GDPR); 2011. évi CXII. törvény az információs önrendelkezési jogról és az információszabadságról; 2001. évi CVIII. törvény az elektronikus kereskedelmi szolgáltatásokról; 2003. évi C. törvény az elektronikus hírközlésről; 2007. évi CXXVII. törvény (ÁFA tv.) 169. §.</p>
 
-    <p class="updated">Utolsó frissítés: 2026. március. <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>.</p>
+    {_legal_footer(footer_links)}
 </body>
 </html>"""
 
 
-TERMS_HTML = """<!DOCTYPE html>
+def _terms_html() -> str:
+    email = _imprint_email()
+    nav = '<a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>'
+    footer_links = f"Utolsó frissítés: 2026. március. {nav}"
+    return f"""<!DOCTYPE html>
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Felhasználási feltételek | VBF Premium</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }
-        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-        h2 { font-size: 1.15rem; margin-top: 1.5rem; }
-        p { margin: 0.5rem 0; }
-        .updated { font-size: 0.9rem; color: #6b7280; }
-    </style>
+    <style>{_legal_css()}</style>
 </head>
 <body>
-    <h1>Felhasználási feltételek</h1>
-    <p class="updated">Utolsó frissítés: 2026. március. <a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a></p>
+{_legal_header("Felhasználási feltételek", footer_links)}
 
     <h2>1. A szolgáltatás</h2>
     <p>A VBF Premium („Szolgáltatás”) villamos biztonsági felülvizsgálati jegyzőkönyvek és kapcsolódó dokumentumok szerkesztésére, tárolására és exportálására szolgál. A szolgáltató fenntartja a jogot a funkciók és a díjszabás módosítására.</p>
@@ -165,31 +229,28 @@ TERMS_HTML = """<!DOCTYPE html>
     <p>A fiók inaktivitás vagy a feltételek megsértése alapján felfüggeszthető vagy törölhető. A felhasználó bármikor kérheti fiókja és adatai törlését; az adatkezelés az <strong>Adatkezelési tájékoztató (GDPR)</strong> szerint történik.</p>
 
     <h2>8. Kapcsolat</h2>
-    <p>Kérdés esetén a weboldal Kapcsolat űrlapján vagy a szolgáltató hivatalos e-mail címén érhetők el. <a href="/api/legal/imprint">Impresszum</a>.</p>
+    <p>Kérdés esetén a weboldal Kapcsolat űrlapján vagy közvetlenül e-mailben: <a href="mailto:{email}">{email}</a>. Részletes adatok: <a href="/api/legal/imprint">Impresszum</a>.</p>
+
+    {_legal_footer(footer_links)}
 </body>
-</html>
-"""
+</html>"""
 
 
 # Általános Szerződési Feltételek (ÁSZF) – előfizetés, vásárlás, visszamondás, panasz
-ASZF_HTML = """<!DOCTYPE html>
+def _aszf_html() -> str:
+    email = _imprint_email()
+    nav = '<a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>'
+    footer_links = f"Utolsó frissítés: 2026. március. {nav}"
+    return f"""<!DOCTYPE html>
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ÁSZF | VBF Premium</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }
-        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-        h2 { font-size: 1.15rem; margin-top: 1.5rem; }
-        p { margin: 0.5rem 0; }
-        ul { margin: 0.5rem 0; padding-left: 1.5rem; }
-        .updated { font-size: 0.9rem; color: #6b7280; }
-    </style>
+    <style>{_legal_css()}</style>
 </head>
 <body>
-    <h1>Általános Szerződési Feltételek (ÁSZF)</h1>
-    <p class="updated">Utolsó frissítés: 2026. március. <a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a></p>
+{_legal_header("Általános Szerződési Feltételek (ÁSZF)", footer_links)}
 
     <h2>1. Szolgáltató és szolgáltatás</h2>
     <p>A szolgáltató adatait az <a href="/api/legal/imprint">Impresszum</a> tartalmazza. A VBF Premium egy felhőalapú (SaaS) szoftver, amely jelenleg villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyvek készítéséhez, tárolásához és exportálásához nyújt eszközöket; a villámvédelmi felülvizsgálati (VVF) modul később kerül bele. A szolgáltatás igénybevétele regisztráció és – a fizetős csomagok esetén – előfizetés / vásárlás alapján történik.</p>
@@ -201,27 +262,30 @@ ASZF_HTML = """<!DOCTYPE html>
     <p>Az árak a webshopban, bruttó forintban (Ft) láthatók. A fizetés jelenleg banki utalással történik. A számla a megadott számlázási cím alapján készül és a megadott e-mailre kerül elküldésre. A hozzáférés az utalás jóváhagyása után kerül aktiválásra (általában 1–2 munkanap). A szolgáltató a 2001. évi CVIII. törvény és a számviteli törvény szerint számlát állít ki.</p>
 
     <h2>4. Visszamondás (fogyasztó)</h2>
-    <p>Ha a vásárló fogyasztó (természetes személy, nem üzleti célból), a 45/2014. (II. 26.) Korm. rendelet 29. § (1) bekezdése alapján <strong>14 napon belül</strong> indoklás nélkül elállhat a szerződéstől. Az elállásról az Impresszumban megadott címre vagy e-mailre történő nyilatkozat szükséges. Ha a szolgáltató a 14 nap lejárta előtt megkezdte a digitális szolgáltatás teljesítését (hozzáférés megadása), és a fogyasztó ezt előre hozzájárulással (pl. „Elfogadom, hogy a hozzáférés megadásával a 14 napos elállási jogom elveszik”) elfogadta, az elállás a digitális tartalomra nem érvényes. Céges / üzleti vásárlás esetén a törvény által kivételként megállapított szabályok érvényesek (pl. nincs 14 napos elállás).</p>
+    <p>Ha a vásárló fogyasztó (természetes személy, nem üzleti célból), a 45/2014. (II. 26.) Korm. rendelet 29. § (1) bekezdése alapján <strong>14 napon belül</strong> indoklás nélkül elállhat a szerződéstől. Az elállásról az Impresszumban megadott címre vagy e-mailre (<a href="mailto:{email}">{email}</a>) történő nyilatkozat szükséges. Ha a szolgáltató a 14 nap lejárta előtt megkezdte a digitális szolgáltatás teljesítését (hozzáférés megadása), és a fogyasztó ezt előre hozzájárulással (pl. „Elfogadom, hogy a hozzáférés megadásával a 14 napos elállási jogom elveszik”) elfogadta, az elállás a digitális tartalomra nem érvényes. Céges / üzleti vásárlás esetén a törvény által kivételként megállapított szabályok érvényesek (pl. nincs 14 napos elállás).</p>
 
     <h2>5. Panasz és garancia</h2>
-    <p>Panasz esetén a vásárló az Impresszumban megadott kapcsolati adaton jelzi a hibát. A szolgáltató a panaszokat megvizsgálja és a 45/2014. (II. 26.) Korm. rendelet szerint, legkésőbb 30 napon belül válaszol. Ha a szolgáltatás hibás, a szolgáltató a jogszabály szerint javítási vagy helyettesítési kötelezettséggel tartozik. A jegyzőkönyvek tartalmi, szakmai helyessége nem a szolgáltató felelőssége, hanem a felhasználóé (felülvizsgáló).</p>
+    <p>Panasz esetén a vásárló a kapcsolati adaton jelzi a hibát: <a href="mailto:{email}">{email}</a>. A szolgáltató a panaszokat megvizsgálja és a 45/2014. (II. 26.) Korm. rendelet szerint, legkésőbb 30 napon belül válaszol. Ha a szolgáltatás hibás, a szolgáltató a jogszabály szerint javítási vagy helyettesítési kötelezettséggel tartozik. A jegyzőkönyvek tartalmi, szakmai helyessége nem a szolgáltató felelőssége, hanem a felhasználóé (felülvizsgáló).</p>
 
     <h2>6. Előfizetés megszűnése és megújítása</h2>
     <p>Az előfizetés a csomagtól függően havi vagy éves. A meghatározott idő lejárta után a szolgáltató nem köteles automatikusan megújítani; a megújítás a felhasználó által kezdeményezett új megrendelés / fizetés és a szolgáltató jóváhagyása útján történik (kosár, utalás vagy – ha elérhető – bankkártya). Ha a megrendeléskor a fiókhoz tartozó e-mail és a céghez kötött hozzáférés alapján még van érvényes előfizetési idő, a szolgáltató a rendszerben az új időszakot a legkésőbbi érvényes lejáratra <strong>ráépíti</strong>, hogy a már kifizetett napok ne vesszenek el.</p>
     <p>A felhasználó a fiók törlésével vagy az előfizetés megszakításával kérheti a szolgáltatás befejezését; az adatkezelésről az <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> tartalmaz részleteket (törlés, export).</p>
 
     <h2>7. Egyéb</h2>
-    <p>A szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv, a 45/2014. (II. 26.) Korm. rendelet (fogyasztó és vállalkozói szerződésekről), valamint a 2001. évi CVIII. törvény (e-commerce) rendelkezései az irányadók. A szolgáltató fenntartja a jogot az ÁSZF módosítására; a lényeges változásról a felhasználót értesíti (pl. e-mail). A további használat a módosítás elfogadásának minősül.</p>
+    <p>A szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv, a 45/2014. (II. 26.) Korm. rendelet (fogyasztó és vállalkozói szerződésekről), valamint a 2001. évi CVIII. törvény (e-commerce) rendelkezései az irányadók. A szolgáltató fenntartja a jogot az ÁSZF módosítására; a lényeges változásról a felhasználót értesíti (pl. e-mail: <a href="mailto:{email}">{email}</a>). A további használat a módosítás elfogadásának minősül.</p>
+
+    {_legal_footer(footer_links)}
 </body>
-</html>
-"""
+</html>"""
 
 
 # Jogi nyilatkozat – szerzői jog, adatkezelési összefoglaló (IMPRINT_* env)
 def _legal_notice_html() -> str:
     company = os.getenv("IMPRINT_COMPANY_NAME", "SZIKORA ZOLTÁN EV")
     web = os.getenv("IMPRINT_WEB", "www.vbfpremium.hu")
-    email = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_USER", "info@vbfpremium.hu"))
+    email = _imprint_email()
+    nav = '<a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a>'
+    footer_links = f"Utolsó frissítés: 2026. március. {nav}"
 
     return f"""<!DOCTYPE html>
 <html lang="hu">
@@ -229,18 +293,10 @@ def _legal_notice_html() -> str:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogi nyilatkozat | VBF Premium</title>
-    <style>
-        body {{ font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }}
-        h1 {{ font-size: 1.5rem; margin-bottom: 1rem; }}
-        h2 {{ font-size: 1.15rem; margin-top: 1.5rem; }}
-        p {{ margin: 0.5rem 0; }}
-        ul {{ margin: 0.5rem 0; padding-left: 1.5rem; }}
-        .updated {{ font-size: 0.9rem; color: #6b7280; }}
-    </style>
+    <style>{_legal_css()}</style>
 </head>
 <body>
-    <h1>Jogi nyilatkozat</h1>
-    <p class="updated">Utolsó frissítés: 2026. március. <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a></p>
+{_legal_header("Jogi nyilatkozat", footer_links)}
 
     <h2>1. Fenntartó és üzemeltető</h2>
     <p>Az Ön által látogatott honlap ({web}) fenntartója és üzemeltetője a {company}.</p>
@@ -272,7 +328,7 @@ def _legal_notice_html() -> str:
     <h2>5. Elérhetőség</h2>
     <p>A weboldal üzemeltetőjének elérhetősége: <a href="/api/legal/imprint">Impresszum</a>.</p>
 
-    <p class="updated">Utolsó frissítés: 2026. március. <a href="/api/legal/imprint">Impresszum</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a></p>
+    {_legal_footer(footer_links)}
 </body>
 </html>"""
 
@@ -286,25 +342,21 @@ def _imprint_html() -> str:
     tax_no = os.getenv("IMPRINT_TAX_NO", "91460028-1-27")
     bank = os.getenv("IMPRINT_BANK_ACCOUNT", "11711113-20002781")
     hosting = os.getenv("IMPRINT_HOSTING", "Amazon Web Services (AWS) Frankfurt")
-    email = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_USER", "info@vbfpremium.hu"))
+    email = _imprint_email()
     phone = os.getenv("IMPRINT_PHONE", "+36303419594")
     bank_line = f'    <p><strong>Bankszámlaszám:</strong><br>{bank}</p>\n' if bank else ""
+    nav = '<a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>'
+    footer_links = f"Utolsó frissítés: 2026. március. {nav}"
     return f"""<!DOCTYPE html>
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Impresszum | VBF Premium</title>
-    <style>
-        body {{ font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1f2937; }}
-        h1 {{ font-size: 1.5rem; margin-bottom: 1rem; }}
-        p {{ margin: 0.5rem 0; }}
-        .updated {{ font-size: 0.9rem; color: #6b7280; }}
-    </style>
+    <style>{_legal_css()}</style>
 </head>
 <body>
-    <h1>Impresszum</h1>
-    <p class="updated"><a href="/api/legal/terms">Felhasználási feltételek</a> · <a href="/api/legal/aszf">ÁSZF</a> · <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> · <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a></p>
+{_legal_header("Impresszum", footer_links)}
 
     <p><strong>Szolgáltató / Üzemeltető:</strong><br>{company}</p>
     <p><strong>Székhely:</strong><br>{seat}</p>
@@ -315,6 +367,8 @@ def _imprint_html() -> str:
     <p><strong>Kapcsolat:</strong><br>E-mail: <a href="mailto:{email}">{email}</a><br>Telefon: {phone}</p>
 
     <p>Az oldal üzemeltetője felel a tartalomért és a szolgáltatás nyújtásáért. Jogi és adatvédelmi kérdésekben a fenti e-mail címen vagy a weboldal Kapcsolat űrlapján lehet jelezni.</p>
+
+    {_legal_footer(footer_links)}
 </body>
 </html>
 """
@@ -331,14 +385,14 @@ def legal_privacy():
 @router.get("/legal/terms", response_class=HTMLResponse)
 def legal_terms():
     """Felhasználási feltételek."""
-    return HTMLResponse(TERMS_HTML)
+    return HTMLResponse(_terms_html())
 
 
 @router.get("/api/legal/aszf", response_class=HTMLResponse)
 @router.get("/legal/aszf", response_class=HTMLResponse)
 def legal_aszf():
     """Általános Szerződési Feltételek (ÁSZF) – előfizetés, vásárlás, visszamondás, panasz."""
-    return HTMLResponse(ASZF_HTML)
+    return HTMLResponse(_aszf_html())
 
 
 @router.get("/api/legal/imprint", response_class=HTMLResponse)
@@ -367,7 +421,7 @@ def contact_submit(body: ContactRequest):
     message = (body.message or "").strip()[:2000]
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Érvényes email cím szükséges.")
-    to_email = os.getenv("ADMIN_EMAIL") or os.getenv("SMTP_USER") or ""
+    to_email = _imprint_email()
     if not to_email:
         logger.warning("Kapcsolat űrlap: nincs ADMIN_EMAIL/SMTP_USER, üzenet nem küldhető.")
         return {"message": "Üzenet fogadva. Hamarosan válaszolunk."}
