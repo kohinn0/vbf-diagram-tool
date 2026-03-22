@@ -30,18 +30,25 @@ export function initDefects() {
         const defectRow = document.createElement('div');
         defectRow.setAttribute(VBF_DEFECT_CARD_ATTR, '');
         defectRow.className = VBF_DEFECT_CARD_CLASS;
+        const duid = `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+        const idTpl = `defect-tpl-${duid}`;
+        const idDesc = `defect-desc-${duid}`;
+        const idDeadline = `defect-deadline-${duid}`;
+        const idStd = `defect-std-${duid}`;
+        const idLoc = `defect-loc-${duid}`;
+        const idPhoto = `defect-photo-${duid}`;
         defectRow.innerHTML = `
             <div class="${VBF_FIELD_BLOCK}">
-                <label class="${VBF_FIELD_LABEL}">Válassz tipikus hibát a sablonhoz:</label>
-                <select class="tpl-select ${VBF_SELECT_CLASS}">
+                <label class="${VBF_FIELD_LABEL}" for="${idTpl}">Válassz tipikus hibát a sablonhoz:</label>
+                <select id="${idTpl}" class="tpl-select ${VBF_SELECT_CLASS}">
                     ${tipikusOptions}
                 </select>
                 
-                <label class="${VBF_FIELD_LABEL}">Jegyzőkönyvbe kerülő szöveg:</label>
-                <textarea rows="4" class="desc-input ${VBF_INPUT_CLASS}" placeholder="Ide kerül a hiba leírása..."></textarea>
+                <label class="${VBF_FIELD_LABEL}" for="${idDesc}">Jegyzőkönyvbe kerülő szöveg:</label>
+                <textarea id="${idDesc}" rows="4" class="desc-input ${VBF_INPUT_CLASS}" placeholder="Ide kerül a hiba leírása..."></textarea>
                 
-                <label class="${VBF_FIELD_LABEL}">Javasolt javítási határidő:</label>
-                <select class="deadline-input ${VBF_SELECT_CLASS}">
+                <label class="${VBF_FIELD_LABEL}" for="${idDeadline}">Javasolt javítási határidő:</label>
+                <select id="${idDeadline}" class="deadline-input ${VBF_SELECT_CLASS}">
                     <option value="Azonnali (0 nap)">Azonnali (0 nap)</option>
                     <option value="30 napon belül">30 napon belül</option>
                     <option value="90 napon belül vagy a következő karbantartáskor">90 napon belül vagy a karbantartáskor</option>
@@ -51,20 +58,20 @@ export function initDefects() {
             </div>
             
             <div class="${VBF_FIELD_BLOCK}">
-                <label class="${VBF_FIELD_LABEL}">Szabvány hivatkozás:</label>
-                <input type="text" class="standard-input ${VBF_INPUT_CLASS}" placeholder="MSZ HD 60364..." />
+                <label class="${VBF_FIELD_LABEL}" for="${idStd}">Szabvány hivatkozás:</label>
+                <input type="text" id="${idStd}" class="standard-input ${VBF_INPUT_CLASS}" placeholder="MSZ HD 60364..." />
                 
-                <label class="${VBF_FIELD_LABEL}">Pontos Helyszín (Emelet, Részleg, Vagy Eszköz):</label>
-                <input type="text" class="loc-input ${VBF_INPUT_CLASS}" list="defectLocationDatalist" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító...">
+                <label class="${VBF_FIELD_LABEL}" for="${idLoc}">Pontos Helyszín (Emelet, Részleg, Vagy Eszköz):</label>
+                <input type="text" id="${idLoc}" class="loc-input ${VBF_INPUT_CLASS}" list="defectLocationDatalist" placeholder="Pl. Földszint, Élosztó, Q2 kismegszakító...">
             </div>
             
             <div class="${VBF_FIELD_BLOCK}">
-                <label class="${VBF_FIELD_LABEL}">Fotó csatolása:</label>
+                <label class="${VBF_FIELD_LABEL}" for="${idPhoto}">Fotó csatolása:</label>
                 <div data-vbf-defect-upload class="flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-sm)] border-2 border-dashed border-[var(--border-color)] p-4 text-center text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--primary)] hover:bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]">
                     <span class="upload-txt">+ Kattints ide kép feltöltéséhez</span>
                     <img class="img-preview mt-2 hidden max-h-40 max-w-full rounded" src="" alt="" />
                 </div>
-                <input type="file" class="photo-input hidden" accept="image/*" />
+                <input type="file" id="${idPhoto}" class="photo-input hidden" accept="image/*" />
                 <button type="button" class="btn btn-danger btn-small !mt-3 !mb-0 w-full" onclick="this.closest('[${VBF_DEFECT_CARD_ATTR}]').remove()">❌ Hiba Törlése</button>
             </div>
         `;

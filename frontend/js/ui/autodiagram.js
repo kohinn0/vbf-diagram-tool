@@ -33,13 +33,13 @@ export function initAutoDiagram() {
             CIRCUIT_DROP: 160,     // vertical drop from busbar to circuit end
             MAX_CIRCUITS_ROW: 12,  // max circuits per sub-row (prevents mega-wide)
             PAGE_HEIGHT: 500,      // vertical page spacing for multi-page
-            LINE_COLOR: '#3b82f6',
+            LINE_COLOR: '#5a92ad',
             LINE_WIDTH: 2,
-            BUS_COLOR: '#f59e0b',
+            BUS_COLOR: '#c9a04a',
             BUS_WIDTH: 3,
             TEXT_COLOR: '#94a3b8',
             LABEL_COLOR: '#e2e8f0',
-            PANEL_LABEL_COLOR: '#f59e0b',
+            PANEL_LABEL_COLOR: '#c9a04a',
         },
 
         /**
@@ -265,8 +265,8 @@ export function initAutoDiagram() {
 
             // ── 3. Earth bar at bottom ──
             const earthY = curY;
-            this._addObj(this._line(C.START_X - 20, earthY, maxX, earthY, '#10b981', 2));
-            this._addObj(this._text('PE (Védővezető sín)', maxX + 10, earthY, 9, 'left', '#10b981'));
+            this._addObj(this._line(C.START_X - 20, earthY, maxX, earthY, '#5cad8f', 2));
+            this._addObj(this._text('PE (Védővezető sín)', maxX + 10, earthY, 9, 'left', '#6eb89a'));
             this._drawEarth(C.START_X - 30, earthY);
             curY += 50;
 
@@ -480,7 +480,7 @@ export function initAutoDiagram() {
             this._addObj(new fabric.Rect({
                 left: cx, top: cy,
                 width: 20, height: 20,
-                fill: 'rgba(14, 165, 233, 0.1)',
+                fill: 'rgba(74, 158, 196, 0.12)',
                 stroke: this.C.LINE_COLOR,
                 strokeWidth: 1.5,
                 rx: 2, ry: 2,
@@ -576,10 +576,10 @@ export function initAutoDiagram() {
         },
 
         _drawEarth(cx, cy) {
-            this._addObj(this._line(cx, cy, cx, cy + 10, '#10b981', 2));
-            this._addObj(this._line(cx - 8, cy + 10, cx + 8, cy + 10, '#10b981', 2));
-            this._addObj(this._line(cx - 5, cy + 14, cx + 5, cy + 14, '#10b981', 2));
-            this._addObj(this._line(cx - 2, cy + 18, cx + 2, cy + 18, '#10b981', 2));
+            this._addObj(this._line(cx, cy, cx, cy + 10, '#5cad8f', 2));
+            this._addObj(this._line(cx - 8, cy + 10, cx + 8, cy + 10, '#5cad8f', 2));
+            this._addObj(this._line(cx - 5, cy + 14, cx + 5, cy + 14, '#5cad8f', 2));
+            this._addObj(this._line(cx - 2, cy + 18, cx + 2, cy + 18, '#5cad8f', 2));
         },
 
         // ═══════════════════════════════════════

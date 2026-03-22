@@ -277,7 +277,7 @@ export function initCart() {
                 const data = await res.json().catch(() => ({}));
                 if (res.ok && data.message) {
                     if (statusEl) {
-                        statusEl.style.color = '#10b981';
+                        statusEl.style.color = 'var(--success)';
                         statusEl.textContent = data.message;
                     }
                     setCart({ items: [] });

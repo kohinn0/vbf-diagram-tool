@@ -17,7 +17,7 @@
             <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">🔑 Cégadmin</button>
         </div>
         <div class="user-controls flex w-full min-w-0 flex-wrap items-center justify-start gap-2 border-t border-[var(--border-color)] pt-2 pl-0 md:ml-auto md:w-auto md:flex-nowrap md:justify-end md:border-t-0 md:border-l md:border-[var(--border-color)] md:pt-0 md:pl-4">
-            <button type="button" class="btn btn-secondary btn-small btn-beta-bug !m-0 shrink-0 whitespace-nowrap" data-bug-report title="Visszajelzés e-mailben – béta verzió">📩 Visszajelzés</button>
+            <button type="button" class="nav-feedback-icon !m-0 shrink-0" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">📩</button>
             <a href="app.html" class="btn btn-outline btn-small !m-0 shrink-0 whitespace-nowrap">📝 Jegyzőkönyv alkalmazás</a>
             <a href="#" id="linkProfile" class="text-sm font-medium text-[var(--accent)] no-underline hover:underline"></a>
             <span id="userInfo" class="text-sm font-medium text-[var(--accent)]"></span>
@@ -51,17 +51,17 @@
                     <div class="panel-glass" style="max-width: 480px; width: 100%; padding: 1.5rem; border-radius: 12px;">
                         <h4 style="margin: 0 0 1rem 0; color: var(--accent);">Csomag szerkesztése: <span id="adminPlanModalTitle"></span></h4>
                         <input type="hidden" id="adminPlanModalKey" value="">
-                        <label>Megjelenített név</label>
+                        <label for="adminPlanDisplayName">Megjelenített név</label>
                         <input type="text" id="adminPlanDisplayName" placeholder="Pl. Pro" style="width: 100%; margin-bottom: 10px;">
-                        <label>Ár havi (HUF)</label>
+                        <label for="adminPlanPriceMonthly">Ár havi (HUF)</label>
                         <input type="number" id="adminPlanPriceMonthly" min="0" placeholder="0 = ingyenes" style="width: 100%; margin-bottom: 10px;">
-                        <label>Ár éves (HUF, opcionális)</label>
+                        <label for="adminPlanPriceYearly">Ár éves (HUF, opcionális)</label>
                         <input type="number" id="adminPlanPriceYearly" min="0" placeholder="Üres = nincs" style="width: 100%; margin-bottom: 10px;">
-                        <label>Havi jegyzőkönyv limit (üres = korlátlan)</label>
+                        <label for="adminPlanReportsLimit">Havi jegyzőkönyv limit (üres = korlátlan)</label>
                         <input type="number" id="adminPlanReportsLimit" min="0" placeholder="Pl. 50" style="width: 100%; margin-bottom: 10px;">
-                        <label>Max. felhasználó / cég (üres = korlátlan)</label>
+                        <label for="adminPlanMaxUsers">Max. felhasználó / cég (üres = korlátlan)</label>
                         <input type="number" id="adminPlanMaxUsers" min="0" placeholder="Pl. 10" style="width: 100%; margin-bottom: 10px;">
-                        <label>Tartalom / hozzáférések (soronként egy elem)</label>
+                        <label for="adminPlanFeatures">Tartalom / hozzáférések (soronként egy elem)</label>
                         <textarea id="adminPlanFeatures" rows="4" placeholder="PDF export&#10;E-mail küldés" style="width: 100%; resize: vertical; margin-bottom: 1rem;"></textarea>
                         <div style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button type="button" class="btn btn-secondary" id="adminPlanModalCancel">Mégse</button>
@@ -82,24 +82,24 @@
                     <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📄 Díjbekérő PDF</h3>
                     <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Fizetési felszólítás PDF-ben, a cégadataid és az Impresszum alapján. Nem NAV-online számla; sorszám és közlemény automatikusan kerül a PDF-re.</p>
                     <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; max-width: 520px;">
-                        <label>Sablon (gyors kitöltés)</label>
+                        <label for="dijbekeroPresetSelect">Sablon (gyors kitöltés)</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
                             <select id="dijbekeroPresetSelect" style="flex: 1; min-width: 180px;">
                                 <option value="">— Válassz sablont —</option>
                             </select>
                             <button type="button" class="btn btn-secondary btn-small" id="btnDijbekeroSavePreset">💾 Mentés sablonként</button>
                         </div>
-                        <label>Összeg (Ft, opcionális)</label>
+                        <label for="dijbekeroAmount">Összeg (Ft, opcionális)</label>
                         <input type="number" id="dijbekeroAmount" min="0" placeholder="Pl. 99000" style="width: 100%; margin-bottom: 10px;">
-                        <label>Leírás (opcionális)</label>
+                        <label for="dijbekeroDesc">Leírás (opcionális)</label>
                         <input type="text" id="dijbekeroDesc" placeholder="Pl. VBF Premium Pro – 1 év" style="width: 100%; margin-bottom: 10px;">
-                        <label>Fizetési határidő (opcionális, pl. 2026.04.15)</label>
+                        <label for="dijbekeroDue">Fizetési határidő (opcionális, pl. 2026.04.15)</label>
                         <input type="text" id="dijbekeroDue" placeholder="2026.04.15" style="width: 100%; margin-bottom: 10px;">
-                        <label>Vevő neve (opcionális)</label>
+                        <label for="dijbekeroVevoNev">Vevő neve (opcionális)</label>
                         <input type="text" id="dijbekeroVevoNev" placeholder="Vevő neve" style="width: 100%; margin-bottom: 10px;">
-                        <label>Vevő címe (opcionális)</label>
+                        <label for="dijbekeroVevoCim">Vevő címe (opcionális)</label>
                         <input type="text" id="dijbekeroVevoCim" placeholder="Cím" style="width: 100%; margin-bottom: 10px;">
-                        <label>E-mail címzett (küldéshez)</label>
+                        <label for="dijbekeroEmail">E-mail címzett (küldéshez)</label>
                         <input type="email" id="dijbekeroEmail" placeholder="vevo@example.com" style="width: 100%; margin-bottom: 12px;">
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button type="button" class="btn btn-primary" id="btnDijbekeroPdf">📥 Letöltés</button>
@@ -114,7 +114,7 @@
                     <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                             <div style="flex: 1; min-width: 200px;">
-                                <label>Új cég neve</label>
+                                <label for="adminNewCompanyName">Új cég neve</label>
                                 <input type="text" id="adminNewCompanyName" placeholder="Pl. Zöldfülű Vill Kft.">
                             </div>
                             <button class="btn btn-primary" id="btnAdminCreateCompany">➕ Cég létrehozása</button>
@@ -132,31 +132,31 @@
                 </table>
                 <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏢 Cégadatok és arculat</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <label>Cégnév</label>
+                    <label for="adminCompName">Cégnév</label>
                     <input type="text" id="adminCompName" placeholder="Zöldfülű Vill Kft.">
-                    <label style="margin-top: 10px;">Adószám</label>
+                    <label for="adminCompTax" style="margin-top: 10px;">Adószám</label>
                     <input type="text" id="adminCompTax" placeholder="12345678-2-41">
-                    <label style="margin-top: 10px;">Székhely / Számlázási Cím</label>
+                    <label for="adminCompAddress" style="margin-top: 10px;">Székhely / Számlázási Cím</label>
                     <input type="text" id="adminCompAddress" placeholder="1111 Bp., Pelikán u. 2.">
-                    <label style="margin-top: 10px;">Bankszámlaszám</label>
+                    <label for="adminCompBank" style="margin-top: 10px;">Bankszámlaszám</label>
                     <input type="text" id="adminCompBank" placeholder="11773000-12345678">
                     <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Cégadatok mentése</button>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                    <label>Cég logója</label>
+                    <label for="adminCompLogoInput">Cég logója</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
                         <img id="adminCompLogoPreview" src="" alt="Nincs logó" style="max-height: 60px; display: none; border-radius: 5px;">
                         <input type="file" id="adminCompLogoInput" accept="image/png, image/jpeg" style="display: none;">
                         <button class="btn btn-secondary btn-small" id="btnAdminUploadLogo" style="margin:0;">🖼️ Logó</button>
                     </div>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                    <label>Aláírás kép</label>
+                    <label for="adminCompSignatureInput">Aláírás kép</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
                         <img id="adminCompSignaturePreview" src="" alt="Nincs aláírás" style="max-height: 50px; display: none; border-radius: 5px; background: #fff;">
                         <input type="file" id="adminCompSignatureInput" accept="image/png, image/jpeg, image/webp" style="display: none;">
                         <button class="btn btn-secondary btn-small" id="btnAdminUploadSignature" style="margin:0;">✍️ Aláírás</button>
                     </div>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                    <label>Hitelesítő tanúsítvány (.pfx) – PDF aláíráshoz</label>
+                    <label for="adminCompCertInput">Hitelesítő tanúsítvány (.pfx) – PDF aláíráshoz</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <span id="adminCompCertStatus" style="font-size: 0.9rem; color: var(--text-muted);">Nincs feltöltött tanúsítvány</span>
                         <input type="file" id="adminCompCertInput" accept=".pfx,.p12,application/x-pkcs12" style="display: none;">
@@ -165,20 +165,20 @@
                 </div>
                 <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">👤 Új felhasználó</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <label>Felhasználónév</label>
+                    <label for="adminNewUsername">Felhasználónév</label>
                     <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
-                    <label style="margin-top: 10px;">Jelszó</label>
+                    <label for="adminNewPassword" style="margin-top: 10px;">Jelszó</label>
                     <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
-                    <label style="margin-top: 10px;">E-mail</label>
+                    <label for="adminNewEmail" style="margin-top: 10px;">E-mail</label>
                     <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
-                    <label style="margin-top: 10px;">Jogosultság</label>
+                    <label for="adminNewRole" style="margin-top: 10px;">Jogosultság</label>
                     <select id="adminNewRole">
                         <option value="TECH">Villanyszerelő</option>
                         <option value="COMPANY_ADMIN">Céges vezető</option>
                         <option value="ADMIN">Főadmin</option>
                     </select>
                     <div id="adminNewCompanyWrap" style="margin-top: 10px; display: none;">
-                        <label>Cég</label>
+                        <label for="adminNewCompanyId">Cég</label>
                         <select id="adminNewCompanyId"><option value="">-- Válassz céget --</option></select>
                     </div>
                     <button class="btn btn-primary" id="btnAdminCreateUser" style="margin-top: 15px;">Felhasználó létrehozása</button>
@@ -186,15 +186,15 @@
                 </div>
                 <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📅 Kiszállás és feladat kiosztása</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <label>Feladat címe</label>
+                    <label for="adminJobTitle">Feladat címe</label>
                     <input type="text" id="adminJobTitle" placeholder="Cím">
-                    <label style="margin-top: 10px;">Cím / Helyszín</label>
+                    <label for="adminJobAddress" style="margin-top: 10px;">Cím / Helyszín</label>
                     <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
-                    <label style="margin-top: 10px;">Leírás</label>
+                    <label for="adminJobDesc" style="margin-top: 10px;">Leírás</label>
                     <textarea id="adminJobDesc" rows="2" placeholder="Kontakt, megjegyzés"></textarea>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <div style="flex: 1;"><label>Dátum & Idő</label><input type="datetime-local" id="adminJobDate"></div>
-                        <div style="flex: 1;"><label>Kijelölt szerelő</label><select id="adminJobAssignSelect"><option value="">-- Válassz kollégát --</option></select></div>
+                        <div style="flex: 1;"><label for="adminJobDate">Dátum & Idő</label><input type="datetime-local" id="adminJobDate"></div>
+                        <div style="flex: 1;"><label for="adminJobAssignSelect">Kijelölt szerelő</label><select id="adminJobAssignSelect"><option value="">-- Válassz kollégát --</option></select></div>
                     </div>
                     <button class="btn btn-primary" id="btnAdminCreateJob" style="margin-top: 15px; width: 100%;">Munkavégzés kiosztása</button>
                 </div>
@@ -207,8 +207,8 @@
         <div class="modal-content panel-glass" style="position: relative;">
             <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 1.25rem;">Bejelentkezés</h2>
-            <div class="prop-group"><label>Felhasználónév</label><input type="text" id="loginUser" placeholder="admin" autocomplete="username"></div>
-            <div class="prop-group"><label>Jelszó</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
+            <div class="prop-group"><label for="loginUser">Felhasználónév</label><input type="text" id="loginUser" placeholder="admin" autocomplete="username"></div>
+            <div class="prop-group"><label for="loginPass">Jelszó</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
             <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
             <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
             <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Bejelentkezés</button>
@@ -218,9 +218,9 @@
         <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
             <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
-            <div class="prop-group"><label>Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password"></div>
-            <div class="prop-group"><label>Új jelszó</label><input type="password" id="passwordNew" placeholder="••••••••" autocomplete="new-password"></div>
-            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label for="passwordCurrent">Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password"></div>
+            <div class="prop-group"><label for="passwordNew">Új jelszó</label><input type="password" id="passwordNew" placeholder="••••••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label for="passwordNewConfirm">Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password"></div>
             <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
             <button class="btn btn-primary" id="btnPasswordSubmit" style="width: 100%;">Mentés</button>
         </div>
@@ -228,10 +228,10 @@
     <div id="profileModal" class="modal-overlay" style="display: none;">
         <div class="modal-content panel-glass" style="max-width: 420px;">
             <h2 style="margin-bottom: 1rem;">Profil</h2>
-            <div class="prop-group"><label>Felhasználónév</label><p id="profileUsername" style="margin: 0; font-weight: 600;"></p></div>
-            <div class="prop-group"><label>E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button></div>
-            <div class="prop-group"><label>Cég</label><p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p></div>
-            <div class="prop-group"><label>Előfizetés lejár</label><p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p></div>
+            <div class="prop-group"><span class="field-label">Felhasználónév</span><p id="profileUsername" style="margin: 0; font-weight: 600;"></p></div>
+            <div class="prop-group"><label for="profileEmail">E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button></div>
+            <div class="prop-group"><span class="field-label">Cég</span><p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p></div>
+            <div class="prop-group"><span class="field-label">Előfizetés lejár</span><p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p></div>
             <hr style="border-color: var(--border-color); margin: 1rem 0;">
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <button type="button" class="btn btn-secondary btn-small" id="btnProfileChangePassword">Jelszó módosítása</button>
@@ -246,20 +246,20 @@
             <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
-            <div class="prop-group"><label>E-mail</label><input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu"></div>
+            <div class="prop-group"><label for="forgotPasswordEmail">E-mail</label><input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu"></div>
             <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
             <button class="btn btn-primary" id="btnForgotPasswordSubmit" style="width: 100%;">Link kérése</button>
         </div>
     </div>
-    <div id="expiryBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: #fff; padding: 0.6rem 1rem; font-size: 0.9rem; z-index: 9998; align-items: center; justify-content: center; gap: 1rem;">
+    <div id="expiryBanner" class="app-banner-expiry" style="display: none;">
         <span id="expiryBannerText"></span>
         <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
     </div>
     <div id="resetPasswordPanel" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
         <div class="modal-content panel-glass" style="max-width: 400px;">
             <h2 style="margin-bottom: 1rem;">Új jelszó</h2>
-            <div class="prop-group"><label>Új jelszó</label><input type="password" id="resetNewPassword" placeholder="••••" autocomplete="new-password"></div>
-            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="resetNewPasswordConfirm" placeholder="••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label for="resetNewPassword">Új jelszó</label><input type="password" id="resetNewPassword" placeholder="••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label for="resetNewPasswordConfirm">Új jelszó még egyszer</label><input type="password" id="resetNewPasswordConfirm" placeholder="••••" autocomplete="new-password"></div>
             <p id="resetPasswordError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
             <button type="button" class="btn btn-primary" id="btnResetPasswordSubmit">Jelszó mentése</button>
         </div>

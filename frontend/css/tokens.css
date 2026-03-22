@@ -8,20 +8,42 @@
     --text-muted: #94a3b8;
     --text-muted-strong: #cbd5e1;
 
-    --primary: #0ea5e9;
-    --primary-hover: #0284c7;
+    /* Tomított, kevésbé „neon” alapszínek (sötét mód) – professzionálisabb megjelenés */
+    --primary: #4a9ec4;
+    --primary-hover: #3d89ad;
     --secondary: #121e36;
     --secondary-hover: #1e293b;
-    --danger: #ef4444;
-    --danger-hover: #dc2626;
+    --danger: #d97070;
+    --danger-hover: #c45c5c;
 
-    --accent: #f59e0b;
+    --accent: #c9a04a;
+
+    /* Állapot / banner – tompított, nem neon */
+    --success: #6eb89a;
+    --success-muted: #8cc9ae;
+    --warning: #c9a55a;
+    --warning-strong: #b8924a;
+    --info-banner-from: #3d6d8a;
+    --info-banner-to: #4a85a3;
 
     --border-color: rgba(255, 255, 255, 0.08);
     --grid-color: rgba(255, 255, 255, 0.04);
 
     --radius: 12px;
     --radius-sm: 8px;
+
+    /* Gombok – egy forma minden felületen (app, shop, főoldal) */
+    --btn-radius: 10px;
+    --btn-min-height: 42px;
+    --btn-min-height-sm: 34px;
+    --btn-pad-y: 0.55rem;
+    --btn-pad-x: 1.05rem;
+    --btn-pad-x-wide: 1.35rem;
+    --btn-font-size: 0.875rem;
+    --btn-font-weight: 600;
+    --btn-border-width: 1px;
+    --btn-gap: 0.4rem;
+
     --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
@@ -33,7 +55,7 @@
     --glass-bg: var(--bg-panel);
     --glass-border: var(--border-color);
     --primary-dark: var(--primary-hover);
-    --primary-light: #38bdf8;
+    --primary-light: #7eb8d4;
 }
 
 * {
@@ -61,7 +83,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(14, 165, 233, 0.5);
+    background: color-mix(in srgb, var(--primary) 45%, transparent);
     background-clip: content-box;
 }
 
@@ -119,16 +141,38 @@ body.landing-page {
 body.light-mode {
     --bg-base: #f8fafc;
     --bg-color: var(--bg-base);
-    --bg-panel: rgba(255, 255, 255, 0.85);
-    --bg-glass: rgba(255, 255, 255, 0.6);
+    --bg-panel: rgba(255, 255, 255, 0.88);
+    --bg-glass: rgba(255, 255, 255, 0.72);
     --text-main: #0f172a;
     --text-muted: #475569;
     --text-muted-strong: #64748b;
-    --border-color: rgba(0, 0, 0, 0.1);
+    --border-color: rgba(15, 23, 42, 0.09);
     --grid-color: rgba(0, 0, 0, 0.05);
     --text-color: var(--text-main);
     --glass-bg: var(--bg-panel);
     --glass-border: var(--border-color);
-    --surface-light: #e2e8f0;
-    background-image: radial-gradient(circle at 50% 0%, #e2e8f0 0%, var(--bg-base) 60%);
+    --surface-light: #e8edf3;
+    --surface-color: #eef2f6;
+
+    --primary: #3d7a96;
+    --primary-hover: #32657d;
+    --primary-light: #5c92ad;
+    --primary-dark: var(--primary-hover);
+    --secondary: #e2e8f0;
+    --secondary-hover: #cbd5e1;
+    --danger: #b85c5c;
+    --danger-hover: #a34d4d;
+    --accent: #a67c2e;
+
+    --success: #4a9078;
+    --success-muted: #5c9e86;
+    --warning: #b8974a;
+    --warning-strong: #9e823e;
+    --info-banner-from: #2f5f78;
+    --info-banner-to: #3d7a96;
+
+    --btn-min-height: 44px;
+    --btn-min-height-sm: 36px;
+
+    background-image: radial-gradient(circle at 50% 0%, #e8edf3 0%, var(--bg-base) 58%);
 }

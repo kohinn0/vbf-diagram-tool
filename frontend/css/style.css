@@ -66,6 +66,11 @@
     margin-bottom: 1rem;
 }
 
+.tool-section .btn {
+    justify-content: center;
+    box-sizing: border-box;
+}
+
 .symbol-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -175,6 +180,14 @@
     margin-bottom: 0.4rem;
 }
 
+/* Nem űrlapmező fölött: ne <label> (audit: orphan label) */
+.prop-group .field-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted-strong, var(--text-muted));
+    margin-bottom: 0.4rem;
+}
+
 .prop-group input,
 .prop-group select,
 .prop-group textarea {
@@ -198,61 +211,126 @@
 }
 
 /* ==========================================================================
-   Buttons
+   Buttons (egységes forma: --btn-* tokenek a tokens.css-ben)
    ========================================================================== */
 .btn {
-    display: flex;
-    width: 100%;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-sm);
+    gap: var(--btn-gap);
+    width: auto;
+    max-width: 100%;
+    min-height: var(--btn-min-height);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    border-radius: var(--btn-radius);
     font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: var(--btn-font-size);
+    font-weight: var(--btn-font-weight);
+    line-height: 1.2;
     cursor: pointer;
     transition: var(--transition);
-    border: 1px solid transparent;
-    margin-bottom: 0.75rem;
+    border: var(--btn-border-width) solid transparent;
+    margin: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+    vertical-align: middle;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 65%, transparent);
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-block,
+.form-container .btn,
+.measurements-container .btn,
+.modal-content .btn,
+.tool-section .btn,
+.sidebar-header .btn,
+#cartDrawer .btn,
+.cookie-consent-actions .btn,
+.cart-btn-full {
+    width: 100%;
+    white-space: normal;
+}
+
+#cookieBanner .btn {
+    width: auto;
+    flex-shrink: 0;
+}
+
+.form-container .btn + .btn,
+.modal-content .btn + .btn {
+    margin-top: 0.5rem;
+}
+
+.user-controls .btn,
+#reportActionsGroup .btn,
+.report-card .actions .btn,
+.nav-help-trigger {
+    width: auto;
+    margin: 0;
 }
 
 .btn-primary {
     background-color: var(--primary);
-    color: white;
+    color: #fff;
+    border-color: transparent;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background-color: var(--primary-hover);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .btn-secondary {
-    background-color: transparent;
+    background-color: color-mix(in srgb, var(--text-main) 5%, transparent);
     color: var(--text-main);
     border-color: var(--border-color);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background-color: var(--bg-glass);
-    border-color: var(--text-muted);
+    border-color: color-mix(in srgb, var(--text-muted) 45%, var(--border-color));
 }
 
 .btn-danger {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--danger);
-    border-color: rgba(239, 68, 68, 0.2);
+    border-color: color-mix(in srgb, var(--danger) 28%, var(--border-color));
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background-color: var(--danger);
-    color: white;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 25%, transparent);
 }
 
-.btn-small {
-    min-height: 36px;
-    padding: 0.45rem 0.8rem !important;
-    font-size: 0.82rem;
+.btn-accent {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 92%, #1e293b), color-mix(in srgb, var(--accent) 75%, #334155));
+    color: #fff;
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.btn-accent:hover:not(:disabled) {
+    filter: brightness(1.06);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.btn-small,
+.nav-util-btn {
+    min-height: var(--btn-min-height-sm);
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    border-radius: var(--btn-radius);
 }
 
 /* Jegyzőkönyv: gyorskitöltő sor – gomb ne legyen mindig teljes szélességű nagy képernyőn */
@@ -268,17 +346,59 @@
     }
 }
 
-/* Béta verzió: hibajelentés gomb (app + shop) */
+/* Béta verzió: hibajelentés – shop / egyéb helyeken továbbra is használható */
 .btn-beta-bug {
-    border-color: color-mix(in srgb, var(--accent) 42%, var(--border-color)) !important;
-    color: var(--accent) !important;
-    background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-color)) !important;
+    color: var(--text-muted-strong) !important;
+    background: color-mix(in srgb, var(--text-main) 4%, transparent) !important;
+    font-weight: 500 !important;
 }
 
 .btn-beta-bug:hover {
-    border-color: color-mix(in srgb, var(--accent) 65%, var(--border-color)) !important;
-    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color)) !important;
+    background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
     color: var(--text-main) !important;
+}
+
+/* App fejléc: diszkrét visszajelzés (ikon), nem teljes szélességű szöveges gomb */
+.nav-feedback-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.125rem;
+    height: 2.125rem;
+    min-height: 32px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--text-main) 4%, transparent);
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.nav-feedback-icon:hover {
+    color: var(--text-main);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* Jegyzőkönyv űrlap: finom „kötelező” jelölés */
+.label-required-hint {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    color: color-mix(in srgb, var(--danger) 45%, var(--text-muted));
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    padding: 0.12rem 0.4rem;
+    border-radius: 4px;
+    line-height: 1.2;
 }
 
 .btn-outline {
@@ -287,9 +407,10 @@
     border-color: var(--primary);
 }
 
-.btn-outline:hover {
-    background: rgba(14, 165, 233, 0.12);
+.btn-outline:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
     color: var(--primary);
+    border-color: var(--primary-hover);
 }
 
 /* ==========================================================================
@@ -375,11 +496,11 @@
 }
 .nav-section-trigger:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(14, 165, 233, 0.5);
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border-color));
 }
 .nav-section-trigger[aria-expanded="true"] {
     border-color: var(--primary);
-    background: rgba(14, 165, 233, 0.12);
+    background: color-mix(in srgb, var(--primary) 11%, transparent);
     color: var(--primary);
 }
 .nav-section-icon {
@@ -456,7 +577,7 @@
     background: rgba(255, 255, 255, 0.08);
 }
 .nav-section-panel .nav-tab.active {
-    background: rgba(14, 165, 233, 0.15);
+    background: color-mix(in srgb, var(--primary) 13%, transparent);
     color: var(--primary);
 }
 a.nav-tab-link {
@@ -486,12 +607,12 @@ a.nav-tab-link {
     font-weight: 600;
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
+    background: color-mix(in srgb, #6eb89a 18%, transparent);
+    color: #8cc9ae;
 }
 .nav-context-chip.modified {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: color-mix(in srgb, var(--accent) 85%, var(--text-muted));
 }
 
 .nav-tab {
@@ -521,19 +642,19 @@ a.nav-tab {
 }
 .nav-tab.active {
     color: var(--primary);
-    border-bottom-color: var(--primary);
-    background: rgba(14, 165, 233, 0.06);
+    border-bottom-color: color-mix(in srgb, var(--primary) 70%, var(--border-color));
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
 }
 .tab-badge {
     display: none;
     margin-left: 0.35rem;
     min-width: 1.1rem;
     padding: 0.1rem 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 600;
     line-height: 1.2;
-    color: #fff;
-    background: var(--danger, #ef4444);
+    color: color-mix(in srgb, #fff 92%, var(--danger));
+    background: color-mix(in srgb, var(--danger) 78%, #475569 22%);
     border-radius: 999px;
 }
 
@@ -565,8 +686,10 @@ a.nav-tab {
 }
 #reportActionsGroup .btn {
     margin: 0;
-    padding: 5px 9px;
-    font-size: 0.78rem;
+    min-height: var(--btn-min-height-sm);
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    border-radius: var(--btn-radius);
     white-space: nowrap;
 }
 @media (max-width: 899px) {
@@ -682,7 +805,7 @@ a.nav-tab {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #10b981;
+    background: var(--success-muted);
 }
 .nav-profile-link {
     color: var(--accent);
@@ -713,10 +836,10 @@ a.nav-tab {
 .nav-gdpr-links .nav-link-danger:hover {
     color: var(--danger-hover);
 }
-#reportActionsGroup #btnExportWord { background: #2563eb; color: #fff; border-color: transparent; }
-#reportActionsGroup #btnExportPdfReport { background: #dc2626; color: #fff; border-color: transparent; }
-#reportActionsGroup #btnEmailReport { background: #7c3aed; color: #fff; border-color: transparent; }
-#btnSyncOffline { background: #f59e0b !important; color: #fff !important; border-color: transparent !important; }
+#reportActionsGroup #btnExportWord { background: color-mix(in srgb, #3d6d9a 88%, #1e293b); color: #f1f5f9; border-color: transparent; }
+#reportActionsGroup #btnExportPdfReport { background: color-mix(in srgb, var(--danger) 75%, #475569); color: #fef2f2; border-color: transparent; }
+#reportActionsGroup #btnEmailReport { background: color-mix(in srgb, #6b5b95 80%, #475569); color: #f5f3ff; border-color: transparent; }
+#btnSyncOffline { background: color-mix(in srgb, var(--warning) 85%, #64748b) !important; color: #fff !important; border-color: transparent !important; }
 
 /* ==========================================================================
    Guided Tour Overlay
@@ -880,10 +1003,65 @@ a.nav-tab {
     color: var(--text-muted);
     margin-bottom: 1.25rem;
     padding: 0.6rem 0.75rem;
-    background: rgba(14, 165, 233, 0.08);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
     border-radius: 8px;
-    border-left: 3px solid var(--primary);
+    border-left: 3px solid color-mix(in srgb, var(--primary) 55%, var(--border-color));
     line-height: 1.45;
+}
+
+/* Fix sávok (app / shop) – téma tokenek */
+.app-banner-expiry {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(90deg, var(--warning), var(--warning-strong));
+}
+
+.app-banner-pdf-watermark {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9997;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.55rem 1rem;
+    font-size: 0.86rem;
+    color: #f1f5f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(90deg, var(--info-banner-from), var(--info-banner-to));
+}
+
+.cart-logged-in-note {
+    display: none;
+    font-size: 0.88rem;
+    color: var(--primary-light);
+    margin-bottom: 1rem;
+    padding: 0.65rem 0.75rem;
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.vbf-report-section-heading {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--success-muted);
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
 .keyboard-shortcuts-modal { max-width: 420px; }
@@ -993,10 +1171,10 @@ body.shop-page .nav-tabs .nav-tab.active {
 }
 
 body.shop-page .user-controls .btn {
-    min-height: 2.35rem;
-    padding: 0.5rem 1rem !important;
-    font-size: 0.84rem !important;
-    border-radius: var(--radius-sm);
+    min-height: var(--btn-min-height-sm);
+    padding: 0.45rem 0.85rem !important;
+    font-size: 0.8125rem !important;
+    border-radius: var(--btn-radius);
 }
 
 /* ==========================================================================
@@ -1073,8 +1251,10 @@ body.shop-page .user-controls .btn {
 }
 
 .data-table .btn-danger {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.8rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.55rem !important;
+    font-size: 0.78rem !important;
+    border-radius: var(--btn-radius);
     width: auto;
     margin: 0;
 }
@@ -1125,25 +1305,15 @@ body.shop-page .user-controls .btn {
 }
 
 .report-card .actions .btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
+    min-height: var(--btn-min-height-sm);
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.8125rem !important;
 }
 
 /* ==========================================================================
    SaaS & Field Work Polish (Large Touch Targets & Contrast)
+   Gombok: egységes alap a fenti .btn szabályokkal + --btn-min-height token
    ========================================================================== */
-.btn {
-    padding: 0.75rem 1.25rem !important;
-    /* Larger for touch */
-    font-size: 0.95rem;
-    font-weight: 500;
-    min-height: 48px;
-    /* Standard touch target height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
 
 input[type="text"],
 input[type="number"],
@@ -1356,10 +1526,9 @@ select {
         /* prevent overflow */
     }
 
-    .btn {
-        padding: 0.5rem 1rem !important;
-        min-height: 40px;
-        font-size: 0.85rem;
+    .btn:not(.btn-small):not(.nav-util-btn) {
+        min-height: max(var(--btn-min-height), 44px);
+        padding: 0.5rem 1rem;
     }
 
     .modal-content {

@@ -100,18 +100,18 @@ export function initCompleteness() {
         const canSave = requiredItems.every(c => c.ok);
 
         bar.style.width = pct + '%';
-        if (pct >= 90) bar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
-        else if (pct >= 50) bar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
-        else bar.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
+        if (pct >= 90) bar.style.background = 'linear-gradient(90deg, #4ade80, #6ee7b7)';
+        else if (pct >= 50) bar.style.background = 'linear-gradient(90deg, #d4a84d, #e8c06a)';
+        else bar.style.background = 'linear-gradient(90deg, #c97b7b, #d4a574)';
 
         text.textContent = `${pct}% kész (${filledRequired}/${requiredItems.length} kötelező)`;
 
         if (canSave) {
             status.textContent = '✅ Menthető!';
-            status.style.color = '#10b981';
+            status.style.color = '#6ee7b7';
         } else {
             status.textContent = '❌ Nem menthető';
-            status.style.color = '#ef4444';
+            status.style.color = '#d4a0a0';
         }
 
         const reportTabBadge = document.getElementById('tabReportBadge');
@@ -146,12 +146,12 @@ export function initCompleteness() {
         checks.forEach(c => {
             const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
             const rowFrame = c.ok
-                ? 'border-0 border-l-[3px] border-l-[#34d399]'
+                ? 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,#6ee7b7_65%,transparent)]'
                 : (c.req
-                    ? 'border-0 border-l-[3px] border-l-[#f87171]'
-                    : 'border-0 border-l-[3px] border-l-[color-mix(in_srgb,var(--text-muted)_50%,transparent)]');
+                    ? 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,#d4a0a0_70%,transparent)]'
+                    : 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,var(--text-muted)_45%,transparent)]');
             const reqBadge = c.req
-                ? '<span class="shrink-0 rounded-md bg-[color-mix(in_srgb,#ef4444_14%,transparent)] px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-[#fca5a5]">Kötelező</span>'
+                ? '<span class="vbf-req-badge shrink-0 rounded px-1.5 py-0.5 text-[0.58rem] font-medium normal-case tracking-normal text-[color-mix(in_srgb,var(--danger)_55%,var(--text-muted))] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)]">kötelező</span>'
                 : '';
             const fieldId = c.fieldId || '';
             const tabTarget = c.tabTarget || '';
@@ -166,7 +166,7 @@ export function initCompleteness() {
                 title = 'Kattints: Mérési adatok fül és táblázat';
             }
             const cursor = fieldId || tabTarget ? 'cursor-pointer' : '';
-            html += `<div ${clickClass} class="vbf-checkitem rounded-[10px] ${rowFrame} bg-[color-mix(in_srgb,var(--bg-panel)_35%,var(--bg-base))] px-4 py-3.5 transition-colors hover:bg-[color-mix(in_srgb,var(--bg-panel)_55%,var(--bg-base))] ${cursor}" title="${esc(title)}">
+            html += `<div ${clickClass} class="vbf-checkitem rounded-[10px] ${rowFrame} bg-[color-mix(in_srgb,var(--bg-glass)_42%,var(--bg-base))] px-4 py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--bg-glass)_58%,var(--bg-base))] ${cursor}" title="${esc(title)}">
                 <div class="flex gap-3.5">
                     <span class="shrink-0 pt-0.5 text-[1.05rem] leading-none opacity-95" aria-hidden="true">${icon}</span>
                     <div class="min-w-0 flex-1">
@@ -188,8 +188,8 @@ export function initCompleteness() {
                 el.style.borderColor = '';
                 return;
             }
-            el.style.borderColor = isOk ? '#10b981' : '#ef4444';
-            el.style.boxShadow = isOk ? '0 0 0 2px rgba(16,185,129,0.2)' : '0 0 0 2px rgba(239,68,68,0.2)';
+            el.style.borderColor = isOk ? '#5eb89a' : '#b88282';
+            el.style.boxShadow = isOk ? '0 0 0 2px rgba(94,184,154,0.2)' : '0 0 0 2px rgba(184,130,130,0.22)';
         };
 
         highlightField('instrumentType', !!(instrType && instrType.match(/\d/)));
@@ -201,11 +201,11 @@ export function initCompleteness() {
         const calHelper = document.getElementById('calHelper');
         if (calHelper && instrCal) {
             if (!calOk) {
-                calHelper.innerHTML = `⚠️ <span style="color:#ef4444; font-weight:600;">LEJÁRT KALIBRÁLÁS!</span> — A kalibrálás (${instrCal}) a múltban van. "Megfelelő" minősítés NEM adható!`;
+                calHelper.innerHTML = `⚠️ <span style="color:#c98a8a; font-weight:600;">Lejárt kalibrálás</span> — A kalibrálás (${instrCal}) a múltban van. „Megfelelő” minősítés nem adható.`;
             } else if (calExpiringSoon) {
-                calHelper.innerHTML = `⏳ <span style="color:#f59e0b; font-weight:600;">Kalibrálás hamarosan lejár!</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
+                calHelper.innerHTML = `⏳ <span style="color:#c9a55a; font-weight:600;">Hamarosan lejár</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
             } else {
-                calHelper.innerHTML = `✅ <span style="color:#10b981; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
+                calHelper.innerHTML = `✅ <span style="color:#6eb89a; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
             }
         }
     }
@@ -224,8 +224,8 @@ export function initCompleteness() {
         }
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.style.transition = 'all 0.3s ease';
-        el.style.boxShadow = '0 0 0 4px rgba(245,158,11,0.6)';
-        el.style.borderColor = '#f59e0b';
+        el.style.boxShadow = '0 0 0 4px rgba(201,165,90,0.45)';
+        el.style.borderColor = '#c9a55a';
         el.focus();
         setTimeout(() => {
             el.style.boxShadow = '';
@@ -246,7 +246,7 @@ export function initCompleteness() {
         if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             section.style.transition = 'box-shadow 0.3s ease';
-            section.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.5)';
+            section.style.boxShadow = '0 0 0 3px rgba(201,165,90,0.42)';
             setTimeout(() => { section.style.boxShadow = ''; }, 2500);
         }
     };

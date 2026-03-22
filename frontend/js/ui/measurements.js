@@ -18,9 +18,10 @@ export function initMeasurements() {
                 : Promise.resolve(dataUrl);
             compress.then(function (compressed) {
                 tr.setAttribute('data-photo', compressed);
-                const photoBtn = tr.querySelector('label[title]');
-                if (photoBtn) {
-                    photoBtn.innerHTML = `✅ <input type="file" accept="image/*" style="display:none;" onchange="attachMeasurementPhoto(this)">`;
+                const photoBtn = tr.querySelector('label.meas-photo-label');
+                const fid = photoBtn?.getAttribute('for');
+                if (photoBtn && fid) {
+                    photoBtn.innerHTML = `✅ <input type="file" id="${fid}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">`;
                     photoBtn.title = 'Kép csatolva! Kattints a cseréhez.';
                 }
             });
@@ -38,12 +39,13 @@ export function initMeasurements() {
 
         const tr = document.createElement('tr');
         if (nodeId) tr.setAttribute('data-node-id', nodeId);
+        const measPhotoId = `meas-ph-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
         tr.innerHTML = htmlContent + `
             <td class="meas-actions" style="white-space:nowrap;">
                 <button type="button" class="btn btn-secondary btn-small" title="Hiba felvitele a hibajegyzékbe" style="margin:0; padding: 4px 8px;" onclick="typeof window.addDefectFromMeasurementRow==='function'&&window.addDefectFromMeasurementRow(this.closest('tr'))">Hiba</button>
-                <label class="btn btn-secondary btn-small" title="Fotó csatolása" style="margin:0; padding: 4px 8px;">
+                <label for="${measPhotoId}" class="btn btn-secondary btn-small meas-photo-label" title="Fotó csatolása" style="margin:0; padding: 4px 8px;">
                     📷
-                    <input type="file" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
+                    <input type="file" id="${measPhotoId}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
                 </label>
                 <button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()" title="Sor törlése" style="margin:0; padding: 4px 8px;">🗑️</button>
             </td>

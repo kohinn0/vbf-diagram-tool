@@ -51,7 +51,7 @@ export function initDashboard() {
             container.innerHTML = '';
 
             const rate = Math.min(100, Math.max(0, Number(stats.result_stats?.pass_rate) || 0));
-            const coneBg = `conic-gradient(#10b981 0deg, #10b981 ${rate * 3.6}deg, rgba(255,255,255,0.08) ${rate * 3.6}deg)`;
+            const coneBg = `conic-gradient(#6eb89a 0deg, #6eb89a ${rate * 3.6}deg, rgba(255,255,255,0.08) ${rate * 3.6}deg)`;
 
             const header = document.createElement('div');
             header.className = 'mb-5';
@@ -66,10 +66,10 @@ export function initDashboard() {
             kpiGrid.innerHTML = `
                 ${this._kpiCard('📋', 'Összes jegyzőkönyv', stats.total_reports, 'var(--primary)')}
                 ${this._kpiCard('📅', 'Havi új dokumentumok', stats.monthly_reports, 'var(--accent)')}
-                ${this._kpiCard('✅', 'Lezárt (véglegesített)', stats.finalized_reports, '#10b981')}
-                ${this._kpiCard('📝', 'Piszkozat (vázlat)', stats.draft_reports, '#8b5cf6')}
-                ${this._kpiCard('👥', 'Aktív munkatársak', stats.active_users, '#06b6d4')}
-                ${this._kpiCard('📌', 'Folyamatban lévő munkák', stats.pending_jobs, '#f43f5e')}
+                ${this._kpiCard('✅', 'Lezárt (véglegesített)', stats.finalized_reports, 'var(--success-muted)')}
+                ${this._kpiCard('📝', 'Piszkozat (vázlat)', stats.draft_reports, '#8b7ab8')}
+                ${this._kpiCard('👥', 'Aktív munkatársak', stats.active_users, '#5a9eaa')}
+                ${this._kpiCard('📌', 'Folyamatban lévő munkák', stats.pending_jobs, '#c97b8a')}
             `;
             container.appendChild(kpiGrid);
 
@@ -99,7 +99,7 @@ export function initDashboard() {
                     <div class="flex flex-col items-center gap-8 py-4 lg:flex-row lg:items-center">
                         <div class="relative flex h-[7.5rem] w-[7.5rem] shrink-0 flex-col items-center justify-center rounded-full" style="background: ${coneBg}">
                             <div class="absolute inset-[10px] z-0 rounded-full bg-[var(--bg-panel)]"></div>
-                            <span class="relative z-[1] text-2xl font-bold text-[#10b981]">${rate}%</span>
+                            <span class="relative z-[1] text-2xl font-bold text-[var(--success-muted)]">${rate}%</span>
                             <span class="relative z-[1] text-[0.65rem] uppercase tracking-wide text-[var(--text-muted)]">Átmenési arány</span>
                         </div>
                         <div class="flex w-full min-w-0 flex-col gap-2">
@@ -195,8 +195,8 @@ export function initDashboard() {
                         datasets: [{
                             label: 'Jegyzőkönyvek',
                             data: values,
-                            backgroundColor: 'rgba(14, 165, 233, 0.6)',
-                            borderColor: '#0ea5e9',
+                            backgroundColor: 'rgba(74, 158, 196, 0.5)',
+                            borderColor: 'rgba(90, 147, 173, 0.95)',
                             borderWidth: 1,
                             borderRadius: 6,
                         }]
@@ -234,7 +234,7 @@ export function initDashboard() {
                 data['VÁLTOZAT_B'] || 0,
                 data['NEM MEGFELELŐ'] || 0,
             ];
-            const colors = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
+            const colors = ['#6eb89a', '#c9a55a', '#d48a5c', '#c97b7b'];
 
             if (window.Chart) {
                 this.charts.qualification = new Chart(ctx, {
@@ -274,7 +274,7 @@ export function initDashboard() {
                 'D — Korszerűtlen'
             ];
             const values = [data.A || 0, data.B || 0, data.C || 0, data.D || 0];
-            const colors = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6'];
+            const colors = ['#c97b7b', '#d48a5c', '#c9a55a', '#8b7ab8'];
 
             if (window.Chart) {
                 this.charts.defects = new Chart(ctx, {

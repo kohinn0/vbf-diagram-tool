@@ -23,15 +23,15 @@ export function initJobs() {
                 card.style.background = 'rgba(255,255,255,0.05)';
                 card.style.padding = '15px';
                 card.style.borderRadius = '8px';
-                card.style.borderLeft = job.status === 'COMPLETED' ? '4px solid #10b981' :
-                    job.status === 'IN_PROGRESS' ? '4px solid #f59e0b' : '4px solid #3b82f6';
+                card.style.borderLeft = job.status === 'COMPLETED' ? '4px solid #6eb89a' :
+                    job.status === 'IN_PROGRESS' ? '4px solid #c9a55a' : '4px solid #5a92ad';
 
                 const dateStr = job.scheduled_date ? new Date(job.scheduled_date).toLocaleString('hu-HU') : 'Nincs dátum kiosztva';
 
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <h4 style="margin:0; font-size:1.2rem; color:var(--accent);">${job.title}</h4>
-                        <span style="font-size: 0.9rem; font-weight: bold; color: ${job.status === 'COMPLETED' ? '#10b981' : job.status === 'IN_PROGRESS' ? '#f59e0b' : '#3b82f6'};">${job.status}</span>
+                        <span style="font-size: 0.9rem; font-weight: bold; color: ${job.status === 'COMPLETED' ? '#8cc9ae' : job.status === 'IN_PROGRESS' ? '#d4b878' : '#7eb8d4'};">${job.status}</span>
                     </div>
                     <p style="margin: 0; font-size: 0.9rem;"><strong>Helyszín:</strong> ${job.address || '-'}</p>
                     <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Időpont:</strong> ${dateStr}</p>
@@ -39,14 +39,14 @@ export function initJobs() {
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-secondary btn-small" onclick="updateJobStatus(${job.id}, 'IN_PROGRESS')" style="flex:1;">Kiszállás alatt / Folyamatban</button>
                         <button class="btn btn-primary btn-small" onclick="updateJobStatus(${job.id}, 'COMPLETED')" style="flex:1;">Megtörtént / Kész</button>
-                        <button class="btn btn-accent btn-small" onclick="startJobWork(${job.id}, \`${job.title || ''}\`, \`${job.address || ''}\`)" style="flex: 2; background: #10b981; color: white;">🚀 Munka Kezdése (Jegyzőkönyv)</button>
+                        <button class="btn btn-accent btn-small" onclick="startJobWork(${job.id}, \`${job.title || ''}\`, \`${job.address || ''}\`)" style="flex: 2; background: var(--success); color: #fff; border-color: transparent;">🚀 Munka Kezdése (Jegyzőkönyv)</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         } catch (err) {
             console.error(err);
-            container.innerHTML = '<p style="color:red">Hiba a feladatok betöltése során.</p>';
+            container.innerHTML = '<p style="color:var(--danger)">Hiba a feladatok betöltése során.</p>';
         }
     };
 

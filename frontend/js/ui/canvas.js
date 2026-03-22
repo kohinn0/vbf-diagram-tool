@@ -9,10 +9,10 @@ export function initCanvas() {
         if (!indicator) return;
         const dot = indicator.querySelector('span');
         if (navigator.onLine) {
-            dot.style.background = '#10b981';
+            dot.style.background = '#6eb89a';
             indicator.lastChild.textContent = ' Online';
         } else {
-            dot.style.background = '#ef4444';
+            dot.style.background = '#c97b7b';
             indicator.lastChild.textContent = ' Offline (Helyi mentés)';
         }
     }
@@ -82,7 +82,7 @@ export function initCanvas() {
     ];
 
     const symbolItemClass =
-        'flex cursor-grab flex-col items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-glass)] p-4 transition-all hover:border-[var(--primary)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(59,130,246,0.2)] [&_svg]:mb-2 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:stroke-[var(--text-main)] [&_svg]:[stroke-width:2] [&_svg]:fill-none [&_span]:text-center [&_span]:text-[0.75rem] [&_span]:text-[var(--text-muted)]';
+        'flex min-h-[6rem] cursor-grab flex-col items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-glass)] px-3 py-3.5 transition-all hover:border-[color-mix(in_srgb,var(--primary)_55%,var(--border-color))] hover:-translate-y-0.5 hover:shadow-[0_4px_14px_rgba(0,0,0,0.2)] [&_svg]:shrink-0 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:stroke-[var(--text-main)] [&_svg]:[stroke-width:2] [&_svg]:fill-none [&_span]:text-center [&_span]:text-[0.72rem] [&_span]:leading-tight [&_span]:text-[var(--text-muted)]';
 
     const symbolGrid = document.getElementById('symbolGrid');
     if (symbolGrid) {
@@ -128,7 +128,7 @@ export function initCanvas() {
 
     // 3. Elem vászonra helyezése
     function addSymbolToCanvas(symbolDef) {
-        fabric.loadSVGFromString(`<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" stroke="#3b82f6" stroke-width="2" fill="none">${symbolDef.svgPath}</svg>`, function (objects, options) {
+        fabric.loadSVGFromString(`<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" stroke="#5a92ad" stroke-width="2" fill="none">${symbolDef.svgPath}</svg>`, function (objects, options) {
             const obj = fabric.util.groupSVGElements(objects, options);
             obj.set({
                 left: wrapper.clientWidth / 2 - 16,
@@ -137,8 +137,8 @@ export function initCanvas() {
                 scaleY: 2,
                 hasControls: true,
                 hasBorders: true,
-                borderColor: '#10b981',
-                cornerColor: '#10b981',
+                borderColor: '#5eb89a',
+                cornerColor: '#5eb89a',
                 transparentCorners: false
             });
 
@@ -175,11 +175,11 @@ export function initCanvas() {
             if (data.isArch) {
                 inspector.innerHTML = `
                     <div class="prop-group">
-                        <label>Típus</label>
-                        <input type="text" value="${data.type}" disabled>
+                        <label for="propTypeArch">Típus</label>
+                        <input type="text" id="propTypeArch" value="${data.type}" disabled>
                     </div>
                     <div class="prop-group">
-                        <label>Megnevezés</label>
+                        <label for="propName">Megnevezés</label>
                         <input type="text" id="propName" value="${data.name}">
                     </div>
                 `;
@@ -189,15 +189,15 @@ export function initCanvas() {
             } else {
                 inspector.innerHTML = `
                     <div class="prop-group">
-                        <label>Típus</label>
-                        <input type="text" value="${data.type}" disabled>
+                        <label for="propTypeCircuit">Típus</label>
+                        <input type="text" id="propTypeCircuit" value="${data.type}" disabled>
                     </div>
                     <div class="prop-group">
-                        <label>Megnevezés (Áramkör neve)</label>
+                        <label for="propName">Megnevezés (Áramkör neve)</label>
                         <input type="text" id="propName" value="${data.name}">
                     </div>
                     <div class="prop-group">
-                        <label>Névleges Áram (A)</label>
+                        <label for="propRating">Névleges Áram (A)</label>
                         <select id="propRating">
                             <option value="6A" ${data.rating === '6A' ? 'selected' : ''}>6 A</option>
                             <option value="10A" ${data.rating === '10A' ? 'selected' : ''}>10 A</option>
@@ -209,7 +209,7 @@ export function initCanvas() {
                         </select>
                     </div>
                     <div class="prop-group">
-                        <label>Vezeték típusa</label>
+                        <label for="propCable">Vezeték típusa</label>
                         <input type="text" id="propCable" value="${data.cable}">
                     </div>
                 `;

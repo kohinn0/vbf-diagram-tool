@@ -8,7 +8,7 @@ let toastTimeout = null;
 const TOAST_BASE =
     'pointer-events-auto flex max-w-sm items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-panel)] px-4 py-3 text-[0.9rem] shadow-[var(--shadow-glass)] opacity-0 translate-y-2 transition-all duration-300';
 const TOAST_BORDER = {
-    success: 'border-l-4 border-l-[#10b981]',
+    success: 'border-l-4 border-l-[#6eb89a]',
     error: 'border-l-4 border-l-[var(--danger)]',
     info: 'border-l-4 border-l-[var(--primary)]'
 };

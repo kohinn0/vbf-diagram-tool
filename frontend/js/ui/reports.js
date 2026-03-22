@@ -173,7 +173,7 @@ export function initReports() {
                 <div class="actions">
                     <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
                     <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
-                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: #10b981; color: white;">E-mail küldése ✉️</button>
+                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: var(--success); color: #fff; border-color: transparent;">E-mail küldése ✉️</button>
                     <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
                 </div>
             `;
@@ -726,7 +726,7 @@ export function initReports() {
                 if (!document.getElementById('lockMessage')) {
                     const lockMsg = document.createElement('div');
                     lockMsg.id = 'lockMessage';
-                    lockMsg.style = 'background: #dc2626; color: white; padding: 10px; text-align: center; font-weight: bold; width: 100%; z-index: 1000;';
+                    lockMsg.style.cssText = 'background: color-mix(in srgb, var(--danger) 82%, #1e293b); color: #fef2f2; padding: 10px; text-align: center; font-weight: 600; width: 100%; z-index: 1000; font-size: 0.92rem;';
                     lockMsg.innerText = '🔒 EZ A JEGYZŐKÖNYV VÉGLEGESÍTVE VAN. MÓDOSÍTÁS NEM LEHETSÉGES!';
                     document.querySelector('.app-content-wrapper')?.prepend(lockMsg);
                 }
@@ -793,7 +793,7 @@ export function initReports() {
             qrDiv.className = 'prop-group';
             qrDiv.style.textAlign = 'center';
             qrDiv.style.marginTop = '20px';
-            qrDiv.innerHTML = `<label style="color:var(--accent); font-weight:bold;">Azonosítás (ID: R-${id})</label><div id="qrcode" style="display:inline-block; padding:10px; background:#fff; border-radius:8px; margin: 10px 0;"></div>`;
+            qrDiv.innerHTML = `<p style="margin:0 0 6px 0; color:var(--accent); font-weight:bold;">Azonosítás (ID: R-${id})</p><div id="qrcode" style="display:inline-block; padding:10px; background:#fff; border-radius:8px; margin: 10px 0;"></div>`;
             inspector.appendChild(qrDiv);
             if (window.QRCode) new window.QRCode(document.getElementById("qrcode"), { text: `VBF-REPORT-${id}`, width: 120, height: 120, colorDark: "#000", colorLight: "#fff" });
         }

@@ -85,7 +85,7 @@
                     <button type="button" class="nav-help-item" data-bug-report>📩 Visszajelzés küldése (béta verzió)</button>
                 </div>
             </div>
-            <button type="button" class="btn btn-secondary btn-small nav-util-btn btn-beta-bug" data-bug-report title="Visszajelzés e-mailben – béta verzió">📩 Visszajelzés</button>
+            <button type="button" class="nav-feedback-icon" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">📩</button>
             <div class="nav-system-group">
                 <div id="offlineIndicator" class="offline-badge">
                     <span id="offlineDot" class="offline-dot"></span>
@@ -145,18 +145,18 @@
             <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
                 <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Megrendelés és fizetés</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong>.</p>
-                <p id="cartLoggedInNote" style="display: none; font-size: 0.88rem; color: var(--primary-light); margin-bottom: 1rem; padding: 0.65rem 0.75rem; background: rgba(14, 165, 233, 0.08); border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.2);"></p>
+                <p id="cartLoggedInNote" class="cart-logged-in-note" style="display: none;"></p>
                 <div id="cartGuestRegBlock" style="margin-bottom: 1.25rem;">
                     <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Nem vagy bejelentkezve: az utalásos számlához add meg lent a számlázási adatokat. Érdemes <strong>uganazt az e-mail címet</strong> használni, mint a későbbi fiókodnál.</p>
                 </div>
                 <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
                     <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártyás fizetés (Stripe)</h4>
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali fizetés. Bejelentkezve hagyd üresen a jelszómezőket. Vendégként opcionálisan adhatsz meg jelszót új fiókhoz (e-mail kötelező); egyébként ideiglenes jelszót küldünk e-mailben.</p>
-                    <label style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
+                    <label for="cartStripeEmail" style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
                     <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Jelszó (opcionális)</label>
+                    <label for="cartStripePassword" style="display:block; margin-bottom: 4px;">Jelszó (opcionális)</label>
                     <input type="password" id="cartStripePassword" placeholder="Új fiókhoz, vagy üres" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
+                    <label for="cartStripePasswordConfirm" style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
                     <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a bankkártyás fizetéshez</button>
                     <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
@@ -166,13 +166,13 @@
                     <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Utalásos fizetés – számla kérése</button>
                 </div>
                 <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
-                    <label style="display:block; margin-bottom: 4px;">E-mail *</label>
+                    <label for="cartEmail" style="display:block; margin-bottom: 4px;">E-mail *</label>
                     <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
+                    <label for="cartName" style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
                     <input type="text" id="cartName" placeholder="Kovács Kft." style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
+                    <label for="cartAddress" style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
                     <input type="text" id="cartAddress" required placeholder="Irányítószám, város, utca, házszám" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="display:block; margin-bottom: 4px;">Adószám (opcionális)</label>
+                    <label for="cartTax" style="display:block; margin-bottom: 4px;">Adószám (opcionális)</label>
                     <input type="text" id="cartTax" placeholder="12345678-2-41" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <button type="button" id="btnCartRequestInvoice" class="btn btn-primary" style="width: 100%;">Számla kérése utaláshoz</button>
                     <p id="cartTransferStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
@@ -190,11 +190,11 @@
 
             <div id="panelLogin">
                 <div class="prop-group">
-                    <label>Felhasználónév</label>
+                    <label for="loginUser">Felhasználónév</label>
                     <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
                 </div>
                 <div class="prop-group">
-                    <label>Jelszó</label>
+                    <label for="loginPass">Jelszó</label>
                     <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
                 </div>
                 <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
@@ -206,19 +206,19 @@
             <div id="panelRegister" style="display: none;">
                 <p id="loginRegisterInfo" class="login-modal-info" style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">Demó fiók – PDF vízjellel. Teljes verzió: főoldalon csomag választása → megrendelés és fizetés → számla → hozzáférés aktiválása.</p>
                 <div class="prop-group">
-                    <label>Felhasználónév *</label>
+                    <label for="regUser">Felhasználónév *</label>
                     <input type="text" id="regUser" placeholder="kovacsbela" autocomplete="username">
                 </div>
                 <div class="prop-group">
-                    <label>E-mail *</label>
+                    <label for="regEmail">E-mail *</label>
                     <input type="email" id="regEmail" placeholder="email@pelda.hu" autocomplete="email">
                 </div>
                 <div class="prop-group">
-                    <label>Cégnév (opcionális)</label>
+                    <label for="regCompany">Cégnév (opcionális)</label>
                     <input type="text" id="regCompany" placeholder="Pl. Villanyszerelő Bt.">
                 </div>
                 <div class="prop-group">
-                    <label>Jelszó *</label>
+                    <label for="regPass">Jelszó *</label>
                     <input type="password" id="regPass" placeholder="min. 8 karakter" autocomplete="new-password">
                 </div>
                 <label style="font-size: 0.82rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.75rem; cursor: pointer;">
@@ -242,15 +242,15 @@
             <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
             <div class="prop-group">
-                <label>Jelenlegi jelszó</label>
+                <label for="passwordCurrent">Jelenlegi jelszó</label>
                 <input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password">
             </div>
             <div class="prop-group">
-                <label>Új jelszó</label>
+                <label for="passwordNew">Új jelszó</label>
                 <input type="password" id="passwordNew" placeholder="••••••••" autocomplete="new-password">
             </div>
             <div class="prop-group">
-                <label>Új jelszó még egyszer</label>
+                <label for="passwordNewConfirm">Új jelszó még egyszer</label>
                 <input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password">
             </div>
             <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
@@ -263,20 +263,20 @@
         <div class="modal-content panel-glass" style="max-width: 420px;">
             <h2 style="margin-bottom: 1rem;">Profil és beállítások</h2>
             <div class="prop-group">
-                <label>Felhasználónév</label>
+                <span class="field-label">Felhasználónév</span>
                 <p id="profileUsername" style="margin: 0; font-weight: 600;"></p>
             </div>
             <div class="prop-group">
-                <label>E-mail</label>
+                <label for="profileEmail">E-mail</label>
                 <input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;">
                 <button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button>
             </div>
             <div class="prop-group">
-                <label>Cég</label>
+                <span class="field-label">Cég</span>
                 <p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p>
             </div>
             <div class="prop-group">
-                <label>Előfizetés lejár</label>
+                <span class="field-label">Előfizetés lejár</span>
                 <p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p>
             </div>
             <hr style="border-color: var(--border-color); margin: 1rem 0;">
@@ -296,7 +296,7 @@
             <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
             <div class="prop-group">
-                <label>E-mail</label>
+                <label for="forgotPasswordEmail">E-mail</label>
                 <input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu">
             </div>
             <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
@@ -305,13 +305,13 @@
     </div>
 
     <!-- Előfizetés lejárat banner (dismissible) -->
-    <div id="expiryBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: #fff; padding: 0.6rem 1rem; font-size: 0.9rem; z-index: 9998; box-shadow: 0 2px 8px rgba(0,0,0,0.2); align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <div id="expiryBanner" class="app-banner-expiry" style="display: none;">
         <span id="expiryBannerText"></span>
         <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
     </div>
 
     <!-- Demó / FREE: PDF vízjel tájékoztató -->
-    <div id="pdfWatermarkBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #0369a1, #0ea5e9); color: #fff; padding: 0.55rem 1rem; font-size: 0.86rem; z-index: 9997; box-shadow: 0 2px 8px rgba(0,0,0,0.15); align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <div id="pdfWatermarkBanner" class="app-banner-pdf-watermark" style="display: none;">
         <span id="pdfWatermarkBannerText">Demó / ingyenes csomag: a letöltött PDF vízjellel készül, nem minősül teljes értékű hiteles dokumentumnak. Teljes PDF az előfizetéssel.</span>
         <button type="button" id="pdfWatermarkBannerDismiss" style="background: rgba(255,255,255,0.22); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
     </div>
@@ -322,11 +322,11 @@
             <h2 style="margin-bottom: 1rem;">Új jelszó megadása</h2>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az új jelszót (min. 8 karakter, nagybetű, kisbetű, szám).</p>
             <div class="prop-group">
-                <label>Új jelszó</label>
+                <label for="resetNewPassword">Új jelszó</label>
                 <input type="password" id="resetNewPassword" placeholder="••••••••" autocomplete="new-password">
             </div>
             <div class="prop-group">
-                <label>Új jelszó még egyszer</label>
+                <label for="resetNewPasswordConfirm">Új jelszó még egyszer</label>
                 <input type="password" id="resetNewPasswordConfirm" placeholder="••••••••" autocomplete="new-password">
             </div>
             <p id="resetPasswordError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
@@ -341,9 +341,9 @@
     </div>
 
     <!-- Floating Report Completeness Panel (mobilon is olvasható, tördelhető lista) -->
-    <div id="completenessPanel" class="fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] rounded-2xl border-0 bg-[var(--bg-panel)] p-6 shadow-[var(--shadow-glass)] backdrop-blur-xl sm:p-7 md:p-8 transition-all duration-300">
-        <div class="mb-4 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
-            <span class="min-w-0 flex-1 text-[0.88rem] font-bold leading-tight text-[var(--accent)] sm:text-[0.95rem]">📋 Jegyzőkönyv készültség</span>
+    <div id="completenessPanel" class="completeness-panel-float fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] rounded-2xl border border-[color-mix(in_srgb,var(--border-color)_90%,transparent)] bg-[color-mix(in_srgb,var(--bg-glass)_88%,transparent)] p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-6 md:p-7 transition-all duration-300">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+            <span class="min-w-0 flex-1 text-[0.88rem] font-semibold leading-snug text-[var(--text-muted-strong)] sm:text-[0.92rem]">📋 Jegyzőkönyv készültség</span>
             <button type="button" id="btnToggleChecklist"
                 onclick="(function(){var d=document.getElementById('checklistDetails');var b=document.getElementById('btnToggleChecklist');var vis=window.getComputedStyle(d).display!=='none';d.style.display=vis?'none':'block';b.textContent=vis?'▶':'▼';b.setAttribute('aria-expanded',vis?'false':'true');})();"
                 class="shrink-0 cursor-pointer rounded-md border-0 bg-transparent p-1.5 text-[1rem] text-[var(--text-main)] hover:bg-[color-mix(in_srgb,var(--text-main)_8%,transparent)] hover:text-[var(--primary)]"
@@ -351,9 +351,9 @@
                 title="Részletek ki/be">▶</button>
         </div>
 
-        <div class="mb-4 h-2.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--text-main)_12%,transparent)] sm:h-3 sm:rounded-[0.625rem]">
+        <div class="mb-3 h-2 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--text-main)_10%,transparent)] sm:h-2.5 sm:rounded-full">
             <div id="completenessBar"
-                class="h-full w-0 rounded-full transition-[width,background] duration-500 ease-out bg-gradient-to-r from-[var(--danger)] to-[var(--accent)] sm:rounded-[0.625rem]">
+                class="h-full w-0 rounded-full transition-[width,background] duration-500 ease-out bg-gradient-to-r from-[color-mix(in_srgb,var(--danger)_75%,#94a3b8)] to-[color-mix(in_srgb,var(--accent)_80%,#94a3b8)] sm:rounded-full">
             </div>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
@@ -421,7 +421,7 @@
                             <div
                                 class="mx-1 h-6 w-px shrink-0 self-center bg-[var(--border-color)]">
                             </div>
-                            <label
+                            <label for="btnUploadBg"
                                 class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent text-[1.1rem] text-[var(--text-main)] transition-colors hover:bg-[color-mix(in_srgb,white_10%,transparent)]"
                                 title="Alaprajz betöltése háttérként">
                                 🖼️
@@ -503,9 +503,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                     <!-- Ügyfelek Oszlop -->
                     <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: #10b981;">
-                            👥 Mentett Ügyfelek</h3>
+                        <h3 class="vbf-report-section-heading">👥 Mentett Ügyfelek</h3>
 
                         <div style="margin-bottom: 1.5rem;">
                             <h4>Új Ügyfél Hozzáadása</h4>
@@ -526,7 +524,7 @@
                     <!-- Felülvizsgálók Oszlop -->
                     <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
                         <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: #3b82f6;">
+                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--primary-light);">
                             👨‍🔧 Mentett Felülvizsgálók</h3>
 
                         <div style="margin-bottom: 1.5rem;">
@@ -584,7 +582,7 @@
                 </div>
 
                 <div class="prop-group" style="margin-bottom: 2rem;">
-                    <label style="font-size: 1.1rem; color: var(--text-main);">Vizsgálat Típusa (MSZ HD 60364 /
+                    <label for="docType" style="font-size: 1.1rem; color: var(--text-main);">Vizsgálat Típusa (MSZ HD 60364 /
                         OTSZ)</label>
                     <select id="docType" style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.3);">
                         <option value="VBF_IDOSZAKOS">VBF - Időszakos felülvizsgálat (OTSZ szerint)</option>
@@ -603,29 +601,29 @@
                             🏢 Helyszín és Megrendelő</h3>
                         <div class="prop-group"
                             style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label style="color: var(--accent);">🔄 Mentett Ügyfél Betöltése</label>
+                            <label for="loadCustomerSelect" style="color: var(--accent);">🔄 Mentett Ügyfél Betöltése</label>
                             <select id="loadCustomerSelect" style="background: rgba(0,0,0,0.5);">
                                 <option value="">-- Válassz Ügyfelet --</option>
                             </select>
                         </div>
                         <div class="prop-group">
-                            <label>Megrendelő Neve / Cégneve</label>
+                            <label for="customerName">Megrendelő Neve / Cégneve</label>
                             <input type="text" id="customerName" placeholder="Pl. Kovács Kft. vagy Gipsz Jakab">
                         </div>
                         <div class="prop-group">
-                            <label>Vizsgált Objektum Címe</label>
+                            <label for="siteAddress">Vizsgált Objektum Címe</label>
                             <input type="text" id="siteAddress" placeholder="Pl. 1011 Bp., Fő utca 1.">
                         </div>
                         <div class="prop-group">
-                            <label>Helyrajzi Szám (HRSZ) / Épület azonosító (OTSZ)</label>
+                            <label for="siteHrsz">Helyrajzi Szám (HRSZ) / Épület azonosító (OTSZ)</label>
                             <input type="text" id="siteHrsz" placeholder="Pl. 12345/6 / A Épület">
                         </div>
                         <div class="prop-group">
-                            <label>Épület Rendeltetése és OTSZ Kockázati Osztály</label>
+                            <span class="field-label">Épület Rendeltetése és OTSZ Kockázati Osztály</span>
                             <div style="display:flex; gap: 10px;">
                                 <input type="text" id="buildingPurpose"
                                     placeholder="Pl. Iroda, Ipari csarnok, Társasház" style="flex:2;">
-                                <select id="buildingOtsz" style="flex:1; background: rgba(0,0,0,0.5);">
+                                <select id="buildingOtsz" style="flex:1; background: rgba(0,0,0,0.5);" aria-label="OTSZ kockázati osztály">
                                     <option value="">OTSZ Osztály</option>
                                     <option value="AK">Alacsony Kockázat (AK)</option>
                                     <option value="KK">Közepes Kockázat (KK)</option>
@@ -642,27 +640,27 @@
                             style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
                             👨‍🔧 Előadó és Eszközök</h3>
                         <div class="prop-group"
-                            style="background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label style="color: var(--accent);">🔄 Mentett Felülvizsgáló Betöltése</label>
+                            style="background: color-mix(in srgb, var(--primary) 10%, transparent); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                            <label for="loadInspectorSelect" style="color: var(--accent);">🔄 Mentett Felülvizsgáló Betöltése</label>
                             <select id="loadInspectorSelect" style="background: rgba(0,0,0,0.5);">
                                 <option value="">-- Válassz Felülvizsgálót --</option>
                             </select>
                         </div>
                         <div class="prop-group">
-                            <label>Felülvizsgáló Cég / Személy Neve</label>
+                            <label for="inspectorName">Felülvizsgáló Cég / Személy Neve</label>
                             <input type="text" id="inspectorName" placeholder="Zöldfülű Vill Kft.">
                         </div>
                         <div class="prop-group">
-                            <label>Vizsgabizonyítvány Száma</label>
+                            <label for="inspectorLicense">Vizsgabizonyítvány Száma</label>
                             <input type="text" id="inspectorLicense" placeholder="Pl. VBF-12345/2023">
                         </div>
                         <div class="prop-group">
-                            <label style="display:flex; align-items:center; gap:5px;">
+                            <label for="instrumentType" style="display:flex; align-items:center; gap:5px;">
                                 Mérőműszer (Típus és Gyári Szám)
-                                <span style="color:#ef4444; font-weight:700;">*Kötelező</span>
+                                <span class="label-required-hint">kötelező</span>
                                 <span
                                     title="A mérőműszer típusa és gyári száma nélkül a jegyzőkönyv bírósági eljárásban hiteltelen! Pl.: Metrel MI 3152, SN:21070123"
-                                    style="cursor:help; background:var(--accent); color:#000; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700;">?</span>
+                                    style="cursor:help; background:color-mix(in srgb, var(--accent) 35%, var(--border-color)); color:var(--text-main); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:600;">?</span>
                             </label>
                             <input type="text" id="instrumentType" placeholder="Pl. Metrel MI 3152, SN:123456" required>
                             <small
@@ -671,12 +669,12 @@
                             </small>
                         </div>
                         <div class="prop-group">
-                            <label style="display:flex; align-items:center; gap:5px;">
+                            <label for="instrumentCal" style="display:flex; align-items:center; gap:5px;">
                                 Műszer Kalibrálás Érvényessége
-                                <span style="color:#ef4444; font-weight:700;">*Kötelező</span>
+                                <span class="label-required-hint">kötelező</span>
                                 <span
                                     title="Lejárt kalibrálású műszerrel végzett mérés jogilag érvénytelen! A rendszer automatikusan blokkolja a 'Megfelelő' minősítést lejárt kalibrálás esetén."
-                                    style="cursor:help; background:var(--accent); color:#000; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700;">?</span>
+                                    style="cursor:help; background:color-mix(in srgb, var(--accent) 35%, var(--border-color)); color:var(--text-main); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:600;">?</span>
                             </label>
                             <input type="date" id="instrumentCal" placeholder="Érvényesség dátuma">
                             <small id="calHelper"
@@ -694,24 +692,24 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <div>
                             <div class="prop-group">
-                                <label>Gázszolgáltató (Gázmérő) bevonása szükséges?</label>
+                                <label for="ephGasRequired">Gázszolgáltató (Gázmérő) bevonása szükséges?</label>
                                 <select id="ephGasRequired" style="background: rgba(0,0,0,0.5);">
                                     <option value="Nem">Nem</option>
                                     <option value="Igen">Igen</option>
                                 </select>
                             </div>
                             <div class="prop-group">
-                                <label>Gázmérő gyári száma (ha van)</label>
+                                <label for="ephGasMeter">Gázmérő gyári száma (ha van)</label>
                                 <input type="text" id="ephGasMeter" placeholder="Pl. 11223344">
                             </div>
                             <div class="prop-group">
-                                <label>PE-N Szétválasztás Helye</label>
+                                <label for="ephPenSep">PE-N Szétválasztás Helye</label>
                                 <input type="text" id="ephPenSep" placeholder="Pl. Főelosztó, Utcai szekrény">
                             </div>
                         </div>
                         <div>
                             <div class="prop-group">
-                                <label>Földelési Ellenállás Mérési Módszer (Metrel)</label>
+                                <label for="ephEarthMethod">Földelési Ellenállás Mérési Módszer (Metrel)</label>
                                 <select id="ephEarthMethod" style="background: rgba(0,0,0,0.5);">
                                     <option value="3-vezetékes">3-vezetékes mérési módszer</option>
                                     <option value="2-lakatfogós">2-lakatfogós hurok mérés</option>
@@ -719,11 +717,11 @@
                                 </select>
                             </div>
                             <div class="prop-group">
-                                <label>Mért Földelési Ellenállás (Ra) [Ω]</label>
+                                <label for="ephRaValue">Mért Földelési Ellenállás (Ra) [Ω]</label>
                                 <input type="number" step="0.01" id="ephRaValue" placeholder="Pl. 5.2">
                             </div>
                             <div class="prop-group">
-                                <label>EPH Fővezeték Keresztmetszete (mm²)</label>
+                                <label for="ephConductor">EPH Fővezeték Keresztmetszete (mm²)</label>
                                 <input type="number" step="0.5" id="ephConductor" placeholder="Pl. 16">
                             </div>
                         </div>
@@ -733,7 +731,7 @@
                 <!-- Szemrevételezés Section (MEEVET/OTSZ/VMBSZ) -->
                 <div id="sectionVisual"
                     style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <h3 style="margin-bottom: 1rem; color: #10b981;">👁️ Szemrevételezéses Ellenőrzések (MEEVET)</h3>
+                    <h3 class="vbf-report-section-heading">👁️ Szemrevételezéses Ellenőrzések (MEEVET)</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="visualChecklist">
                         <div class="prop-group checkbox-group">
                             <input type="checkbox" id="check_id_marks" checked> <label for="check_id_marks">Azonosító
@@ -763,10 +761,10 @@
                 </div>
 
                 <div
-                    style="margin-top: 2rem; background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
+                    style="margin-top: 2rem; background: color-mix(in srgb, var(--primary) 6%, transparent); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
                     <h3 style="margin-bottom: 1rem;">📝 Összefoglaló Minősítés</h3>
                     <div class="prop-group">
-                        <label>A Vizsgált Berendezés / Rendszer Állapota:</label>
+                        <label for="reportResult">A Vizsgált Berendezés / Rendszer Állapota:</label>
                         <select id="reportResult"
                             style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.5);">
                             <option value="MEGFELELŐ">✅ MEGFELELŐ - Üzemeltetésre alkalmas, nincsenek feltárt hibák.
@@ -845,7 +843,7 @@
                     class="mb-8 rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,white_3%,transparent)] p-3 sm:p-4 md:p-5">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end sm:gap-5">
                         <div class="min-w-0">
-                            <label
+                            <label for="globalLocation"
                                 class="mb-1 block text-[0.78rem] leading-snug text-[var(--text-muted)] sm:text-[0.8rem]">📍
                                 Aktív helyszín / elosztó
                                 <span class="opacity-60">(a fából vagy kézzel)</span></label>
@@ -854,7 +852,7 @@
                                 list="circuitNames">
                         </div>
                         <div class="min-w-0">
-                            <label
+                            <label for="globalDevice"
                                 class="mb-1 block text-[0.78rem] leading-snug text-[var(--text-muted)] sm:text-[0.8rem]">⚡
                                 Kikapcsoló szerv</label>
                             <input type="text" id="globalDevice" placeholder="B16"
@@ -1026,10 +1024,10 @@
                 és a felhőbe menteni.
             </p>
             <div class="tour-footer">
-                <label>
-                    <input type="checkbox" id="tourDontShow">
-                    Ne mutasd automatikusan legközelebb
-                </label>
+                <div class="flex items-start gap-2" style="margin-bottom: 0.75rem;">
+                    <input type="checkbox" id="tourDontShow" style="margin-top: 3px;">
+                    <label for="tourDontShow" style="margin: 0; cursor: pointer; font-size: 0.9rem;">Ne mutasd automatikusan legközelebb</label>
+                </div>
                 <div class="tour-actions">
                     <button class="btn btn-secondary btn-small btn-ghost" id="tourPrev">Előző</button>
                     <button class="btn btn-primary btn-small" id="tourNext">Következő</button>

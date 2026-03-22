@@ -31,17 +31,17 @@ export const Storage = {
 
         if (offlineDot && offlineText) {
             if (!navigator.onLine) {
-                offlineDot.style.background = '#ef4444'; // Piros
+                offlineDot.style.background = '#c97b7b';
                 offlineText.innerText = 'Offline';
-                offlineText.style.color = '#ef4444';
+                offlineText.style.color = '#d4a0a0';
             } else if (queue.length > 0) {
-                offlineDot.style.background = '#f59e0b'; // Borostyán
+                offlineDot.style.background = '#c9a55a';
                 offlineText.innerText = queue.length === 1 ? 'Offline mentve, szinkronizálás vár' : `${queue.length} mentés vár szinkronizálásra`;
-                offlineText.style.color = '#f59e0b';
+                offlineText.style.color = '#d4b878';
             } else {
-                offlineDot.style.background = '#10b981'; // Zöld
+                offlineDot.style.background = '#6eb89a';
                 offlineText.innerText = 'Online';
-                offlineText.style.color = '#10b981';
+                offlineText.style.color = '#8cc9ae';
             }
         }
 
