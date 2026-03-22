@@ -1,5 +1,6 @@
 export function initCompleteness() {
     function updateCompleteness() {
+        const panel = document.getElementById('completenessPanel');
         const bar = document.getElementById('completenessBar');
         const text = document.getElementById('completenessText');
         const status = document.getElementById('completenessStatus');
@@ -30,7 +31,7 @@ export function initCompleteness() {
 
         // 3. Műszer
         const instrType = document.getElementById('instrumentType')?.value?.trim();
-        checks.push({ label: '🔧 Mérőműszer típus + gyári szám', req: true, ok: !!(instrType && instrType.match(/\d/)), hint: 'Pl.: Metrel MI 3152, SN:21070123', fieldId: 'instrumentType' });
+        checks.push({ label: 'Mérőműszer típus + gyári szám', req: true, ok: !!(instrType && instrType.match(/\d/)), hint: 'Pl.: Metrel MI 3152, SN:21070123', fieldId: 'instrumentType' });
 
         const instrCal = document.getElementById('instrumentCal')?.value?.trim();
         let calOk = false;
@@ -47,23 +48,29 @@ export function initCompleteness() {
                 calExpiringSoon = calDaysLeft <= 30 && calDaysLeft >= 0;
             }
         }
-        const calHint = !instrCal ? 'Dátum hiányzik' : !calOk ? '⚠️ LEJÁRT!' : calExpiringSoon ? `⏳ ${calDaysLeft} nap múlva lejár` : 'Érvényes';
-        checks.push({ label: '📅 Kalibrálás érvényessége', req: true, ok: calOk, hint: calHint, fieldId: 'instrumentCal' });
+        const calHint = !instrCal
+            ? 'Dátum hiányzik'
+            : !calOk
+                ? 'Lejárt kalibrálás'
+                : calExpiringSoon
+                    ? `${calDaysLeft} nap múlva lejár`
+                    : 'Érvényes';
+        checks.push({ label: 'Kalibrálás érvényessége', req: true, ok: calOk, hint: calHint, fieldId: 'instrumentCal' });
 
         // 4. Épület
         const bPurpose = document.getElementById('buildingPurpose')?.value?.trim();
-        checks.push({ label: '🏢 Épület rendeltetése', req: isVBF, ok: !!bPurpose, hint: 'Pl. Lakóépület, Iroda, Üzem', fieldId: 'buildingPurpose' });
+        checks.push({ label: 'Épület rendeltetése', req: isVBF, ok: !!bPurpose, hint: 'Pl. Lakóépület, Iroda, Üzem', fieldId: 'buildingPurpose' });
 
         const bOtsz = document.getElementById('buildingOtsz')?.value;
-        checks.push({ label: '🏗️ OTSZ kockázati osztály', req: isVBF, ok: !!bOtsz, hint: 'AK / KK / MK', fieldId: 'buildingOtsz' });
+        checks.push({ label: 'OTSZ kockázati osztály', req: isVBF, ok: !!bOtsz, hint: 'AK / KK / MK', fieldId: 'buildingOtsz' });
 
         // 5. Mérések (tab + scroll a Mérési Adatok fülre)
         const rpeRows = document.querySelectorAll('#table-rpe tbody tr').length;
-        checks.push({ label: '📏 Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rpe' });
+        checks.push({ label: 'Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rpe' });
 
         const isoRows = document.querySelectorAll('#table-insulation tbody tr').length;
         checks.push({
-            label: '⚡ Riso mérések (szigetelés)',
+            label: 'Riso mérések (szigetelés)',
             req: isVBF,
             ok: isoRows > 0,
             hint: isVBF
@@ -75,7 +82,7 @@ export function initCompleteness() {
 
         const loopRows = document.querySelectorAll('#table-loop tbody tr').length;
         checks.push({
-            label: '🔄 Zs mérések (hurok)',
+            label: 'Zs mérések (hurok)',
             req: isVBF,
             ok: loopRows > 0,
             hint: isVBF
@@ -86,11 +93,11 @@ export function initCompleteness() {
         });
 
         const rcdRows = document.querySelectorAll('#table-rcd tbody tr').length;
-        checks.push({ label: '🛡️ RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rcd' });
+        checks.push({ label: 'RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rcd' });
 
         // 6. Minősítés
         const reportResult = document.getElementById('reportResult')?.value;
-        checks.push({ label: '📊 Összefoglaló minősítés', req: true, ok: !!reportResult, hint: 'Válaszd ki a minősítést!', fieldId: 'reportResult' });
+        checks.push({ label: 'Összefoglaló minősítés', req: true, ok: !!reportResult, hint: 'Válaszd ki a minősítést!', fieldId: 'reportResult' });
 
         const requiredItems = checks.filter(c => c.req);
         const filledRequired = requiredItems.filter(c => c.ok).length;
@@ -100,18 +107,29 @@ export function initCompleteness() {
         const canSave = requiredItems.every(c => c.ok);
 
         bar.style.width = pct + '%';
-        if (pct >= 90) bar.style.background = 'linear-gradient(90deg, #4ade80, #6ee7b7)';
-        else if (pct >= 50) bar.style.background = 'linear-gradient(90deg, #d4a84d, #e8c06a)';
-        else bar.style.background = 'linear-gradient(90deg, #c97b7b, #d4a574)';
-
-        text.textContent = `${pct}% kész (${filledRequired}/${requiredItems.length} kötelező)`;
-
         if (canSave) {
-            status.textContent = '✅ Menthető!';
-            status.style.color = '#6ee7b7';
+            bar.style.background = 'linear-gradient(90deg, #34d399, #6ee7b7)';
+        } else if (pct >= 66) {
+            bar.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+        } else if (pct >= 33) {
+            bar.style.background = 'linear-gradient(90deg, #2563eb, #3b82f6)';
         } else {
-            status.textContent = '❌ Nem menthető';
-            status.style.color = '#d4a0a0';
+            bar.style.background = 'linear-gradient(90deg, #1d4ed8, #60a5fa)';
+        }
+
+        if (panel) panel.classList.toggle('is-blocked', !canSave);
+
+        if (text) {
+            text.textContent = `${pct}% kész (${filledRequired}/${requiredItems.length} kötelező)`;
+        }
+
+        const icOk =
+            '<svg class="vbf-completeness-status-ic" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M3.5 8.5l3 3 6-7"/></svg>';
+        const icHold =
+            '<svg class="vbf-completeness-status-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.25" opacity="0.55"/></svg>';
+        if (status) {
+            status.className = canSave ? 'vbf-completeness-status vbf-completeness-status--ok' : 'vbf-completeness-status';
+            status.innerHTML = canSave ? `${icOk}<span>Menthető</span>` : `${icHold}<span>Nem menthető</span>`;
         }
 
         const reportTabBadge = document.getElementById('tabReportBadge');
@@ -142,40 +160,40 @@ export function initCompleteness() {
             .replace(/</g, '&lt;')
             .replace(/"/g, '&quot;');
 
+        const svgCheck =
+            '<svg class="vbf-checkitem-glyph-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3.5 8.5l3 3 6-7"/></svg>';
+        const svgMiss =
+            '<svg class="vbf-checkitem-glyph-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="#f87171" stroke-width="1.5"/></svg>';
+        const svgOpt =
+            '<svg class="vbf-checkitem-glyph-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="#64748b" stroke-width="1.5"/></svg>';
+
         let html = '';
         checks.forEach(c => {
-            const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
-            const rowFrame = c.ok
-                ? 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,#6ee7b7_65%,transparent)]'
-                : (c.req
-                    ? 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,#d4a0a0_70%,transparent)]'
-                    : 'border-0 border-l-[2px] border-l-[color-mix(in_srgb,var(--text-muted)_45%,transparent)]');
-            const reqBadge = c.req
-                ? '<span class="vbf-req-badge shrink-0 rounded px-1.5 py-0.5 text-[0.58rem] font-medium normal-case tracking-normal text-[color-mix(in_srgb,var(--danger)_55%,var(--text-muted))] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)]">kötelező</span>'
+            const rowMod = c.ok ? 'vbf-checkitem--ok' : (c.req ? 'vbf-checkitem--miss' : 'vbf-checkitem--optional');
+            const glyph = c.ok ? svgCheck : (c.req ? svgMiss : svgOpt);
+            const star = c.req && !c.ok
+                ? '<span class="vbf-checkitem-req-star" title="Kötelező mező" aria-hidden="true">*</span>'
                 : '';
             const fieldId = c.fieldId || '';
             const tabTarget = c.tabTarget || '';
             const sectionSelector = c.sectionSelector || '';
-            let clickClass = '';
+            let clickAttr = '';
             let title = '';
             if (fieldId) {
-                clickClass = `onclick="navigateToField('${fieldId}')"`;
+                clickAttr = `onclick="navigateToField('${fieldId}')"`;
                 title = 'Kattints: ugrás a mezőhöz';
             } else if (tabTarget && sectionSelector) {
-                clickClass = `onclick="navigateToSection('${tabTarget}','${sectionSelector}')"`;
+                clickAttr = `onclick="navigateToSection('${tabTarget}','${sectionSelector}')"`;
                 title = 'Kattints: Mérési adatok fül és táblázat';
             }
-            const cursor = fieldId || tabTarget ? 'cursor-pointer' : '';
-            html += `<div ${clickClass} class="vbf-checkitem rounded-[10px] ${rowFrame} bg-[color-mix(in_srgb,var(--bg-glass)_42%,var(--bg-base))] px-4 py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--bg-glass)_58%,var(--bg-base))] ${cursor}" title="${esc(title)}">
-                <div class="flex gap-3.5">
-                    <span class="shrink-0 pt-0.5 text-[1.05rem] leading-none opacity-95" aria-hidden="true">${icon}</span>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                            <span class="text-[0.875rem] font-medium leading-snug text-[var(--text-main)]">${esc(c.label)}</span>
-                            ${reqBadge}
-                        </div>
-                        <p class="mt-2.5 break-words text-[0.8rem] leading-[1.6] text-[var(--text-muted)]">${esc(c.hint)}</p>
+            const cursor = fieldId || tabTarget ? 'vbf-checkitem--click' : '';
+            html += `<div ${clickAttr} class="vbf-checkitem ${rowMod} ${cursor}" title="${esc(title)}">
+                <div class="vbf-checkitem-glyph" aria-hidden="true">${glyph}</div>
+                <div class="vbf-checkitem-body">
+                    <div class="vbf-checkitem-title-row">
+                        ${star}<span class="vbf-checkitem-label">${esc(c.label)}</span>
                     </div>
+                    <p class="vbf-checkitem-hint">${esc(c.hint)}</p>
                 </div>
             </div>`;
         });
@@ -201,11 +219,11 @@ export function initCompleteness() {
         const calHelper = document.getElementById('calHelper');
         if (calHelper && instrCal) {
             if (!calOk) {
-                calHelper.innerHTML = `⚠️ <span style="color:#c98a8a; font-weight:600;">Lejárt kalibrálás</span> — A kalibrálás (${instrCal}) a múltban van. „Megfelelő” minősítés nem adható.`;
+                calHelper.innerHTML = `<span style="color:#c98a8a; font-weight:600;">Lejárt kalibrálás</span> — A kalibrálás (${instrCal}) a múltban van. „Megfelelő” minősítés nem adható.`;
             } else if (calExpiringSoon) {
-                calHelper.innerHTML = `⏳ <span style="color:#c9a55a; font-weight:600;">Hamarosan lejár</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
+                calHelper.innerHTML = `<span style="color:#c9a55a; font-weight:600;">Hamarosan lejár</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
             } else {
-                calHelper.innerHTML = `✅ <span style="color:#6eb89a; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
+                calHelper.innerHTML = `<span style="color:#6eb89a; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
             }
         }
     }

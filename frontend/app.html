@@ -340,31 +340,32 @@
         <button type="button" id="cookieBannerAccept" class="btn btn-primary btn-small">Elfogadom</button>
     </div>
 
-    <!-- Floating Report Completeness Panel (mobilon is olvasható, tördelhető lista) -->
-    <div id="completenessPanel" class="completeness-panel-float fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] rounded-2xl border border-[color-mix(in_srgb,var(--border-color)_90%,transparent)] bg-[color-mix(in_srgb,var(--bg-glass)_88%,transparent)] p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-6 md:p-7 transition-all duration-300">
-        <div class="mb-3 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
-            <span class="min-w-0 flex-1 text-[0.88rem] font-semibold leading-snug text-[var(--text-muted-strong)] sm:text-[0.92rem]">📋 Jegyzőkönyv készültség</span>
+    <!-- Jegyzőkönyv állapota (készültség) – lebegő panel -->
+    <div id="completenessPanel"
+        class="vbf-completeness-panel fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] transition-all duration-300">
+        <div class="vbf-completeness-title-row">
+            <div class="vbf-completeness-title-wrap min-w-0 flex-1">
+                <span class="vbf-completeness-warn-dot" id="completenessTitleWarn" aria-hidden="true" title="Kötelező mezők hiányoznak"></span>
+                <span class="vbf-completeness-title">Jegyzőkönyv állapota</span>
+            </div>
             <button type="button" id="btnToggleChecklist"
                 onclick="(function(){var d=document.getElementById('checklistDetails');var b=document.getElementById('btnToggleChecklist');var vis=window.getComputedStyle(d).display!=='none';d.style.display=vis?'none':'block';b.textContent=vis?'▶':'▼';b.setAttribute('aria-expanded',vis?'false':'true');})();"
-                class="shrink-0 cursor-pointer rounded-md border-0 bg-transparent p-1.5 text-[1rem] text-[var(--text-main)] hover:bg-[color-mix(in_srgb,var(--text-main)_8%,transparent)] hover:text-[var(--primary)]"
+                class="vbf-completeness-toggle shrink-0"
                 aria-expanded="false"
                 title="Részletek ki/be">▶</button>
         </div>
 
-        <div class="mb-3 h-2 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--text-main)_10%,transparent)] sm:h-2.5 sm:rounded-full">
-            <div id="completenessBar"
-                class="h-full w-0 rounded-full transition-[width,background] duration-500 ease-out bg-gradient-to-r from-[color-mix(in_srgb,var(--danger)_75%,#94a3b8)] to-[color-mix(in_srgb,var(--accent)_80%,#94a3b8)] sm:rounded-full">
-            </div>
+        <div class="vbf-completeness-bar-track">
+            <div id="completenessBar" class="vbf-completeness-bar-fill"></div>
         </div>
-        <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-            <span id="completenessText" class="text-[0.78rem] text-[var(--text-muted)] sm:text-[0.8rem]">0% kész</span>
-            <span id="completenessStatus" class="text-[0.78rem] font-semibold text-[var(--text-main)] sm:shrink-0 sm:text-[0.8rem]">❌ Nem menthető</span>
+        <div class="vbf-completeness-meta">
+            <span id="completenessText" class="vbf-completeness-pct">0% kész</span>
+            <span id="completenessStatus" class="vbf-completeness-status" role="status"></span>
         </div>
 
-        <div id="checklistDetails"
-            style="display: none;"
-            class="mt-5 max-h-[min(28rem,58vh)] overflow-x-hidden overflow-y-auto overscroll-contain border-0 bg-transparent p-0 [-webkit-overflow-scrolling:touch] sm:max-h-[min(26rem,50vh)]">
-            <div id="checkItems" class="space-y-4 text-[0.82rem] leading-relaxed"></div>
+        <div id="checklistDetails" style="display: none;"
+            class="vbf-completeness-details max-h-[min(28rem,58vh)] overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] sm:max-h-[min(26rem,50vh)]">
+            <div id="checkItems" class="vbf-completeness-list"></div>
         </div>
     </div>
 

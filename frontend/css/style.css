@@ -401,6 +401,212 @@
     line-height: 1.2;
 }
 
+/* ==========================================================================
+   Jegyzőkönyv állapota (készültség) panel
+   ========================================================================== */
+.vbf-completeness-panel {
+    padding: 1.25rem 1.5rem;
+    background: rgba(30, 34, 45, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.55);
+}
+
+.vbf-completeness-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.vbf-completeness-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vbf-completeness-warn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f87171;
+    flex-shrink: 0;
+    opacity: 0.85;
+    display: none;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25);
+}
+
+.vbf-completeness-panel.is-blocked .vbf-completeness-warn-dot {
+    display: block;
+}
+
+.vbf-completeness-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+}
+
+.vbf-completeness-toggle {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.vbf-completeness-toggle:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.vbf-completeness-bar-track {
+    height: 6px;
+    max-height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.vbf-completeness-bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    transition: width 0.45s ease, background 0.35s ease;
+}
+
+.vbf-completeness-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+}
+
+.vbf-completeness-pct {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.vbf-completeness-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #9ca3af;
+}
+
+.vbf-completeness-status.vbf-completeness-status--ok {
+    color: #86efac;
+}
+
+.vbf-completeness-status-ic {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.95;
+}
+
+.vbf-completeness-details {
+    margin-top: 1rem;
+    padding-top: 0.25rem;
+}
+
+.vbf-completeness-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vbf-checkitem {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.2s ease;
+}
+
+.vbf-checkitem:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.vbf-checkitem--click {
+    cursor: pointer;
+}
+
+.vbf-checkitem--ok {
+    border-left: 2px solid rgba(74, 222, 128, 0.75);
+}
+
+.vbf-checkitem--miss {
+    border-left: 2px solid rgba(248, 113, 113, 0.55);
+}
+
+.vbf-checkitem--optional {
+    border-left: 2px solid rgba(100, 116, 139, 0.45);
+}
+
+.vbf-checkitem-glyph {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vbf-checkitem-glyph svg {
+    display: block;
+}
+
+.vbf-checkitem-body {
+    min-width: 0;
+    flex: 1;
+}
+
+.vbf-checkitem-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.35rem;
+}
+
+.vbf-checkitem-req-star {
+    color: #f87171;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
+    user-select: none;
+}
+
+.vbf-checkitem-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+    line-height: 1.35;
+}
+
+.vbf-checkitem-hint {
+    margin: 0.45rem 0 0 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #9ca3af;
+    word-break: break-word;
+}
+
 .btn-outline {
     background: transparent;
     color: var(--text-main);
