@@ -146,6 +146,7 @@ export const API = {
         const res = await fetch(`${getBaseUrl()}/api/dashboard/stats`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
+        if (!res.ok) throw new Error('Hiba a dashboard adatok lekérésekor');
         return res.json();
     }
 };

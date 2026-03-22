@@ -137,8 +137,13 @@ export function initReports() {
             if (res.ok) {
                 if (window.showToast) window.showToast('Jegyzőkönyv véglegesítve! (LOCKED)', 'success'); else alert('Jegyzőkönyv véglegesítve! (LOCKED)');
                 window.loadReport(window.currentSavedReportId); // Reload to lock UI
+            } else {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.detail || 'Hiba a véglegesítés során! Kérlek ellenőrizd az űrlapot.');
             }
-        } catch (err) { if (window.showToast) window.showToast('Szerver hiba a véglegesítéskor.', 'error'); else alert('Szerver hiba a véglegesítéskor.'); }
+        } catch (err) {
+            if (window.showToast) window.showToast(err.message, 'error'); else alert(err.message);
+        }
     });
 
     function formatDocId(typeStr, id, dateStr) {
@@ -158,18 +163,25 @@ export function initReports() {
             container.innerHTML = '<p>Még nincs elmentett jegyzőkönyved.</p>';
             return;
         }
+        const myId = window._currentUserId || (window.currentUserData && window.currentUserData.id);
         reports.forEach(rep => {
             const docId = formatDocId(rep.report_type, rep.id, rep.created_at);
+            const isOwn = !myId || rep.owner_id === myId;
+            const isShared = !isOwn && rep.company_shared;
+            const sharedBadge = isShared
+                ? `<span class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[0.7rem] font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30"><svg width='10' height='10' viewBox='0 0 20 20' fill='currentColor'><path d='M13 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm5 9a5 5 0 0 0-10 0h10zm-15 0a5 5 0 0 0 6.5-4.75A5 5 0 0 0 3 10a5 5 0 0 0 0 5z'/></svg> Megosztott</span>` : '';
             const card = document.createElement('div');
             card.className = 'report-card panel-glass';
+            const deleteBtn = isOwn || (window.currentUser && ['COMPANY_ADMIN','ADMIN','SUPER_ADMIN'].includes(window.currentUser.role))
+                ? `<button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>` : '';
             card.innerHTML = `
-                <h4>[${docId}] ${rep.title}</h4>
+                <h4>[${docId}] ${rep.title} ${sharedBadge}</h4>
                 <p class="meta">Típus: ${rep.report_type.toUpperCase()}<br>Létrehozva: ${new Date(rep.created_at).toLocaleDateString()}</p>
                 <div class="actions">
                     <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
                     <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
                     <button class="btn btn-primary btn-small" onclick="sendEmailReport(${rep.id})">E-mail küldése</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
+                    ${deleteBtn}
                 </div>
             `;
             container.appendChild(card);
@@ -425,7 +437,9 @@ export function initReports() {
             diagram_data: canvasJson,
             diagram_image: diagramImage,
             defects_data: defectsArr,
-            measurements_data: [(window.VBF && window.VBF.measurements) ? window.VBF.measurements.collectAll() : {}]
+            measurements_data: [(window.VBF && window.VBF.measurements) ? window.VBF.measurements.collectAll() : {}],
+            company_shared: document.getElementById('chkCompanyShared') ? document.getElementById('chkCompanyShared').checked : true,
+            notes: document.getElementById('reportNotes')?.value?.trim() || ''
         };
     }
 
@@ -628,6 +642,9 @@ export function initReports() {
 
         document.getElementById('documentTitle') && (document.getElementById('documentTitle').value = rep.title || '');
         document.getElementById('docType') && (document.getElementById('docType').value = rep.report_type.toUpperCase() || 'VBF');
+        // Notes (belső megjegyzés)
+        const notesEl = document.getElementById('reportNotes');
+        if (notesEl) notesEl.value = rep.notes || '';
 
         const c = rep.client_data || {};
         const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor'];

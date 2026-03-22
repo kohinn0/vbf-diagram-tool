@@ -1,14 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
+import base64
 import hashlib
+import io
+import json
+import logging
 import os
+import re
+import secrets
+import smtplib
 import sys
+import zipfile
+from email.message import EmailMessage
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import schemas, auth, database, generator
-from fastapi.responses import StreamingResponse
 from security import is_locked, record_failure, record_success
 
 router = APIRouter()
@@ -77,7 +86,6 @@ def export_my_data(db: Session = Depends(auth.get_db), current_user: database.Us
         "customers": [{"id": c.id, "name": c.name, "address": c.address} for c in customers],
         "inspectors": [{"id": i.id, "name": i.name, "license": i.license} for i in inspectors],
     }
-    from fastapi.responses import JSONResponse
     return JSONResponse(content=export)
 
 
@@ -87,10 +95,6 @@ def export_my_data_zip(db: Session = Depends(auth.get_db), current_user: databas
     GDPR – teljes adatcsomag (ZIP): minden jegyzőkönyv, fénykép, diagram és egyéb adat
     egy letölthető ZIP-ben. Fiók törlése előtt vagy bármikor kérhető.
     """
-    import zipfile
-    import json
-    import re
-    from fastapi.responses import StreamingResponse
 
     db.refresh(current_user, ["company"])
     reports = db.query(database.Report).filter(database.Report.owner_id == current_user.id).all()
@@ -99,7 +103,7 @@ def export_my_data_zip(db: Session = Depends(auth.get_db), current_user: databas
 
     ts = datetime.utcnow().strftime("%Y-%m-%d_%H%M")
     root = f"vbf_adatexport_{ts}"
-    buf = __import__("io").BytesIO()
+    buf = io.BytesIO()
     zf = zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED)
 
     def safe_name(s: str) -> str:
@@ -481,8 +485,6 @@ def request_password_reset(request: Request, body: schemas.RequestPasswordResetR
     Elfelejtett jelszó: email alapján token generálás és link küldése (ha van SMTP).
     Rate limit: 5/15 perc. Mindig ugyanaz a válasz (biztonság).
     """
-    import secrets
-    import hashlib
     email = (body.email or "").strip().lower()
     if not email or "@" not in email:
         return {"message": "Ha van ilyen fiók, jelszó-visszaállító linket küldtünk az e-mail címedre."}
@@ -503,8 +505,6 @@ def request_password_reset(request: Request, body: schemas.RequestPasswordResetR
     smtp_user = os.getenv("SMTP_USER", "")
     smtp_pass = os.getenv("SMTP_PASS", "")
     if smtp_server and smtp_user and smtp_pass:
-        import smtplib
-        from email.message import EmailMessage
         msg = EmailMessage()
         msg["Subject"] = "VBF – Jelszó visszaállítás"
         msg["From"] = smtp_user
@@ -520,7 +520,6 @@ def request_password_reset(request: Request, body: schemas.RequestPasswordResetR
                 server.login(smtp_user, smtp_pass)
                 server.send_message(msg)
         except Exception as e:
-            import logging
             logging.getLogger("vbf").exception("Jelszó reset email: %s", e)
     return {"message": "Ha van ilyen fiók, jelszó-visszaállító linket küldtünk az e-mail címedre."}
 
@@ -529,7 +528,6 @@ def request_password_reset(request: Request, body: schemas.RequestPasswordResetR
 @limiter.limit("5/15minute")
 def reset_password(request: Request, body: schemas.ResetPasswordRequest, db: Session = Depends(auth.get_db)):
     """Jelszó visszaállítása token alapján (elfelejtett jelszó link)."""
-    import hashlib
     auth.validate_password_policy(body.new_password)
     token_hash = hashlib.sha256((body.token or "").encode()).hexdigest()
     row = db.query(database.PasswordResetToken).filter(

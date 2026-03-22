@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import auth, reports, admin, masterdata, jobs, payments, dashboard, legal
+from routers import auth, reports, admin, masterdata, jobs, payments, dashboard, legal, padfx
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -77,7 +77,6 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-from routers import padfx
 app.include_router(auth.router)
 app.include_router(reports.router)
 app.include_router(admin.router)

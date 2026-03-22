@@ -195,7 +195,7 @@
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
-        <div class="modal-content panel-glass login-modal-inner">
+        <div class="modal-content-centered max-w-[420px] panel-glass login-modal-inner">
             <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 id="loginModalTitle" class="modal-title-lg">Bejelentkezés</h2>
 
@@ -249,7 +249,7 @@
 
     <!-- Jelszó módosítása modal -->
     <div id="passwordModal" class="modal-overlay is-hidden">
-        <div class="modal-content panel-glass modal-content--400">
+        <div class="modal-content-centered max-w-[400px] panel-glass">
             <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 class="modal-title-md">Jelszó módosítása</h2>
             <div class="prop-group">
@@ -271,7 +271,7 @@
 
     <!-- Profil / Beállítások modal -->
     <div id="profileModal" class="modal-overlay is-hidden">
-        <div class="modal-content panel-glass modal-content--420">
+        <div class="modal-content-centered max-w-[420px] panel-glass">
             <h2 class="modal-title-md">Profil és beállítások</h2>
             <div class="prop-group">
                 <span class="field-label">Felhasználónév</span>
@@ -302,7 +302,7 @@
 
     <!-- Elfelejtett jelszó: link kérése -->
     <div id="forgotPasswordModal" class="modal-overlay is-hidden">
-        <div class="modal-content panel-glass modal-content--400">
+        <div class="modal-content-centered max-w-[400px] panel-glass">
             <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 class="modal-title-sm">Elfelejtett jelszó</h2>
             <p class="form-text-muted">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
@@ -329,7 +329,7 @@
 
     <!-- Jelszó visszaállítás (app.html?reset=TOKEN) -->
     <div id="resetPasswordPanel" class="modal-overlay is-hidden">
-        <div class="modal-content panel-glass modal-content--400">
+        <div class="modal-content-centered max-w-[400px] panel-glass">
             <h2 class="modal-title-md">Új jelszó megadása</h2>
             <p class="form-text-muted">Add meg az új jelszót (min. 8 karakter, nagybetű, kisbetű, szám).</p>
             <div class="prop-group">
@@ -773,6 +773,14 @@
                         </select>
                     </div>
                 </div>
+
+                <div class="report-summary-panel" style="margin-top:1.25rem;">
+                    <h3 class="report-summary-title">📝 Belső Megjegyzés</h3>
+                    <div class="prop-group">
+                        <label for="reportNotes" style="font-size:0.82rem;color:var(--text-muted)">Helyszíni megfigyelések, kollégáknak szóló megjegyzések (csak belső):</label>
+                        <textarea id="reportNotes" rows="4" style="width:100%;border-radius:0.5rem;border:1px solid var(--border-color);background:var(--bg-base);padding:0.65rem 0.75rem;font-size:0.875rem;color:var(--text-main);resize:vertical" placeholder="pl. Az elosztó hátsó oldalán is vannak csatlakozók, de nem volt hozzáférhető..."></textarea>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1051,7 +1059,7 @@
 
     <!-- QR Scan Modal -->
     <div id="qrModal" class="modal-overlay is-hidden">
-        <div class="modal-content panel-glass modal-content--qr">
+        <div class="modal-content-centered max-w-[400px] panel-glass modal-content--qr">
             <h2 class="qr-modal-title">QR-kód beolvasása</h2>
             <div id="qrReaderPlaceholder" class="qr-reader-box">
                 <p>A kamera képe itt jelenik meg.</p>

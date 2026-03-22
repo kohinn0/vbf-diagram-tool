@@ -20,13 +20,22 @@ router = APIRouter()
 
 
 def _reports_scope(db, current_user):
-    """TECH: saját; COMPANY_ADMIN: cégé; SUPER_ADMIN/ADMIN: minden."""
+    """TECH: saját + cég megosztott; COMPANY_ADMIN: cégé; SUPER_ADMIN/ADMIN: minden."""
+    from sqlalchemy import or_
     if current_user.role in ("SUPER_ADMIN", "ADMIN"):
         return db.query(database.Report)
-    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
-        return db.query(database.Report).join(database.User, database.Report.owner_id == database.User.id).filter(
-            database.User.company_id == current_user.company_id
-        )
+    if current_user.company_id:
+        if current_user.role == "COMPANY_ADMIN":
+            return db.query(database.Report).join(database.User, database.Report.owner_id == database.User.id).filter(
+                database.User.company_id == current_user.company_id
+            )
+        else:
+            return db.query(database.Report).join(database.User, database.Report.owner_id == database.User.id).filter(
+                or_(
+                    database.Report.owner_id == current_user.id,
+                    (database.Report.company_shared == True) & (database.User.company_id == current_user.company_id)
+                )
+            )
     return db.query(database.Report).filter(database.Report.owner_id == current_user.id)
 
 
@@ -79,16 +88,8 @@ def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_d
 
 @router.get("/api/reports/{report_id}", response_model=schemas.ReportResponse)
 def get_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    report = db.query(database.Report).filter(database.Report.id == report_id).first()
+    report = _report_access(db, report_id, current_user)
     if report is None:
-        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
-        pass
-    elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
-        owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
-        if not owner or owner.company_id != current_user.company_id:
-            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    elif report.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     return report
 
@@ -194,9 +195,9 @@ def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data:
 
 @router.put("/api/reports/{report_id}", response_model=schemas.ReportResponse)
 def update_report(report_id: int, updated_report: schemas.ReportUpdate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
+    db_report = _report_access(db, report_id, current_user)
     if db_report is None:
-        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található vagy nincs jogosultságod.")
     
     if db_report.status == "FINAL":
         raise HTTPException(status_code=400, detail="Ez a jegyzőkönyv már le van zárva, nem módosítható!")
@@ -220,7 +221,7 @@ def update_report(report_id: int, updated_report: schemas.ReportUpdate, db: Sess
 
 @router.post("/api/reports/{report_id}/finalize", response_model=schemas.ReportResponse)
 def finalize_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
+    db_report = _report_access(db, report_id, current_user)
     if db_report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     
@@ -300,9 +301,11 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
 
 @router.delete("/api/reports/{report_id}")
 def delete_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
+    db_report = _report_access(db, report_id, current_user)
     if db_report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    if db_report.owner_id != current_user.id and current_user.role not in ("SUPER_ADMIN", "ADMIN", "COMPANY_ADMIN"):
+        raise HTTPException(status_code=403, detail="Csak a saját jegyzőkönyvedet törölheted.")
     db.delete(db_report)
     db.commit()
     return {"message": "Report successfully deleted"}
@@ -315,10 +318,11 @@ def _report_access(db, report_id: int, current_user: database.User):
         return None
     if current_user.role in ("SUPER_ADMIN", "ADMIN"):
         return report
-    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+    if current_user.company_id:
         owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
         if owner and owner.company_id == current_user.company_id:
-            return report
+            if current_user.role == "COMPANY_ADMIN" or report.owner_id == current_user.id or getattr(report, "company_shared", True):
+                return report
     if report.owner_id == current_user.id:
         return report
     return None
@@ -534,17 +538,9 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
 
 @router.post("/api/reports/{report_id}/email")
 def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    db_report = db.query(database.Report).filter(database.Report.id == report_id).first()
+    db_report = _report_access(db, report_id, current_user)
     if not db_report:
-        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
-        pass
-    elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
-        owner = db.query(database.User).filter(database.User.id == db_report.owner_id).first()
-        if not owner or owner.company_id != current_user.company_id:
-            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    elif db_report.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található vagy nincs jogosultságod.")
         
     # DRAFT → DOCX, FINAL → PDF (Word csak piszkozatként)
     if db_report.status == "FINAL":

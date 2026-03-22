@@ -22,6 +22,19 @@ def get_inspectors(
     db: Session = Depends(auth.get_db),
     current_user: database.User = Depends(auth.get_current_user),
 ):
+    """Cégen belüli összes vizsgáló (team kollaboráció). Saját ha nincs cég."""
+    if current_user.company_id:
+        company_user_ids = (
+            db.query(database.User.id)
+            .filter(database.User.company_id == current_user.company_id, database.User.deleted_at == None)
+            .subquery()
+        )
+        return (
+            db.query(database.Inspector)
+            .filter(database.Inspector.owner_id.in_(company_user_ids))
+            .order_by(database.Inspector.name)
+            .all()
+        )
     return (
         db.query(database.Inspector)
         .filter(database.Inspector.owner_id == current_user.id)
@@ -74,6 +87,19 @@ def get_customers(
     db: Session = Depends(auth.get_db),
     current_user: database.User = Depends(auth.get_current_user),
 ):
+    """Cégen belüli összes ügyfél (team kollaboráció). Saját ha nincs cég."""
+    if current_user.company_id:
+        company_user_ids = (
+            db.query(database.User.id)
+            .filter(database.User.company_id == current_user.company_id, database.User.deleted_at == None)
+            .subquery()
+        )
+        return (
+            db.query(database.Customer)
+            .filter(database.Customer.owner_id.in_(company_user_ids))
+            .order_by(database.Customer.name)
+            .all()
+        )
     return (
         db.query(database.Customer)
         .filter(database.Customer.owner_id == current_user.id)

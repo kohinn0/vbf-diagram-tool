@@ -35,6 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toast (korán, hogy showToast mindenhol elérhető legyen)
     initToast();
+    
+    // Globális alert felülírás, így az összes legacy "alert(...)" szép toast-ként jelenik meg:
+    const origAlert = window.alert;
+    window.alert = function(msg) {
+        if (typeof window.showToast === 'function') {
+            const lowMsg = (msg || '').toString().toLowerCase();
+            let type = 'info';
+            if (['hiba', 'sikertelen', 'nem ', 'érvénytelen', 'tilos', 'kötelező'].some(w => lowMsg.includes(w))) type = 'error';
+            else if (['siker', 'kész', 'mentve', 'létrehozva'].some(w => lowMsg.includes(w))) type = 'success';
+            window.showToast(msg, type);
+        } else {
+            origAlert(msg);
+        }
+    };
+    
     initBugReportLinks();
     // UI Komponensek
     initData();

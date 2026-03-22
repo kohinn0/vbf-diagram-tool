@@ -94,6 +94,7 @@ export function initAuth() {
                 })
                 .then(userData => {
                     window.currentUserData = userData;
+                    window._currentUserId = userData.id; // gyors hozzáférés ID-hez a riport kártyákon
                     const role = (userData.role || '').trim().toUpperCase() || '';
                     window.currentUserRole = role;
                     const isPlatformAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';

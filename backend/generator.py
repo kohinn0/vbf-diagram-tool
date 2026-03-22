@@ -1,21 +1,26 @@
 import io
 import base64
+import logging
+import hashlib
+import json
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-import database
-from database import Report
-import hashlib
-import json
+from PIL import Image
 import qrcode
 from datetime import datetime
 from typing import Optional
+
+import database
+from database import Report
+
+logger = logging.getLogger("vbf")
 
 # ─── Premium dokumentum stílusok ───
 def _apply_premium_styles(doc, section, header_para):
@@ -117,8 +122,6 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
 
     # Insert Logo at the top if exists
     if settings and settings.logo_path and os.path.exists(settings.logo_path):
-        import io as custom_io
-        from PIL import Image
         try:
             # We add it to the first paragraph of the body
             logo_p = doc.add_paragraph()
@@ -126,13 +129,13 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             logo_img = Image.open(settings.logo_path)
             
             # Since WebP might have issues directly in Word via docx in some versions, convert temporarily to PNG in memory
-            img_byte_arr = custom_io.BytesIO()
+            img_byte_arr = io.BytesIO()
             logo_img.save(img_byte_arr, format='PNG')
             img_byte_arr.seek(0)
             
             logo_p.add_run().add_picture(img_byte_arr, width=Cm(5))
         except Exception as e:
-            print(f"Hiba a logó beillesztésekor: {e}")
+            logger.warning("Hiba a logó beillesztésekor: %s", e)
     
     # Title
     if rep_type == "VBF_IDOSZAKOS":
@@ -412,7 +415,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             doc.add_paragraph() # Spacer
             section_num += 1
         except Exception as e:
-            print(f"Error embedding diagram: {e}")
+            logger.warning("Hiba a diagram beillesztésekor: %s", e)
             doc.add_paragraph(f"[Hiba a rajz beillesztésekor: {str(e)}]")
 
     # EPH Specific Data — jelenjen meg VBF jegyzőkönyvekben is, ha ki van töltve
@@ -442,10 +445,8 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         p3.add_run(c_data.get('ephConductor', 'N/A') + ' mm²\n')
         section_num += 1
     
-    # Measurements
-    meas_data = report.measurements_data[0] if report.measurements_data and len(report.measurements_data) > 0 else {}
-    if not isinstance(meas_data, dict):
-        meas_data = {}
+    # Measurements – measurements_data a DB-ben dict, nem lista
+    meas_data = report.measurements_data if isinstance(report.measurements_data, dict) else {}
     if meas_data:
         doc.add_heading(f'{section_num}. Mérési Eredmények', level=1)
         sub_num = 1

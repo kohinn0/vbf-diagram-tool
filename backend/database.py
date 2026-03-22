@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, Text, JSON, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, Text, JSON, DateTime, text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
 from datetime import datetime
 from typing import Optional
@@ -100,6 +100,8 @@ class Report(Base):
     title = Column(String, index=True)
     report_type = Column(String, index=True) # vbf, vvf, eph
     status = Column(String, default="DRAFT") # DRAFT or FINAL
+    company_shared = Column(Boolean, default=True) # Share internally with company users
+    notes = Column(Text, nullable=True) # Belső megjegyzés (szabad szöveg)
     
     # Store JSON strings for complex nested data structures from the frontend
     # For SQLite, SQLAlchemy JSON column type will handle serialization
@@ -393,38 +395,38 @@ Base.metadata.create_all(bind=engine)
 if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
     with engine.connect() as conn:
         try:
-            r = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            r = conn.execute(text("PRAGMA table_info(company_settings)"))
             cols = [row[1] for row in r.fetchall()]
             if "company_id" not in cols:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN company_id INTEGER"))
+                conn.execute(text("ALTER TABLE company_settings ADD COLUMN company_id INTEGER"))
                 conn.commit()
-            r2 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            r2 = conn.execute(text("PRAGMA table_info(company_settings)"))
             cols2 = [row[1] for row in r2.fetchall()]
             if "signature_path" not in cols2:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN signature_path VARCHAR"))
+                conn.execute(text("ALTER TABLE company_settings ADD COLUMN signature_path VARCHAR"))
                 conn.commit()
-            r3 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(company_settings)"))
+            r3 = conn.execute(text("PRAGMA table_info(company_settings)"))
             cols3 = [row[1] for row in r3.fetchall()]
             if "pfx_path" not in cols3:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE company_settings ADD COLUMN pfx_path VARCHAR"))
+                conn.execute(text("ALTER TABLE company_settings ADD COLUMN pfx_path VARCHAR"))
                 conn.commit()
             # SaaS: companies plan + limits
-            r4 = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(companies)"))
+            r4 = conn.execute(text("PRAGMA table_info(companies)"))
             cols4 = [row[1] for row in r4.fetchall()]
             if "plan" not in cols4:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN plan VARCHAR DEFAULT 'FREE'"))
+                conn.execute(text("ALTER TABLE companies ADD COLUMN plan VARCHAR DEFAULT 'FREE'"))
                 conn.commit()
             if "reports_per_month_limit" not in cols4:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN reports_per_month_limit INTEGER"))
+                conn.execute(text("ALTER TABLE companies ADD COLUMN reports_per_month_limit INTEGER"))
                 conn.commit()
             if "max_users" not in cols4:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE companies ADD COLUMN max_users INTEGER"))
+                conn.execute(text("ALTER TABLE companies ADD COLUMN max_users INTEGER"))
                 conn.commit()
             # payment_logs tábla (ha még nincs)
             try:
-                r5 = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='payment_logs'"))
+                r5 = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='payment_logs'"))
                 if r5.fetchone() is None:
-                    conn.execute(__import__("sqlalchemy").text("""
+                    conn.execute(text("""
                         CREATE TABLE payment_logs (
                             id INTEGER NOT NULL PRIMARY KEY,
                             email VARCHAR NOT NULL,
@@ -446,16 +448,16 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
             except Exception:
                 pass
             # pending_orders.reminder_sent_at (határidő emlékeztető)
-            r_po = conn.execute(__import__("sqlalchemy").text("PRAGMA table_info(pending_orders)"))
+            r_po = conn.execute(text("PRAGMA table_info(pending_orders)"))
             cols_po = [row[1] for row in r_po.fetchall()]
             if "reminder_sent_at" not in cols_po:
-                conn.execute(__import__("sqlalchemy").text("ALTER TABLE pending_orders ADD COLUMN reminder_sent_at DATETIME"))
+                conn.execute(text("ALTER TABLE pending_orders ADD COLUMN reminder_sent_at DATETIME"))
                 conn.commit()
             # password_reset_tokens tábla (elfelejtett jelszó)
             try:
-                r6 = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='password_reset_tokens'"))
+                r6 = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='password_reset_tokens'"))
                 if r6.fetchone() is None:
-                    conn.execute(__import__("sqlalchemy").text("""
+                    conn.execute(text("""
                         CREATE TABLE password_reset_tokens (
                             id INTEGER NOT NULL PRIMARY KEY,
                             user_id INTEGER NOT NULL,
@@ -465,15 +467,15 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
                             FOREIGN KEY(user_id) REFERENCES users(id)
                         )
                     """))
-                    conn.execute(__import__("sqlalchemy").text("CREATE INDEX ix_password_reset_tokens_token_hash ON password_reset_tokens (token_hash)"))
+                    conn.execute(text("CREATE INDEX ix_password_reset_tokens_token_hash ON password_reset_tokens (token_hash)"))
                     conn.commit()
             except Exception:
                 pass
             # registration_invites (főadmin meghívók)
             try:
-                r_inv = conn.execute(__import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table' AND name='registration_invites'"))
+                r_inv = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='registration_invites'"))
                 if r_inv.fetchone() is None:
-                    conn.execute(__import__("sqlalchemy").text("""
+                    conn.execute(text("""
                         CREATE TABLE registration_invites (
                             id INTEGER NOT NULL PRIMARY KEY,
                             email VARCHAR(255) NOT NULL,
@@ -485,10 +487,10 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
                             FOREIGN KEY(created_by_id) REFERENCES users(id)
                         )
                     """))
-                    conn.execute(__import__("sqlalchemy").text(
+                    conn.execute(text(
                         "CREATE INDEX ix_registration_invites_email ON registration_invites (email)"
                     ))
-                    conn.execute(__import__("sqlalchemy").text(
+                    conn.execute(text(
                         "CREATE INDEX ix_registration_invites_token_hash ON registration_invites (token_hash)"
                     ))
                     conn.commit()

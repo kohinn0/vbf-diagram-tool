@@ -116,6 +116,8 @@ class ReportBase(BaseModel):
     diagram_image: Optional[str] = None
     defects_data: Optional[List[Dict[str, Any]]] = None
     measurements_data: Optional[List[Dict[str, Any]]] = None
+    company_shared: bool = True
+    notes: Optional[str] = None
 
 class ReportCreate(ReportBase):
     pass
