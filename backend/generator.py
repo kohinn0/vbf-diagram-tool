@@ -83,7 +83,7 @@ def _style_table_header(table):
         pass
 
 
-def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = None) -> io.BytesIO:
+def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = None, include_integrity: bool = False) -> io.BytesIO:
     doc = Document()
     
     settings = None
@@ -830,8 +830,15 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p_disc = doc.add_paragraph(disclaimer)
     p_disc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     
+    # Digitális Integritás (SHA-256) – csak PDF-ben; Word = piszkozat, nincs hash
+    if not include_integrity:
+        stream = io.BytesIO()
+        doc.save(stream)
+        stream.seek(0)
+        return stream
+    
     # ═══════════════════════════════════════════════════════
-    # DIGITÁLIS INTEGRITÁS - QR Kód és Hash
+    # DIGITÁLIS INTEGRITÁS - QR Kód és Hash (PDF exportnál)
     # ═══════════════════════════════════════════════════════
     doc.add_heading(f'{section_num}. Digitális Integritás és Nyomonkövethetőség', level=1)
     
@@ -1061,72 +1068,43 @@ def generate_signed_pdf_stream(
         # inkább próbáljuk meg aláírás nélkül visszaadni a PDF-et.
         pfx_pass = (_os.environ.get("VBF_PFX_PASSWORD") or "").encode("utf-8")
 
-    # Generate the standard DOCX (share_url → QR borítólapra)
-    docx_stream = generate_docx_stream(report, db, share_url=share_url)
+    # ReportLab-bal közvetlen PDF – nincs LibreOffice, alacsony erőforrás-igény
+    from generator_pdf import generate_pdf_reportlab_stream
+    pdf_buffer = generate_pdf_reportlab_stream(report, db, share_url=share_url)
+    pdf_bytes = pdf_buffer.getvalue()
 
-    with tempfile.TemporaryDirectory() as td:
-        docx_path = os.path.join(td, "temp.docx")
-        pdf_path = os.path.join(td, "temp.pdf")
-        with open(docx_path, "wb") as f:
-            f.write(docx_stream.getvalue())
+    if watermark:
+        pdf_bytes = apply_pdf_watermark(pdf_bytes)
+        out_plain = io.BytesIO(pdf_bytes)
+        out_plain.seek(0)
+        return out_plain
 
-        try:
-            import subprocess
-            import sys
+    from pyhanko.sign import signers
+    from pyhanko.pdf_utils.reader import PdfFileReader
+    from pyhanko.pdf_utils.writer import copy_into_new_writer
+    import io as pyhanko_io
 
-            if sys.platform == "win32":
-                from docx2pdf import convert
-                convert(docx_path, pdf_path)
-            else:
-                subprocess.run(
-                    ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", td, docx_path],
-                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
+    if not os.path.exists(pfx_path):
+        pdf_out = pyhanko_io.BytesIO(pdf_bytes)
+        pdf_out.seek(0)
+        return pdf_out
+    if not pfx_pass:
+        pdf_out = pyhanko_io.BytesIO(pdf_bytes)
+        pdf_out.seek(0)
+        return pdf_out
 
-            with open(pdf_path, "rb") as f:
-                pdf_bytes = f.read()
-
-            if watermark:
-                pdf_bytes = apply_pdf_watermark(pdf_bytes)
-                out_plain = io.BytesIO(pdf_bytes)
-                out_plain.seek(0)
-                return out_plain
-
-            from pyhanko.sign import signers
-            from pyhanko.pdf_utils.reader import PdfFileReader
-            from pyhanko.pdf_utils.writer import copy_into_new_writer
-            import io as pyhanko_io
-
-            if not os.path.exists(pfx_path):
-                pdf_out = pyhanko_io.BytesIO(pdf_bytes)
-                pdf_out.seek(0)
-                return pdf_out
-            # Ha nincs jelszó megadva, ne próbáljunk aláírni: térjünk vissza a sima PDF-fel
-            if not pfx_pass:
-                pdf_out = pyhanko_io.BytesIO(pdf_bytes)
-                pdf_out.seek(0)
-                return pdf_out
-
-            signer = signers.SimpleSigner.load_pkcs12(pfx_path, pfx_pass)
-            
-            r = PdfFileReader(pyhanko_io.BytesIO(pdf_bytes))
-            w = copy_into_new_writer(r)
-            pdf_out = pyhanko_io.BytesIO()
-            
-            # Sign and save
-            signers.sign_pdf(
-                w, 
-                signers.PdfSignatureMetadata(field_name='VBF_Signature'), 
-                signer=signer, 
-                in_place=False, 
-                existing_fields_only=False, 
-                bytes_reserved=8192,
-                out=pdf_out
-            )
-            
-            pdf_out.seek(0)
-            return pdf_out
-            
-        except Exception as e:
-            print(f"Hiba a PDF generálása vagy aláírása során: {e}")
-            raise RuntimeError(f"PDF generálási hiba: {e}") from e
+    signer = signers.SimpleSigner.load_pkcs12(pfx_path, pfx_pass)
+    r = PdfFileReader(pyhanko_io.BytesIO(pdf_bytes))
+    w = copy_into_new_writer(r)
+    pdf_out = pyhanko_io.BytesIO()
+    signers.sign_pdf(
+        w,
+        signers.PdfSignatureMetadata(field_name='VBF_Signature'),
+        signer=signer,
+        in_place=False,
+        existing_fields_only=False,
+        bytes_reserved=8192,
+        out=pdf_out
+    )
+    pdf_out.seek(0)
+    return pdf_out

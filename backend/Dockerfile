@@ -2,12 +2,10 @@ FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Install system dependencies for document generation
-# LibreOffice for PDF conversion, plus cleanup to keep image smaller
+# ReportLab PDF: DejaVu betűtípus az ékezetes karakterekhez
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libreoffice-core \
-    libreoffice-writer \
+    fonts-dejavu-core \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean

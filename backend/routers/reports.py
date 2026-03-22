@@ -238,19 +238,10 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
     report = _report_access(db, report_id, current_user)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
-
-    share_url = None
     if report.status == "FINAL":
-        share_row = db.query(database.ReportShareToken).filter(database.ReportShareToken.report_id == report_id).first()
-        if not share_row:
-            share_row = database.ReportShareToken(report_id=report_id, token=secrets.token_urlsafe(32), expires_at=None)
-            db.add(share_row)
-            db.commit()
-            db.refresh(share_row)
-        base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
-        share_url = f"{base_url.rstrip('/')}/api/public/report/{share_row.token}?format=docx"
+        raise HTTPException(status_code=403, detail="A véglegesített jegyzőkönyv csak PDF formátumban exportálható. Word (szerkeszthető piszkozat) csak DRAFT státuszú dokumentumoknál érhető el.")
 
-    stream = generator.generate_docx_stream(report, db, share_url=share_url)
+    stream = generator.generate_docx_stream(report, db, share_url=None)
     rep_type = report.report_type.upper() if report.report_type else "VBF"
     short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
     year = report.created_at.year if report.created_at else datetime.utcnow().year
@@ -382,7 +373,7 @@ def clone_report(report_id: int, db: Session = Depends(auth.get_db), current_use
 
 @router.post("/api/reports/export-zip")
 def export_reports_zip(body: schemas.ReportExportZipRequest, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
-    """Több jegyzőkönyv exportálása egy ZIP fájlba (DOCX formátumban)."""
+    """Több jegyzőkönyv exportálása egy ZIP fájlba (DOCX formátumban, csak DRAFT státuszú)."""
     if not body.report_ids or len(body.report_ids) > 50:
         raise HTTPException(status_code=400, detail="1–50 jegyzőkönyv megadása szükséges.")
 
@@ -390,7 +381,7 @@ def export_reports_zip(body: schemas.ReportExportZipRequest, db: Session = Depen
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for rid in body.report_ids:
             report = _report_access(db, rid, current_user)
-            if not report:
+            if not report or report.status == "FINAL":
                 continue
             stream = generator.generate_docx_stream(report, db)
             rep_type = report.report_type.upper() if report.report_type else "VBF"
@@ -509,18 +500,7 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
     if format == "docx":
-        base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
-        share_url = f"{base_url.rstrip('/')}/api/public/report/{token}?format=docx"
-        stream = generator.generate_docx_stream(report, db, share_url=share_url)
-        rep_type = report.report_type.upper() if report.report_type else "VBF"
-        short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
-        year = report.created_at.year if report.created_at else datetime.utcnow().year
-        fn = f"{short_rep_type}-{year}-{report.id:03d}.docx"
-        return StreamingResponse(
-            stream,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": f'attachment; filename="{fn}"'}
-        )
+        raise HTTPException(status_code=403, detail="A véglegesített jegyzőkönyv csak PDF formátumban tölthető le. Használd a ?format=pdf paramétert.")
     if format == "pdf":
         base_url = os.environ.get("BACKEND_URL", "http://localhost:8002")
         pdf_share_url = f"{base_url.rstrip('/')}/api/public/report/{token}?format=pdf"
@@ -537,19 +517,10 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
                 media_type="application/pdf",
                 headers={"Content-Disposition": f'attachment; filename="{fn}"'}
             )
-        except Exception:
-            stream = generator.generate_docx_stream(report, db, share_url=pdf_share_url)
-            rep_type = report.report_type.upper() if report.report_type else "VBF"
-            short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
-            year = report.created_at.year if report.created_at else datetime.utcnow().year
-            fn = f"{short_rep_type}-{year}-{report.id:03d}.docx"
-            return StreamingResponse(
-                stream,
-                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                headers={"Content-Disposition": f'attachment; filename="{fn}"'}
-            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"PDF generálási hiba: {e}")
 
-    # format == "json" (default): read-only adatok
+    # format == "json" (default): read-only adatok (véglegesített = csak PDF)
     return {
         "id": report.id,
         "title": report.title,
@@ -557,7 +528,6 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
         "status": report.status,
         "created_at": report.created_at.isoformat() if report.created_at else None,
         "finalized_at": report.finalized_at.isoformat() if report.finalized_at else None,
-        "export_docx_url": f"/api/public/report/{token}?format=docx",
         "export_pdf_url": f"/api/public/report/{token}?format=pdf",
     }
 
@@ -576,7 +546,13 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
     elif db_report.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    doc_stream = generator.generate_docx_stream(db_report, db)
+    # DRAFT → DOCX, FINAL → PDF (Word csak piszkozatként)
+    if db_report.status == "FINAL":
+        doc_stream = generator.generate_signed_pdf_stream(db_report, db, watermark=False)
+        maintype, subtype, ext = "application", "pdf", "pdf"
+    else:
+        doc_stream = generator.generate_docx_stream(db_report, db)
+        maintype, subtype, ext = "application", "vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"
     doc_bytes = doc_stream.getvalue()
     
     # Send Email settings
@@ -599,9 +575,8 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
     short_rep_type = "EPH" if rep_type == "EPH" else "VBF"
     year = db_report.created_at.year if db_report.created_at else datetime.utcnow().year
     
-    filename = f"{short_rep_type}-{year}-{db_report.id:03d}_{safe_title}.docx"
-    
-    msg.add_attachment(doc_bytes, maintype='application', subtype='vnd.openxmlformats-officedocument.wordprocessingml.document', filename=filename)
+    filename = f"{short_rep_type}-{year}-{db_report.id:03d}_{safe_title}.{ext}"
+    msg.add_attachment(doc_bytes, maintype=maintype, subtype=subtype, filename=filename)
     
     if smtp_server and smtp_user and smtp_pass:
         try:

@@ -14,7 +14,6 @@ slowapi
 
 # Document generation
 python-docx
-docx2pdf
 pyhanko
 pypdf
 reportlab
