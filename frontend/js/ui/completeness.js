@@ -145,11 +145,13 @@ export function initCompleteness() {
         let html = '';
         checks.forEach(c => {
             const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
-            const rowBorder = c.ok
-                ? 'border-2 border-[color-mix(in_srgb,#10b981_42%,transparent)]'
-                : (c.req ? 'border-2 border-[color-mix(in_srgb,#ef4444_38%,transparent)]' : 'border-2 border-[color-mix(in_srgb,var(--text-main)_16%,var(--border-color))]');
+            const rowFrame = c.ok
+                ? 'border border-[var(--border-color)] border-l-[3px] border-l-[#34d399]'
+                : (c.req
+                    ? 'border border-[var(--border-color)] border-l-[3px] border-l-[#f87171]'
+                    : 'border border-[var(--border-color)] border-l-[3px] border-l-[color-mix(in_srgb,var(--text-muted)_50%,transparent)]');
             const reqBadge = c.req
-                ? '<span class="shrink-0 rounded-md bg-[color-mix(in_srgb,#ef4444_22%,transparent)] px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-[#f87171]">Kötelező</span>'
+                ? '<span class="shrink-0 rounded-md bg-[color-mix(in_srgb,#ef4444_14%,transparent)] px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-[#fca5a5]">Kötelező</span>'
                 : '';
             const fieldId = c.fieldId || '';
             const tabTarget = c.tabTarget || '';
@@ -164,15 +166,15 @@ export function initCompleteness() {
                 title = 'Kattints: Mérési adatok fül és táblázat';
             }
             const cursor = fieldId || tabTarget ? 'cursor-pointer' : '';
-            html += `<div ${clickClass} class="vbf-checkitem rounded-xl ${rowBorder} bg-[color-mix(in_srgb,var(--bg-base)_55%,transparent)] px-3.5 py-3 shadow-[inset_0_1px_0_color-mix(in_srgb,white_8%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--bg-base)_70%,transparent)] ${cursor}" title="${esc(title)}">
-                <div class="flex gap-3">
-                    <span class="shrink-0 pt-0.5 text-[1.05rem] leading-none" aria-hidden="true">${icon}</span>
+            html += `<div ${clickClass} class="vbf-checkitem rounded-[10px] ${rowFrame} bg-[color-mix(in_srgb,var(--bg-panel)_35%,var(--bg-base))] px-4 py-3.5 transition-colors hover:bg-[color-mix(in_srgb,var(--bg-panel)_55%,var(--bg-base))] ${cursor}" title="${esc(title)}">
+                <div class="flex gap-3.5">
+                    <span class="shrink-0 pt-0.5 text-[1.05rem] leading-none opacity-95" aria-hidden="true">${icon}</span>
                     <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
-                            <span class="text-[0.86rem] font-medium leading-snug text-[var(--text-main)]">${esc(c.label)}</span>
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                            <span class="text-[0.875rem] font-medium leading-snug text-[var(--text-main)]">${esc(c.label)}</span>
                             ${reqBadge}
                         </div>
-                        <p class="mt-2 break-words text-[0.78rem] leading-[1.55] text-[var(--text-muted)]">${esc(c.hint)}</p>
+                        <p class="mt-2.5 break-words text-[0.8rem] leading-[1.6] text-[var(--text-muted)]">${esc(c.hint)}</p>
                     </div>
                 </div>
             </div>`;
