@@ -23,17 +23,20 @@ export function initAuth() {
         const pr = document.getElementById('panelRegister');
         const tabL = document.getElementById('tabLoginMode');
         const tabR = document.getElementById('tabRegisterMode');
+        const infoEl = document.getElementById('loginRegisterInfo');
         if (!pl || !pr) return;
         if (mode === 'register') {
             pl.style.display = 'none';
             pr.style.display = 'block';
-            if (tabL) { tabL.classList.remove('btn-primary'); tabL.classList.add('btn-secondary'); }
-            if (tabR) { tabR.classList.remove('btn-secondary'); tabR.classList.add('btn-primary'); }
+            if (tabL) tabL.classList.remove('is-active');
+            if (tabR) tabR.classList.add('is-active');
+            if (infoEl) infoEl.style.display = 'block';
         } else {
             pl.style.display = 'block';
             pr.style.display = 'none';
-            if (tabL) { tabL.classList.add('btn-primary'); tabL.classList.remove('btn-secondary'); }
-            if (tabR) { tabR.classList.add('btn-secondary'); tabR.classList.remove('btn-primary'); }
+            if (tabL) tabL.classList.add('is-active');
+            if (tabR) tabR.classList.remove('is-active');
+            if (infoEl) infoEl.style.display = 'none';
         }
     }
 

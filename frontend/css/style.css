@@ -995,21 +995,45 @@ a.nav-tab {
 .login-tabs {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
 }
 .login-tabs button {
     background: none !important;
     border: none !important;
+    box-shadow: none !important;
     color: var(--text-muted);
     font-size: 0.95rem;
     cursor: pointer;
-    padding: 0.2rem 0;
-    box-shadow: none !important;
+    padding: 0.25rem 0;
+    position: relative;
 }
 .login-tabs button:hover { color: var(--primary-light); }
-.login-tabs button.btn-primary { color: var(--primary-light); font-weight: 600; }
-.login-tabs-div { color: var(--text-muted); font-size: 0.85rem; opacity: 0.6; }
+.login-tabs button.is-active {
+    color: var(--primary-light);
+    font-weight: 600;
+}
+.login-tabs button.is-active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.8rem;
+    height: 2px;
+    background: var(--primary-light);
+}
+.login-modal-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(14, 165, 233, 0.08);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+    line-height: 1.45;
+}
 
 .keyboard-shortcuts-modal { max-width: 420px; }
 .keyboard-shortcuts-list {
