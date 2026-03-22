@@ -972,6 +972,45 @@ a.nav-tab {
     border-radius: var(--radius);
 }
 
+.modal-close-x {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+.modal-close-x:hover { color: var(--text-color); background: rgba(255,255,255,0.08); }
+
+.login-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.login-tabs button {
+    background: none !important;
+    border: none !important;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0.2rem 0;
+    box-shadow: none !important;
+}
+.login-tabs button:hover { color: var(--primary-light); }
+.login-tabs button.btn-primary { color: var(--primary-light); font-weight: 600; }
+.login-tabs-div { color: var(--text-muted); font-size: 0.85rem; opacity: 0.6; }
+
 .keyboard-shortcuts-modal { max-width: 420px; }
 .keyboard-shortcuts-list {
     list-style: none;

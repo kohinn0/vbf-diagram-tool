@@ -522,12 +522,16 @@ export function initAuth() {
         });
     }
 
-    if (btnCloseLogin) {
-        btnCloseLogin.addEventListener('click', () => {
-            if (loginModal) loginModal.style.display = 'none';
-            if (loginError) loginError.innerText = '';
-            const re = document.getElementById('registerError');
-            if (re) re.textContent = '';
+    function closeLoginModal() {
+        if (loginModal) loginModal.style.display = 'none';
+        if (loginError) loginError.innerText = '';
+        const re = document.getElementById('registerError');
+        if (re) re.textContent = '';
+    }
+    if (btnCloseLogin) btnCloseLogin.addEventListener('click', closeLoginModal);
+    if (loginModal) {
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) closeLoginModal();
         });
     }
 

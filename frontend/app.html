@@ -95,6 +95,7 @@
                 <a href="#" id="linkProfile" class="nav-profile-link"></a>
                 <span id="userInfo" class="nav-profile-link"></span>
                 <div id="gdprLinks" class="nav-gdpr-links">
+                    <a href="mailto:info@vbfpremium.hu" title="Kapcsolat">info@vbfpremium.hu</a>
                     <a href="#" id="linkChangePassword">Jelszó</a>
                     <a href="#" id="linkDataExportZip" title="Jegyzőkönyvek, fényképek – ZIP">Export ZIP</a>
                     <a href="#" id="linkDataExport" title="Összefoglaló JSON">Adataim</a>
@@ -183,31 +184,31 @@
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 440px;">
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary btn-small" id="tabLoginMode">Belépés</button>
-                <button type="button" class="btn btn-secondary btn-small" id="tabRegisterMode">Regisztráció (demó)</button>
+        <div class="modal-content panel-glass login-modal-inner" style="max-width: 400px; position: relative;">
+            <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
+            <div class="login-tabs">
+                <button type="button" id="tabLoginMode">Belépés</button>
+                <span class="login-tabs-div">|</span>
+                <button type="button" id="tabRegisterMode">Regisztráció</button>
             </div>
-            <p id="loginRegisterInfo" style="display: none; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">Bárki regisztrálhat demó fiókot: saját cég (ingyenes csomag), PDF vízjellel. Teljes előfizetés a főoldalon. A hírlevélhez jelöld be az opciót a regisztrációnál vagy a főoldali űrlapon.</p>
+            <p id="loginRegisterInfo" style="display: none; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.6rem; background: rgba(255,255,255,0.05); border-radius: 8px;">Ingyenes demó fiók, PDF vízjellel. Teljes előfizetés a főoldalon.</p>
 
             <div id="panelLogin">
-                <h2 style="margin-bottom: 1.25rem;">Bejelentkezés</h2>
                 <div class="prop-group">
                     <label>Felhasználónév</label>
                     <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
                 </div>
                 <div class="prop-group">
                     <label>Jelszó</label>
-                    <input type="password" id="loginPass" placeholder="titkos" autocomplete="current-password">
+                    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
                 </div>
-                <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem; min-height: 1.2em;"></div>
-                <p style="margin-top: 0.5rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-                <button type="button" class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
+                <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
+                <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
+                <button type="button" class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Belépés</button>
             </div>
 
             <div id="panelRegister" style="display: none;">
-                <h2 style="margin-bottom: 0.75rem;">Demó regisztráció</h2>
-                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Létrejön egy saját céged (ingyenes csomag). A PDF export vízjellel készül; előfizetéssel teljes értékű.</p>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Ingyenes demó – PDF vízjellel. Teljes verzió a főoldalon.</p>
                 <div class="prop-group">
                     <label>Felhasználónév *</label>
                     <input type="text" id="regUser" placeholder="kovacsbela" autocomplete="username">
@@ -222,23 +223,22 @@
                 </div>
                 <div class="prop-group">
                     <label>Jelszó *</label>
-                    <input type="password" id="regPass" placeholder="min. 8 karakter, nagy+kis+szám" autocomplete="new-password">
+                    <input type="password" id="regPass" placeholder="min. 8 karakter" autocomplete="new-password">
                 </div>
-                <label style="font-size: 0.82rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer;">
+                <label style="font-size: 0.8rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer;">
                     <input type="checkbox" id="regMarketing" style="margin-top: 3px;">
-                    <span>Szeretnék hírlevelet, újdonságokat (marketing). <a href="index.html#contact" target="_blank" rel="noopener" style="color: var(--accent);">Leiratkozás</a> bármikor.</span>
+                    <span>Hírlevél (opcionális)</span>
                 </label>
-                <div id="registerError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem; min-height: 1.2em;"></div>
-                <button type="button" class="btn btn-primary" id="btnSubmitRegister">Fiók létrehozása</button>
+                <div id="registerError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
+                <button type="button" class="btn btn-primary" id="btnSubmitRegister" style="width: 100%;">Fiók létrehozása</button>
             </div>
-
-            <button type="button" class="btn btn-secondary" id="btnCloseLogin" style="margin-top: 1rem;">Mégse</button>
         </div>
     </div>
 
     <!-- Jelszó módosítása modal -->
     <div id="passwordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
+        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+            <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
             <div class="prop-group">
                 <label>Jelenlegi jelszó</label>
@@ -252,11 +252,8 @@
                 <label>Új jelszó még egyszer</label>
                 <input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password">
             </div>
-            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.5rem; min-height: 1.2em;"></p>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-primary" id="btnPasswordSubmit">Mentés</button>
-                <button class="btn btn-secondary" id="btnPasswordClose">Mégse</button>
-            </div>
+            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
+            <button class="btn btn-primary" id="btnPasswordSubmit" style="width: 100%;">Mentés</button>
         </div>
     </div>
 
@@ -293,18 +290,16 @@
 
     <!-- Elfelejtett jelszó: link kérése -->
     <div id="forgotPasswordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
-            <h2 style="margin-bottom: 1rem;">Elfelejtett jelszó</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed. Ha van hozzá tartozó fiók, jelszó-visszaállító linket küldünk.</p>
+        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+            <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
+            <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
             <div class="prop-group">
                 <label>E-mail</label>
                 <input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu">
             </div>
-            <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.5rem; min-height: 1.2em;"></p>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-primary" id="btnForgotPasswordSubmit">Link kérése</button>
-                <button class="btn btn-secondary" id="btnForgotPasswordClose">Mégse</button>
-            </div>
+            <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
+            <button class="btn btn-primary" id="btnForgotPasswordSubmit" style="width: 100%;">Link kérése</button>
         </div>
     </div>
 
@@ -1101,6 +1096,7 @@
                 <li><strong>Funkcionális:</strong> sablonok, bemutató már megtekintve jelzés.</li>
             </ul>
             <p>Ezeket az adatokat nem küldjük harmadik félnek; a tárolás kizárólag a szolgáltatás működtetéséhez szükséges.</p>
+            <p><strong>Kapcsolat:</strong> <a href="mailto:info@vbfpremium.hu">info@vbfpremium.hu</a> · <a href="index.html#contact">Főoldal – Kapcsolat</a></p>
             <button type="button" id="cookieConsentModalClose" class="btn btn-secondary">Bezárás</button>
         </div>
     </div>

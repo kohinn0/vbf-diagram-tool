@@ -23,6 +23,7 @@
             <a href="#" id="linkProfile" style="color: var(--accent); font-weight: 500; font-size: 0.9rem; text-decoration: none;"></a>
             <span id="userInfo" style="color: var(--accent); font-weight: 500; font-size: 0.9rem;"></span>
             <div id="gdprLinks" style="display: none; align-items: center; gap: 8px;">
+                <a href="mailto:info@vbfpremium.hu" style="font-size: 0.8rem; color: var(--primary, #0ea5e9);">info@vbfpremium.hu</a>
                 <a href="#" id="linkChangePassword" style="font-size: 0.8rem; color: var(--text-muted);">Jelszó módosítása</a>
                 <a href="#" id="linkDataExportZip" style="font-size: 0.8rem; color: var(--primary, #0ea5e9);">Teljes adatcsomag (ZIP)</a>
                 <a href="#" id="linkDeleteAccount" style="font-size: 0.8rem; color: var(--danger, #ef4444);">Fiók törlése</a>
@@ -204,27 +205,25 @@
 
     <!-- Auth modals (same IDs as app for auth.js) -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass">
-            <h2 style="margin-bottom: 2rem;">Bejelentkezés</h2>
-            <div class="prop-group"><label>Felhasználónév</label><input type="text" id="loginUser" placeholder="admin"></div>
-            <div class="prop-group"><label>Jelszó</label><input type="password" id="loginPass" placeholder="••••"></div>
-            <div id="loginError" style="color: var(--danger); margin-bottom: 1rem; font-size: 0.85rem;"></div>
-            <p style="margin-top: 0.75rem;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-            <button class="btn btn-primary" id="btnSubmitLogin">Belépés</button>
-            <button class="btn btn-secondary" id="btnCloseLogin">Mégse</button>
+        <div class="modal-content panel-glass" style="position: relative;">
+            <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
+            <h2 style="margin-bottom: 1.25rem;">Bejelentkezés</h2>
+            <div class="prop-group"><label>Felhasználónév</label><input type="text" id="loginUser" placeholder="admin" autocomplete="username"></div>
+            <div class="prop-group"><label>Jelszó</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
+            <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
+            <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
+            <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Belépés</button>
         </div>
     </div>
     <div id="passwordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
+        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+            <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
             <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
-            <div class="prop-group"><label>Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••" autocomplete="current-password"></div>
-            <div class="prop-group"><label>Új jelszó</label><input type="password" id="passwordNew" placeholder="••••" autocomplete="new-password"></div>
-            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••" autocomplete="new-password"></div>
-            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-primary" id="btnPasswordSubmit">Mentés</button>
-                <button class="btn btn-secondary" id="btnPasswordClose">Mégse</button>
-            </div>
+            <div class="prop-group"><label>Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password"></div>
+            <div class="prop-group"><label>Új jelszó</label><input type="password" id="passwordNew" placeholder="••••••••" autocomplete="new-password"></div>
+            <div class="prop-group"><label>Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password"></div>
+            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
+            <button class="btn btn-primary" id="btnPasswordSubmit" style="width: 100%;">Mentés</button>
         </div>
     </div>
     <div id="profileModal" class="modal-overlay" style="display: none;">
@@ -244,15 +243,13 @@
         </div>
     </div>
     <div id="forgotPasswordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
-            <h2 style="margin-bottom: 1rem;">Elfelejtett jelszó</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed.</p>
+        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+            <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
+            <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
             <div class="prop-group"><label>E-mail</label><input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu"></div>
-            <p id="forgotPasswordStatus" style="font-size: 0.85rem; min-height: 1.2em;"></p>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-primary" id="btnForgotPasswordSubmit">Link kérése</button>
-                <button class="btn btn-secondary" id="btnForgotPasswordClose">Mégse</button>
-            </div>
+            <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
+            <button class="btn btn-primary" id="btnForgotPasswordSubmit" style="width: 100%;">Link kérése</button>
         </div>
     </div>
     <div id="expiryBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: #fff; padding: 0.6rem 1rem; font-size: 0.9rem; z-index: 9998; align-items: center; justify-content: center; gap: 1rem;">
