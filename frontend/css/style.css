@@ -255,6 +255,19 @@
     font-size: 0.82rem;
 }
 
+/* Jegyzőkönyv: gyorskitöltő sor – gomb ne legyen mindig teljes szélességű nagy képernyőn */
+.vbf-quickfill-actions .btn {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .vbf-quickfill-actions .btn {
+        width: auto;
+        align-self: stretch;
+    }
+}
+
 /* Béta verzió: hibajelentés gomb (app + shop) */
 .btn-beta-bug {
     border-color: color-mix(in srgb, var(--accent) 42%, var(--border-color)) !important;

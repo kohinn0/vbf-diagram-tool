@@ -554,12 +554,16 @@
                 <h2 style="margin-bottom: 1rem; color: var(--accent);">📊 Jegyzőkönyv Típusa és Alapadatok</h2>
                 <p class="workflow-hint" style="margin-bottom: 2rem; font-size: 0.9rem; color: var(--text-muted-strong, var(--text-muted));">Rajz → Adatok → Hibák → Mérések → Mentés</p>
 
-                <div class="prop-group"
-                    style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #ffc107;">
-                    <label style="color: #ffc107; font-weight: bold;">📝 Gyorskitöltő Sablon Betöltése</label>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <select id="loadTemplateSelect" style="background: rgba(0,0,0,0.5); flex-grow: 1;">
-                            <option value="">-- Válassz Sablont (Opcionális) --</option>
+                <div
+                    class="mb-8 rounded-2xl border-0 border-l-[3px] border-l-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg-panel))] p-5 shadow-[var(--shadow-glass)] sm:p-6">
+                    <label for="loadTemplateSelect"
+                        class="mb-3 block text-[0.95rem] font-bold leading-snug text-[var(--accent)]">📝 Gyorskitöltő
+                        sablon betöltése</label>
+                    <div
+                        class="vbf-quickfill-actions flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-4">
+                        <select id="loadTemplateSelect"
+                            class="min-h-[2.75rem] w-full flex-1 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-glass)] px-3 py-2.5 text-[0.875rem] text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none sm:min-w-0">
+                            <option value="">-- Válassz sablont (opcionális) --</option>
                             <option value="TPL_PANEL_3ROOM">3 Szobás Panel Lakás (Alapkiépítés) - Alap mérések kitöltése
                             </option>
                             <option value="TPL_APARTMENT_1ROOM">1 Szobás (Garzon) Lakás - Alap mérések kitöltése
@@ -574,8 +578,8 @@
                             </option>
                             <option value="TPL_EPH_BOILER">Csak EPH - Kazán, gázmérő és fémcsövek</option>
                         </select>
-                        <button class="btn btn-primary" id="btnSaveCustomTemplate"
-                            style="margin: 0; white-space: nowrap;">Mentés Saját Sablonként 💾</button>
+                        <button type="button" class="btn btn-primary whitespace-nowrap" id="btnSaveCustomTemplate">Mentés
+                            saját sablonként 💾</button>
                     </div>
                 </div>
 
