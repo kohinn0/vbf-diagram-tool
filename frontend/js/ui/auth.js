@@ -602,9 +602,12 @@ export function initAuth() {
         const banner = document.getElementById('cookieBanner');
         const accept = document.getElementById('cookieBannerAccept');
         const privacyLink = document.getElementById('cookieBannerPrivacyLink');
-        if (privacyLink && (window.API_BASE_URL || window.location.origin)) {
-            privacyLink.href = (window.API_BASE_URL || window.location.origin + '/api') + '/legal/privacy';
-        }
+        const legalBase = (window.API_BASE_URL || window.location.origin + '/api').replace(/\/api$/, '') + '/api';
+        if (privacyLink) privacyLink.href = legalBase + '/legal/privacy';
+        const linkRegTerms = document.getElementById('linkRegTerms');
+        const linkRegAszf = document.getElementById('linkRegAszf');
+        if (linkRegTerms) linkRegTerms.href = legalBase + '/legal/terms';
+        if (linkRegAszf) linkRegAszf.href = legalBase + '/legal/aszf';
         if (banner && !localStorage.getItem('cookie_consent')) banner.style.display = 'flex';
         if (accept) accept.addEventListener('click', () => { localStorage.setItem('cookie_consent', '1'); if (banner) banner.style.display = 'none'; });
     })();

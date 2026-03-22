@@ -1069,6 +1069,10 @@
             </div>
             <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
                 <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Utalásos megrendelés</h3>
+                <label style="display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer; font-size: 0.88rem;">
+                    <input type="checkbox" id="cartTermsAccept" required style="margin-top: 3px;">
+                    <span>Elfogadom a <a href="#" id="cartLinkTerms" target="_blank" rel="noopener">Felhasználási feltételek</a> és az <a href="#" id="cartLinkAszf" target="_blank" rel="noopener">ÁSZF</a> hatályát. A jegyzőkönyvek tartalmáért kizárólag én vállalok felelősséget.</span>
+                </label>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>hosszabbítás</strong> ugyanitt: jóváhagyás után az új időszak a még érvényes PRO lejáratra <strong>ráépül</strong> (nem vesznek el napok). Az utalásos számlához <strong>nem kell jelszót</strong> megadnod – a lenti űrlapon a számlázási adatok elég. A hozzáférés a fizetés jóváhagyása után kerül aktiválásra; érdemes <strong>ugyanazt az e-mail címet</strong> használni, mint a fiókodnál.</p>
                 <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 1.25rem 0; line-height: 1.55;">Már be vagy jelentkezve a jegyzőkönyv szerkesztőbe? Nyisd meg az <a href="app.html" style="color: var(--accent);">alkalmazást</a> – ott is eléred ugyanezt a kosarat (azonos böngészőben).</p>
                 <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
@@ -1601,6 +1605,8 @@
         if (document.getElementById('linkTerms')) document.getElementById('linkTerms').href = API_BASE_URL + '/legal/aszf';
         if (document.getElementById('linkPrivacy')) document.getElementById('linkPrivacy').href = API_BASE_URL + '/legal/privacy';
         if (document.getElementById('linkImprint')) document.getElementById('linkImprint').href = API_BASE_URL + '/legal/imprint';
+        if (document.getElementById('cartLinkTerms')) document.getElementById('cartLinkTerms').href = API_BASE_URL + '/legal/terms';
+        if (document.getElementById('cartLinkAszf')) document.getElementById('cartLinkAszf').href = API_BASE_URL + '/legal/aszf';
         if (document.getElementById('footerPrivacyLink')) document.getElementById('footerPrivacyLink').href = API_BASE_URL + '/legal/privacy';
         if (document.getElementById('cookieBannerPrivacyLink')) document.getElementById('cookieBannerPrivacyLink').href = API_BASE_URL + '/legal/privacy';
         (function () {
@@ -1762,6 +1768,11 @@
         document.getElementById('btnCartPayCard')?.addEventListener('click', async function () {
             var cart = getCart();
             if (!cart.items.length) return;
+            if (!document.getElementById('cartTermsAccept')?.checked) {
+                var st = document.getElementById('cartStripeStatus');
+                if (st) { st.style.color = '#ef4444'; st.textContent = 'A vásárláshoz el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
+                return;
+            }
             var email = document.getElementById('cartStripeEmail')?.value?.trim() || null;
             var pw = document.getElementById('cartStripePassword')?.value || '';
             var pwc = document.getElementById('cartStripePasswordConfirm')?.value || '';
@@ -1802,6 +1813,11 @@
         document.getElementById('btnCartRequestInvoice')?.addEventListener('click', async function () {
             var cart = getCart();
             if (!cart.items.length) return;
+            if (!document.getElementById('cartTermsAccept')?.checked) {
+                var statusEl = document.getElementById('cartTransferStatus');
+                if (statusEl) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
+                return;
+            }
             var email = document.getElementById('cartEmail')?.value?.trim();
             var name = document.getElementById('cartName')?.value?.trim();
             var address = document.getElementById('cartAddress')?.value?.trim();

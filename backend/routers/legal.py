@@ -205,8 +205,9 @@ def _terms_html() -> str:
 <body>
 {_legal_header("Felhasználási feltételek", footer_links)}
 
-    <h2>1. A szolgáltatás</h2>
-    <p>A VBF Premium („Szolgáltatás”) villamos biztonsági felülvizsgálati jegyzőkönyvek és kapcsolódó dokumentumok szerkesztésére, tárolására és exportálására szolgál. A szolgáltató fenntartja a jogot a funkciók és a díjszabás módosítására.</p>
+    <h2>1. A szolgáltatás és az elfogadás</h2>
+    <p>A VBF Premium („Szolgáltatás”) villamos biztonsági felülvizsgálati jegyzőkönyvek és kapcsolódó dokumentumok szerkesztésére, tárolására és exportálására szolgál. A szolgáltatás használatával, regisztrációval vagy előfizetéssel a felhasználó tudomásul veszi és elfogadja a jelen feltételek és az ÁSZF teljes körű hatályát. Ha nem fogadja el a feltételeket, a szolgáltatás használata tilos.</p>
+    <p><strong>Változtatás joga:</strong> A szolgáltató fenntartja a jogot a feltételek, a szolgáltatás tartalma, funkciói, díjszabása és elérhetősége bármely időben történő módosítására, kiegészítésére vagy felfüggesztésére, előzetes értesítés nélkül is. A szolgáltatás nem minősül megszakíthatatlannak; a szolgáltató jogosult a szolgáltatás részleges vagy teljes felfüggesztésére, korlátozására vagy megszüntetésére. A lényeges változásról a szolgáltató igyekszik értesíteni (pl. e-mail, weboldal); a további használat a módosítás elfogadásának minősül.</p>
 
     <h2>2. Regisztráció és fiók</h2>
     <p>A teljes alkalmazás használatához regisztráció és bejelentkezés szükséges. A megadott adatoknak valósnak kell lenniük. A fiók biztonsága (jelszó, eszköz) a felhasználó felelőssége. Céges fióknál a cégen belüli felhasználók és a limitek az előfizetési csomag szerint érvényesek.</p>
@@ -222,14 +223,24 @@ def _terms_html() -> str:
     <h2>5. Szellemi tulajdon és adatok</h2>
     <p>A felhasználó által feltöltött vagy létrehozott tartalom (jegyzőkönyv, rajz) továbbra is a felhasználó vagy a megbízó cég tulajdona. A szolgáltató a szolgáltatás nyújtásához szükséges mértékben feldolgozhatja és tárolja az adatokat az adatkezelési tájékoztató szerint.</p>
 
-    <h2>6. Felelősség</h2>
-    <p>A szolgáltató a rendelkezésre állásra és az adat biztonságára törekszik, de nem vállal felelősséget közvetett kárért vagy adatvesztésért, kivéve ha azt jogszabály kifejezetten előírja. A jegyzőkönyvek tartalmi és szakmai helyessége a felhasználó felelőssége.</p>
+    <h2>6. Felelősség, garancia kizárás, kártérítési limit</h2>
+    <p><strong>Jegyzőkönyvek tartalma:</strong> A szolgáltató semmilyen jogi felelősséget nem vállal a felhasználók által a szoftverben létrehozott jegyzőkönyvek (VBF, EPH, villámvédelem, elosztó rajz stb.) tartalmáért. A szolgáltatás csupán eszközt nyújt; a szolgáltató nem állít ki, nem ellenőriz, nem minősít semmilyen dokumentumot. A jegyzőkönyvek tartalma, szakmai helyessége, jogszabályi megfelelősége és jogérvényessége kizárólag a felhasználó felelőssége.</p>
+    <p><strong>Garancia kizárás:</strong> A szolgáltatás „ahogy van” (as is) és „amennyire elérhető” (as available) alapon nyújtott. A szolgáltató nem vállal kifejezett vagy hallgatólagos garanciát a szolgáltatás megszakítatlanságára, hibamentességére vagy adott célra való alkalmasságára. A jogszabály által el nem roncsolható fogyasztói jogok továbbra is érvényesek.</p>
+    <p><strong>Felelősség korlátozása:</strong> A szolgáltató – a jogszabály által kötelezően előírt esetek kivételével – nem vállal felelősséget közvetett, következményes, különleges vagy végrehajtási kárért, adatvesztésért, üzletszegényért, elszalasztott haszonért. Üzleti (nem fogyasztói) használat esetén a szolgáltató felelőssége a kérdéses időszakra (max. 12 hónap) fizetett díjak összegével szemben legfeljebb a befizetett összegre korlátozódik.</p>
+    <p><strong>Force majeure:</strong> A szolgáltató nem felelős olyan teljesítési akadályokért, amelyek az ő ésszerű befolyása alatt álló körülményeken kívül esnek (pl. természeti katasztrófa, háború, terrorizmus, áramszünet, internet- vagy tárhelyszolgáltatói hiba, vírusok, szabotázs, hatósági intézkedés).</p>
+    <p><strong>Kártalanítás:</strong> A felhasználó kártalanítja a szolgáltatót minden olyan követeléssel, kárral és költséggel szemben, amely a felhasználó szolgáltatás-használatából, a benne létrehozott tartalmakból (jegyzőkönyvek stb.) vagy a felhasználó jogi kötelezettségének megsértéséből ered, ideértve a szolgáltató védelmében felmerülő jogi költségeket.</p>
+    <p><strong>Alkalmazandó jog és illetékesség:</strong> A jelen feltételek magyar jog szerint értelendők. A szerződéses felekre vonatkozó jogvitákra – a jogszabály által kivételként meghatározott eseteket kivéve – a szolgáltató székhelye szerint illetékes magyar bíróság kizárólagos illetékességgel rendelkezik.</p>
 
     <h2>7. Megszűnés</h2>
     <p>A fiók inaktivitás vagy a feltételek megsértése alapján felfüggeszthető vagy törölhető. A felhasználó bármikor kérheti fiókja és adatai törlését; az adatkezelés az <strong>Adatkezelési tájékoztató (GDPR)</strong> szerint történik.</p>
 
     <h2>8. Kapcsolat</h2>
     <p>Kérdés esetén a weboldal Kapcsolat űrlapján vagy közvetlenül e-mailben: <a href="mailto:{email}">{email}</a>. Részletes adatok: <a href="/api/legal/imprint">Impresszum</a>.</p>
+
+    <h2>9. Szakaszhatóság, teljes megállapodás, jogok alól való mentesülés</h2>
+    <p><strong>Szakaszhatóság:</strong> Ha a jelen feltételek bármely rendelkezése jogellenesnek, érvénytelennék vagy végrehajthatatlannak minősülne, az adott rendelkezés hatályát veszti; a többi rendelkezés teljes mértékben hatályban marad.</p>
+    <p><strong>Teljes megállapodás:</strong> A jelen feltételek és az ÁSZF a felek teljes megállapodását képezik a szolgáltatásra vonatkozóan. Korábbi, szóbeli vagy írásbeli megállapodások, megértések vagy nyilatkozatok a jelen feltételekhez és az ÁSZF-hez képest nem alkalmazandók.</p>
+    <p><strong>Jogok alól való mentesülés hiánya:</strong> A szolgáltató részéről a jelen feltételek egyes rendelkezéseinek nem kérhető végrehajtása vagy késedelmes végrehajtása nem jelenti a további rendelkezések alól való mentesülést vagy a jogsértés elfogadását.</p>
 
     {_legal_footer(footer_links)}
 </body>
@@ -254,6 +265,7 @@ def _aszf_html() -> str:
 
     <h2>1. Szolgáltató és szolgáltatás</h2>
     <p>A szolgáltató adatait az <a href="/api/legal/imprint">Impresszum</a> tartalmazza. A VBF Premium egy felhőalapú (SaaS) szoftver, amely jelenleg villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyvek készítéséhez, tárolásához és exportálásához nyújt eszközöket; a villámvédelmi felülvizsgálati (VVF) modul később kerül bele. A szolgáltatás igénybevétele regisztráció és – a fizetős csomagok esetén – előfizetés / vásárlás alapján történik.</p>
+    <p><strong>Változtatás joga:</strong> A szolgáltató fenntartja a jogot az ÁSZF, a szolgáltatás tartalma, funkciói és díjszabása bármely időben történő módosítására vagy megszüntetésére. A lényeges változásról igyekszünk értesíteni (pl. e-mail: <a href="mailto:{email}">{email}</a>). A további használat a módosítás elfogadásának minősül. A szolgáltatás nem minősül megszakíthatatlannak; a szolgáltató jogosult a szolgáltatás részleges vagy teljes felfüggesztésére, korlátozására vagy megszüntetésére.</p>
 
     <h2>2. Szerződéskötés</h2>
     <p>A webshopban (főoldal) kiválasztott csomag kosárba helyezése, a számlázási adatok megadása és az utalásos megrendelés leadása a szerződéskötési folyamat része. A szerződés a fizetés jóváírása és a szolgáltató jóváhagyása után jön létre, ekkor a hozzáférésről e-mail értesítés készül.</p>
@@ -265,14 +277,23 @@ def _aszf_html() -> str:
     <p>Ha a vásárló fogyasztó (természetes személy, nem üzleti célból), a 45/2014. (II. 26.) Korm. rendelet 29. § (1) bekezdése alapján <strong>14 napon belül</strong> indoklás nélkül elállhat a szerződéstől. Az elállásról az Impresszumban megadott címre vagy e-mailre (<a href="mailto:{email}">{email}</a>) történő nyilatkozat szükséges. Ha a szolgáltató a 14 nap lejárta előtt megkezdte a digitális szolgáltatás teljesítését (hozzáférés megadása), és a fogyasztó ezt előre hozzájárulással (pl. „Elfogadom, hogy a hozzáférés megadásával a 14 napos elállási jogom elveszik”) elfogadta, az elállás a digitális tartalomra nem érvényes. Céges / üzleti vásárlás esetén a törvény által kivételként megállapított szabályok érvényesek (pl. nincs 14 napos elállás).</p>
 
     <h2>5. Panasz és garancia</h2>
-    <p>Panasz esetén a vásárló a kapcsolati adaton jelzi a hibát: <a href="mailto:{email}">{email}</a>. A szolgáltató a panaszokat megvizsgálja és a 45/2014. (II. 26.) Korm. rendelet szerint, legkésőbb 30 napon belül válaszol. Ha a szolgáltatás hibás, a szolgáltató a jogszabály szerint javítási vagy helyettesítési kötelezettséggel tartozik. A jegyzőkönyvek tartalmi, szakmai helyessége nem a szolgáltató felelőssége, hanem a felhasználóé (felülvizsgáló).</p>
+    <p>Panasz esetén a vásárló a kapcsolati adaton jelzi a hibát: <a href="mailto:{email}">{email}</a>. A szolgáltató a panaszokat megvizsgálja és a 45/2014. (II. 26.) Korm. rendelet szerint, legkésőbb 30 napon belül válaszol. Ha a szolgáltatás (szoftver működése) hibás, a szolgáltató a jogszabály szerint javítási vagy helyettesítési kötelezettséggel tartozik.</p>
+    <p><strong>Jegyzőkönyvek tartalma – felelősség kizárása:</strong> A szolgáltató semmilyen jogi felelősséget nem vállal a felhasználók által létrehozott jegyzőkönyvek (VBF, EPH, villámvédelem, elosztó rajz stb.) tartalmáért, szakmai helyességéért, jogszabályi megfelelőségéért vagy jogérvényességéért. A jegyzőkönyvek tartalma kizárólag a felülvizsgálatot végző szakember felelőssége. A garancia a szoftver működésére vonatkozik, nem a benne szerkesztett dokumentumok tartalmára.</p>
 
     <h2>6. Előfizetés megszűnése és megújítása</h2>
     <p>Az előfizetés a csomagtól függően havi vagy éves. A meghatározott idő lejárta után a szolgáltató nem köteles automatikusan megújítani; a megújítás a felhasználó által kezdeményezett új megrendelés / fizetés és a szolgáltató jóváhagyása útján történik (kosár, utalás vagy – ha elérhető – bankkártya). Ha a megrendeléskor a fiókhoz tartozó e-mail és a céghez kötött hozzáférés alapján még van érvényes előfizetési idő, a szolgáltató a rendszerben az új időszakot a legkésőbbi érvényes lejáratra <strong>ráépíti</strong>, hogy a már kifizetett napok ne vesszenek el.</p>
     <p>A felhasználó a fiók törlésével vagy az előfizetés megszakításával kérheti a szolgáltatás befejezését; az adatkezelésről az <a href="/api/legal/privacy">Adatkezelési tájékoztató</a> tartalmaz részleteket (törlés, export).</p>
 
-    <h2>7. Egyéb</h2>
-    <p>A szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv, a 45/2014. (II. 26.) Korm. rendelet (fogyasztó és vállalkozói szerződésekről), valamint a 2001. évi CVIII. törvény (e-commerce) rendelkezései az irányadók. A szolgáltató fenntartja a jogot az ÁSZF módosítására; a lényeges változásról a felhasználót értesíti (pl. e-mail: <a href="mailto:{email}">{email}</a>). A további használat a módosítás elfogadásának minősül.</p>
+    <h2>7. Felelősség korlátozása, force majeure, illetékesség</h2>
+    <p><strong>Felelősség:</strong> A szolgáltató – a jogszabály által kötelezően előírt (pl. fogyasztói) jogok kivételével – nem vállal felelősséget közvetett, következményes vagy különleges kárért, adatvesztésért, üzletszegényért. Üzleti (nem fogyasztói) vásárlás esetén a szolgáltató felelőssége legfeljebb a kérdéses időszakra befizetett díjak összegével korlátozódik.</p>
+    <p><strong>Force majeure:</strong> A szolgáltató nem felelős olyan akadályokért, amelyek az ő ésszerű befolyása alatt álló körülményeken kívül esnek (természeti katasztrófa, háború, áramszünet, internet-/tárhelyszolgáltatói hiba, hatósági intézkedés stb.).</p>
+    <p><strong>Illetékesség:</strong> A jelen szerződés magyar jog szerint értelendő. A jogvitákra – a jogszabály által kivételként meghatározott eseteket kivéve – a szolgáltató székhelye szerint illetékes magyar bíróság kizárólagos illetékességgel rendelkezik.</p>
+
+    <h2>8. Egyéb</h2>
+    <p>A szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv, a 45/2014. (II. 26.) Korm. rendelet (fogyasztó és vállalkozói szerződésekről), valamint a 2001. évi CVIII. törvény (e-commerce) rendelkezései az irányadók.</p>
+    <p><strong>Szakaszhatóság:</strong> Ha az ÁSZF bármely rendelkezése jogellenesnek vagy érvénytelennék minősülne, az adott rendelkezés hatályát veszti; a többi rendelkezés hatályban marad.</p>
+    <p><strong>Teljes megállapodás:</strong> A jelen ÁSZF és a Felhasználási feltételek a felek teljes megállapodását képezik. Korábbi szóbeli vagy írásbeli megállapodások nem alkalmazandók.</p>
+    <p><strong>Jogok alól való mentesülés hiánya:</strong> A szolgáltató egyes jogai késedelmes vagy nem kért végrehajtása nem jelenti a többi jog alól való mentesülést.</p>
 
     {_legal_footer(footer_links)}
 </body>
@@ -306,12 +327,15 @@ def _legal_notice_html() -> str:
     <p>Előzetes írásbeli jóváhagyás nélkül tilos a weboldal egészének vagy részének, részletének tájékoztatási célon túli (pl. kereskedelmi célú) másolása, többszörözése, újra nyilvánossághoz történő közvetítése, és/vagy a weboldal tartalmának mindenfajta eltorzítása, megcsonkítása, egészben vagy részben történő használata, felhasználása, feldolgozása, értékesítése a {company} írásos hozzájárulása nélkül. Előzetes írásbeli jóváhagyás nélkül tilos módosítani a weboldalt (vagy annak bármely részét), vagy belefoglalni azt bármilyen más műbe, nyomtatott dokumentumba, blogba vagy harmadik fél weboldalába.</p>
     <p>A weboldal olvasója, felhasználója tudomásul veszi, hogy a felhasználási engedély nélküli felhasználás esetén a szerzőt kötbér illeti meg. A kötbér összege mondatonként és/vagy képenként és/vagy videónként bruttó 25.000 Ft. Szerzői jogi jogsértés esetén közjegyzői ténytanúsítás alkalmazásra kerülhet, melynek összegét a jogsértő felhasználóra hárítjuk.</p>
 
-    <h2>3. Szolgáltatás és számlázás</h2>
+    <h2>3. Jegyzőkönyvek tartalma – felelősség kizárása</h2>
+    <p><strong>A {company} semmilyen jogi felelősséget nem vállal a felhasználók által a VBF Premium szoftverben létrehozott jegyzőkönyvek (VBF, EPH, villámvédelem, elosztó rajz stb.) tartalmáért, szakmai helyességéért, jogszabályi megfelelőségéért vagy jogérvényességéért.</strong> A szolgáltatás eszközt nyújt a dokumentumok szerkesztéséhez; a tartalom kizárólag a felhasználó (a felülvizsgálatot végző szakember) felelőssége. Bármilyen kár, igény vagy jogkövetkezmény, amely a jegyzőkönyvek tartalmából ered, a felhasználóra hárul. A szolgáltatás „ahogy van” alapon nyújtott; garanciát nem vállalunk a dokumentumok tartalmára, pontosságára vagy jogszabályi megfelelőségére vonatkozóan.</p>
+
+    <h2>4. Szolgáltatás és számlázás</h2>
     <p>A {company} ezúton tájékoztatja Ügyfeleit, hogy a szolgáltatások nyújtása és a számlázás kizárólag a {company} nevében és javára történik.</p>
     <p>A {company}-vel történő kapcsolatfelvétel, megrendelés vagy bármilyen üzleti ügylet kizárólag a {company}-vel jön létre. Nem használunk fedőcégeket; alvállalkozók bevonása esetén minden esetben egyértelmű és átlátható szerződéses viszonyt biztosítunk.</p>
     <p>A számlázás mindig a {company} nevében, hivatalos magyar adószámmal történik, így ügyfeleink biztosak lehetnek a szolgáltatás jogszerűségében és átláthatóságában.</p>
 
-    <h2>4. Adatkezelési összefoglaló</h2>
+    <h2>5. Adatkezelési összefoglaló</h2>
     <p>A {company} tájékoztatja a {web} weboldalra látogatókat az oldalán keresztül kezelt adatokról, az adatkezelés elveiről és az érintettek jogairól.</p>
     <ul>
         <li><strong>Jogalap:</strong> az érintett önkéntes hozzájárulása (2011. évi CXII. törvény), szerződés teljesítése, jogi kötelezettség. Csak a Látogató által megadott személyes adatokat kezeljük.</li>
@@ -325,8 +349,14 @@ def _legal_notice_html() -> str:
         <li><strong>Internet:</strong> a nyilvános interneten történő adatközlés adatbiztonsági szempontból nem minden esetben védett; az ebből fakadó kockázatokért a {company} felelősséget nem vállal.</li>
     </ul>
 
-    <h2>5. Elérhetőség</h2>
+    <h2>6. Elérhetőség</h2>
     <p>A weboldal üzemeltetőjének elérhetősége: <a href="/api/legal/imprint">Impresszum</a>.</p>
+
+    <h2>7. Felelősség kizárása – általános</h2>
+    <p>A {company} a jogszabály által el nem roncsolható jogok kivételével semmilyen felelősséget nem vállal közvetett, következményes vagy különleges kárért, adatvesztésért, üzletszegényért. A szolgáltatás legfontosabb jogi feltételei (felelősség korlátozása, force majeure, kártalanítás, illetékesség) a <a href="/api/legal/terms">Felhasználási feltételek</a> és az <a href="/api/legal/aszf">ÁSZF</a> tartalmazza.</p>
+
+    <h2>8. Változtatás joga</h2>
+    <p>A {company} fenntartja a jogot a weboldal tartalmának, a szolgáltatásoknak, az áraknak és a jelen nyilatkozatnak bármely időben történő módosítására vagy megszüntetésére. A változások előzetes értesítés nélkül is életbe léphetnek.</p>
 
     {_legal_footer(footer_links)}
 </body>
@@ -366,7 +396,7 @@ def _imprint_html() -> str:
     {bank_line}<p><strong>Tárhelyszolgáltató:</strong><br>{hosting}</p>
     <p><strong>Kapcsolat:</strong><br>E-mail: <a href="mailto:{email}">{email}</a><br>Telefon: {phone}</p>
 
-    <p>Az oldal üzemeltetője felel a tartalomért és a szolgáltatás nyújtásáért. Jogi és adatvédelmi kérdésekben a fenti e-mail címen vagy a weboldal Kapcsolat űrlapján lehet jelezni.</p>
+    <p>Az oldal üzemeltetője felel a weboldal saját tartalmáért és a szolgáltatás nyújtásáért. <strong>A felhasználók által a szoftverben létrehozott jegyzőkönyvek tartalmáért a szolgáltató semmilyen jogi felelősséget nem vállal</strong> (részletek: <a href="/api/legal/terms">Felhasználási feltételek</a>, <a href="/api/legal/jogi-nyilatkozat">Jogi nyilatkozat</a>). Jogi és adatvédelmi kérdésekben a fenti e-mail címen vagy a weboldal Kapcsolat űrlapján lehet jelezni.</p>
 
     {_legal_footer(footer_links)}
 </body>
