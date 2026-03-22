@@ -341,7 +341,7 @@
     </div>
 
     <!-- Floating Report Completeness Panel (mobilon is olvasható, tördelhető lista) -->
-    <div id="completenessPanel" class="fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2.5rem,28rem)] md:max-w-[27.5rem] panel-glass rounded-xl p-5 sm:p-6 md:p-7 transition-all duration-300">
+    <div id="completenessPanel" class="fixed z-[9000] left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-[min(100vw-2rem,36rem)] md:max-w-[38rem] lg:max-w-[42rem] rounded-2xl border-0 bg-[var(--bg-panel)] p-6 shadow-[var(--shadow-glass)] backdrop-blur-xl sm:p-7 md:p-8 transition-all duration-300">
         <div class="mb-4 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
             <span class="min-w-0 flex-1 text-[0.88rem] font-bold leading-tight text-[var(--accent)] sm:text-[0.95rem]">📋 Jegyzőkönyv készültség</span>
             <button type="button" id="btnToggleChecklist"
@@ -363,7 +363,7 @@
 
         <div id="checklistDetails"
             style="display: none;"
-            class="mt-5 max-h-[min(22rem,52vh)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-base)_72%,var(--bg-panel))] p-4 sm:p-5 [-webkit-overflow-scrolling:touch] sm:max-h-[min(20rem,45vh)]">
+            class="mt-5 max-h-[min(28rem,58vh)] overflow-x-hidden overflow-y-auto overscroll-contain border-0 bg-transparent p-0 [-webkit-overflow-scrolling:touch] sm:max-h-[min(26rem,50vh)]">
             <div id="checkItems" class="space-y-4 text-[0.82rem] leading-relaxed"></div>
         </div>
     </div>

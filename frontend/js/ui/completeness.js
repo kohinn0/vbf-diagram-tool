@@ -146,10 +146,10 @@ export function initCompleteness() {
         checks.forEach(c => {
             const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
             const rowFrame = c.ok
-                ? 'border border-[var(--border-color)] border-l-[3px] border-l-[#34d399]'
+                ? 'border-0 border-l-[3px] border-l-[#34d399]'
                 : (c.req
-                    ? 'border border-[var(--border-color)] border-l-[3px] border-l-[#f87171]'
-                    : 'border border-[var(--border-color)] border-l-[3px] border-l-[color-mix(in_srgb,var(--text-muted)_50%,transparent)]');
+                    ? 'border-0 border-l-[3px] border-l-[#f87171]'
+                    : 'border-0 border-l-[3px] border-l-[color-mix(in_srgb,var(--text-muted)_50%,transparent)]');
             const reqBadge = c.req
                 ? '<span class="shrink-0 rounded-md bg-[color-mix(in_srgb,#ef4444_14%,transparent)] px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-[#fca5a5]">Kötelező</span>'
                 : '';
