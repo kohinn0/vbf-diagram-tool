@@ -86,8 +86,12 @@ export function initAuth() {
                 })
                 .then(userData => {
                     window.currentUserData = userData;
-                    window.currentUserRole = userData.role;
-                    if (userData.role === 'ADMIN' || userData.role === 'SUPER_ADMIN') {
+                    const role = (userData.role || '').trim().toUpperCase() || '';
+                    window.currentUserRole = role;
+                    const isPlatformAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+                    const isCompanyAdmin = role === 'COMPANY_ADMIN';
+                    const canCompanyAdminUi = isPlatformAdmin || isCompanyAdmin;
+                    if (canCompanyAdminUi) {
                         if (navAdmin) navAdmin.classList.remove('is-hidden');
                         if (dashboardTab) dashboardTab.classList.remove('is-hidden');
                         var linkShopAdmin = document.getElementById('linkShopAdmin');
@@ -109,7 +113,7 @@ export function initAuth() {
                         if (masterTab) masterTab.classList.remove('is-hidden');
                     }
                     var exp = userData.subscription_expires;
-                    if (exp && userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
+                    if (exp && !isPlatformAdmin) {
                         var expDate = new Date(exp);
                         var now = new Date();
                         var days = Math.ceil((expDate - now) / (24 * 60 * 60 * 1000));

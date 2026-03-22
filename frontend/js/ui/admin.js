@@ -7,7 +7,7 @@ export function initAdmin() {
             });
             if (res.ok) {
                 const me = await res.json();
-                window.currentUserRole = me.role || '';
+                window.currentUserRole = (me.role || '').trim().toUpperCase() || '';
                 window.currentUserCompanyId = me.company_id || null;
                 window.currentUserCompanyName = me.company_name || '';
                 return me;
@@ -17,6 +17,7 @@ export function initAdmin() {
     };
 
     const isSuperAdmin = () => window.currentUserRole === 'ADMIN' || window.currentUserRole === 'SUPER_ADMIN';
+    const isCompanyAdminOnly = () => window.currentUserRole === 'COMPANY_ADMIN';
 
     window.fetchCompanySettings = async function () {
         try {
@@ -203,13 +204,36 @@ export function initAdmin() {
         const companiesSection = document.getElementById('adminCompaniesSection');
         const plansSection = document.getElementById('adminPlansSection');
         const pendingOrdersSection = document.getElementById('adminPendingOrdersSection');
+        const paymentHistorySection = document.getElementById('adminPaymentHistorySection');
         const companyWrap = document.getElementById('adminNewCompanyWrap');
         const roleSelect = document.getElementById('adminNewRole');
         if (companiesSection) companiesSection.classList.toggle('is-hidden', !isSuperAdmin());
         if (plansSection) plansSection.classList.toggle('is-hidden', !isSuperAdmin());
         if (pendingOrdersSection) pendingOrdersSection.classList.toggle('is-hidden', !isSuperAdmin());
+        if (paymentHistorySection) paymentHistorySection.classList.toggle('is-hidden', !isSuperAdmin());
         const dijbekeroSection = document.getElementById('adminDijbekeroSection');
         if (dijbekeroSection) dijbekeroSection.classList.toggle('is-hidden', !isSuperAdmin());
+
+        const shopTitle = document.getElementById('vbfShopAdminPageTitle');
+        const shopLead = document.getElementById('vbfShopAdminPageLead');
+        if (shopTitle) {
+            shopTitle.textContent = isCompanyAdminOnly() ? 'Cégvezetői felület' : 'Cégadminisztráció';
+        }
+        if (shopLead) {
+            shopLead.textContent = isCompanyAdminOnly()
+                ? 'A saját céged alkalmazottai, kiszállások / naptár és céges arculat (logó, aláírás, adatok). Az előfizetés és globális beállítások csak a főadminnak érhetők el.'
+                : 'Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.';
+        }
+
+        const adminTable = document.getElementById('table-admin-users');
+        const theadTr = adminTable?.querySelector('thead tr');
+        if (theadTr) {
+            if (isCompanyAdminOnly()) {
+                theadTr.innerHTML = '<th>ID</th><th>Felhasználónév</th><th>E-mail</th><th>Státusz</th><th>Jogosultság</th><th>Műveletek</th>';
+            } else {
+                theadTr.innerHTML = '<th>ID</th><th>Felhasználónév</th><th>E-mail</th><th>Státusz</th><th>Jogosultság</th><th>Cég</th><th>Előfizetés lejárata</th><th>Műveletek</th>';
+            }
+        }
         if (isSuperAdmin()) {
             window.fetchAdminCompanies();
             if (window.fetchAdminPlans) window.fetchAdminPlans();
@@ -227,7 +251,8 @@ export function initAdmin() {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
             if (!res.ok) {
-                list.innerHTML = '<tr><td colspan="8">Hiba a felhasználók lekérdezése közben.</td></tr>';
+                const cw = isCompanyAdminOnly() ? 6 : 8;
+                list.innerHTML = '<tr><td colspan="' + cw + '">Hiba a felhasználók lekérdezése közben.</td></tr>';
                 return;
             }
             const users = await res.json();
@@ -248,7 +273,11 @@ export function initAdmin() {
                 const expiry = u.subscription_expires ? new Date(u.subscription_expires).toISOString().split('T')[0] : '';
                 const safeEmail = (u.email || '').replace(/"/g, '&quot;');
                 const safeCompany = (u.company_name || '').replace(/</g, '&lt;');
-                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" class="vbf-admin-user-email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" placeholder="e-mail@pelda.hu" autocomplete="email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button type="button" class="btn btn-danger btn-small vbf-admin-user-delete" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                if (isCompanyAdminOnly()) {
+                    tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" class="vbf-admin-user-email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" placeholder="e-mail@pelda.hu" autocomplete="email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td><button type="button" class="btn btn-danger btn-small vbf-admin-user-delete" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                } else {
+                    tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" class="vbf-admin-user-email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" placeholder="e-mail@pelda.hu" autocomplete="email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button type="button" class="btn btn-danger btn-small vbf-admin-user-delete" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                }
                 list.appendChild(tr);
             });
         } catch (err) { console.error(err); }

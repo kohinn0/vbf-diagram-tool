@@ -18,7 +18,7 @@
         </a>
         <div class="nav-tabs inline-flex min-w-0 max-w-full items-center gap-1 overflow-x-auto">
             <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">Irányítópult</button>
-            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">Cégadmin</button>
+            <button type="button" class="nav-tab is-hidden shrink-0" data-target="tab-admin" id="navAdminShop">Cégadmin</button>
         </div>
         <div class="user-controls flex w-full min-w-0 flex-wrap items-center justify-start gap-2 border-t border-[var(--border-color)] pt-2 pl-0 md:ml-auto md:w-auto md:flex-nowrap md:justify-end md:border-t-0 md:border-l md:border-[var(--border-color)] md:pt-0 md:pl-4">
             <button type="button" class="nav-feedback-icon !m-0 shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] border border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,white_8%,transparent)] hover:text-[var(--text-main)]" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">
@@ -56,8 +56,8 @@
         </div>
         <div id="tab-admin" class="tab-pane">
             <div class="form-container panel-glass vbf-admin vbf-shop-admin-wrap">
-                <h2 class="vbf-admin-page-title">Cégadminisztráció</h2>
-                <p class="vbf-admin-lead">Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.</p>
+                <h2 class="vbf-admin-page-title" id="vbfShopAdminPageTitle">Cégadminisztráció</h2>
+                <p class="vbf-admin-lead" id="vbfShopAdminPageLead">Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.</p>
 
                 <div id="adminPlansSection" class="vbf-admin-super-section is-hidden">
                     <h3 class="vbf-admin-section-title">Előfizetési csomagok</h3>

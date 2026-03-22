@@ -493,12 +493,14 @@ def admin_update_user(
     if not db_user:
         raise HTTPException(status_code=404, detail="Felhasználó nem található.")
 
-    # Céges vezető nem adhat SUPER_ADMIN/ADMIN szerepkört, és nem változtathat company_id-t
+    # Céges vezető nem adhat SUPER_ADMIN/ADMIN szerepkört, nem változtathat company_id-t,
+    # és nem módosíthat előfizetés-lejáratot (azt csak főadmin / fizetési folyamat).
     if not _is_super_admin(current_admin):
         update_data = user_update.model_dump(exclude_unset=True)
         if update_data.get("role") in ("SUPER_ADMIN", "ADMIN"):
             raise HTTPException(status_code=403, detail="Nincs jogosultságod ehhez a szerepkörhöz.")
         update_data.pop("company_id", None)
+        update_data.pop("subscription_expires", None)
     else:
         update_data = user_update.model_dump(exclude_unset=True)
 
