@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+    // Relatív asset útvonalak: aldomain, proxy, helyi fájl is működik (/assets 404 nélkül)
+    base: './',
     plugins: [tailwindcss()],
     build: {
         rollupOptions: {

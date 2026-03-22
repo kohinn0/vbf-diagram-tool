@@ -59,6 +59,8 @@ A projekt teljes egészében, minden függőségével (PDF motorok, adatbázis) 
    ```
    A `--build` újraépíti a frontend és backend image-eket a legfrissebb kódból, majd újraindítja a konténereket. Az adatbázis (SQLite a `vbf_data` volume-on) megmarad. Ha csak a konténereket akarod újraindítani build nélkül: `docker-compose up -d`.
 
+   **Fontos:** a frontend konténer a **`npm run build`** kimenetét (`frontend/dist/`) szolgálja ki. Ha a főoldal „nyers”, stílus nélküli HTML-ként jelenik meg, gyakran az a ok, hogy forrás `index.html` került nginx alá build nélkül, vagy lejárat / hiányzó `assets/` mappa. Mindig **`docker-compose up -d --build`** a frontend változás után. Kézi kiszolgáláshoz: `cd frontend && npm run build`, majd a **`dist/`** teljes tartalmát tedd a webszerver gyökerébe.
+
 *Alapértelmezett első belépés: Készíts egy felhasználót, az legelső regisztráló automatikusan ADMIN jogot kap az egész alkalmazás felett!*
 
 ## 📁 Projekt struktúra (Nagyvonalakban)
