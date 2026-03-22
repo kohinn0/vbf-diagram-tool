@@ -176,6 +176,7 @@ def _privacy_html() -> str:
     <h2>8. Adatbiztonság és adatvédelmi incidens</h2>
     <p>Adatait megfelelő technikai és szervezési intézkedésekkel védjük:</p>
     <ul>
+        <li><strong>Az adatokat titkosítva tároljuk</strong> – titkosítás nyugalmi állapotban (adatbázis szinten)</li>
         <li><strong>SSL titkosítás</strong> minden adatátvitelnél (HTTPS)</li>
         <li><strong>Jelszavak hash-elve</strong> tárolva (bcrypt), erős jelszókövetelmény</li>
         <li><strong>Hozzáférés korlátozása</strong> – need-to-know elv, szerepkör alapú jogosultságok</li>
