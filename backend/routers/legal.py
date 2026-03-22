@@ -466,7 +466,7 @@ def contact_submit(body: ContactRequest):
     company = (body.company or "").strip()[:200] if body.company else ""
     message = (body.message or "").strip()[:2000]
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Érvényes email cím szükséges.")
+        raise HTTPException(status_code=400, detail="Érvényes e-mail cím szükséges.")
     to_email = _imprint_email()
     if not to_email:
         logger.warning("Kapcsolat űrlap: nincs ADMIN_EMAIL/SMTP_USER, üzenet nem küldhető.")
@@ -492,5 +492,5 @@ def contact_submit(body: ContactRequest):
             server.send_message(msg)
     except Exception as e:
         logger.exception("Kapcsolat űrlap email küldés: %s", e)
-        raise HTTPException(status_code=503, detail="Az üzenet küldése pillanatnyilag nem sikerült. Kérjük próbáld később vagy írj közvetlenül az email címeddel.")
+        raise HTTPException(status_code=503, detail="Az üzenet küldése pillanatnyilag nem sikerült. Próbáld később, vagy írj közvetlenül az e-mail címeddel.")
     return {"message": "Üzenet elküldve. Hamarosan válaszolunk."}

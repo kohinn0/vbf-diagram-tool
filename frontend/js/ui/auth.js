@@ -30,7 +30,7 @@ export function initAuth() {
         } else {
             pl.style.display = 'block';
             pr.style.display = 'none';
-            if (titleEl) titleEl.textContent = 'Belépés';
+            if (titleEl) titleEl.textContent = 'Bejelentkezés';
         }
     }
 
@@ -296,13 +296,13 @@ export function initAuth() {
             });
             if (res.ok) {
                 window.currentUserData = await res.json();
-                if (window.showToast) window.showToast('Email mentve.', 'success');
+                if (window.showToast) window.showToast('E-mail mentve.', 'success');
             } else {
                 var data = await res.json().catch(function () { return {}; });
-                if (window.showToast) window.showToast(data.detail || 'Hiba', 'error');
+                if (window.showToast) window.showToast(data.detail || 'Hiba történt.', 'error');
             }
         } catch (err) {
-            if (window.showToast) window.showToast('Hiba', 'error');
+            if (window.showToast) window.showToast('Hiba történt.', 'error');
         }
     });
     document.getElementById('btnProfileChangePassword')?.addEventListener('click', () => {
@@ -483,8 +483,8 @@ export function initAuth() {
         linkDeleteAccount.addEventListener('click', (e) => {
             e.preventDefault();
             if (!window.currentToken) return;
-            const msg = 'Fiók törlése előtt érdemes letölteni az adataidat (jegyzőkönyvek, fényképek).\n\nSzeretnéd most letölteni a teljes adatcsomagot (ZIP)?';
-            const choice = confirm(msg + '\n\n[OK] = Letöltöm a ZIP-et, majd kérdezünk a törlésre\n[Mégse] = Csak a törlésre kérdezünk (nem töltesz le most)');
+            const msg = 'Fiók törlése előtt érdemes letölteni az adataidat (jegyzőkönyvek, fényképek).\n\nLetöltöd most a teljes adatcsomagot (ZIP)? Ha nem, közvetlenül a törlés megerősítésére ugrunk.';
+            const choice = confirm(msg);
             if (choice) {
                 const url = `${window.API_BASE_URL}/api/users/me/data-export-zip`;
                 fetch(url, { headers: { 'Authorization': `Bearer ${window.currentToken}` } })
@@ -500,8 +500,8 @@ export function initAuth() {
                     })
                     .catch(() => {});
             }
-            if (!confirm('Biztosan törölni szeretnéd a fiókodat? A jegyzőkönyveid és minden adatod végleg törlődik. Ez a lépés nem vonható vissza.')) return;
-            if (!confirm('Utolsó kérdés: tényleg töröljük a fiókot?')) return;
+            if (!confirm('Biztosan törlöd a fiókodat? A jegyzőkönyvek és minden adat véglegesen törlődnek; ez nem vonható vissza.')) return;
+            if (!confirm('Utolsó megerősítés: véglegesen töröljük a fiókot?')) return;
             fetch(`${window.API_BASE_URL}/api/users/me`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
@@ -544,7 +544,7 @@ export function initAuth() {
             const password = document.getElementById('loginPass').value;
 
             if (!username || !password) {
-                if (loginError) loginError.innerText = 'Kérlek töltsd ki mindkét mezőt!';
+                if (loginError) loginError.innerText = 'Add meg a felhasználónevet és a jelszót.';
                 return;
             }
 
@@ -568,7 +568,7 @@ export function initAuth() {
     }
 
     window.deleteMyAccount = async function () {
-        if (!confirm('FIGYELEM! Ezzel minden adatod és jegyzőkönyved VÉGLEG törlődik. Nincs visszaút. Folytatod?')) return;
+        if (!confirm('Minden adatod és jegyzőkönyved véglegesen törlődik. Nincs visszaút. Folytatod?')) return;
         try {
             const res = await fetch(`${window.API_BASE_URL}/api/users/me`, {
                 method: 'DELETE',
@@ -615,8 +615,8 @@ export function initAuth() {
             .then(r => r.json())
             .then(data => {
                 if (data && data.paid) {
-                    if (window.showToast) window.showToast('Sikeres vásárlás! Belépési adataidat emailben küldtük.', 'success');
-                    else if (typeof alert === 'function') alert('Sikeres vásárlás! Belépési adataidat emailben küldtük.');
+                    if (window.showToast) window.showToast('Sikeres vásárlás! A belépési adatokat e-mailben küldtük.', 'success');
+                    else if (typeof alert === 'function') alert('Sikeres vásárlás! A belépési adatokat e-mailben küldtük.');
                 }
                 history.replaceState({}, '', window.location.pathname);
             })

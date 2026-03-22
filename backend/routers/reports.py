@@ -61,7 +61,7 @@ def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_d
             if report_count >= limit:
                 raise HTTPException(
                     status_code=403,
-                    detail=f"Elérted a havi jegyzőkönyv limitet ({limit} db). Frissíts előfizetést az Admin felületen.",
+                    detail=f"Elérted a havi jegyzőkönyv limitet ({limit} db). Frissíts előfizetést a cégadmin felületen.",
                 )
     elif getattr(current_user, "report_limit", None) is not None and current_user.report_limit > -1:
         report_count = db.query(database.Report).filter(
@@ -81,15 +81,15 @@ def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_d
 def get_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     report = db.query(database.Report).filter(database.Report.id == report_id).first()
     if report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     if current_user.role in ("SUPER_ADMIN", "ADMIN"):
         pass
     elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
         if not owner or owner.company_id != current_user.company_id:
-            raise HTTPException(status_code=404, detail="Report not found")
+            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     elif report.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     return report
 
 def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data: dict, db: Session):
@@ -196,7 +196,7 @@ def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data:
 def update_report(report_id: int, updated_report: schemas.ReportUpdate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
     if db_report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     
     if db_report.status == "FINAL":
         raise HTTPException(status_code=400, detail="Ez a jegyzőkönyv már le van zárva, nem módosítható!")
@@ -222,7 +222,7 @@ def update_report(report_id: int, updated_report: schemas.ReportUpdate, db: Sess
 def finalize_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
     if db_report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     
     db_report.status = "FINAL"
     db_report.finalized_at = datetime.utcnow()
@@ -237,7 +237,7 @@ import generator
 def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     report = _report_access(db, report_id, current_user)
     if report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     if report.status == "FINAL":
         raise HTTPException(status_code=403, detail="A véglegesített jegyzőkönyv csak PDF formátumban exportálható. Word (szerkeszthető piszkozat) csak DRAFT státuszú dokumentumoknál érhető el.")
 
@@ -262,7 +262,7 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
 def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     report = _report_access(db, report_id, current_user)
     if report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
     share_url = None
     if report.status == "FINAL":
@@ -302,7 +302,7 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
 def delete_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = db.query(database.Report).filter(database.Report.id == report_id, database.Report.owner_id == current_user.id).first()
     if db_report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     db.delete(db_report)
     db.commit()
     return {"message": "Report successfully deleted"}
@@ -329,7 +329,7 @@ def clone_report(report_id: int, db: Session = Depends(auth.get_db), current_use
     """Meglévő jegyzőkönyvből másolat készítése (DRAFT státuszban)."""
     source = _report_access(db, report_id, current_user)
     if not source:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
     # Havi limit ellenőrzés
     current_date = datetime.utcnow()
@@ -407,7 +407,7 @@ def create_report_share(report_id: int, expires_days: int = 30, db: Session = De
     """Megosztási link létrehozása – read-only hozzáférés a jegyzőkönyvhöz."""
     report = _report_access(db, report_id, current_user)
     if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
 
     if report.status != "FINAL":
         raise HTTPException(status_code=400, detail="Csak véglegesített jegyzőkönyv osztható meg.")
@@ -432,7 +432,7 @@ def revoke_report_share(report_id: int, db: Session = Depends(auth.get_db), curr
     """Megosztási link visszavonása."""
     report = _report_access(db, report_id, current_user)
     if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     db.query(database.ReportShareToken).filter(database.ReportShareToken.report_id == report_id).delete()
     db.commit()
     return {"message": "Megosztási link visszavonva."}
@@ -536,15 +536,15 @@ def get_public_report(token: str, format: str = "json", db: Session = Depends(au
 def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = db.query(database.Report).filter(database.Report.id == report_id).first()
     if not db_report:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     if current_user.role in ("SUPER_ADMIN", "ADMIN"):
         pass
     elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         owner = db.query(database.User).filter(database.User.id == db_report.owner_id).first()
         if not owner or owner.company_id != current_user.company_id:
-            raise HTTPException(status_code=404, detail="Report not found")
+            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     elif db_report.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
         
     # DRAFT → DOCX, FINAL → PDF (Word csak piszkozatként)
     if db_report.status == "FINAL":
@@ -586,7 +586,7 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
                 server.send_message(msg)
             return {"message": f"Email sikeresen elküldve a következő címre: {email_data.to_email}!"}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Hiba az email küldésekor: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Hiba az e-mail küldésekor: {str(e)}")
     else:
         # Mock mode if no SMTP is set
         print(f"--- MOCK EMAIL SEndING ---")

@@ -142,7 +142,7 @@ def refund_payment(
         pi = session.payment_intent
         payment_intent_id = pi if isinstance(pi, str) else (getattr(pi, "id", None) if pi else None)
         if not payment_intent_id:
-            raise HTTPException(status_code=400, detail="Nincs payment_intent a sessionben.")
+            raise HTTPException(status_code=400, detail="Nincs bankkártyás tranzakció-azonosító (payment_intent) a Stripe munkamenetben.")
         stripe.Refund.create(payment_intent=payment_intent_id)
     except stripe.error.InvalidRequestError as e:
         raise HTTPException(status_code=400, detail=f"Stripe visszatérítés sikertelen: {str(e)}")
@@ -214,7 +214,7 @@ def generate_dijbekero_pdf_endpoint(
                 sorszam=sorszam,
             )
         except Exception as e:
-            raise HTTPException(status_code=503, detail=f"Email küldés sikertelen: {str(e)}")
+            raise HTTPException(status_code=503, detail=f"E-mail küldés sikertelen: {str(e)}")
         from fastapi.responses import JSONResponse
         return JSONResponse({"message": f"Díjbekérő {sorszam} elküldve a következő címre: {send_to}", "sorszam": sorszam})
     from io import BytesIO
@@ -429,7 +429,7 @@ def admin_create_user(
     auth.validate_password_policy(user_req.password)
     db_user = auth.get_user(db, username=user_req.username)
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Ez a felhasználónév már foglalt.")
 
     role = role.upper()
     company = None
@@ -491,7 +491,7 @@ def admin_update_user(
 ):
     db_user = _admin_user_scope_query(db, current_admin).filter(database.User.id == user_id).first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Felhasználó nem található.")
 
     # Céges vezető nem adhat SUPER_ADMIN/ADMIN szerepkört, és nem változtathat company_id-t
     if not _is_super_admin(current_admin):
@@ -518,7 +518,7 @@ def admin_delete_user(
 ):
     db_user = _admin_user_scope_query(db, current_admin).filter(database.User.id == user_id).first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Felhasználó nem található.")
 
     db_user.deleted_at = datetime.utcnow()
     db_user.is_active = False

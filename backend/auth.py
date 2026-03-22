@@ -72,7 +72,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="A bejelentkezés lejárt vagy érvénytelen. Jelentkezz be újra.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -92,7 +92,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         if datetime.utcnow() > user.subscription_expires:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Az előfizetésed lejárt. Kérjük frissítsd a hozzáférésedet!"
+                detail="Az előfizetésed lejárt. Frissítsd a hozzáférésedet!"
             )
             
     return user

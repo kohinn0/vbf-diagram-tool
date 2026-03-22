@@ -124,7 +124,7 @@ def update_job(job_id: int, job_update: schemas.JobUpdate, db: Session = Depends
     """Admin/céges vezető updates job details."""
     db_job = _admin_job_scope(db, current_admin, job_id)
     if not db_job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="A feladat nem található.")
     
     update_data = job_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -139,7 +139,7 @@ def delete_job(job_id: int, db: Session = Depends(auth.get_db), current_admin: d
     """Admin/céges vezető deletes a job."""
     db_job = _admin_job_scope(db, current_admin, job_id)
     if not db_job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="A feladat nem található.")
     db.delete(db_job)
     db.commit()
     return {"message": "Job deleted"}
@@ -149,7 +149,7 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     """Tech updates the status of their assigned job."""
     db_job = db.query(database.Job).filter(database.Job.id == job_id).first()
     if not db_job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="A feladat nem található.")
     
     # Check permissions: saját feladat, vagy admin/céges vezető a cég feladatához
     if current_user.role in ("SUPER_ADMIN", "ADMIN"):
@@ -157,9 +157,9 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         assignee = db.query(database.User).filter(database.User.id == db_job.assigned_to_id).first()
         if not assignee or assignee.company_id != current_user.company_id:
-            raise HTTPException(status_code=403, detail="Not authorized to update this job")
+            raise HTTPException(status_code=403, detail="Nincs jogosultságod ehhez a feladathoz.")
     elif db_job.assigned_to_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this job")
+        raise HTTPException(status_code=403, detail="Nincs jogosultságod ehhez a feladathoz.")
         
     db_job.status = status
     db.commit()

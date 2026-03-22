@@ -291,16 +291,16 @@ export function initSiteTree() {
 
             const header = document.createElement('div');
             header.className =
-                'flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-4 py-3 sm:px-5';
+                'flex flex-col gap-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:px-5 sm:py-3';
             header.innerHTML = `
-                <h3 class="m-0 flex items-center gap-2 text-[0.92rem] font-semibold text-[var(--text-main)] sm:text-base">
-                    <svg class="text-[var(--accent)]" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="m-0 flex min-w-0 items-center gap-2 text-[0.9rem] font-semibold text-[var(--text-main)] sm:text-base">
+                    <svg class="shrink-0 text-[var(--accent)]" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                     Helyszínfa
                 </h3>
-                <button type="button" class="btn btn-primary btn-small !m-0 shrink-0 !min-h-9 !px-3 !py-1 !text-[0.74rem] sm:!text-[0.8rem]" data-vbf-st-add-root title="Új épület hozzáadása">+ Épület</button>
+                <button type="button" class="btn btn-primary btn-small !m-0 w-full shrink-0 !min-h-9 !px-3 !py-1.5 !text-[0.78rem] sm:w-auto sm:!py-1 sm:!text-[0.8rem]" data-vbf-st-add-root title="Új épület hozzáadása">+ Épület</button>
             `;
             container.appendChild(header);
 
@@ -314,7 +314,7 @@ export function initSiteTree() {
                 container.appendChild(empty);
             } else {
                 const tree = document.createElement('div');
-                tree.className = 'max-h-[250px] overflow-y-auto overflow-x-hidden py-2 md:max-h-[28rem]';
+                tree.className = 'max-h-[min(50vh,18rem)] overflow-y-auto overflow-x-hidden py-1.5 sm:max-h-[min(55vh,22rem)] md:max-h-[28rem]';
                 this._renderNodes(tree, this.data, 0);
                 container.appendChild(tree);
             }
@@ -342,26 +342,34 @@ export function initSiteTree() {
 
                 const row = document.createElement('div');
                 row.className = [
-                    'group flex min-h-12 min-w-0 w-full cursor-pointer items-center gap-1 border-l-[3px] border-transparent py-2 pr-2 transition-colors sm:min-h-[2.4rem]',
+                    'group flex min-h-11 min-w-0 w-full flex-wrap items-start gap-x-1 gap-y-1.5 border-l-[3px] border-transparent py-1.5 pr-1 transition-colors sm:min-h-[2.35rem] sm:items-center sm:gap-y-1 sm:py-2 sm:pr-2',
                     'hover:bg-[color-mix(in_srgb,white_4%,transparent)]',
                     isActive ? 'border-l-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)]' : ''
                 ].filter(Boolean).join(' ');
-                row.style.paddingInlineStart = `${0.5 + depth * 1.25}rem`;
+                row.style.paddingInlineStart = `${0.45 + depth * 1.05}rem`;
 
                 const toggle = node.children !== undefined
-                    ? `<span class="flex h-4 w-4 shrink-0 select-none items-center justify-center text-[0.65rem] text-[var(--text-muted)] transition-transform hover:text-[var(--text-main)] ${node.collapsed ? '-rotate-90' : ''}" data-action="toggle" data-id="${node.id}" role="button" tabindex="0">
+                    ? `<span class="flex h-7 w-4 shrink-0 select-none items-center justify-center text-[0.65rem] text-[var(--text-muted)] transition-transform hover:text-[var(--text-main)] sm:h-4 ${node.collapsed ? '-rotate-90' : ''}" data-action="toggle" data-id="${node.id}" role="button" tabindex="0">
                         ${hasChildren ? (node.collapsed ? '▶' : '▼') : '·'}
                        </span>`
-                    : '<span class="inline-block h-4 w-4 shrink-0"></span>';
+                    : '<span class="inline-block h-7 w-4 shrink-0 sm:h-4"></span>';
+
+                const typeLabel = this._typeName(node.type);
+                const panelInput = node.type === 'panel'
+                    ? `<input data-vbf-st-device class="mt-1 w-full max-w-[6.5rem] rounded border border-[color-mix(in_srgb,var(--text-main)_15%,transparent)] bg-[color-mix(in_srgb,black_30%,transparent)] px-1.5 py-1 text-center text-[0.74rem] font-semibold text-[var(--accent)] focus:border-[var(--primary)] focus:outline-none sm:mt-0 sm:max-w-[4.5rem] sm:py-0.5 sm:text-[0.78rem]" data-id="${node.id}" value="${sq(node.device || '')}" placeholder="B16" title="Kikapcsoló szerv" />`
+                    : '';
 
                 row.innerHTML = `
                     ${toggle}
-                    <span class="shrink-0 text-base leading-none">${this._typeIcon(node.type)}</span>
-                    <span class="min-w-0 flex-1 cursor-pointer truncate text-[0.83rem] text-[var(--text-main)] transition-colors hover:text-[var(--primary)] sm:text-[0.88rem] ${isActive ? 'font-semibold text-[var(--primary)]' : ''}" data-action="select" data-id="${node.id}" title="Kattints a kiválasztáshoz">${sh(node.name)}</span>
-                    ${node.type === 'panel' ? `<input data-vbf-st-device class="w-[3.6rem] shrink-0 rounded border border-[color-mix(in_srgb,var(--text-main)_15%,transparent)] bg-[color-mix(in_srgb,black_30%,transparent)] px-1 py-0.5 text-center text-[0.75rem] font-semibold text-[var(--accent)] focus:border-[var(--primary)] focus:outline-none sm:w-16 sm:text-[0.78rem]" data-id="${node.id}" value="${sq(node.device || '')}" placeholder="B16" title="Alapértelmezett kikapcsoló" />` : ''}
-                    <span class="hidden shrink-0 rounded px-1.5 py-0.5 text-[0.6rem] uppercase tracking-wide text-[var(--text-muted)] opacity-70 sm:inline bg-[color-mix(in_srgb,white_5%,transparent)]">${this._typeName(node.type)}</span>
-    
-                    <div class="flex shrink-0 gap-0.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+                    <span class="shrink-0 pt-0.5 text-base leading-none sm:pt-0">${this._typeIcon(node.type)}</span>
+                    <div class="min-w-0 flex-[1_1_10rem] max-w-full">
+                        <div class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                            <span class="min-w-0 cursor-pointer break-words text-[0.8rem] leading-snug text-[var(--text-main)] transition-colors hover:text-[var(--primary)] sm:text-[0.86rem] ${isActive ? 'font-semibold text-[var(--primary)]' : ''}" data-action="select" data-id="${node.id}" title="Kattints a kiválasztáshoz">${sh(node.name)}</span>
+                            <span class="shrink-0 rounded-md bg-[color-mix(in_srgb,var(--text-main)_10%,transparent)] px-1.5 py-px text-[0.58rem] font-semibold uppercase tracking-wide text-[var(--text-muted)]">${typeLabel}</span>
+                        </div>
+                        ${panelInput}
+                    </div>
+                    <div class="flex basis-full shrink-0 flex-wrap justify-end gap-0.5 pl-5 sm:basis-auto sm:pl-0 sm:opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                         ${node.type === 'circuit' ? `
                             <div class="group/me relative shrink-0">
                                 <button type="button" class="flex h-[34px] w-8 items-center justify-center rounded border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-transparent text-[0.65rem] font-bold leading-none text-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] sm:h-[26px] sm:text-[0.7rem]" title="Mérés Hozzáadása">+M</button>

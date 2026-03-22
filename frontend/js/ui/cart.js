@@ -72,7 +72,7 @@ function syncCheckoutStepForSession() {
             loggedNote.style.display = 'block';
             const u = window.currentUserData;
             const company = (u && u.company_name) ? u.company_name : 'céged';
-            loggedNote.textContent = `Bejelentkezve: a megrendelés a jelenlegi fiókodhoz és a(z) „${company}” céghez kapcsolódik. A számlázási adatokat lent add meg.`;
+            loggedNote.textContent = `Bejelentkezve vagy: a megrendelés a jelenlegi fiókodhoz és a(z) „${company}” céghez kapcsolódik. Az utalásos számlához lent add meg a számlázási adatokat.`;
         }
         prefillTransferFromUser();
         prefillStripeFromUser();
@@ -247,7 +247,7 @@ export function initCart() {
             if (!email || !name) {
                 if (statusEl) {
                     statusEl.style.color = 'var(--danger)';
-                    statusEl.textContent = 'Email és név kötelező.';
+                    statusEl.textContent = 'E-mail és név kötelező.';
                 }
                 return;
             }
@@ -259,7 +259,7 @@ export function initCart() {
                 return;
             }
             if (statusEl) {
-                statusEl.textContent = 'Küldés...';
+                statusEl.textContent = 'Küldés…';
                 statusEl.style.color = '';
             }
             try {
@@ -338,7 +338,7 @@ async function loadPlansForAppCart() {
                 items: [
                     {
                         plan_type: 'monthly',
-                        label: `${monthlyPlan.display_name || 'Havi'} licenc`,
+                        label: `${monthlyPlan.display_name || 'Havi'} előfizetés`,
                         price: parseInt(monthlyPlan.price_monthly, 10)
                     }
                 ]
@@ -357,7 +357,7 @@ async function loadPlansForAppCart() {
                 items: [
                     {
                         plan_type: 'yearly',
-                        label: `${yearlyPlan.display_name || 'Éves'} licenc`,
+                        label: `${yearlyPlan.display_name || 'Éves'} előfizetés`,
                         price: parseInt(yearlyPlan.price_yearly, 10)
                     }
                 ]

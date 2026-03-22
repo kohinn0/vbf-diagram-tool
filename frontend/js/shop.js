@@ -1,5 +1,5 @@
 /**
- * Cég admin / Webshop réteg: Dashboard + Admin. Külön HTML (shop.html).
+ * Cég admin: Irányítópult + Cégadmin. Külön HTML (shop.html).
  */
 import '../css/tokens.css';
 import '../css/tw.css';
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = initAuth();
     window.updateAuthUI = auth.updateAuthUI;
 
-    // Dashboard tartalom betöltése (shop első tabja aktív)
+    // Irányítópult tartalom betöltése (shop első lap aktív)
     if (window.VBF && window.VBF.dashboard && typeof window.VBF.dashboard.init === 'function') {
         setTimeout(() => window.VBF.dashboard.init(), 500);
     }

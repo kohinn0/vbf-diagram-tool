@@ -26,7 +26,7 @@ export function initCompleteness() {
         checks.push({ label: 'Felülvizsgáló neve', req: true, ok: !!inspName, hint: 'Jegyzőkönyv Adatok fül → Felülvizsgáló', fieldId: 'inspectorName' });
 
         const inspLic = document.getElementById('inspectorLicense')?.value?.trim();
-        checks.push({ label: 'Vizsgabizonyítvány szám', req: false, ok: !!inspLic, hint: 'Regisztrációs szám', fieldId: 'inspectorLicense' });
+        checks.push({ label: 'Vizsgabizonyítvány száma', req: false, ok: !!inspLic, hint: 'Regisztrációs / okmányszám', fieldId: 'inspectorLicense' });
 
         // 3. Műszer
         const instrType = document.getElementById('instrumentType')?.value?.trim();
@@ -62,10 +62,28 @@ export function initCompleteness() {
         checks.push({ label: '📏 Rpe mérések (védővezető)', req: false, ok: rpeRows > 0, hint: `${rpeRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rpe' });
 
         const isoRows = document.querySelectorAll('#table-insulation tbody tr').length;
-        checks.push({ label: '⚡ Riso mérések (szigetelés)', req: isVBF, ok: isoRows > 0, hint: isVBF ? (isoRows > 0 ? `${isoRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${isoRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-insulation' });
+        checks.push({
+            label: '⚡ Riso mérések (szigetelés)',
+            req: isVBF,
+            ok: isoRows > 0,
+            hint: isVBF
+                ? (isoRows > 0 ? `${isoRows} sor` : 'Adj meg legalább egy sort a Mérési adatok fülön (táblázat: szigetelés).')
+                : `${isoRows} sor`,
+            tabTarget: 'tab-measurements',
+            sectionSelector: '#table-insulation'
+        });
 
         const loopRows = document.querySelectorAll('#table-loop tbody tr').length;
-        checks.push({ label: '🔄 Zs mérések (hurok)', req: isVBF, ok: loopRows > 0, hint: isVBF ? (loopRows > 0 ? `${loopRows} db sor` : 'KÖTELEZŐ! Menj a Mérési Adatok fülre!') : `${loopRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-loop' });
+        checks.push({
+            label: '🔄 Zs mérések (hurok)',
+            req: isVBF,
+            ok: loopRows > 0,
+            hint: isVBF
+                ? (loopRows > 0 ? `${loopRows} sor` : 'Adj meg legalább egy sort a Mérési adatok fülön (táblázat: hurokellenállás).')
+                : `${loopRows} sor`,
+            tabTarget: 'tab-measurements',
+            sectionSelector: '#table-loop'
+        });
 
         const rcdRows = document.querySelectorAll('#table-rcd tbody tr').length;
         checks.push({ label: '🛡️ RCD/ÁVK mérések', req: false, ok: rcdRows > 0, hint: `${rcdRows} db sor`, tabTarget: 'tab-measurements', sectionSelector: '#table-rcd' });
@@ -119,28 +137,43 @@ export function initCompleteness() {
             }
         }
 
+        const esc = (s) => String(s ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/"/g, '&quot;');
+
         let html = '';
         checks.forEach(c => {
             const icon = c.ok ? '✅' : (c.req ? '❌' : '⬜');
-            const color = c.ok ? '#10b981' : (c.req ? '#ef4444' : 'var(--text-secondary)');
-            const reqBadge = c.req ? '<span style="color:#ef4444; font-weight:700; font-size:0.7rem; margin-left:4px;">KÖTELEZŐ</span>' : '';
+            const rowBorder = c.ok ? 'border-[color-mix(in_srgb,#10b981_25%,transparent)]' : (c.req ? 'border-[color-mix(in_srgb,#ef4444_22%,transparent)]' : 'border-[color-mix(in_srgb,var(--border-color)_80%,transparent)]');
+            const reqBadge = c.req
+                ? '<span class="shrink-0 rounded-md bg-[color-mix(in_srgb,#ef4444_18%,transparent)] px-1.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-[#f87171]">Kötelező</span>'
+                : '';
             const fieldId = c.fieldId || '';
             const tabTarget = c.tabTarget || '';
             const sectionSelector = c.sectionSelector || '';
-            let clickAttr = '';
+            let clickClass = '';
             let title = '';
             if (fieldId) {
-                clickAttr = `onclick="navigateToField('${fieldId}')" style="cursor:pointer;"`;
-                title = 'Kattints ide → Odanavigálok!';
+                clickClass = `onclick="navigateToField('${fieldId}')"`;
+                title = 'Kattints: ugrás a mezőhöz';
             } else if (tabTarget && sectionSelector) {
-                clickAttr = `onclick="navigateToSection('${tabTarget}','${sectionSelector}')" style="cursor:pointer;"`;
-                title = 'Kattints → Mérési Adatok fül + megfelelő táblázat';
+                clickClass = `onclick="navigateToSection('${tabTarget}','${sectionSelector}')"`;
+                title = 'Kattints: Mérési adatok fül és táblázat';
             }
-            html += `<div ${clickAttr} style="display:flex; align-items:center; gap:6px; color:${color}; padding: 3px 0; ${fieldId || tabTarget ? 'cursor:pointer;' : ''} border-radius:4px;" title="${title}">
-            <span>${icon}</span>
-            <span style="flex:1; color: var(--text-primary);">${c.label}${reqBadge}</span>
-            <span style="font-size:0.75rem; color: var(--text-secondary); max-width: 140px; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.hint}</span>
-        </div>`;
+            const cursor = fieldId || tabTarget ? 'cursor-pointer' : '';
+            html += `<div ${clickClass} class="vbf-checkitem mb-1.5 rounded-lg border ${rowBorder} bg-[color-mix(in_srgb,var(--bg-base)_40%,transparent)] px-2.5 py-2 transition-colors last:mb-0 hover:bg-[color-mix(in_srgb,white_6%,transparent)] ${cursor}" title="${esc(title)}">
+                <div class="flex gap-2.5">
+                    <span class="shrink-0 pt-0.5 text-[1rem] leading-none" aria-hidden="true">${icon}</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <span class="text-[0.84rem] font-medium leading-snug text-[var(--text-main)]">${esc(c.label)}</span>
+                            ${reqBadge}
+                        </div>
+                        <p class="mt-1 break-words text-[0.78rem] leading-relaxed text-[var(--text-muted)]">${esc(c.hint)}</p>
+                    </div>
+                </div>
+            </div>`;
         });
         items.innerHTML = html;
 

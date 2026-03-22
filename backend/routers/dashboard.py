@@ -288,7 +288,7 @@ async def send_inspection_reminder(
     # For now, send to the logged-in user (admin) as a test
     to_email = current_user.email or smtp_user
 
-    subject = f"⚡ Felülvizsgálat Emlékeztető — {site_address}"
+    subject = f"⚡ Felülvizsgálat értesítés — {site_address}"
     body = f"""Tisztelt {customer_name}!
 
 Ezúton értesítjük, hogy az alábbi ingatlanra vonatkozó időszakos érintésvédelmi 
@@ -326,9 +326,9 @@ Ez az email automatikusan lett generálva a VBF Készítő rendszerből.
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
-        return {"message": f"Emlékeztető email sikeresen elküldve ide: {to_email}"}
+        return {"message": f"Értesítés sikeresen elküldve ide: {to_email}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Email küldési hiba: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"E-mail küldési hiba: {str(e)}")
 
 
 # ═══════════════════════════════════════════════

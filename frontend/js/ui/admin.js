@@ -248,7 +248,7 @@ export function initAdmin() {
                 const expiry = u.subscription_expires ? new Date(u.subscription_expires).toISOString().split('T')[0] : '';
                 const safeEmail = (u.email || '').replace(/"/g, '&quot;');
                 const safeCompany = (u.company_name || '').replace(/</g, '&lt;');
-                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" style="width:150px;padding:0.2rem;" placeholder="Email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button class="btn btn-danger btn-small" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" style="width:150px;padding:0.2rem;" placeholder="E-mail"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button class="btn btn-danger btn-small" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
                 list.appendChild(tr);
             });
         } catch (err) { console.error(err); }
@@ -412,22 +412,22 @@ export function initAdmin() {
                 listEl.innerHTML = '<p style="color:var(--text-muted);">Nincs függő megrendelés.</p>';
                 return;
             }
-            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>Email</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Dátum</th><th></th></tr></thead><tbody></tbody></table>';
+            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Dátum</th><th></th></tr></thead><tbody></tbody></table>';
             const tbody = listEl.querySelector('tbody');
             orders.forEach(o => {
                 const tr = document.createElement('tr');
                 const created = o.created_at ? new Date(o.created_at).toLocaleDateString('hu-HU') : '';
-                tr.innerHTML = '<td>' + String(o.email).replace(/</g, '&lt;') + '</td><td>' + String(o.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (o.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (o.amount_huf || 0) + ' Ft</td><td>' + created + '</td><td><button type="button" class="btn btn-primary btn-small" data-order-id="' + o.id + '">Jóváhagyás</button></td>';
+                tr.innerHTML = '<td>' + String(o.email).replace(/</g, '&lt;') + '</td><td>' + String(o.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (o.plan_type === 'monthly' ? 'Havi előfizetés' : 'Éves előfizetés') + '</td><td>' + (o.amount_huf || 0) + ' Ft</td><td>' + created + '</td><td><button type="button" class="btn btn-primary btn-small" data-order-id="' + o.id + '">Megrendelés jóváhagyása</button></td>';
                 tr.querySelector('button').addEventListener('click', async () => {
                     const id = tr.querySelector('button').getAttribute('data-order-id');
-                    if (!id || !confirm('Utalás jóváhagyása: a vásárló megkapja a hozzáférési emailt. Folytatod?')) return;
+                    if (!id || !confirm('Utalás jóváhagyása: a vásárló megkapja a hozzáférési e-mailt. Folytatod?')) return;
                     try {
                         const r = await fetch(`${window.API_BASE_URL}/api/admin/pending-orders/${id}/mark-paid`, {
                             method: 'POST',
                             headers: { 'Authorization': `Bearer ${window.currentToken}` }
                         });
                         if (r.ok) {
-                            if (window.showToast) window.showToast('Hozzáférés aktiválva, email kiküldve.', 'success'); else alert('Kész.');
+                            if (window.showToast) window.showToast('Hozzáférés aktiválva, értesítő e-mail elküldve.', 'success'); else alert('Hozzáférés aktiválva.');
                             await window.fetchAdminPendingOrders();
                         } else {
                             const d = await r.json();
@@ -460,24 +460,24 @@ export function initAdmin() {
                 listEl.innerHTML = '<p style="color:var(--text-muted);">Még nincs rögzített vásárlás.</p>';
                 return;
             }
-            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>Dátum</th><th>Email</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Fizetés</th><th>Státusz</th><th></th></tr></thead><tbody></tbody></table>';
+            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>Dátum</th><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Fizetés</th><th>Státusz</th><th></th></tr></thead><tbody></tbody></table>';
             const tbody = listEl.querySelector('tbody');
             logs.forEach(log => {
                 const tr = document.createElement('tr');
                 const created = log.created_at ? new Date(log.created_at).toLocaleString('hu-HU') : '';
                 const method = log.payment_method === 'stripe' ? 'Kártya' : 'Utalás';
-                const status = log.status === 'refunded' ? 'Visszatérítve' : 'Részrehajtva';
+                const status = log.status === 'refunded' ? 'Visszatérítve' : 'Teljesítve';
                 const canRefund = log.payment_method === 'stripe' && log.status === 'completed';
                 let actionCell = '';
                 if (canRefund) {
                     actionCell = '<button type="button" class="btn btn-danger btn-small" data-log-id="' + log.id + '">Visszatérítés</button>';
                 }
-                tr.innerHTML = '<td>' + created + '</td><td>' + String(log.email).replace(/</g, '&lt;') + '</td><td>' + String(log.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (log.plan_type === 'monthly' ? 'Havi' : 'Éves') + '</td><td>' + (log.amount_huf || 0) + ' Ft</td><td>' + method + '</td><td>' + status + '</td><td>' + actionCell + '</td>';
+                tr.innerHTML = '<td>' + created + '</td><td>' + String(log.email).replace(/</g, '&lt;') + '</td><td>' + String(log.customer_name || '').replace(/</g, '&lt;') + '</td><td>' + (log.plan_type === 'monthly' ? 'Havi előfizetés' : 'Éves előfizetés') + '</td><td>' + (log.amount_huf || 0) + ' Ft</td><td>' + method + '</td><td>' + status + '</td><td>' + actionCell + '</td>';
                 const btn = tr.querySelector('button');
                 if (btn) {
                     btn.addEventListener('click', async () => {
                         const id = btn.getAttribute('data-log-id');
-                        if (!id || !confirm('Visszatérítés: a Stripe-ban refund történik és a hozzáférés visszavonásra kerül. Folytatod?')) return;
+                        if (!id || !confirm('Visszatérítés: a Stripe-ban visszatérítés történik, a hozzáférés visszavonásra kerül. Folytatod?')) return;
                         try {
                             const r = await fetch(`${window.API_BASE_URL}/api/admin/payment-logs/${id}/refund`, {
                                 method: 'POST',
@@ -572,7 +572,7 @@ export function initAdmin() {
         const email = document.getElementById('dijbekeroEmail')?.value?.trim();
         if (!email || !email.includes('@')) {
             const statusEl = document.getElementById('dijbekeroStatus');
-            if (statusEl) statusEl.textContent = 'Érvényes email címet adj meg.';
+            if (statusEl) statusEl.textContent = 'Érvényes e-mail címet adj meg.';
             return;
         }
         try { await dijbekeroFetch(email); } catch (e) {
@@ -673,7 +673,7 @@ export function initAdmin() {
     };
 
     window.deleteUser = async function (id) {
-        if (!confirm('Biztosan törölni szeretnéd ezt a felhasználót?')) return;
+        if (!confirm('Biztosan törlöd ezt a felhasználót?')) return;
         try {
             const res = await fetch(`${window.API_BASE_URL}/api/admin/users/${id}`, {
                 method: 'DELETE',

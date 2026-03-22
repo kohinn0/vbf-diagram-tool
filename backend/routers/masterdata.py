@@ -59,7 +59,7 @@ def delete_inspector(
         .first()
     )
     if not db_inspector:
-        raise HTTPException(status_code=404, detail="Inspector not found")
+        raise HTTPException(status_code=404, detail="Felülvizsgáló nem található.")
     db.delete(db_inspector)
     db.commit()
     return {"message": "Inspector deleted"}
@@ -111,7 +111,7 @@ def delete_customer(
         .first()
     )
     if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise HTTPException(status_code=404, detail="Ügyfél nem található.")
     db.delete(db_customer)
     db.commit()
     return {"message": "Customer deleted"}

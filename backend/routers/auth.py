@@ -236,7 +236,7 @@ def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestFor
         _audit(db, getattr(user, "id", None), "login_fail", f"username={username}", ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Hibás felhasználónév vagy jelszó.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     record_success(ip)
@@ -527,7 +527,7 @@ def bootstrap_admin(db: Session = Depends(auth.get_db)):
     import os
     if os.getenv("ENABLE_DEV_BOOTSTRAP_ADMIN") != "1":
         # Szándékosan 404-et adunk vissza, hogy ne derüljön ki az endpoint létezése
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="Nem található.")
     username = "admin"
     plain_password = "TesztJelszo123"
 

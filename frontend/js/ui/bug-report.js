@@ -1,6 +1,6 @@
-/** Béta verzió: mailto hibajelentés – URL és böngésző a levélben. */
+/** Béta verzió: mailto visszajelzés – URL és böngésző a levélben. */
 const BUG_REPORT_EMAIL = 'info@vbfpremium.hu';
-const BUG_REPORT_SUBJECT = '[VBF Premium – béta verzió] Hibajelentés';
+const BUG_REPORT_SUBJECT = '[VBF Premium – béta verzió] Visszajelzés';
 
 export function buildBugReportMailto() {
     const body = [

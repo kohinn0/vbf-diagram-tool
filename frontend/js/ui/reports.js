@@ -173,7 +173,7 @@ export function initReports() {
                 <div class="actions">
                     <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
                     <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
-                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: #10b981; color: white;">Email Küldése ✉️</button>
+                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: #10b981; color: white;">E-mail küldése ✉️</button>
                     <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
                 </div>
             `;
@@ -477,7 +477,7 @@ export function initReports() {
         }
 
         if (!silent && validation.warnings.length > 0) {
-            if (!confirm('⚠️ FIGYELMEZTETÉSEK:\n\n' + validation.warnings.join('\n\n') + '\n\nSzeretné folytatni a mentést a hiányosságok ellenére?')) return false;
+            if (!confirm('⚠️ Figyelmeztetések:\n\n' + validation.warnings.join('\n\n') + '\n\nFolytatod a mentést a hiányosságok ellenére?')) return false;
         }
 
         const autoQualification = autoDetectMEEQualification();
@@ -493,7 +493,7 @@ export function initReports() {
             };
             const autoName = qualNames[autoQualification] || autoQualification;
             const currentName = qualNames[currentResult] || currentResult;
-            if (confirm(`🔄 AUTOMATIKUS MINŐSÍTŐ IRAT JAVASLAT\n\nKiválasztott: ${currentName}\nJavasolt: ${autoName}\nSzeretné ÁTVÁLTANI?`)) {
+            if (confirm(`🔄 Automatikus minősítő irat javaslat\n\nKiválasztott: ${currentName}\nJavasolt: ${autoName}\nÁtváltasz a javaslatra?`)) {
                 document.getElementById('reportResult').value = autoQualification;
             }
         }
@@ -518,7 +518,7 @@ export function initReports() {
                 payload._endpoint = isUpdate ? `/api/reports/${window.currentSavedReportId}` : `/api/reports`;
                 offlineQueue.push(payload);
                 localStorage.setItem('vbf_offline_queue', JSON.stringify(offlineQueue));
-                if (!silent) window.showToast ? window.showToast('Kapcsolat megszakadt, mentve offline tárolóba.') : alert('Offilne mentve!');
+                if (!silent) window.showToast ? window.showToast('Kapcsolat megszakadt, mentve offline tárolóba.') : alert('Offline mentve!');
                 return true;
             }
 

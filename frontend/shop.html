@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0e1726">
-    <meta name="description" content="VBF Cég admin és Dashboard – Felhasználók, előfizetések, munkakiosztás.">
-    <title>VBF Cég admin | Dashboard & Admin</title>
+    <meta name="description" content="VBF Cég admin és Irányítópult – Felhasználók, előfizetések, munkakiosztás.">
+    <title>VBF Cég admin | Irányítópult és Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
@@ -13,11 +13,11 @@
     <nav class="main-nav panel-glass flex min-h-[3.25rem] w-full max-w-full flex-wrap items-center justify-between gap-3 border-b border-[var(--border-color)] px-[5%] py-3 backdrop-blur-md md:flex-nowrap md:gap-4">
         <a href="index.html" class="nav-brand inline-flex shrink-0 items-center gap-2 border-0 border-r-0 pr-2 text-[1.1rem] font-bold text-[var(--text-main)] no-underline transition-colors hover:text-[var(--primary)] md:border-r md:border-[var(--border-color)] md:pr-3" title="Főoldal">⚡ VBF Premium</a>
         <div class="nav-tabs inline-flex min-w-0 max-w-full items-center gap-1 overflow-x-auto">
-            <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">📊 Dashboard</button>
-            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">🔑 Admin</button>
+            <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">📊 Irányítópult</button>
+            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">🔑 Cégadmin</button>
         </div>
         <div class="user-controls flex w-full min-w-0 flex-wrap items-center justify-start gap-2 border-t border-[var(--border-color)] pt-2 pl-0 md:ml-auto md:w-auto md:flex-nowrap md:justify-end md:border-t-0 md:border-l md:border-[var(--border-color)] md:pt-0 md:pl-4">
-            <button type="button" class="btn btn-secondary btn-small btn-beta-bug !m-0 shrink-0 whitespace-nowrap" data-bug-report title="Hibajelentés e-mailben – béta verzió">🐛 Hiba</button>
+            <button type="button" class="btn btn-secondary btn-small btn-beta-bug !m-0 shrink-0 whitespace-nowrap" data-bug-report title="Visszajelzés e-mailben – béta verzió">📩 Visszajelzés</button>
             <a href="app.html" class="btn btn-outline btn-small !m-0 shrink-0 whitespace-nowrap">📝 Jegyzőkönyv alkalmazás</a>
             <a href="#" id="linkProfile" class="text-sm font-medium text-[var(--accent)] no-underline hover:underline"></a>
             <span id="userInfo" class="text-sm font-medium text-[var(--accent)]"></span>
@@ -27,20 +27,20 @@
                 <a href="#" id="linkDataExportZip" class="text-xs text-[var(--primary)] hover:underline">Teljes adatcsomag (ZIP)</a>
                 <a href="#" id="linkDeleteAccount" class="text-xs text-[var(--danger)] hover:text-[var(--danger-hover)]">Fiók törlése</a>
             </div>
-            <button type="button" class="btn btn-secondary btn-small !m-0 shrink-0" id="btnLoginNav">Belépés</button>
+            <button type="button" class="btn btn-secondary btn-small !m-0 shrink-0" id="btnLoginNav">Bejelentkezés</button>
         </div>
     </nav>
 
     <div class="app-content-wrapper">
         <div id="tab-dashboard" class="tab-pane active">
             <div class="form-container" style="max-width: 1200px; margin: 0 auto;" id="dashboardContainer">
-                <p style="color:var(--text-muted); text-align:center; padding: 3rem;">Jelentkezz be az admin felület megtekintéséhez.</p>
+                <p style="color:var(--text-muted); text-align:center; padding: 3rem;">Jelentkezz be cégvezetői, admin vagy főadmin jogosultsággal az Irányítópult és a cégadmin felület megtekintéséhez.</p>
             </div>
         </div>
         <div id="tab-admin" class="tab-pane">
             <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Adminisztrátori Felület</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók kezelése és előfizetések beállítása.</p>
+                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Cégadminisztráció</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.</p>
 
                 <div id="adminPlansSection" style="display: none; margin-bottom: 2rem;">
                     <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">💰 Előfizetési csomagok</h3>
@@ -62,7 +62,7 @@
                         <label>Max. felhasználó / cég (üres = korlátlan)</label>
                         <input type="number" id="adminPlanMaxUsers" min="0" placeholder="Pl. 10" style="width: 100%; margin-bottom: 10px;">
                         <label>Tartalom / hozzáférések (soronként egy elem)</label>
-                        <textarea id="adminPlanFeatures" rows="4" placeholder="PDF export&#10;Email küldés" style="width: 100%; resize: vertical; margin-bottom: 1rem;"></textarea>
+                        <textarea id="adminPlanFeatures" rows="4" placeholder="PDF export&#10;E-mail küldés" style="width: 100%; resize: vertical; margin-bottom: 1rem;"></textarea>
                         <div style="display: flex; gap: 10px; justify-content: flex-end;">
                             <button type="button" class="btn btn-secondary" id="adminPlanModalCancel">Mégse</button>
                             <button type="button" class="btn btn-primary" id="adminPlanModalSave">💾 Mentés</button>
@@ -80,7 +80,7 @@
                 </div>
                 <div id="adminDijbekeroSection" style="display: none; margin-bottom: 2rem;">
                     <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📄 Díjbekérő PDF</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">NAV-kötés nélküli fizetési felszólítás a céges adataiddal (Impresszum). Sorszám automatikus, közlemény a PDF-en.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Fizetési felszólítás PDF-ben, a cégadataid és az Impresszum alapján. Nem NAV-online számla; sorszám és közlemény automatikusan kerül a PDF-re.</p>
                     <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; max-width: 520px;">
                         <label>Sablon (gyors kitöltés)</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
@@ -99,11 +99,11 @@
                         <input type="text" id="dijbekeroVevoNev" placeholder="Vevő neve" style="width: 100%; margin-bottom: 10px;">
                         <label>Vevő címe (opcionális)</label>
                         <input type="text" id="dijbekeroVevoCim" placeholder="Cím" style="width: 100%; margin-bottom: 10px;">
-                        <label>Email címzett (ha küldés)</label>
+                        <label>E-mail címzett (küldéshez)</label>
                         <input type="email" id="dijbekeroEmail" placeholder="vevo@example.com" style="width: 100%; margin-bottom: 12px;">
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button type="button" class="btn btn-primary" id="btnDijbekeroPdf">📥 Letöltés</button>
-                            <button type="button" class="btn btn-secondary" id="btnDijbekeroEmail">📧 Küldés emailben</button>
+                            <button type="button" class="btn btn-secondary" id="btnDijbekeroEmail">📧 Küldés e-mailben</button>
                             <button type="button" class="btn btn-secondary" id="btnDijbekeroDuplikatum">📋 Duplikátum</button>
                         </div>
                         <p id="dijbekeroStatus" style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);"></p>
@@ -125,12 +125,12 @@
                 <table class="data-table" id="table-admin-users" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>ID</th><th>Felhasználónév</th><th>Email</th><th>Státusz</th><th>Jogosultság</th><th>Cég</th><th>Lejárat</th><th>Műveletek</th>
+                            <th>ID</th><th>Felhasználónév</th><th>E-mail</th><th>Státusz</th><th>Jogosultság</th><th>Cég</th><th>Előfizetés lejárata</th><th>Műveletek</th>
                         </tr>
                     </thead>
                     <tbody id="adminUserList"></tbody>
                 </table>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏢 Céges Adatok és Logó</h3>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏢 Cégadatok és arculat</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <label>Cégnév</label>
                     <input type="text" id="adminCompName" placeholder="Zöldfülű Vill Kft.">
@@ -140,9 +140,9 @@
                     <input type="text" id="adminCompAddress" placeholder="1111 Bp., Pelikán u. 2.">
                     <label style="margin-top: 10px;">Bankszámlaszám</label>
                     <input type="text" id="adminCompBank" placeholder="11773000-12345678">
-                    <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Céges Adatok mentése</button>
+                    <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Cégadatok mentése</button>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                    <label>Céges Logó</label>
+                    <label>Cég logója</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
                         <img id="adminCompLogoPreview" src="" alt="Nincs logó" style="max-height: 60px; display: none; border-radius: 5px;">
                         <input type="file" id="adminCompLogoInput" accept="image/png, image/jpeg" style="display: none;">
@@ -163,13 +163,13 @@
                         <button class="btn btn-secondary btn-small" id="btnAdminUploadCert" style="margin:0;">🔐 Tanúsítvány</button>
                     </div>
                 </div>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">👤 Új Felhasználó</h3>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">👤 Új felhasználó</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <label>Felhasználónév</label>
                     <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
                     <label style="margin-top: 10px;">Jelszó</label>
                     <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
-                    <label style="margin-top: 10px;">Email</label>
+                    <label style="margin-top: 10px;">E-mail</label>
                     <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
                     <label style="margin-top: 10px;">Jogosultság</label>
                     <select id="adminNewRole">
@@ -181,10 +181,10 @@
                         <label>Cég</label>
                         <select id="adminNewCompanyId"><option value="">-- Válassz céget --</option></select>
                     </div>
-                    <button class="btn btn-primary" id="btnAdminCreateUser" style="margin-top: 15px;">Létrehozás</button>
+                    <button class="btn btn-primary" id="btnAdminCreateUser" style="margin-top: 15px;">Felhasználó létrehozása</button>
                     <div id="adminCreateUserError" style="color: var(--danger); margin-top: 10px; font-size: 0.85rem;"></div>
                 </div>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📅 Feladat / Kiszállás Kiosztása</h3>
+                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📅 Kiszállás és feladat kiosztása</h3>
                 <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <label>Feladat címe</label>
                     <input type="text" id="adminJobTitle" placeholder="Cím">
@@ -211,7 +211,7 @@
             <div class="prop-group"><label>Jelszó</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
             <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
             <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-            <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Belépés</button>
+            <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Bejelentkezés</button>
         </div>
     </div>
     <div id="passwordModal" class="modal-overlay" style="display: none;">
@@ -229,7 +229,7 @@
         <div class="modal-content panel-glass" style="max-width: 420px;">
             <h2 style="margin-bottom: 1rem;">Profil</h2>
             <div class="prop-group"><label>Felhasználónév</label><p id="profileUsername" style="margin: 0; font-weight: 600;"></p></div>
-            <div class="prop-group"><label>E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">Email mentése</button></div>
+            <div class="prop-group"><label>E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button></div>
             <div class="prop-group"><label>Cég</label><p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p></div>
             <div class="prop-group"><label>Előfizetés lejár</label><p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p></div>
             <hr style="border-color: var(--border-color); margin: 1rem 0;">

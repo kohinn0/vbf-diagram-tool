@@ -11,7 +11,7 @@ export function initDashboard() {
             container.innerHTML = `
                 <div class="flex flex-col items-center justify-center gap-4 py-16 text-[var(--text-muted)]">
                     <div class="h-10 w-10 animate-spin rounded-full border-[3px] border-[color-mix(in_srgb,var(--text-main)_10%,transparent)] border-t-[var(--primary)]"></div>
-                    <p>Dashboard betöltése...</p>
+                    <p>Irányítópult betöltése…</p>
                 </div>`;
 
             try {
@@ -21,14 +21,14 @@ export function initDashboard() {
                 ]);
 
                 if (!statsRes) {
-                    container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--text-muted)]">Jelentkezz be ADMIN fiókkal a Dashboard megtekintéséhez.</p>';
+                    container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--text-muted)]">Jelentkezz be ADMIN fiókkal az Irányítópult megtekintéséhez.</p>';
                     return;
                 }
 
                 this.render(container, statsRes, inspRes);
             } catch (err) {
                 console.error('Dashboard error:', err);
-                container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--danger)]">Hiba a dashboard betöltésekor: ' + err.message + '</p>';
+                container.innerHTML = '<p class="px-8 py-12 text-center text-[var(--danger)]">Hiba az irányítópult betöltésekor: ' + err.message + '</p>';
             }
         },
 
@@ -56,8 +56,8 @@ export function initDashboard() {
             const header = document.createElement('div');
             header.className = 'mb-5';
             header.innerHTML = `
-                <h2 class="mb-1 text-2xl font-bold text-[var(--text-main)]">📊 Üzleti Dashboard</h2>
-                <p class="text-[0.95rem] text-[var(--text-muted)]">Átfogó statisztikák és közelgő feladatok</p>
+                <h2 class="mb-1 text-2xl font-bold text-[var(--text-main)]">📊 Üzleti Irányítópult</h2>
+                <p class="text-[0.95rem] text-[var(--text-muted)]">Átfogó statisztikák és aktuális feladatok</p>
             `;
             container.appendChild(header);
 
@@ -65,11 +65,11 @@ export function initDashboard() {
             kpiGrid.className = 'mb-8 grid grid-cols-2 gap-4 lg:auto-rows-fr lg:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]';
             kpiGrid.innerHTML = `
                 ${this._kpiCard('📋', 'Összes jegyzőkönyv', stats.total_reports, 'var(--primary)')}
-                ${this._kpiCard('📅', 'Havi jegyzőkönyvek', stats.monthly_reports, 'var(--accent)')}
-                ${this._kpiCard('✅', 'Véglegesített', stats.finalized_reports, '#10b981')}
-                ${this._kpiCard('📝', 'Vázlat', stats.draft_reports, '#8b5cf6')}
-                ${this._kpiCard('👥', 'Aktív felhasználók', stats.active_users, '#06b6d4')}
-                ${this._kpiCard('📌', 'Függő munkák', stats.pending_jobs, '#f43f5e')}
+                ${this._kpiCard('📅', 'Havi új dokumentumok', stats.monthly_reports, 'var(--accent)')}
+                ${this._kpiCard('✅', 'Lezárt (véglegesített)', stats.finalized_reports, '#10b981')}
+                ${this._kpiCard('📝', 'Piszkozat (vázlat)', stats.draft_reports, '#8b5cf6')}
+                ${this._kpiCard('👥', 'Aktív munkatársak', stats.active_users, '#06b6d4')}
+                ${this._kpiCard('📌', 'Folyamatban lévő munkák', stats.pending_jobs, '#f43f5e')}
             `;
             container.appendChild(kpiGrid);
 
@@ -77,11 +77,11 @@ export function initDashboard() {
             chartsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             chartsRow.innerHTML = `
                 <div class="panel-glass rounded-[var(--radius)] p-6">
-                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📈 Havi trend (utolsó 12 hónap)</h3>
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📈 Havi trendek (utolsó 12 hónap)</h3>
                     <div class="relative h-[220px] w-full"><canvas id="chartMonthlyTrend"></canvas></div>
                 </div>
                 <div class="panel-glass rounded-[var(--radius)] p-6">
-                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">🎯 Minősítés megoszlás</h3>
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">🎯 Minősítések megoszlása</h3>
                     <div class="relative h-[220px] w-full"><canvas id="chartQualification"></canvas></div>
                 </div>
             `;
@@ -91,11 +91,11 @@ export function initDashboard() {
             analyticsRow.className = 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2';
             analyticsRow.innerHTML = `
                 <div class="panel-glass rounded-[var(--radius)] p-6">
-                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">⚠️ Hibakategóriák (MEE)</h3>
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">⚠️ Hibakategóriák (MEE szerint)</h3>
                     <div class="relative h-[220px] w-full"><canvas id="chartDefects"></canvas></div>
                 </div>
                 <div class="panel-glass rounded-[var(--radius)] p-6">
-                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📊 Mérési eredmények</h3>
+                    <h3 class="mb-4 text-base font-semibold text-[var(--text-main)]">📊 Mérési statisztikák</h3>
                     <div class="flex flex-col items-center gap-8 py-4 lg:flex-row lg:items-center">
                         <div class="relative flex h-[7.5rem] w-[7.5rem] shrink-0 flex-col items-center justify-center rounded-full" style="background: ${coneBg}">
                             <div class="absolute inset-[10px] z-0 rounded-full bg-[var(--bg-panel)]"></div>
@@ -116,7 +116,7 @@ export function initDashboard() {
                 const inspSection = document.createElement('div');
                 inspSection.className = 'panel-glass mb-8 rounded-[var(--radius)] p-6';
                 inspSection.innerHTML = `
-                    <h3 class="mb-4 text-[1.1rem] font-semibold text-[var(--text-main)]">🔔 Közelgő / lejárt felülvizsgálatok</h3>
+                    <h3 class="mb-4 text-[1.1rem] font-semibold text-[var(--text-main)]">🔔 Közelgő és lejárt felülvizsgálatok</h3>
                     <div class="mb-6 flex flex-wrap gap-3">
                         <span class="inline-block rounded-full border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] px-3 py-1 text-[0.8rem] font-semibold text-[var(--danger)]">${inspections.total_overdue || 0} lejárt</span>
                         <span class="inline-block rounded-full border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] px-3 py-1 text-[0.8rem] font-semibold text-[var(--accent)]">${inspections.total_upcoming || 0} közelgő (90 nap)</span>
@@ -153,8 +153,8 @@ export function initDashboard() {
                             </div>
                             <button type="button" class="btn btn-primary btn-small !m-0 w-full shrink-0 !min-h-9 sm:mt-0 sm:w-auto" 
                                     onclick="VBF.dashboard.sendReminder(${item.report_id})"
-                                    title="Emlékeztető email küldése">
-                                ✉️ Emlékeztető
+                                    title="Értesítés e-mail küldése">
+                                ✉️ Értesítés küldése
                             </button>
                         `;
                         listEl.appendChild(row);
@@ -312,10 +312,10 @@ export function initDashboard() {
         },
 
         async sendReminder(reportId) {
-            if (!confirm('Emlékeztető email küldése erről a felülvizsgálatról?')) return;
+            if (!confirm('Értesítés e-mail küldése erről a felülvizsgálatról?')) return;
             try {
                 const res = await this.fetchJSON(`/api/dashboard/send-reminder/${reportId}`);
-                alert(res?.message || 'Emlékeztető elküldve!');
+                alert(res?.message || 'Értesítés elküldve!');
             } catch (err) {
                 alert('Hiba: ' + err.message);
             }

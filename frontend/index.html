@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VBF Premium – Villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver magyar villanyszerelőknek. MSZ HD 60364, OTSZ szerinti sablonok. VBF szakértő készítette – szakembertől szakembereknek. Metrel PADFX import, elosztó rajz, hibajegyzék, tableten is működik.">
+    <meta name="description" content="Professzionális VBF- és EPH-jegyzőkönyv készítő szoftver. MSZ HD 60364 és OTSZ szerinti sablonok, Metrel PADFX adatok beolvasása, elosztórajz-készítő és hibajegyzék egy helyen. Szakembertől szakembereknek.">
     <meta name="keywords" content="VBF jegyzőkönyv, villamos biztonsági felülvizsgálat, EPH jegyzőkönyv, villanyszerelő szoftver, villamos szakember, felülvizsgálati jegyzőkönyv, MSZ HD 60364, Metrel PADFX, elosztó rajz, villamos biztonság">
-    <title>VBF Premium | VBF és EPH Jegyzőkönyv Szoftver – Villamos Szakemberektől</title>
+    <title>VBF Premium | VBF- és EPH-jegyzőkönyv készítő szoftver villamos szakembereknek</title>
     <link rel="icon" type="image/svg+xml" href="img/logo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -21,17 +21,17 @@
         <div class="nav-links">
             <a href="#features">Funkciók</a>
             <a href="#about">Rólunk</a>
-            <a href="#how-it-works">Hogyan Működik</a>
-            <a href="#shop">Webshop és árazás</a>
+            <a href="#how-it-works">Működés</a>
+            <a href="#shop">Árak és Vásárlás</a>
             <a href="#partners">Partnereink</a>
-            <a href="#experts">Szakemberek</a>
+            <a href="#experts">Szakemberkereső</a>
             <a href="#faq">Gyakori kérdések</a>
-            <a href="#" class="nav-bug-report" data-bug-report title="Hibajelentés e-mailben (béta verzió)">🐛 Hibajelentés</a>
+            <a href="#" class="nav-bug-report" data-bug-report title="Visszajelzés e-mailben (béta verzió)">📩 Visszajelzés küldése</a>
         </div>
         <div class="nav-actions">
             <button type="button" id="btnCart" class="nav-icon-btn" title="Kosár"><span>🛒</span><span id="cartBadge" class="nav-cart-badge">0</span></button>
-            <a href="app.html" class="btn btn-outline nav-cta-compact">Belépés (Jegyzőkönyv)</a>
-            <a href="#shop" class="btn btn-primary nav-cta-compact">Vásárlás és regisztráció</a>
+            <a href="app.html" class="btn btn-outline nav-cta-compact">Bejelentkezés</a>
+            <a href="#shop" class="btn btn-primary nav-cta-compact">Regisztráció és Vásárlás</a>
         </div>
     </nav>
 
@@ -43,36 +43,36 @@
                 <button type="button" id="cartPanelClose" class="cart-close-btn" aria-label="Bezárás">×</button>
             </div>
             <div id="cartStep1" class="cart-step">
-                <div id="cartEmpty" class="cart-empty-msg">A kosár üres. Válassz egy licencet az Árazás szekcióból.</div>
+                <div id="cartEmpty" class="cart-empty-msg">A kosár üres. Válassz egy csomagot az Árak és Vásárlás szekcióból.</div>
                 <div id="cartContent" class="cart-content" style="display: none;">
                     <ul id="cartItemsList" class="cart-items-list"></ul>
                     <p id="cartTotal" class="cart-total-line"></p>
-                    <button type="button" id="btnCartCheckout" class="btn btn-primary cart-btn-full">Tovább a fizetéshez</button>
+                    <button type="button" id="btnCartCheckout" class="btn btn-primary cart-btn-full">Megrendelés folytatása</button>
                 </div>
             </div>
             <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
-                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Utalásos megrendelés</h3>
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Megrendelés és fizetés</h3>
                 <label style="display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer; font-size: 0.88rem;">
                     <input type="checkbox" id="cartTermsAccept" required style="margin-top: 3px;">
-                    <span>Vállalkozóként / jogi személyként, üzleti célból vásárolok. Elfogadom a <a href="#" id="cartLinkTerms" target="_blank" rel="noopener">Felhasználási feltételek</a> és az <a href="#" id="cartLinkAszf" target="_blank" rel="noopener">ÁSZF</a> hatályát. A jegyzőkönyvek tartalmáért kizárólag én vállalok felelősséget.</span>
+                    <span>Vállalkozóként vagy jogi személyként, üzleti célból vásárolok. Elfogadom a <a href="#" id="cartLinkTerms" target="_blank" rel="noopener">Felhasználási feltételek</a> és az <a href="#" id="cartLinkAszf" target="_blank" rel="noopener">ÁSZF</a> hatályát. A jegyzőkönyvek tartalmáért kizárólag én vállalok felelősséget.</span>
                 </label>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>hosszabbítás</strong> ugyanitt: jóváhagyás után az új időszak a még érvényes PRO lejáratra <strong>ráépül</strong> (nem vesznek el napok). Az utalásos számlához <strong>nem kell jelszót</strong> megadnod – a lenti űrlapon a számlázási adatok elég. A hozzáférés a fizetés jóváhagyása után kerül aktiválásra; érdemes <strong>ugyanazt az e-mail címet</strong> használni, mint a fiókodnál.</p>
-                <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 1.25rem 0; line-height: 1.55;">Már be vagy jelentkezve a jegyzőkönyv szerkesztőbe? Nyisd meg az <a href="app.html" style="color: var(--accent);">alkalmazást</a> – ott is eléred ugyanezt a kosarat (azonos böngészőben).</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt intézhető: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong> (nem vesznek el napok). Bankkártyával azonnal fizethetsz; <strong>utaláshoz</strong> elég a lenti számlázási adat – jelszó nem kell. A hozzáférés a fizetés (vagy utalás jóváhagyása) után aktiválódik; érdemes <strong>uganazt az e-mail címet</strong> megadni, mint a fiókodnál.</p>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 1.25rem 0; line-height: 1.55;">Be vagy jelentkezve a jegyzőkönyv-alkalmazásba? Nyisd meg az <a href="app.html" style="color: var(--accent);">alkalmazást</a> – ugyanezt a kosarat ott is eléred (azonos böngészőben).</p>
                 <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
-                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártya (Stripe)</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali fizetés. Új fiók esetén opcionálisan megadhatsz jelszót (e-mail kötelező hozzá); ha üresen hagyod, ideiglenes jelszót kapsz e-mailben.</p>
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártyás fizetés (Stripe)</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali, biztonságos fizetés. Új fiók esetén megadhatsz jelszót is (e-mail kötelező); ha üresen hagyod, ideiglenes jelszót küldünk e-mailben.</p>
                     <label style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
                     <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <label style="display:block; margin-bottom: 4px;">Jelszó (opcionális, új fiókhoz)</label>
                     <input type="password" id="cartStripePassword" placeholder="Ha kitöltöd, min. 8 karakter, nagy+kis+szám" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
                     <label style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
                     <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a biztonságos fizetéshez (Stripe)</button>
+                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a bankkártyás fizetéshez</button>
                     <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
                     <p style="text-align: center; font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0 0;">— vagy utalással —</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Számla kérése (utalás)</button>
+                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Utalásos fizetés – számla kérése</button>
                 </div>
                 <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
                     <label style="display:block; margin-bottom: 4px;">E-mail *</label>
@@ -94,24 +94,24 @@
     <!-- Sikeres vásárlás üzenet (Stripe visszatérés a webshopra) -->
     <div id="paymentSuccessBanner" style="display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 999; max-width: 90%; padding: 1rem 1.5rem; background: linear-gradient(135deg, #065f46, #047857); color: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center;">
         <p style="margin: 0 0 0.75rem 0; font-weight: 600;">✓ Köszönjük a vásárlást!</p>
-        <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">Belépési adataidat emailben küldtük. Az alkalmazás (jegyzőkönyv készítő) használatához kattints a <strong>Belépés (Jegyzőkönyv)</strong> gombra a menüben.</p>
-        <a href="app.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Belépés az alkalmazásba</a>
+        <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">Belépési adataidat emailben küldtük. Az alkalmazás (jegyzőkönyv készítő) használatához kattints a <strong>Bejelentkezés</strong> gombra a menüben.</p>
+        <a href="app.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Bejelentkezés az alkalmazásba</a>
     </div>
 
     <section class="hero">
         <div class="hero-content">
-            <div class="badge">⚡ VBF szakértő készítette – szakembertől szakembereknek</div>
-            <p style="max-width: 600px; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--accent); font-weight: 600;">✨ VBF és EPH jegyzőkönyv, elosztó rajz, Metrel mérések – minden egy helyen</p>
-            <h1>Villamos biztonsági felülvizsgálat.<br>Gyorsabban és szakszerűen.</h1>
-            <p style="max-width: 600px; margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-light); font-weight: 600;">A programot VBF szakértő készítette – aki maga is terepen dolgozik. Szakembertől szakembereknek.</p>
-            <p style="max-width: 600px; font-size: 1rem; color: var(--text-color); margin-bottom: 1rem; font-weight: 500;">A programot én, mint villamos biztonsági (VBF) és EPH szakértő fejlesztettem – olyan szoftvert, amit a saját felülvizsgálataimhoz használnék. Tudom, mire van szükség a terepen és a jegyzőkönyvnél – mert én is ott vagyok minden nap.</p>
+            <div class="badge">⚡ VBF-szakértő fejlesztette – szakembereknek, szakemberektől.</div>
+            <p style="max-width: 600px; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--accent); font-weight: 600;">✨ VBF- és EPH-jegyzőkönyv, elosztórajz, Metrel mérések – minden, amire szüksége van.</p>
+            <h1>Villamos biztonsági felülvizsgálat.<br>Gyorsabban, pontosabban, szakszerűen.</h1>
+            <p style="max-width: 600px; margin-bottom: 0.5rem; font-size: 1rem; color: var(--primary-light); font-weight: 600;">A programot VBF-szakértő fejlesztette – aki maga is terepen dolgozik. Szakembertől szakembereknek.</p>
+            <p style="max-width: 600px; font-size: 1rem; color: var(--text-color); margin-bottom: 1rem; font-weight: 500;">Olyan szoftvert készítettünk, amit a saját felülvizsgálatokhoz is használnánk: tudjuk, mire van szükség a terepen és a jegyzőkönyvnél.</p>
             <p style="max-width: 600px; font-size: 1.15rem; line-height: 1.7;">
-                <strong>Egy helyen minden:</strong> villamos biztonsági felülvizsgálati jegyzőkönyv (VBF), EPH jegyzőkönyv, egyvonalas elosztó rajz, Metrel PADFX import és automatikus hibajegyzék. Munkakiosztás, naptár, villámvédelem (LPS) blokk. Böngészőben, tableten is – akár offline a terepen, később szinkronizálva.
-                <strong>Szabványos és hiteles:</strong> MSZ HD 60364-6, TvMI 7, OTSZ szerinti sablonok. Saját céges logóval és aláírással. Word és PDF export, QR kód az elosztóra. A demó PDF vízjellel készül; előfizetéssel digitálisan aláírt, vízjel nélküli PDF.
+                <strong>Minden egy helyen:</strong> VBF/EPH, rajzkészítő, PADFX beolvasás, automatikus hibajegyzék, naptár és offline munkavégzés.
+                <strong>Szabványos és hiteles:</strong> MSZ, TvMI és OTSZ megfelelőség, saját logó használata, Word/PDF export, QR-kódos azonosítás.
             </p>
             <div class="cta-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <a href="#shop" class="btn btn-accent btn-large"
-                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Licenc vásárlása</a>
+                    style="font-size: 1.15rem; padding: 1rem 2.5rem;">Előfizetés megrendelése</a>
                 <a href="app.html?register=1" class="btn btn-outline btn-large"
                     style="font-size: 1.15rem; padding: 1rem 2.5rem;">Demó és regisztráció</a>
             </div>
@@ -206,17 +206,17 @@
 
     <section id="how-it-works" class="shop-section" style="padding: 6rem 5%;">
         <div class="section-header">
-            <h2 class="section-title">Hogyan működik a VBF Premium?</h2>
-            <p class="section-subtitle">A licencválasztástól a kész jegyzőkönyvig – villamos biztonsági felülvizsgálat, négy lépésben összefoglalva.</p>
+            <h2 class="section-title">Működés</h2>
+            <p class="section-subtitle">Az előfizetés kiválasztásától a kész jegyzőkönyvig – villamos biztonsági felülvizsgálat, négy lépésben összefoglalva.</p>
         </div>
         <div style="max-width: 800px; margin: 0 auto;">
             <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem;">
-                Regisztráció, licenc kiválasztása, utalásos számla – a hozzáférés aktiválása után azonnal dolgozhatsz. A céges vezető kiosztja a villamos biztonsági vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon rögzítik a méréseket – akár offline a terepen. Metrel PADFX import, elosztó rajz, hibajegyzék – végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
+                Regisztráció, csomag kiválasztása, utalásos számla – a hozzáférés aktiválása után azonnal dolgozhatsz. A céges vezető kiosztja a villamos biztonsági vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon rögzítik a méréseket – akár offline a terepen. Metrel PADFX import, elosztó rajz, hibajegyzék – végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
             </p>
             <div class="how-step-grid">
                 <div class="how-step-card">
                     <div class="how-step-num" aria-hidden="true">1️⃣</div>
-                    <h4>Licenc és regisztráció</h4>
+                    <h4>Előfizetés és regisztráció</h4>
                     <p>Válaszd a csomagot, kérj utalásos számlát – a belépési adatok az utalás jóváhagyása után kerülnek kiküldésre.</p>
                 </div>
                 <div class="how-step-card">
@@ -285,17 +285,17 @@
 
     <section id="shop" class="shop-section">
         <div class="section-header">
-            <h2 class="section-title">Árazás és licenc vásárlás</h2>
-            <p class="section-subtitle">Válaszd ki a neked való jegyzőkönyv-licencet – átláthatóan, rejtett költségek nélkül.</p>
+            <h2 class="section-title">Árak és előfizetés</h2>
+            <p class="section-subtitle">Válaszd ki a neked való jegyzőkönyv-előfizetést – átláthatóan, rejtett költségek nélkül.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
-                Havi vagy éves csomag – villamos szakembereknek és villanyszerelő cégeknek. A havi licenc kipróbáláshoz és kisebb volumenhez ideális; az éves licenccel akár két havi használatot ajándékba kapsz. Utalásos számlázás, az aktiválás 1–2 munkanap. Online szolgáltatás – nincs szállítás, minden azonnal elérhető.
+                Havi vagy éves csomag – villamos szakembereknek és villanyszerelő cégeknek. A havi előfizetés kipróbáláshoz és kisebb volumenhez ideális; az éves csomaggal akár két havi használatot ajándékba kapsz. Utalásos számlázás, az aktiválás 1–2 munkanap. Online szolgáltatás – nincs szállítás, minden azonnal elérhető.
             </p>
         </div>
 
         <div class="pricing-grid">
             <!-- Basic Plan -->
             <div class="pricing-card">
-                <div class="plan-name">Havi licenc</div>
+                <div class="plan-name">Havi előfizetés</div>
                 <div class="price">12.990 <span>Ft</span></div>
                 <div class="billing-period">Havonta számlázva</div>
 
@@ -308,13 +308,13 @@
                     <li style="color: #64748b; text-decoration: line-through;"><span class="check"
                             style="background:transparent; color:#475569;">✖</span> Saját céges logó használata</li>
                 </ul>
-                <button type="button" class="btn btn-outline btn-add-cart" data-plan="monthly" data-label="Havi licenc" data-price="12990" style="width: 100%;">Kosárba 🛒</button>
+                <button type="button" class="btn btn-outline btn-add-cart" data-plan="monthly" data-label="Havi előfizetés" data-price="12990" style="width: 100%;">Kosárba 🛒</button>
             </div>
 
             <!-- Pro Plan (Popular) -->
             <div class="pricing-card popular">
                 <div class="popular-badge">Legnépszerűbb</div>
-                <div class="plan-name">Éves licenc</div>
+                <div class="plan-name">Éves előfizetés</div>
                 <div class="price">99.000 <span>Ft</span></div>
                 <div class="billing-period">Évente számlázva (2 hónap ajándék)</div>
 
@@ -326,7 +326,7 @@
                     <li><span class="check">✔</span> Munkakiosztás és csoportos használat</li>
                     <li><span class="check">✔</span> Kiemelt támogatás</li>
                 </ul>
-                <button type="button" class="btn btn-primary btn-add-cart" data-plan="yearly" data-label="Éves licenc" data-price="99000" style="width: 100%; font-size: 1.1rem; padding: 1rem;">Kosárba 🛒</button>
+                <button type="button" class="btn btn-primary btn-add-cart" data-plan="yearly" data-label="Éves előfizetés" data-price="99000" style="width: 100%; font-size: 1.1rem; padding: 1rem;">Kosárba 🛒</button>
             </div>
 
             <!-- Céges / egyedi árazás -->
@@ -343,7 +343,7 @@
             </div>
         </div>
 
-        <p style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-top: 1.5rem;">Válaszd ki a csomagot, tedd kosárba, majd a menü kosár ikonjánál kérj utalásos számlát.</p>
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-top: 1.5rem;">Válaszd ki a csomagot, tedd a kosárba, majd a menüben a kosár ikonnál fejezd be a megrendelést (bankkártya vagy utalás).</p>
     </section>
 
     <section id="partners" class="shop-section" style="padding: 6rem 5%;">
@@ -375,7 +375,7 @@
 
     <section id="experts" class="shop-section" style="padding: 6rem 5%;">
         <div class="section-header">
-            <h2 class="section-title">👷 Minősített Szakemberek</h2>
+            <h2 class="section-title">👷 Szakemberkereső</h2>
             <p class="section-subtitle">Villamos biztonsági (VBF), EPH és villámvédelem (VVF) szolgáltató szakemberek.</p>
             <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
                 Minősített VBF és EPH szakemberek – ha vizsgálatra vagy jegyzőkönyvre van szükséged, fordulj hozzájuk. Szakemberként megjelenni szeretnél? Írj nekünk a feltételekért.
@@ -403,9 +403,9 @@
         </div>
         <div class="faq-list">
             <div class="faq-item">
-                <button type="button" class="faq-question">Béta verzió – hogyan jelezhetek hibát?</button>
+                <button type="button" class="faq-question">Béta verzió – hogyan küldhetek visszajelzést?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">A VBF Premiumot jelenleg <strong>béta verzióban</strong> fejlesztjük és tesszük egyre jobbá. Ha valami nem úgy működik, ahogy kellene, furcsán jelenik meg a képernyőn, vagy van ötleted a javításhoz: kattints a <strong>„Hibajelentés”</strong> linkre vagy gombra a főoldalon, a jegyzőkönyv-készítőben vagy a cég admin felületen. A böngésző megnyitja a leveledet egy előre kitöltött sablonnal (melyik oldalon voltál, milyen böngészőt használsz) – így gyorsabban rá tudunk nézni. Köszönjük, ha írsz! <button type="button" class="btn btn-outline nav-cta-compact" style="margin-top: 0.75rem;" data-bug-report>🐛 Hibajelentés küldése</button></div>
+                    <div class="faq-answer-inner">A VBF Premiumot jelenleg <strong>béta verzióban</strong> fejlesztjük és tesszük egyre jobbá. Ha valami nem úgy működik, ahogy kellene, furcsán jelenik meg a képernyőn, vagy van ötleted a javításhoz: kattints a <strong>„Visszajelzés küldése”</strong> linkre vagy gombra a főoldalon, a jegyzőkönyv-készítőben vagy a cég admin felületen. A böngésző megnyitja a leveledet egy előre kitöltött sablonnal (melyik oldalon voltál, milyen böngészőt használsz) – így gyorsabban rá tudunk nézni. Köszönjük, ha írsz! <button type="button" class="btn btn-outline nav-cta-compact" style="margin-top: 0.75rem;" data-bug-report>📩 Visszajelzés küldése</button></div>
                 </div>
             </div>
             <div class="faq-item">
@@ -481,7 +481,7 @@
                 Egyedi árazást kérsz nagyobb csomaghoz? Szeretnél partnerként megjelenni az oldalunkon? Szakemberként hirdetnéd magad villamos biztonsági (VBF), EPH vagy villámvédelem (VVF) szolgáltatással? Bármilyen kérdésed van, írd meg az üzenetben – válaszolunk 1–2 munkanapon belül.
             </p>
             <p style="margin: 0 0 1.5rem 0; font-size: 1rem;"><strong>E-mail:</strong> <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light); font-weight: 500;">info@vbfpremium.hu</a> · <strong>Telefon:</strong> <a href="tel:+36303419594" style="color: var(--primary-light); font-weight: 500;">+36 30 341 9594</a></p>
-            <p style="margin: -0.5rem auto 1.25rem; max-width: 520px; font-size: 0.95rem; color: var(--text-muted);">A program <strong>béta verzióban</strong> érhető el. Ha elírást vagy működési hibát tapasztalsz, itt jelezheted: <button type="button" class="btn btn-outline nav-cta-compact" data-bug-report>🐛 Hibajelentés e-mailben</button></p>
+            <p style="margin: -0.5rem auto 1.25rem; max-width: 520px; font-size: 0.95rem; color: var(--text-muted);">A program <strong>béta verzióban</strong> érhető el. Ha elírást vagy működési hibát tapasztalsz, itt jelezheted: <button type="button" class="btn btn-outline nav-cta-compact" data-bug-report>📩 Visszajelzés e-mailben</button></p>
         </div>
         <div class="cart-total" style="max-width: 500px; margin: 0 auto;">
             <form id="contactForm" style="text-align: left;">
@@ -520,9 +520,9 @@
                 <h4 class="footer-title">Termék</h4>
                 <ul class="footer-links">
                     <li><a href="#features">Funkciók</a></li>
-                    <li><a href="#shop">Árazás</a></li>
+                    <li><a href="#shop">Árak és Vásárlás</a></li>
                     <li><a href="#partners">Partnereink</a></li>
-                    <li><a href="#experts">Szakemberek</a></li>
+                    <li><a href="#experts">Szakemberkereső</a></li>
                 </ul>
             </div>
             <div>
@@ -531,7 +531,7 @@
                     <li><a href="#">Dokumentáció</a></li>
                     <li><a href="#faq">Gyakori kérdések</a></li>
                     <li><a href="#contact">Kapcsolat</a></li>
-                    <li><a href="#" data-bug-report>🐛 Hibajelentés (béta verzió)</a></li>
+                    <li><a href="#" data-bug-report>📩 Visszajelzés (béta verzió)</a></li>
                 </ul>
             </div>
             <div>
@@ -549,11 +549,11 @@
         </div>
     </footer>
 
-    <!-- Mobil: sticky CTA (Vásárlás / Belépés) -->
+    <!-- Mobil: sticky CTA -->
     <div class="sticky-cta-mobile" id="stickyCtaMobile" role="navigation">
-        <a href="#shop" class="btn-sticky-primary">Vásárlás</a>
-        <a href="app.html" class="btn-sticky-outline">Belépés</a>
-        <button type="button" class="btn-sticky-bug" data-bug-report title="Hibajelentés – béta verzió">🐛 Hiba</button>
+        <a href="#shop" class="btn-sticky-primary">Árak</a>
+        <a href="app.html" class="btn-sticky-outline">Bejelentkezés</a>
+        <button type="button" class="btn-sticky-bug" data-bug-report title="Visszajelzés – béta verzió">📩 Visszajelzés</button>
     </div>
 
     <!-- Cookie / GDPR banner (megjelenik, ha még nincs elfogadva) -->
@@ -676,7 +676,7 @@
                 if (p1.price_monthly != null) card1.querySelector('.price').innerHTML = formatPrice(p1.price_monthly) + ' <span>Ft</span>';
                 if (p1.price_monthly != null) card1.querySelector('.billing-period').textContent = 'Havonta számlázva';
                 var btn1 = card1.querySelector('.btn-add-cart');
-                if (btn1 && p1.price_monthly != null) { btn1.setAttribute('data-price', p1.price_monthly); btn1.setAttribute('data-label', (p1.display_name || 'Havi') + ' licenc'); }
+                if (btn1 && p1.price_monthly != null) { btn1.setAttribute('data-price', p1.price_monthly); btn1.setAttribute('data-label', (p1.display_name || 'Havi') + ' előfizetés'); }
                 if (Array.isArray(p1.features) && p1.features.length) {
                     card1.querySelector('.features-list').innerHTML = p1.features.map(f => '<li><span class="check">✔</span> ' + String(f).replace(/</g, '&lt;') + '</li>').join('');
                 }
@@ -684,7 +684,7 @@
                 if (p2.price_yearly != null) card2.querySelector('.price').innerHTML = formatPrice(p2.price_yearly) + ' <span>Ft</span>';
                 if (p2.price_yearly != null) card2.querySelector('.billing-period').textContent = 'Évente számlázva';
                 var btn2 = card2.querySelector('.btn-add-cart');
-                if (btn2 && p2.price_yearly != null) { btn2.setAttribute('data-price', p2.price_yearly); btn2.setAttribute('data-label', (p2.display_name || 'Éves') + ' licenc'); }
+                if (btn2 && p2.price_yearly != null) { btn2.setAttribute('data-price', p2.price_yearly); btn2.setAttribute('data-label', (p2.display_name || 'Éves') + ' előfizetés'); }
                 if (Array.isArray(p2.features) && p2.features.length) {
                     card2.querySelector('.features-list').innerHTML = p2.features.map(f => '<li><span class="check">✔</span> ' + String(f).replace(/</g, '&lt;') + '</li>').join('');
                 }
@@ -761,7 +761,7 @@
             if (!cart.items.length) return;
             if (!document.getElementById('cartTermsAccept')?.checked) {
                 var st = document.getElementById('cartStripeStatus');
-                if (st) { st.style.color = '#ef4444'; st.textContent = 'A vásárláshoz el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
+                if (st) { st.style.color = '#ef4444'; st.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
                 return;
             }
             var email = document.getElementById('cartStripeEmail')?.value?.trim() || null;
@@ -814,9 +814,9 @@
             var address = document.getElementById('cartAddress')?.value?.trim();
             var tax = document.getElementById('cartTax')?.value?.trim() || null;
             var statusEl = document.getElementById('cartTransferStatus');
-            if (!email || !name) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Email és név kötelező.'; return; }
+            if (!email || !name) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'E-mail és név kötelező.'; return; }
             if (!address || address.length < 5) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Számlázási cím megadása kötelező.'; return; }
-            statusEl.textContent = 'Küldés...';
+            statusEl.textContent = 'Küldés…';
             statusEl.style.color = '';
             try {
                 var res = await fetch(API_BASE_URL + '/payments/request-bank-transfer', {
@@ -849,11 +849,11 @@
             var statusEl = document.getElementById('contactStatus');
             var btn = document.getElementById('btnContactSubmit');
             if (!email || !message) {
-                if (statusEl) statusEl.style.color = '#ef4444'; statusEl.textContent = 'Email és üzenet kötelező.';
+                if (statusEl) statusEl.style.color = '#ef4444'; statusEl.textContent = 'E-mail és üzenet kötelező.';
                 return;
             }
             if (btn) btn.disabled = true;
-            if (statusEl) statusEl.textContent = 'Küldés...';
+            if (statusEl) statusEl.textContent = 'Küldés…';
             try {
                 var res = await fetch(API_BASE_URL + '/contact', {
                     method: 'POST',

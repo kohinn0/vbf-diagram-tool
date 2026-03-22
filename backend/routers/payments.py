@@ -80,7 +80,7 @@ def create_checkout_session(request: Request, body: CheckoutRequest, db: Session
     if not CARD_PAYMENTS_ENABLED:
         raise HTTPException(
             status_code=503,
-            detail="A bankkártyás fizetés ideiglenesen szünetel. Kérjük válaszd az utalásos számla kérést.",
+            detail="A bankkártyás fizetés ideiglenesen szünetel. Válaszd az utalásos számla kérést.",
         )
     # Determine the host dynamically for success/cancel URLs based on the Referer or Host
     origin = request.headers.get("origin")
@@ -115,7 +115,7 @@ def create_checkout_session(request: Request, body: CheckoutRequest, db: Session
     if customer_email and "@" not in customer_email:
         customer_email = None
     if body.password and not customer_email:
-        raise HTTPException(status_code=400, detail="Jelszó megadásához email cím is szükséges.")
+        raise HTTPException(status_code=400, detail="Jelszó megadásához e-mail cím is szükséges.")
     if body.password:
         auth.validate_password_policy(body.password)
     try:
@@ -166,9 +166,9 @@ def request_bank_transfer(
     """
     email = (body.email or "").strip().lower()
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Érvényes email cím szükséges.")
+        raise HTTPException(status_code=400, detail="Érvényes e-mail cím szükséges.")
     if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", email):
-        raise HTTPException(status_code=400, detail="Érvényes email cím szükséges.")
+        raise HTTPException(status_code=400, detail="Érvényes e-mail cím szükséges.")
     address = (body.buyer_address or "").strip()
     if not address or len(address) < 5:
         raise HTTPException(status_code=400, detail="Számlázási cím megadása kötelező (irányítószám, város, cím).")
@@ -431,7 +431,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(auth.get_db)):
             )
     except Exception as e:
         print(f"Webhook signature verification failed: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        raise HTTPException(status_code=400, detail="Érvénytelen aláírás (webhook).")
 
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
