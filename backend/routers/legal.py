@@ -169,13 +169,21 @@ def _privacy_html() -> str:
     <p>Az adatkezelés célja: számla kiállítása és küldése e-mail mellékletként. Jogalap: jogszabályon alapuló kötelező adatkezelés. Kezelt adatok: név, cégnév, cím, e-mail, telefon, adószám, számlaadatok. Megőrzés: a számviteli törvény szerint (jellemzően legalább 8 év). Az adatok megismerésére jogosultak az adatkezelő és alkalmazottai.</p>
 
     <h2>7. Adatfeldolgozók és adatfeldolgozási megállapodás (DPA)</h2>
-    <p><strong>Tárhelyszolgáltató:</strong> {hosting}. Az Ön adatait a tárhelyszolgáltató által üzemeltetett szerver tárolja. Az adatokhoz csak munkatársaink, illetve a szervert üzemeltető munkatársak férhetnek hozzá. Számlázás: Számlázz.hu vagy más partner, ha alkalmazva. E-mail küldés: SMTP szolgáltató. Bankkártyás fizetés esetén: Stripe (vagy más szolgáltató) saját adatvédelmi szabályzata szerint.</p>
+    <p><strong>Tárhelyszolgáltató:</strong> {hosting}. <strong>CDN és proxy szolgáltatás:</strong> Cloudflare, Inc. (USA) – a Cloudflare DPA és Standard Contractual Clauses szerint. Az Ön adatait a tárhelyszolgáltató által üzemeltetett szerver tárolja. Az adatokhoz csak munkatársaink, illetve a szervert üzemeltető munkatársak férhetnek hozzá. Számlázás: Számlázz.hu vagy más partner, ha alkalmazva. E-mail küldés: SMTP szolgáltató. Bankkártyás fizetés esetén: Stripe (vagy más szolgáltató) saját adatvédelmi szabályzata szerint.</p>
     <p><strong>B2B adatfeldolgozás:</strong> Ha Ön jogi személyként vagy vállalkozóként a jegyzőkönyvekben megbízottjaik (ügyfeleik) adatait kezeli, mi adatfeldolgozóként járunk el. A GDPR 28. cikke szerinti adatfeldolgozási megállapodás (DPA) kérhető a {email} címen.</p>
     <p>Külföldre nem továbbítunk adatokat. A bíróság, ügyészség, hatóságok megkeresése esetén adatszolgáltatási kötelezettség teljesítésére csak a szükséges mértékben kerülhet sor.</p>
 
-    <h2>8. Biztonság és adatvédelmi incidens</h2>
-    <p>Jelszó titkosítva (bcrypt), erős jelszókövetelmény, JWT token. Rate limit a bejelentkezéshez és nyilvános végpontokhoz. Élesben HTTPS kötelező. Titkosítás, jelszóvédelem, megfelelő technikai intézkedések. Az interneten keresztüli adattovábbítás nem tekinthető teljes körűen biztonságosnak; a beérkezett adatok tekintetében szigorú előírásokat tartunk be.</p>
-    <p><strong>Adatvédelmi incidens:</strong> Ha adatvédelmi incidens (személyes adat jogosulatlan hozzáférése, elvesztése stb.) történik, a GDPR 33–34. cikke szerint a hatóságot (NAIH) legkésőbb 72 órán belül értesítjük; ha magas kockázat áll fenn az érintettek jogaira, az érintetteket is haladéktalanul tájékoztatjuk.</p>
+    <h2>8. Adatbiztonság és adatvédelmi incidens</h2>
+    <p>Adatait megfelelő technikai és szervezési intézkedésekkel védjük:</p>
+    <ul>
+        <li><strong>SSL titkosítás</strong> minden adatátvitelnél (HTTPS)</li>
+        <li><strong>Jelszavak hash-elve</strong> tárolva (bcrypt), erős jelszókövetelmény</li>
+        <li><strong>Hozzáférés korlátozása</strong> – need-to-know elv, szerepkör alapú jogosultságok</li>
+        <li><strong>Rendszeres biztonsági mentések</strong></li>
+        <li><strong>Adatvédelmi incidenskezelési protokoll</strong> – a GDPR 33–34. cikke szerint</li>
+    </ul>
+    <p>JWT token hitelesítés, rate limit a bejelentkezéshez és nyilvános végpontokhoz. Az interneten keresztüli adattovábbítás nem tekinthető teljes körűen biztonságosnak; a beérkezett adatok tekintetében szigorú előírásokat tartunk be.</p>
+    <p><strong>Adatvédelmi incidens:</strong> Ha adatvédelmi incidens (személyes adat jogosulatlan hozzáférése, elvesztése stb.) történik, a hatóságot (NAIH) legkésőbb 72 órán belül értesítjük; ha magas kockázat áll fenn az érintettek jogaira, az érintetteket is haladéktalanul tájékoztatjuk.</p>
 
     <h2>9. Érintett jogaid (GDPR)</h2>
     <p>Jogosult vagy: tájékoztatásra, hozzáférésre, helyesbítésre, törlésre, korlátozásra, adathordozhatóságra, hozzájárulás visszavonására (ha az adatkezelés erre alapul), tiltakozásra jogos érdek alapú kezelés ellen. Bejelentkezés után az alkalmazásban: <strong>Teljes adatcsomag (ZIP)</strong>, <strong>Adataim (JSON)</strong>, <strong>Fiók törlése</strong>. Marketinghez: leiratkozás. E-mailben is kérhet exportot vagy törlést a {email} címen.</p>
