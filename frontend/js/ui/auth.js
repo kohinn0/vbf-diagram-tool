@@ -2,7 +2,33 @@ import { API } from '../api.js';
 
 export function initAuth() {
     const userInfoSpan = document.getElementById('userInfo');
+    const navUserMenu = document.getElementById('navUserMenu');
+    const navUserMenuTrigger = document.getElementById('navUserMenuTrigger');
     const btnLoginNav = document.getElementById('btnLoginNav');
+
+    function closeNavUserMenu() {
+        navUserMenu?.classList.remove('is-open');
+        if (navUserMenuTrigger) navUserMenuTrigger.setAttribute('aria-expanded', 'false');
+    }
+    if (navUserMenuTrigger && navUserMenu) {
+        navUserMenuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navUserMenu.classList.toggle('is-open');
+            const isOpen = navUserMenu.classList.contains('is-open');
+            navUserMenuTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+        document.addEventListener('click', (e) => {
+            if (navUserMenu.classList.contains('is-open') && !navUserMenu.contains(e.target)) {
+                closeNavUserMenu();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeNavUserMenu();
+        });
+        document.getElementById('navUserMenuPanel')?.addEventListener('click', () => {
+            closeNavUserMenu();
+        });
+    }
     const btnSaveCloud = document.getElementById('btnSaveCloud');
     const btnExportWord = document.getElementById('btnExportWord');
     const btnExportPdfReport = document.getElementById('btnExportPdfReport');
@@ -36,15 +62,12 @@ export function initAuth() {
 
     function updateAuthUI() {
         if (window.currentToken && window.currentUser) {
-            if (userInfoSpan) userInfoSpan.innerText = `Szia, ${window.currentUser}!`;
-            const linkProfile = document.getElementById('linkProfile');
-            if (linkProfile) { linkProfile.textContent = 'Profil'; linkProfile.style.display = 'inline'; }
+            if (userInfoSpan) userInfoSpan.textContent = window.currentUser;
+            if (navUserMenu) navUserMenu.style.display = 'flex';
             if (btnLoginNav) {
                 btnLoginNav.innerText = 'Kijelentkezés';
                 btnLoginNav.classList.replace('btn-secondary', 'btn-danger');
             }
-            const gdprLinks = document.getElementById('gdprLinks');
-            if (gdprLinks) gdprLinks.style.display = 'flex';
             if (btnSaveCloud) btnSaveCloud.style.display = 'inline-block';
             if (btnFinalize) btnFinalize.style.display = 'inline-block';
 
@@ -115,15 +138,13 @@ export function initAuth() {
                 .catch(err => console.error("Admin check failed", err));
 
         } else {
-            if (userInfoSpan) userInfoSpan.innerText = '';
-            var linkProfile = document.getElementById('linkProfile');
-            if (linkProfile) linkProfile.style.display = 'none';
+            if (userInfoSpan) userInfoSpan.textContent = '';
+            closeNavUserMenu();
+            if (navUserMenu) navUserMenu.style.display = 'none';
             if (btnLoginNav) {
                 btnLoginNav.innerText = 'Bejelentkezés';
                 btnLoginNav.classList.replace('btn-danger', 'btn-secondary');
             }
-            const gdprLinks = document.getElementById('gdprLinks');
-            if (gdprLinks) gdprLinks.style.display = 'none';
             if (btnSaveCloud) btnSaveCloud.style.display = 'none';
             if (btnExportWord) btnExportWord.style.display = 'none';
             if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';

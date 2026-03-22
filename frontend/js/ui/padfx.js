@@ -16,7 +16,9 @@ export function initPadfx() {
 
             try {
                 console.log("[PADFX] Új fájl feltöltése:", file.name);
-                btnLoadPadfx.innerText = 'Feldolgozás... ⏳';
+                const padfxLbl = document.getElementById('btnLoadPadfxLabel');
+                if (padfxLbl) padfxLbl.textContent = 'Feldolgozás…';
+                else btnLoadPadfx.textContent = 'Feldolgozás…';
                 const fetchHeaders = {};
                 if (window.currentToken) {
                     fetchHeaders['Authorization'] = `Bearer ${window.currentToken}`;
@@ -48,7 +50,7 @@ export function initPadfx() {
                                     <td><input type="number" class="meas-point" value="${++rpeCount}"></td>
                                     <td><input type="text" class="meas-loc" value="${m.location}"></td>
                                     <td><input type="number" step="0.01" class="meas-val" value="${parseFloat(val) || val}" oninput="validateRpe(this.closest('tr'))"></td>
-                                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 // Automatikus validáció futtatása
                                 const lastRow = document.querySelector('#table-rpe tbody tr:last-child');
@@ -70,7 +72,7 @@ export function initPadfx() {
                                     <td><input type="text" class="meas-device" value="${device}" oninput="validateZs(this.closest('tr'))"></td>
                                     <td><input type="text" class="meas-loc" value="${m.location}"></td>
                                     <td><input type="number" step="0.01" class="meas-zs" value="${zsVal}" oninput="validateZs(this.closest('tr'))"></td>
-                                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-loop tbody tr:last-child');
                                 if (lastRow) window.validateZs(lastRow);
@@ -87,7 +89,7 @@ export function initPadfx() {
                                     <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
                                     <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
                                     <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
-                                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-rcd tbody tr:last-child');
                                 if (lastRow) window.validateRcd(lastRow);
@@ -99,7 +101,7 @@ export function initPadfx() {
                                 <td><input type="number" step="0.1" class="meas-ln" value="${ln || ''}" oninput="validateIns(this.closest('tr'))"></td>
                                 <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                                 <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                                ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                             `);
                                 const lastRow = document.querySelector('#table-insulation tbody tr:last-child');
                                 if (lastRow) window.validateIns(lastRow);
@@ -116,7 +118,9 @@ export function initPadfx() {
             } catch (err) {
                 alert('Hiba a fájl feltöltésekor: ' + err.message);
             } finally {
-                btnLoadPadfx.innerText = 'Metrel PADFX Import 📥';
+                const padfxLblDone = document.getElementById('btnLoadPadfxLabel');
+                if (padfxLblDone) padfxLblDone.textContent = 'Metrel PADFX import';
+                else btnLoadPadfx.textContent = 'Metrel PADFX import';
                 e.target.value = '';
             }
         });

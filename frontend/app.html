@@ -70,15 +70,15 @@
             <div class="report-actions-wrapper">
                 <button type="button" class="report-actions-trigger btn btn-secondary btn-small nav-util-btn" id="reportActionsTrigger" aria-haspopup="true" aria-expanded="false" title="Jegyzőkönyv műveletek">Műveletek ▾</button>
                 <div id="reportActionsGroup">
-                    <button class="btn btn-primary btn-small" id="btnSaveCloud" style="display: none;"><span aria-hidden="true">☁️</span> Mentés</button>
-                    <button class="btn btn-danger btn-small" id="btnFinalize" style="display: none;"><span aria-hidden="true">🔒</span> Zárás</button>
+                    <button type="button" class="btn btn-primary btn-small vbf-header-doc-btn" id="btnSaveCloud" style="display: none;">Mentés</button>
+                    <button type="button" class="btn btn-secondary btn-small vbf-header-doc-btn" id="btnFinalize" style="display: none;">Zárás</button>
                     <button class="btn btn-accent btn-small" id="btnExportWord" style="display: none;">Word</button>
                     <button class="btn btn-accent btn-small" id="btnExportPdfReport" style="display: none;">PDF</button>
                     <button class="btn btn-accent btn-small" id="btnEmailReport" style="display: none;">Küldés</button>
                 </div>
             </div>
             <div class="nav-help-dropdown">
-                <button type="button" class="nav-help-trigger btn btn-secondary btn-small nav-util-btn" id="navHelpTrigger" aria-haspopup="true" aria-expanded="false" title="Súgó">? Súgó</button>
+                <button type="button" class="nav-help-trigger btn btn-secondary btn-small vbf-header-doc-btn" id="navHelpTrigger" aria-haspopup="true" aria-expanded="false" title="Súgó">Súgó</button>
                 <div class="nav-help-panel" id="navHelpPanel" role="menu">
                     <button type="button" class="nav-help-item" id="btnStartTour">Bemutató</button>
                     <button type="button" class="nav-help-item" id="btnShowKeyboardShortcuts">⌨️ Billentyűk</button>
@@ -92,14 +92,24 @@
                     <span id="offlineText">Online</span>
                 </div>
                 <button id="btnSyncOffline" class="btn btn-primary btn-small nav-util-btn" style="display: none;">🔄 Szinkronizálás (<span id="offlineCount">0</span>)</button>
-                <a href="#" id="linkProfile" class="nav-profile-link"></a>
-                <span id="userInfo" class="nav-profile-link"></span>
-                <div id="gdprLinks" class="nav-gdpr-links">
-                    <a href="mailto:info@vbfpremium.hu" title="Kapcsolat">info@vbfpremium.hu</a>
-                    <a href="#" id="linkChangePassword">Jelszó</a>
-                    <a href="#" id="linkDataExportZip" title="Jegyzőkönyvek, fényképek – ZIP">Export ZIP</a>
-                    <a href="#" id="linkDataExport" title="Összefoglaló JSON">Adataim</a>
-                    <a href="#" id="linkDeleteAccount" class="nav-link-danger">Fiók törlése</a>
+                <div id="navUserMenu" class="nav-user-menu" style="display: none;">
+                    <button type="button" id="navUserMenuTrigger" class="nav-user-menu-trigger" aria-haspopup="true" aria-expanded="false" title="Fiók és beállítások">
+                        <span class="nav-user-menu-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
+                        </span>
+                        <span id="userInfo" class="nav-user-menu-label"></span>
+                        <span class="nav-user-menu-chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="nav-user-menu-panel" id="navUserMenuPanel" role="menu" aria-label="Fiók menü">
+                        <a href="#" id="linkProfile" role="menuitem" class="nav-user-menu-item">Profil</a>
+                        <a href="#" id="linkChangePassword" role="menuitem" class="nav-user-menu-item">Jelszó módosítása</a>
+                        <a href="#" id="linkDataExportZip" role="menuitem" class="nav-user-menu-item" title="Jegyzőkönyvek, fényképek – ZIP">Export ZIP</a>
+                        <a href="#" id="linkDataExport" role="menuitem" class="nav-user-menu-item" title="Összefoglaló JSON">Adataim (JSON)</a>
+                        <div class="nav-user-menu-sep" aria-hidden="true"></div>
+                        <a href="mailto:info@vbfpremium.hu" class="nav-user-menu-item nav-user-menu-item--muted" role="menuitem">info@vbfpremium.hu</a>
+                        <div class="nav-user-menu-sep" aria-hidden="true"></div>
+                        <a href="#" id="linkDeleteAccount" role="menuitem" class="nav-user-menu-item nav-user-menu-item--danger">Fiók törlése</a>
+                    </div>
                 </div>
                 <button type="button" class="btn btn-secondary btn-small nav-util-btn" id="btnCart" title="Előfizetés – kosár" aria-label="Kosár"><span aria-hidden="true">🛒</span><span id="cartBadge">0</span></button>
                 <button class="btn btn-secondary btn-small nav-util-btn" id="btnLoginNav">Bejelentkezés</button>
@@ -787,9 +797,29 @@
         <!-- 3. TAB: HIBAJEGYZÉK (Tailwind: flex/grid, mobilra fix alsó műveletsáv) -->
         <div id="tab-defects" class="tab-pane">
             <div class="flex h-full min-h-0 w-full max-w-[62.5rem] flex-col rounded-xl border border-[var(--border-color)] bg-[var(--bg-panel)]/80 px-3 pt-3 shadow-[var(--shadow-glass)] backdrop-blur-md sm:px-5 sm:pt-5">
-                <h2 class="order-1 mb-3 shrink-0 text-xl font-semibold text-[var(--text-main)] sm:text-[1.35rem] md:mb-2">Feltárt Hibák és Hiányosságok</h2>
+                <header id="defectsToolbar" class="vbf-defects-header shrink-0 border-b border-[var(--border-color)] pb-4 mb-1">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
+                        <div class="min-w-0 flex flex-col gap-3">
+                            <h2 class="text-xl font-semibold text-[var(--text-main)] sm:text-[1.35rem] leading-tight m-0">Feltárt Hibák és Hiányosságok</h2>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label for="defectFilterSelect" class="shrink-0 text-sm text-[var(--text-muted)]">Szűrés:</label>
+                                <select id="defectFilterSelect" class="min-h-11 min-w-0 flex-1 max-w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-2 py-2 text-sm text-[var(--text-main)] sm:max-w-[16rem] sm:flex-none">
+                                    <option value="">Összes hiba</option>
+                                    <option value="kritikus">Kritikus</option>
+                                    <option value="sulyos">Súlyos</option>
+                                    <option value="kozepes">Közepes</option>
+                                    <option value="egyedi">Egyedi (sablon nélkül)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex w-full shrink-0 flex-wrap gap-2 md:w-auto md:justify-end md:pt-0.5">
+                            <button type="button" class="btn btn-secondary btn-small vbf-defects-action-btn" id="btnGenerateDefects">Automatikus gyűjtés</button>
+                            <button type="button" class="btn btn-primary btn-small vbf-defects-action-btn" id="btnAddDefect">Új hiba</button>
+                        </div>
+                    </div>
+                </header>
 
-                <div id="defectListScroll" class="order-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:order-3 md:pb-4">
+                <div id="defectListScroll" class="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 pt-2 md:pb-4">
                     <div id="defectList"></div>
                     <datalist id="defectTemplates">
                         <option value="A biztosíték tábla nincs megfelelően feliratozva.">
@@ -799,38 +829,25 @@
                     </datalist>
                     <datalist id="defectLocationDatalist"></datalist>
                 </div>
-
-                <div id="defectsToolbar" class="order-3 fixed inset-x-0 bottom-0 z-40 flex flex-col gap-3 border-t border-[var(--border-color)] bg-[var(--bg-panel)]/95 px-3 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md md:order-2 md:static md:z-auto md:mt-0 md:mb-4 md:flex-row md:flex-wrap md:items-center md:justify-between md:border-t-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-0">
-                    <div class="flex min-w-0 flex-wrap items-center gap-2">
-                        <label for="defectFilterSelect" class="shrink-0 text-sm text-[var(--text-muted)]">Szűrés:</label>
-                        <select id="defectFilterSelect" class="min-h-11 min-w-0 flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-2 py-2 text-sm text-[var(--text-main)] sm:max-w-[14rem] sm:flex-none md:max-w-none">
-                            <option value="">Összes hiba</option>
-                            <option value="kritikus">Kritikus</option>
-                            <option value="sulyos">Súlyos</option>
-                            <option value="kozepes">Közepes</option>
-                            <option value="egyedi">Egyedi (sablon nélkül)</option>
-                        </select>
-                    </div>
-                    <div class="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-                        <button type="button" class="btn btn-secondary !m-0 min-h-11 min-w-0 flex-1 sm:flex-none sm:min-w-[10rem]" id="btnGenerateDefects">🤖 Automatikus Gyűjtés</button>
-                        <button type="button" class="btn btn-primary !m-0 min-h-11 min-w-0 flex-1 sm:flex-none sm:min-w-[10rem]" id="btnAddDefect">+ Új Hiba</button>
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- 4. TAB: MÉRÉSI ADATOK -->
         <div id="tab-measurements" class="tab-pane">
-            <div class="measurements-container panel-glass"
+            <div class="measurements-container panel-glass vbf-meas-page"
                 style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2 style="margin: 0; color: var(--accent);">🔬 Mérési Adatok (Kézi bevitel)</h2>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <div class="vbf-meas-page-head">
+                    <h2 class="vbf-meas-page-title">Mérési adatok (kézi bevitel)</h2>
+                    <div class="vbf-meas-page-actions">
                         <input type="file" id="inputPadfx" accept=".padfx,.xml" style="display: none;" />
-                        <button class="btn btn-primary" id="btnLoadPadfx"
-                            style="background-color: var(--accent); color: white;">Metrel PADFX Import 📥</button>
-                        <button type="button" class="btn btn-secondary" id="btnExportMeasurementsCsv">Mérések export CSV 📊</button>
+                        <button type="button" class="btn btn-primary btn-small vbf-meas-toolbar-btn" id="btnLoadPadfx">
+                            <svg class="vbf-meas-btn-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span id="btnLoadPadfxLabel">Metrel PADFX import</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-small vbf-meas-toolbar-btn" id="btnExportMeasurementsCsv">
+                            <svg class="vbf-meas-btn-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span>CSV export</span>
+                        </button>
                     </div>
                 </div>
 
@@ -864,10 +881,11 @@
 
                 <!-- VBF MÉRÉSEK -->
                 <div id="vbf-measurements">
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 class="vbf-meas-section-title">
                         1. Védővezető folytonosság (Rpe)</h3>
-                    <table class="data-table" id="table-rpe"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll">
+                    <table class="data-table vbf-meas-table" id="table-rpe"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Pont</th>
@@ -879,12 +897,14 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddRpe">+ Rpe Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddRpe">+ Rpe mérés</button>
 
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 class="vbf-meas-section-title">
                         2. Szigetelési ellenállás (500V DC)</h3>
-                    <table class="data-table" id="table-insulation"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll">
+                    <table class="data-table vbf-meas-table" id="table-insulation"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Áramkör neve</th>
@@ -897,12 +917,14 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddInsulation">+ Szig. Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddInsulation">+ Szigetelési mérés</button>
 
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 class="vbf-meas-section-title">
                         3. Hurokellenállás (Zs) és Hibavédelem</h3>
-                    <table class="data-table" id="table-loop"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll">
+                    <table class="data-table vbf-meas-table" id="table-loop"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Áramkör / Pont</th>
@@ -915,12 +937,14 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddLoop">+ Hurok Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddLoop">+ Hurok mérés</button>
 
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 class="vbf-meas-section-title">
                         4. FI-relé (ÁVK) Részletes vizsgálat (MEEVET M5)</h3>
-                    <table class="data-table" id="table-rcd"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
+                    <table class="data-table vbf-meas-table" id="table-rcd"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Áramkör</th>
@@ -937,11 +961,13 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddRcd">+ RCD Mérés</button>
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddRcd">+ RCD mérés</button>
+                    <h3 class="vbf-meas-section-title">
                         5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
-                    <table class="data-table" id="table-tools"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll">
+                    <table class="data-table vbf-meas-table" id="table-tools"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Megnevezés</th>
@@ -953,12 +979,14 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddTool">+ Szerszám Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddTool">+ Szerszám mérés</button>
 
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 class="vbf-meas-section-title">
                         6. SELV / PELV / Villamos elválasztás (MEEVET M2)</h3>
-                    <table class="data-table" id="table-selv"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
+                    <table class="data-table vbf-meas-table" id="table-selv"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Hely / Tr. áttétel</th>
@@ -972,15 +1000,17 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddSelv">+ SELV/PELV Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddSelv">+ SELV / PELV mérés</button>
                 </div>
 
                 <!-- EPH MÉRÉSEK -->
                 <div id="eph-measurements" style="display: none;">
-                    <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        EPH Bekötések Folytonossága</h3>
-                    <table class="data-table" id="table-eph"
-                        style="width: 100%; margin-bottom: 1rem; text-align: left; border-collapse: collapse;">
+                    <h3 class="vbf-meas-section-title">
+                        EPH bekötések folytonossága</h3>
+                    <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
+                    <table class="data-table vbf-meas-table" id="table-eph"
+                        style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <th>Sorszám</th>
@@ -995,7 +1025,8 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <button class="btn btn-secondary btn-small" id="btnAddEph">+ EPH Bekötés Mérés</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-add-row" id="btnAddEph">+ EPH bekötés mérés</button>
                 </div>
 
             </div>

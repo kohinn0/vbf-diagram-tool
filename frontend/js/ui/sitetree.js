@@ -132,7 +132,7 @@ export function initSiteTree() {
                     <td><input type="text" class="meas-device" value="${safeDeviceStr}" oninput="window.validateZs(this.closest('tr'))"></td>
                     <td><input type="text" class="meas-loc" value="${safePath}"></td>
                     <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="window.validateZs(this.closest('tr'))"></td>
-                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             } else if (type === 'rcd') {
                 window.createRow('table-rcd', `
@@ -144,7 +144,7 @@ export function initSiteTree() {
                     <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="window.validateRcd(this.closest('tr'))"></td>
                     <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="window.validateRcd(this.closest('tr'))"></td>
                     <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
-                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             } else if (type === 'insulation') {
                 window.createRow('table-insulation', `
@@ -152,7 +152,7 @@ export function initSiteTree() {
                     <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
                     <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
                     <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
-                    <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             }
         },
@@ -291,16 +291,16 @@ export function initSiteTree() {
 
             const header = document.createElement('div');
             header.className =
-                'flex flex-col gap-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:px-5 sm:py-3';
+                'vbf-st-tree-head flex flex-row flex-wrap items-center justify-between gap-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-glass)_55%,transparent)] px-3 py-2 sm:px-4 sm:py-2.5';
             header.innerHTML = `
-                <h3 class="m-0 flex min-w-0 items-center gap-2 text-[0.9rem] font-semibold text-[var(--text-main)] sm:text-base">
-                    <svg class="shrink-0 text-[var(--accent)]" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="m-0 flex min-w-0 flex-1 items-center gap-2 text-[0.9rem] font-semibold text-[var(--text-main)] sm:text-base">
+                    <svg class="shrink-0 text-[var(--text-muted)]" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                     Helyszínfa
                 </h3>
-                <button type="button" class="btn btn-primary btn-small !m-0 w-full shrink-0 !min-h-9 !px-3 !py-1.5 !text-[0.78rem] sm:w-auto sm:!py-1 sm:!text-[0.8rem]" data-vbf-st-add-root title="Új épület hozzáadása">+ Épület</button>
+                <button type="button" class="btn btn-secondary btn-small m-0 shrink-0 vbf-st-add-building-btn" data-vbf-st-add-root title="Új épület hozzáadása"><span class="vbf-st-add-building-ic" aria-hidden="true">+</span><span>Épület</span></button>
             `;
             container.appendChild(header);
 

@@ -1,6 +1,36 @@
 export function initMeasurements() {
     window.VBF = window.VBF || {};
 
+    /** Megfelelőség: rejtett select (collectAll) + ✓ / ✕ gombok */
+    window.vbfMeasPassCellHtmlFromPass = function (pass) {
+        const p = pass === 'Nem' ? 'Nem' : 'Igen';
+        const isIgen = p === 'Igen';
+        return `<td class="vbf-meas-pass-cell">
+            <select class="meas-pass vbf-meas-pass-native" tabindex="-1" aria-hidden="true">
+                <option${isIgen ? ' selected' : ''}>Igen</option>
+                <option${!isIgen ? ' selected' : ''}>Nem</option>
+            </select>
+            <div class="vbf-meas-pass-pair" role="group" aria-label="Megfelelőség">
+                <button type="button" class="vbf-meas-pass-btn vbf-meas-pass-btn--yes${isIgen ? ' is-active' : ''}" aria-pressed="${isIgen}">✓</button>
+                <button type="button" class="vbf-meas-pass-btn vbf-meas-pass-btn--no${!isIgen ? ' is-active' : ''}" aria-pressed="${!isIgen}">✕</button>
+            </div>
+        </td>`;
+    };
+
+    window.vbfSyncMeasPassUI = function (tr) {
+        const cell = tr?.querySelector('.vbf-meas-pass-cell');
+        if (!cell) return;
+        const sel = cell.querySelector('.meas-pass');
+        const y = cell.querySelector('.vbf-meas-pass-btn--yes');
+        const n = cell.querySelector('.vbf-meas-pass-btn--no');
+        if (!sel || !y || !n) return;
+        const yes = sel.value === 'Igen';
+        y.classList.toggle('is-active', yes);
+        n.classList.toggle('is-active', !yes);
+        y.setAttribute('aria-pressed', yes ? 'true' : 'false');
+        n.setAttribute('aria-pressed', yes ? 'false' : 'true');
+    };
+
     // ═══════════════════════════════════════════
     // Mérési kép csatolás
     // ═══════════════════════════════════════════
@@ -21,7 +51,7 @@ export function initMeasurements() {
                 const photoBtn = tr.querySelector('label.meas-photo-label');
                 const fid = photoBtn?.getAttribute('for');
                 if (photoBtn && fid) {
-                    photoBtn.innerHTML = `✅ <input type="file" id="${fid}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">`;
+                    photoBtn.innerHTML = `Fotó ✓<input type="file" id="${fid}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">`;
                     photoBtn.title = 'Kép csatolva! Kattints a cseréhez.';
                 }
             });
@@ -41,17 +71,20 @@ export function initMeasurements() {
         if (nodeId) tr.setAttribute('data-node-id', nodeId);
         const measPhotoId = `meas-ph-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
         tr.innerHTML = htmlContent + `
-            <td class="meas-actions" style="white-space:nowrap;">
-                <button type="button" class="btn btn-secondary btn-small" title="Hiba felvitele a hibajegyzékbe" style="margin:0; padding: 4px 8px;" onclick="typeof window.addDefectFromMeasurementRow==='function'&&window.addDefectFromMeasurementRow(this.closest('tr'))">Hiba</button>
-                <label for="${measPhotoId}" class="btn btn-secondary btn-small meas-photo-label" title="Fotó csatolása" style="margin:0; padding: 4px 8px;">
-                    📷
-                    <input type="file" id="${measPhotoId}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
-                </label>
-                <button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()" title="Sor törlése" style="margin:0; padding: 4px 8px;">🗑️</button>
+            <td class="meas-actions vbf-meas-actions-cell">
+                <div class="vbf-meas-actions-row">
+                    <button type="button" class="btn btn-secondary btn-small vbf-meas-row-btn" title="Hiba felvitele a hibajegyzékbe" onclick="typeof window.addDefectFromMeasurementRow==='function'&&window.addDefectFromMeasurementRow(this.closest('tr'))">Hiba</button>
+                    <label for="${measPhotoId}" class="btn btn-secondary btn-small vbf-meas-row-btn meas-photo-label" title="Fotó csatolása">
+                        Fotó
+                        <input type="file" id="${measPhotoId}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
+                    </label>
+                    <button type="button" class="btn btn-danger btn-small vbf-meas-row-btn" onclick="this.closest('tr').remove()" title="Sor törlése">Törlés</button>
+                </div>
             </td>
         `;
 
         tbody.appendChild(tr);
+        window.vbfSyncMeasPassUI(tr);
         return tr;
     };
 
@@ -66,7 +99,7 @@ export function initMeasurements() {
                 <td><input type="number" class="meas-point" placeholder="1"></td>
                 <td><input type="text" class="meas-loc" placeholder="PE sín - Gázcső" value="${safeGloc}"></td>
                 <td><input type="number" step="0.01" class="meas-val" placeholder="0.12" oninput="validateRpe(this.closest('tr'))"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -88,6 +121,7 @@ export function initMeasurements() {
             valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
             passSelect.value = 'Igen';
         }
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -102,7 +136,7 @@ export function initMeasurements() {
                 <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                 <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                 <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -134,6 +168,7 @@ export function initMeasurements() {
         if (anyFilled) {
             passSelect.value = isOk ? 'Igen' : 'Nem';
         }
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -150,7 +185,7 @@ export function initMeasurements() {
                 <td><input type="text" class="meas-device" placeholder="B16" value="${safeGdev}" oninput="validateZs(this.closest('tr'))"></td>
                 <td><input type="text" class="meas-loc" placeholder="E1/4" value="${safeGloc}"></td>
                 <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="validateZs(this.closest('tr'))"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -191,6 +226,7 @@ export function initMeasurements() {
                 zsInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
                 passSelect.value = 'Igen';
             }
+            window.vbfSyncMeasPassUI(tr);
         }
     };
 
@@ -208,7 +244,7 @@ export function initMeasurements() {
                 <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
                 <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
                 <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -273,6 +309,7 @@ export function initMeasurements() {
         }
 
         passSelect.value = isOk ? 'Igen' : 'Nem';
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -284,7 +321,7 @@ export function initMeasurements() {
                 <td><input type="text" class="meas-name" placeholder="Ütvefúró"></td>
                 <td><input type="text" class="meas-id" placeholder="HILTI-01"></td>
                 <td><input type="number" step="0.1" class="meas-val" placeholder="50" oninput="validateTool(this.closest('tr'))"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -303,6 +340,7 @@ export function initMeasurements() {
             valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
             passSelect.value = 'Igen';
         }
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -332,7 +370,7 @@ export function initMeasurements() {
                 <td><input type="text" class="meas-mat" placeholder="Cu 6mm2"></td>
                 <td><select class="meas-conn"><option>EPH bilincs</option><option>Szemes saru</option><option>Hegesztett</option><option>Wago/Sorkapocs</option></select></td>
                 <td><input type="number" step="0.01" class="meas-val" placeholder="0.15" oninput="validateEph(this.closest('tr'))"></td>
-                <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
+                ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
 
@@ -354,6 +392,7 @@ export function initMeasurements() {
             valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
             passSelect.value = 'Igen';
         }
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -498,5 +537,19 @@ export function initMeasurements() {
         a.click();
         URL.revokeObjectURL(url);
         if (typeof window.showToast === 'function') window.showToast('CSV export kész.', 'success');
+    });
+
+    document.getElementById('tab-measurements')?.addEventListener('click', (e) => {
+        const yes = e.target.closest('.vbf-meas-pass-btn--yes');
+        const no = e.target.closest('.vbf-meas-pass-btn--no');
+        const cell = (yes || no)?.closest('.vbf-meas-pass-cell');
+        if (!cell) return;
+        e.preventDefault();
+        const sel = cell.querySelector('.meas-pass');
+        const tr = cell.closest('tr');
+        if (!sel || !tr) return;
+        if (yes) sel.value = 'Igen';
+        if (no) sel.value = 'Nem';
+        window.vbfSyncMeasPassUI(tr);
     });
 }
