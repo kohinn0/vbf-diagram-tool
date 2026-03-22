@@ -30,27 +30,29 @@ export const Storage = {
         const queue = JSON.parse(localStorage.getItem('vbf_offline_queue') || '[]');
 
         if (offlineDot && offlineText) {
+            offlineDot.classList.remove('offline-dot--offline', 'offline-dot--pending', 'offline-dot--online');
+            offlineText.classList.remove('offline-text--offline', 'offline-text--pending', 'offline-text--online');
             if (!navigator.onLine) {
-                offlineDot.style.background = '#c97b7b';
+                offlineDot.classList.add('offline-dot--offline');
+                offlineText.classList.add('offline-text--offline');
                 offlineText.innerText = 'Offline';
-                offlineText.style.color = '#d4a0a0';
             } else if (queue.length > 0) {
-                offlineDot.style.background = '#c9a55a';
+                offlineDot.classList.add('offline-dot--pending');
+                offlineText.classList.add('offline-text--pending');
                 offlineText.innerText = queue.length === 1 ? 'Offline mentve, szinkronizálás vár' : `${queue.length} mentés vár szinkronizálásra`;
-                offlineText.style.color = '#d4b878';
             } else {
-                offlineDot.style.background = '#6eb89a';
+                offlineDot.classList.add('offline-dot--online');
+                offlineText.classList.add('offline-text--online');
                 offlineText.innerText = 'Online';
-                offlineText.style.color = '#8cc9ae';
             }
         }
 
         if (btnSyncOffline) {
             if (queue.length > 0) {
-                btnSyncOffline.style.display = 'inline-block';
+                btnSyncOffline.classList.remove('is-hidden');
                 if (offlineCountSpan) offlineCountSpan.innerText = queue.length;
             } else {
-                btnSyncOffline.style.display = 'none';
+                btnSyncOffline.classList.add('is-hidden');
             }
         }
 
@@ -122,7 +124,7 @@ export const Storage = {
 
         if (btnSyncOffline) {
             btnSyncOffline.disabled = false;
-            btnSyncOffline.innerHTML = `🔄 Szinkronizálás (<span id="offlineCount">${failedQueue.length}</span>)`;
+            btnSyncOffline.innerHTML = `Szinkronizálás (<span id="offlineCount">${failedQueue.length}</span>)`;
         }
 
         if (successCount > 0) {

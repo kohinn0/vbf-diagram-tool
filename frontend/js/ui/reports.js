@@ -15,13 +15,13 @@ export function initReports() {
             if (status === 'saved') {
                 chipEl.textContent = 'Mentve';
                 chipEl.classList.remove('modified');
-                chipEl.style.display = '';
+                chipEl.classList.remove('is-hidden');
             } else if (status === 'modified') {
                 chipEl.textContent = 'Módosítva';
                 chipEl.classList.add('modified');
-                chipEl.style.display = '';
+                chipEl.classList.remove('is-hidden');
             } else {
-                chipEl.style.display = 'none';
+                chipEl.classList.add('is-hidden');
             }
         }
     };
@@ -31,7 +31,6 @@ export function initReports() {
     const btnExportPdfReport = document.getElementById('btnExportPdfReport');
     const btnEmailReport = document.getElementById('btnEmailReport');
     const docTypeSelect = document.getElementById('docType');
-    const sectionEPH = document.getElementById('sectionEPH');
     const vbfMeasurements = document.getElementById('vbf-measurements');
     const ephMeasurements = document.getElementById('eph-measurements');
 
@@ -46,18 +45,14 @@ export function initReports() {
     }
 
     // DocType változás figyelése (EPH szekció)
-    if (docTypeSelect && sectionEPH) {
+    if (docTypeSelect && vbfMeasurements && ephMeasurements) {
         const applyDocTypeVisibility = (value) => {
             if (value === 'EPH') {
-                // Tiszta EPH jegyzőkönyv: csak EPH mérések
-                sectionEPH.style.display = 'block';
-                if (vbfMeasurements) vbfMeasurements.style.display = 'none';
-                if (ephMeasurements) ephMeasurements.style.display = 'block';
+                if (vbfMeasurements) vbfMeasurements.classList.add('is-hidden');
+                if (ephMeasurements) ephMeasurements.classList.remove('is-hidden');
             } else {
-                // Minden VBF típusnál: VBF + EPH blokk IS legyen látható
-                sectionEPH.style.display = 'block';
-                if (vbfMeasurements) vbfMeasurements.style.display = 'block';
-                if (ephMeasurements) ephMeasurements.style.display = 'none';
+                if (vbfMeasurements) vbfMeasurements.classList.remove('is-hidden');
+                if (ephMeasurements) ephMeasurements.classList.add('is-hidden');
             }
         };
 
@@ -90,7 +85,7 @@ export function initReports() {
     let html5QrcodeScanner = null;
 
     btnScanQr?.addEventListener('click', () => {
-        qrModal.style.display = 'flex';
+        qrModal.classList.remove('is-hidden');
         if (!html5QrcodeScanner && window.Html5QrcodeScanner) {
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "qrReaderPlaceholder",
@@ -108,7 +103,7 @@ export function initReports() {
     });
 
     function closeQrScanner() {
-        qrModal.style.display = 'none';
+        qrModal.classList.add('is-hidden');
         if (html5QrcodeScanner) {
             html5QrcodeScanner.clear().catch(e => console.error(e));
             html5QrcodeScanner = null;
@@ -173,7 +168,7 @@ export function initReports() {
                 <div class="actions">
                     <button class="btn btn-primary btn-small" onclick="loadReport(${rep.id})">Betöltés</button>
                     <button class="btn btn-secondary btn-small" onclick="cloneReport(${rep.id})">Másolás</button>
-                    <button class="btn btn-accent btn-small" onclick="sendEmailReport(${rep.id})" style="background: var(--success); color: #fff; border-color: transparent;">E-mail küldése ✉️</button>
+                    <button class="btn btn-primary btn-small" onclick="sendEmailReport(${rep.id})">E-mail küldése</button>
                     <button class="btn btn-danger btn-small" onclick="deleteReport(${rep.id})">Törlés</button>
                 </div>
             `;
@@ -187,10 +182,10 @@ export function initReports() {
         const searchHint = document.getElementById('reportSearchHint');
         if (!reportListContainer || !window.currentToken) {
             if (reportListContainer) reportListContainer.innerHTML = '';
-            if (searchInput) searchInput.style.display = 'none';
+            if (searchInput) searchInput.classList.add('is-hidden');
             return;
         }
-        if (searchInput) searchInput.style.display = '';
+        if (searchInput) searchInput.classList.remove('is-hidden');
         reportListContainer.innerHTML = '<p>Betöltés...</p>';
 
         try {
@@ -537,9 +532,9 @@ export function initReports() {
                 const savedTitle = document.getElementById('documentTitle')?.value?.trim() || data.title || 'Jegyzőkönyv';
                 if (window.updateHeaderReportContext) window.updateHeaderReportContext(savedTitle, 'saved');
                 if (!silent && window.showToast) window.showToast('✅ Jegyzőkönyv sikeresen mentve a felhőbe!');
-                if (btnExportWord) btnExportWord.style.display = 'inline-block';
-                if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
-                if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
+                if (btnExportWord) btnExportWord.classList.remove('is-hidden');
+                if (btnExportPdfReport) btnExportPdfReport.classList.remove('is-hidden');
+                if (btnEmailReport) btnEmailReport.classList.remove('is-hidden');
                 window.showReportQr(data.id);
                 window.fetchReports();
                 return true;
@@ -608,7 +603,7 @@ export function initReports() {
             a.click();
             window.URL.revokeObjectURL(url);
         } catch (err) { if (window.showToast) window.showToast(err.message, 'error'); else alert(err.message); }
-        finally { btnExportPdfReport.innerText = 'PDF Aláírva 📜'; btnExportPdfReport.disabled = false; }
+        finally { btnExportPdfReport.innerText = 'PDF aláírva'; btnExportPdfReport.disabled = false; }
     });
 
     window.applyPhotoToLastRow = function (tableId, photo) {
@@ -619,9 +614,11 @@ export function initReports() {
         tr.setAttribute('data-photo', photo);
         const input = tr.querySelector('input[type="file"]');
         if (input) {
-            input.parentElement.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-            input.parentElement.style.borderColor = 'var(--accent)';
-            input.parentElement.title = "Kép betöltve!";
+            const wrap = input.parentElement;
+            if (wrap) {
+                wrap.classList.add('vbf-meas-photo-label--filled');
+                wrap.title = 'Kép betöltve!';
+            }
         }
     };
 
@@ -670,7 +667,7 @@ export function initReports() {
                         lastCard.setAttribute('data-photo', d.photo);
                         const imgP = lastCard.querySelector('.img-preview');
                         const txt = lastCard.querySelector('.upload-txt');
-                        if (imgP && txt) { imgP.src = d.photo; imgP.style.display = 'block'; txt.style.display = 'none'; }
+                        if (imgP && txt) { imgP.src = d.photo; imgP.classList.remove('hidden'); txt.classList.add('hidden'); }
                     }
                 });
             }
@@ -700,8 +697,8 @@ export function initReports() {
             const res = await fetch(`${window.API_BASE_URL}/api/reports/${id}`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
             const rep = await res.json();
             window.currentSavedReportId = null;
-            if (btnExportWord) btnExportWord.style.display = 'none';
-            if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
+            if (btnExportWord) btnExportWord.classList.add('is-hidden');
+            if (btnExportPdfReport) btnExportPdfReport.classList.add('is-hidden');
             window.loadReportIntoUI(rep);
             if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = "MÁSOLAT: " + (rep.title || '');
             if (window.updateHeaderReportContext) window.updateHeaderReportContext("MÁSOLAT: " + (rep.title || ''), 'modified');
@@ -717,26 +714,28 @@ export function initReports() {
             const rep = await res.json();
             window.currentSavedReportId = rep.id;
             try { localStorage.setItem('vbf_last_report_id', String(rep.id)); } catch (_) {}
-            if (btnExportWord) btnExportWord.style.display = 'inline-block';
-            if (btnExportPdfReport) btnExportPdfReport.style.display = 'inline-block';
-            if (btnEmailReport) btnEmailReport.style.display = 'inline-block';
+            if (btnExportWord) btnExportWord.classList.remove('is-hidden');
+            if (btnExportPdfReport) btnExportPdfReport.classList.remove('is-hidden');
+            if (btnEmailReport) btnEmailReport.classList.remove('is-hidden');
             window.loadReportIntoUI(rep);
 
             if (rep.status === 'FINAL') {
-                if (btnSaveCloud) btnSaveCloud.style.display = 'none';
-                if (document.getElementById('btnFinalize')) document.getElementById('btnFinalize').style.display = 'none';
-                document.querySelectorAll('input:not(#manualQrId), select, textarea, button:not(.nav-tab):not(#btnExportWord):not(#btnExportPdfReport):not(#btnEmailReport):not(#btnLoginNav):not(#btnToggleTheme):not(#btnCloseLogin)').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
+                document.body.classList.add('vbf-report-final-locked');
+                if (btnSaveCloud) btnSaveCloud.classList.add('is-hidden');
+                if (document.getElementById('btnFinalize')) document.getElementById('btnFinalize').classList.add('is-hidden');
+                document.querySelectorAll('input:not(#manualQrId), select, textarea, button:not(.nav-tab):not(#btnExportWord):not(#btnExportPdfReport):not(#btnEmailReport):not(#btnLoginNav):not(#btnToggleTheme):not(#btnCloseLogin)').forEach(el => { el.disabled = true; });
                 if (!document.getElementById('lockMessage')) {
                     const lockMsg = document.createElement('div');
                     lockMsg.id = 'lockMessage';
-                    lockMsg.style.cssText = 'background: color-mix(in srgb, var(--danger) 82%, #1e293b); color: #fef2f2; padding: 10px; text-align: center; font-weight: 600; width: 100%; z-index: 1000; font-size: 0.92rem;';
-                    lockMsg.innerText = '🔒 EZ A JEGYZŐKÖNYV VÉGLEGESÍTVE VAN. MÓDOSÍTÁS NEM LEHETSÉGES!';
+                    lockMsg.className = 'vbf-report-lock-banner';
+                    lockMsg.innerText = 'Ez a jegyzőkönyv véglegesítve van. Módosítás nem lehetséges.';
                     document.querySelector('.app-content-wrapper')?.prepend(lockMsg);
                 }
             } else {
-                if (btnSaveCloud) btnSaveCloud.style.display = 'inline-block';
-                if (document.getElementById('btnFinalize')) document.getElementById('btnFinalize').style.display = 'inline-block';
-                document.querySelectorAll('input:not(#manualQrId), select, textarea, button').forEach(el => { el.disabled = false; el.style.opacity = '1'; });
+                document.body.classList.remove('vbf-report-final-locked');
+                if (btnSaveCloud) btnSaveCloud.classList.remove('is-hidden');
+                if (document.getElementById('btnFinalize')) document.getElementById('btnFinalize').classList.remove('is-hidden');
+                document.querySelectorAll('input:not(#manualQrId), select, textarea, button').forEach(el => { el.disabled = false; });
                 const lm = document.getElementById('lockMessage');
                 if (lm) lm.remove();
             }
@@ -757,9 +756,9 @@ export function initReports() {
                 if (window.currentSavedReportId === id) {
                     window.currentSavedReportId = null;
                     try { localStorage.removeItem('vbf_last_report_id'); } catch (_) {}
-                    if (btnExportWord) btnExportWord.style.display = 'none';
-                    if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
-                    if (btnEmailReport) btnEmailReport.style.display = 'none';
+                    if (btnExportWord) btnExportWord.classList.add('is-hidden');
+                    if (btnExportPdfReport) btnExportPdfReport.classList.add('is-hidden');
+                    if (btnEmailReport) btnEmailReport.classList.add('is-hidden');
                     if (document.getElementById('documentTitle')) document.getElementById('documentTitle').value = '';
                     if (window.updateHeaderReportContext) window.updateHeaderReportContext('', null);
                 }
@@ -793,10 +792,8 @@ export function initReports() {
             if (existing) existing.remove();
             const qrDiv = document.createElement('div');
             qrDiv.id = 'qr-container';
-            qrDiv.className = 'prop-group';
-            qrDiv.style.textAlign = 'center';
-            qrDiv.style.marginTop = '20px';
-            qrDiv.innerHTML = `<p style="margin:0 0 6px 0; color:var(--accent); font-weight:bold;">Azonosítás (ID: R-${id})</p><div id="qrcode" style="display:inline-block; padding:10px; background:#fff; border-radius:8px; margin: 10px 0;"></div>`;
+            qrDiv.className = 'prop-group vbf-inspector-qr-block';
+            qrDiv.innerHTML = `<p class="vbf-inspector-qr-block__title">Azonosítás (ID: R-${id})</p><div id="qrcode" class="vbf-inspector-qr-block__canvas-wrap"></div>`;
             inspector.appendChild(qrDiv);
             if (window.QRCode) new window.QRCode(document.getElementById("qrcode"), { text: `VBF-REPORT-${id}`, width: 120, height: 120, colorDark: "#000", colorLight: "#fff" });
         }

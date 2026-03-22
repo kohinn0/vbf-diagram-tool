@@ -169,8 +169,8 @@ export function initDefects() {
                                 const uploadTxt = lastDefect.querySelector('.upload-txt');
                                 if (imgPreview && uploadTxt) {
                                     imgPreview.src = attrPhoto;
-                                    imgPreview.style.display = 'block';
-                                    uploadTxt.style.display = 'none';
+                                    imgPreview.classList.remove('hidden');
+                                    uploadTxt.classList.add('hidden');
                                 }
                             }
                         }
@@ -364,7 +364,7 @@ export function initDefects() {
                 lastDefect.setAttribute('data-photo', attrPhoto);
                 const imgPreview = lastDefect.querySelector('.img-preview');
                 const uploadTxt = lastDefect.querySelector('.upload-txt');
-                if (imgPreview && uploadTxt) { imgPreview.src = attrPhoto; imgPreview.style.display = 'block'; uploadTxt.style.display = 'none'; }
+                if (imgPreview && uploadTxt) { imgPreview.src = attrPhoto; imgPreview.classList.remove('hidden'); uploadTxt.classList.add('hidden'); }
             }
         }
         const tabBtn = document.querySelector('.nav-tab[data-target="tab-defects"]');
@@ -389,7 +389,7 @@ export function initDefects() {
         document.querySelectorAll(VBF_DEFECT_ROW_SELECTOR).forEach(card => {
             const severity = (card.getAttribute('data-severity') || 'egyedi').toLowerCase();
             const show = !filter || severity === filter;
-            card.style.display = show ? '' : 'none';
+            card.classList.toggle('is-hidden', !show);
         });
     };
     const defectFilterSelect = document.getElementById('defectFilterSelect');

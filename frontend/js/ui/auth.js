@@ -50,12 +50,12 @@ export function initAuth() {
         const titleEl = document.getElementById('loginModalTitle');
         if (!pl || !pr) return;
         if (mode === 'register') {
-            pl.style.display = 'none';
-            pr.style.display = 'block';
+            pl.classList.add('is-hidden');
+            pr.classList.remove('is-hidden');
             if (titleEl) titleEl.textContent = 'Regisztráció';
         } else {
-            pl.style.display = 'block';
-            pr.style.display = 'none';
+            pl.classList.remove('is-hidden');
+            pr.classList.add('is-hidden');
             if (titleEl) titleEl.textContent = 'Bejelentkezés';
         }
     }
@@ -63,16 +63,16 @@ export function initAuth() {
     function updateAuthUI() {
         if (window.currentToken && window.currentUser) {
             if (userInfoSpan) userInfoSpan.textContent = window.currentUser;
-            if (navUserMenu) navUserMenu.style.display = 'flex';
+            if (navUserMenu) navUserMenu.classList.remove('is-hidden');
             if (btnLoginNav) {
                 btnLoginNav.innerText = 'Kijelentkezés';
                 btnLoginNav.classList.replace('btn-secondary', 'btn-danger');
             }
-            if (btnSaveCloud) btnSaveCloud.style.display = 'inline-block';
-            if (btnFinalize) btnFinalize.style.display = 'inline-block';
+            if (btnSaveCloud) btnSaveCloud.classList.remove('is-hidden');
+            if (btnFinalize) btnFinalize.classList.remove('is-hidden');
 
             const cloudLoginPrompt = document.getElementById('cloudLoginPrompt');
-            if (cloudLoginPrompt) cloudLoginPrompt.style.display = 'none';
+            if (cloudLoginPrompt) cloudLoginPrompt.classList.add('is-hidden');
             if (typeof window.fetchReports === 'function') window.fetchReports();
             if (typeof window.fetchJobs === 'function') window.fetchJobs();
 
@@ -88,25 +88,25 @@ export function initAuth() {
                     window.currentUserData = userData;
                     window.currentUserRole = userData.role;
                     if (userData.role === 'ADMIN' || userData.role === 'SUPER_ADMIN') {
-                        if (navAdmin) navAdmin.style.display = 'inline-block';
-                        if (dashboardTab) dashboardTab.style.display = 'inline-block';
+                        if (navAdmin) navAdmin.classList.remove('is-hidden');
+                        if (dashboardTab) dashboardTab.classList.remove('is-hidden');
                         var linkShopAdmin = document.getElementById('linkShopAdmin');
-                        if (linkShopAdmin) linkShopAdmin.style.display = 'inline-block';
+                        if (linkShopAdmin) linkShopAdmin.classList.remove('is-hidden');
                         var navAdminShop = document.getElementById('navAdminShop');
-                        if (navAdminShop) navAdminShop.style.display = 'inline-block';
-                        if (cloudTab) cloudTab.style.display = 'inline-block';
-                        if (masterTab) masterTab.style.display = 'inline-block';
+                        if (navAdminShop) navAdminShop.classList.remove('is-hidden');
+                        if (cloudTab) cloudTab.classList.remove('is-hidden');
+                        if (masterTab) masterTab.classList.remove('is-hidden');
                         if (typeof window.fetchAdminUsers === 'function') window.fetchAdminUsers();
                         if (typeof window.fetchCompanySettings === 'function') window.fetchCompanySettings();
                     } else {
-                        if (navAdmin) navAdmin.style.display = 'none';
-                        if (dashboardTab) dashboardTab.style.display = 'none';
+                        if (navAdmin) navAdmin.classList.add('is-hidden');
+                        if (dashboardTab) dashboardTab.classList.add('is-hidden');
                         var linkShopAdmin = document.getElementById('linkShopAdmin');
-                        if (linkShopAdmin) linkShopAdmin.style.display = 'none';
+                        if (linkShopAdmin) linkShopAdmin.classList.add('is-hidden');
                         var navAdminShop = document.getElementById('navAdminShop');
-                        if (navAdminShop) navAdminShop.style.display = 'none';
-                        if (cloudTab) cloudTab.style.display = 'inline-block';
-                        if (masterTab) masterTab.style.display = 'inline-block';
+                        if (navAdminShop) navAdminShop.classList.add('is-hidden');
+                        if (cloudTab) cloudTab.classList.remove('is-hidden');
+                        if (masterTab) masterTab.classList.remove('is-hidden');
                     }
                     var exp = userData.subscription_expires;
                     if (exp && userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
@@ -118,20 +118,20 @@ export function initAuth() {
                             var text = document.getElementById('expiryBannerText');
                             if (banner && text) {
                                 text.textContent = 'Előfizetésed ' + days + ' nap múlva lejár. Frissítsd időben.';
-                                banner.style.display = 'flex';
+                                banner.classList.remove('is-hidden');
                             }
                         }
                     }
                     var pdfBan = document.getElementById('pdfWatermarkBanner');
                     if (pdfBan) {
                         if (userData.pdf_export_watermarked && !sessionStorage.getItem('vbf_pdf_wm_banner_dismissed')) {
-                            pdfBan.style.display = 'flex';
+                            pdfBan.classList.remove('is-hidden');
                         } else {
-                            pdfBan.style.display = 'none';
+                            pdfBan.classList.add('is-hidden');
                         }
                     }
                     if (btnExportPdfReport) {
-                        btnExportPdfReport.innerText = userData.pdf_export_watermarked ? 'PDF (vízjel) 📜' : 'PDF aláírva 📜';
+                        btnExportPdfReport.innerText = userData.pdf_export_watermarked ? 'PDF (vízjel)' : 'PDF aláírva';
                     }
                     if (typeof window.vbfCartOnUserLoaded === 'function') window.vbfCartOnUserLoaded(userData);
                 })
@@ -140,30 +140,30 @@ export function initAuth() {
         } else {
             if (userInfoSpan) userInfoSpan.textContent = '';
             closeNavUserMenu();
-            if (navUserMenu) navUserMenu.style.display = 'none';
+            if (navUserMenu) navUserMenu.classList.add('is-hidden');
             if (btnLoginNav) {
                 btnLoginNav.innerText = 'Bejelentkezés';
                 btnLoginNav.classList.replace('btn-danger', 'btn-secondary');
             }
-            if (btnSaveCloud) btnSaveCloud.style.display = 'none';
-            if (btnExportWord) btnExportWord.style.display = 'none';
-            if (btnExportPdfReport) btnExportPdfReport.style.display = 'none';
-            if (btnEmailReport) btnEmailReport.style.display = 'none';
-            if (btnFinalize) btnFinalize.style.display = 'none';
-            if (navAdmin) navAdmin.style.display = 'none';
-            if (dashboardTab) dashboardTab.style.display = 'none';
+            if (btnSaveCloud) btnSaveCloud.classList.add('is-hidden');
+            if (btnExportWord) btnExportWord.classList.add('is-hidden');
+            if (btnExportPdfReport) btnExportPdfReport.classList.add('is-hidden');
+            if (btnEmailReport) btnEmailReport.classList.add('is-hidden');
+            if (btnFinalize) btnFinalize.classList.add('is-hidden');
+            if (navAdmin) navAdmin.classList.add('is-hidden');
+            if (dashboardTab) dashboardTab.classList.add('is-hidden');
             var linkShopAdminEl = document.getElementById('linkShopAdmin');
-            if (linkShopAdminEl) linkShopAdminEl.style.display = 'none';
+            if (linkShopAdminEl) linkShopAdminEl.classList.add('is-hidden');
             var navAdminShopEl = document.getElementById('navAdminShop');
-            if (navAdminShopEl) navAdminShopEl.style.display = 'none';
-            if (cloudTab) cloudTab.style.display = 'none';
-            if (masterTab) masterTab.style.display = 'none';
+            if (navAdminShopEl) navAdminShopEl.classList.add('is-hidden');
+            if (cloudTab) cloudTab.classList.add('is-hidden');
+            if (masterTab) masterTab.classList.add('is-hidden');
 
             window.currentSavedReportId = null;
             if (window.updateHeaderReportContext) window.updateHeaderReportContext('', null);
             if (reportListContainer) reportListContainer.innerHTML = '';
             const cloudLoginPrompt = document.getElementById('cloudLoginPrompt');
-            if (cloudLoginPrompt) cloudLoginPrompt.style.display = 'block';
+            if (cloudLoginPrompt) cloudLoginPrompt.classList.remove('is-hidden');
             if (typeof window.vbfCartOnUserLoggedOut === 'function') window.vbfCartOnUserLoggedOut();
         }
     }
@@ -179,7 +179,7 @@ export function initAuth() {
                 updateAuthUI();
             } else {
                 setLoginModalMode('login');
-                if (loginModal) loginModal.style.display = 'flex';
+                if (loginModal) loginModal.classList.remove('is-hidden');
             }
         });
     }
@@ -188,7 +188,7 @@ export function initAuth() {
     document.getElementById('linkToLogin')?.addEventListener('click', (e) => { e.preventDefault(); setLoginModalMode('login'); });
     document.getElementById('btnCloudLoginPrompt')?.addEventListener('click', () => {
         setLoginModalMode('login');
-        if (loginModal) loginModal.style.display = 'flex';
+        if (loginModal) loginModal.classList.remove('is-hidden');
     });
 
     const btnSubmitRegister = document.getElementById('btnSubmitRegister');
@@ -235,7 +235,7 @@ export function initAuth() {
                 localStorage.setItem('vbf_token', window.currentToken);
                 localStorage.setItem('vbf_user', window.currentUser);
                 updateAuthUI();
-                if (loginModal) loginModal.style.display = 'none';
+                if (loginModal) loginModal.classList.add('is-hidden');
                 if (window.showToast) window.showToast('Sikeres regisztráció!', 'success');
             } catch (err) {
                 if (registerError) registerError.textContent = err.message || 'Hiba.';
@@ -260,25 +260,25 @@ export function initAuth() {
                 document.getElementById('passwordNew').value = '';
                 document.getElementById('passwordNewConfirm').value = '';
                 if (passwordModalError) passwordModalError.textContent = '';
-                passwordModal.style.display = 'flex';
+                passwordModal.classList.remove('is-hidden');
             }
         });
     }
     if (btnPasswordClose) {
         btnPasswordClose.addEventListener('click', () => {
-            if (passwordModal) passwordModal.style.display = 'none';
+            if (passwordModal) passwordModal.classList.add('is-hidden');
             if (passwordModalError) passwordModalError.textContent = '';
         });
     }
     document.getElementById('expiryBannerDismiss')?.addEventListener('click', () => {
         sessionStorage.setItem('vbf_expiry_banner_dismissed', '1');
         var b = document.getElementById('expiryBanner');
-        if (b) b.style.display = 'none';
+        if (b) b.classList.add('is-hidden');
     });
     document.getElementById('pdfWatermarkBannerDismiss')?.addEventListener('click', () => {
         sessionStorage.setItem('vbf_pdf_wm_banner_dismissed', '1');
         var b = document.getElementById('pdfWatermarkBanner');
-        if (b) b.style.display = 'none';
+        if (b) b.classList.add('is-hidden');
     });
     var profileModal = document.getElementById('profileModal');
     document.getElementById('linkProfile')?.addEventListener('click', function (e) {
@@ -302,10 +302,10 @@ export function initAuth() {
                 profileExpiry.textContent = '–';
             }
         }
-        if (profileModal) profileModal.style.display = 'flex';
+        if (profileModal) profileModal.classList.remove('is-hidden');
     });
-    document.getElementById('btnProfileClose')?.addEventListener('click', () => { if (profileModal) profileModal.style.display = 'none'; });
-    profileModal?.addEventListener('click', function (e) { if (e.target === profileModal) profileModal.style.display = 'none'; });
+    document.getElementById('btnProfileClose')?.addEventListener('click', () => { if (profileModal) profileModal.classList.add('is-hidden'); });
+    profileModal?.addEventListener('click', function (e) { if (e.target === profileModal) profileModal.classList.add('is-hidden'); });
     document.getElementById('btnProfileSaveEmail')?.addEventListener('click', async () => {
         var email = document.getElementById('profileEmail')?.value?.trim() || null;
         if (!window.currentToken) return;
@@ -327,12 +327,12 @@ export function initAuth() {
         }
     });
     document.getElementById('btnProfileChangePassword')?.addEventListener('click', () => {
-        if (profileModal) profileModal.style.display = 'none';
+        if (profileModal) profileModal.classList.add('is-hidden');
         if (passwordModal) {
             document.getElementById('passwordCurrent').value = '';
             document.getElementById('passwordNew').value = '';
             document.getElementById('passwordNewConfirm').value = '';
-            passwordModal.style.display = 'flex';
+            passwordModal.classList.remove('is-hidden');
         }
     });
     document.getElementById('btnProfileExportZip')?.addEventListener('click', function (e) {
@@ -341,7 +341,7 @@ export function initAuth() {
     });
     document.getElementById('linkDeleteAccountFromProfile')?.addEventListener('click', function (e) {
         e.preventDefault();
-        if (profileModal) profileModal.style.display = 'none';
+        if (profileModal) profileModal.classList.add('is-hidden');
         document.getElementById('linkDeleteAccount')?.click();
     });
     var forgotPasswordModal = document.getElementById('forgotPasswordModal');
@@ -349,10 +349,10 @@ export function initAuth() {
         e.preventDefault();
         document.getElementById('forgotPasswordEmail').value = '';
         document.getElementById('forgotPasswordStatus').textContent = '';
-        if (forgotPasswordModal) forgotPasswordModal.style.display = 'flex';
+        if (forgotPasswordModal) forgotPasswordModal.classList.remove('is-hidden');
     });
-    document.getElementById('btnForgotPasswordClose')?.addEventListener('click', () => { if (forgotPasswordModal) forgotPasswordModal.style.display = 'none'; });
-    forgotPasswordModal?.addEventListener('click', function (e) { if (e.target === forgotPasswordModal) forgotPasswordModal.style.display = 'none'; });
+    document.getElementById('btnForgotPasswordClose')?.addEventListener('click', () => { if (forgotPasswordModal) forgotPasswordModal.classList.add('is-hidden'); });
+    forgotPasswordModal?.addEventListener('click', function (e) { if (e.target === forgotPasswordModal) forgotPasswordModal.classList.add('is-hidden'); });
     document.getElementById('btnForgotPasswordSubmit')?.addEventListener('click', async () => {
         var email = document.getElementById('forgotPasswordEmail')?.value?.trim();
         var statusEl = document.getElementById('forgotPasswordStatus');
@@ -365,7 +365,7 @@ export function initAuth() {
             });
             var data = await res.json().catch(function () { return {}; });
             if (statusEl) statusEl.textContent = data.message || 'Ha van ilyen fiók, linket küldtünk.';
-            if (res.ok && forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+            if (res.ok && forgotPasswordModal) forgotPasswordModal.classList.add('is-hidden');
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Hálózati hiba.';
         }
@@ -373,7 +373,7 @@ export function initAuth() {
     var resetToken = new URLSearchParams(window.location.search).get('reset');
     if (resetToken) {
         var resetPanel = document.getElementById('resetPasswordPanel');
-        if (resetPanel) resetPanel.style.display = 'flex';
+        if (resetPanel) resetPanel.classList.remove('is-hidden');
         document.getElementById('btnResetPasswordSubmit')?.addEventListener('click', async () => {
             var newPw = document.getElementById('resetNewPassword')?.value || '';
             var confirmPw = document.getElementById('resetNewPasswordConfirm')?.value || '';
@@ -391,7 +391,7 @@ export function initAuth() {
                 if (res.ok) {
                     if (window.showToast) window.showToast(data.message || 'Jelszó megváltoztatva.', 'success');
                     history.replaceState({}, '', window.location.pathname);
-                    if (resetPanel) resetPanel.style.display = 'none';
+                    if (resetPanel) resetPanel.classList.add('is-hidden');
                 } else {
                     if (errEl) errEl.textContent = data.detail || 'Hiba';
                 }
@@ -401,7 +401,7 @@ export function initAuth() {
         });
     }
     if (passwordModal && passwordModal.addEventListener) {
-        passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) passwordModal.style.display = 'none'; });
+        passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) passwordModal.classList.add('is-hidden'); });
     }
     if (btnPasswordSubmit) {
         btnPasswordSubmit.addEventListener('click', async () => {
@@ -431,7 +431,7 @@ export function initAuth() {
                 const data = await res.json().catch(() => ({}));
                 if (res.ok) {
                     if (window.showToast) window.showToast(data.message || 'Jelszó megváltoztatva.', 'success');
-                    if (passwordModal) passwordModal.style.display = 'none';
+                    if (passwordModal) passwordModal.classList.add('is-hidden');
                 } else {
                     if (passwordModalError) passwordModalError.textContent = data.detail || 'Hiba a módosítás során.';
                 }
@@ -547,7 +547,7 @@ export function initAuth() {
     }
 
     function closeLoginModal() {
-        if (loginModal) loginModal.style.display = 'none';
+        if (loginModal) loginModal.classList.add('is-hidden');
         if (loginError) loginError.innerText = '';
         const re = document.getElementById('registerError');
         if (re) re.textContent = '';
@@ -579,7 +579,7 @@ export function initAuth() {
                 localStorage.setItem('vbf_user', window.currentUser);
 
                 updateAuthUI();
-                if (loginModal) loginModal.style.display = 'none';
+                if (loginModal) loginModal.classList.add('is-hidden');
                 if (loginError) loginError.innerText = '';
             } catch (error) {
                 console.error("Login hiba:", error);
@@ -610,7 +610,7 @@ export function initAuth() {
     const params = new URLSearchParams(window.location.search);
     if (!window.currentToken && (params.get('from') === 'landing' || params.get('register') === '1')) {
         setLoginModalMode(params.get('register') === '1' ? 'register' : 'login');
-        if (loginModal) loginModal.style.display = 'flex';
+        if (loginModal) loginModal.classList.remove('is-hidden');
         history.replaceState({}, '', window.location.pathname);
     }
     // Cookie banner (app oldal): ha még nincs elfogadva, megjelenítés + Elfogadom
@@ -624,8 +624,8 @@ export function initAuth() {
         const linkRegAszf = document.getElementById('linkRegAszf');
         if (linkRegTerms) linkRegTerms.href = legalBase + '/legal/terms';
         if (linkRegAszf) linkRegAszf.href = legalBase + '/legal/aszf';
-        if (banner && !localStorage.getItem('cookie_consent')) banner.style.display = 'flex';
-        if (accept) accept.addEventListener('click', () => { localStorage.setItem('cookie_consent', '1'); if (banner) banner.style.display = 'none'; });
+        if (banner && !localStorage.getItem('cookie_consent')) banner.classList.remove('is-hidden');
+        if (accept) accept.addEventListener('click', () => { localStorage.setItem('cookie_consent', '1'); if (banner) banner.classList.add('is-hidden'); });
     })();
 
     // Sikeres vásárlás visszatérés: csak ha a backend paid=true, üzenet, majd URL tisztítása

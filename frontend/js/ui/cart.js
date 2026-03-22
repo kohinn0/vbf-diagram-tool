@@ -35,26 +35,22 @@ function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalEl = document.getElementById('cartTotal');
     if (badge) {
-        if (cart.items.length) {
-            badge.textContent = String(cart.items.length);
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
+        badge.textContent = String(cart.items.length);
+        badge.classList.toggle('cart-badge--visible', cart.items.length > 0);
     }
     if (cart.items.length === 0) {
-        if (empty) empty.style.display = 'block';
-        if (content) content.style.display = 'none';
+        if (empty) empty.classList.remove('is-hidden');
+        if (content) content.classList.add('is-hidden');
         return;
     }
-    if (empty) empty.style.display = 'none';
-    if (content) content.style.display = 'block';
+    if (empty) empty.classList.add('is-hidden');
+    if (content) content.classList.remove('is-hidden');
     if (!list || !totalEl) return;
     let total = 0;
     list.innerHTML = cart.items.map((it) => {
         total += it.price || 0;
         const label = (it.label || it.plan_type || '').replace(/</g, '&lt;');
-        return `<li style="padding: 10px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between;"><span>${label}</span><strong>${formatPrice(it.price)} Ft</strong></li>`;
+        return `<li><span>${label}</span><strong>${formatPrice(it.price)} Ft</strong></li>`;
     }).join('');
     totalEl.textContent = `Összesen: ${formatPrice(total)} Ft`;
 }
@@ -67,9 +63,9 @@ function syncCheckoutStepForSession() {
     const guestBlock = document.getElementById('cartGuestRegBlock');
     const loggedNote = document.getElementById('cartLoggedInNote');
     if (isLoggedIn()) {
-        if (guestBlock) guestBlock.style.display = 'none';
+        if (guestBlock) guestBlock.classList.add('is-hidden');
         if (loggedNote) {
-            loggedNote.style.display = 'block';
+            loggedNote.classList.remove('is-hidden');
             const u = window.currentUserData;
             const company = (u && u.company_name) ? u.company_name : 'céged';
             loggedNote.textContent = `Bejelentkezve vagy: a megrendelés a jelenlegi fiókodhoz és a(z) „${company}” céghez kapcsolódik. Az utalásos számlához lent add meg a számlázási adatokat.`;
@@ -77,8 +73,8 @@ function syncCheckoutStepForSession() {
         prefillTransferFromUser();
         prefillStripeFromUser();
     } else {
-        if (guestBlock) guestBlock.style.display = 'block';
-        if (loggedNote) loggedNote.style.display = 'none';
+        if (guestBlock) guestBlock.classList.remove('is-hidden');
+        if (loggedNote) loggedNote.classList.add('is-hidden');
     }
 }
 
@@ -104,20 +100,20 @@ function prefillStripeFromUser() {
 function openCartPanel() {
     const panel = document.getElementById('cartPanel');
     if (!panel) return;
-    panel.style.display = 'flex';
+    panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
     const s2 = document.getElementById('cartStep2');
     const s1 = document.getElementById('cartStep1');
-    if (s2) s2.style.display = 'none';
-    if (s1) s1.style.display = 'block';
+    if (s2) s2.classList.add('is-hidden');
+    if (s1) s1.classList.remove('is-hidden');
     const tf = document.getElementById('cartTransferForm');
-    if (tf) tf.style.display = 'none';
+    if (tf) tf.classList.add('is-hidden');
     const st = document.getElementById('cartTransferStatus');
     if (st) st.textContent = '';
     const stripeSt = document.getElementById('cartStripeStatus');
     if (stripeSt) {
         stripeSt.textContent = '';
-        stripeSt.style.color = '';
+        stripeSt.classList.remove('form-status--success', 'form-status--danger');
     }
     syncCheckoutStepForSession();
 }
@@ -125,7 +121,7 @@ function openCartPanel() {
 function closeCartPanel() {
     const panel = document.getElementById('cartPanel');
     if (panel) {
-        panel.style.display = 'none';
+        panel.classList.remove('is-open');
         panel.setAttribute('aria-hidden', 'true');
     }
 }
@@ -160,23 +156,23 @@ export function initCart() {
     if (btnClose) btnClose.addEventListener('click', closeCartPanel);
     if (btnCheckout) {
         btnCheckout.addEventListener('click', () => {
-            document.getElementById('cartStep1').style.display = 'none';
-            document.getElementById('cartStep2').style.display = 'block';
+            document.getElementById('cartStep1')?.classList.add('is-hidden');
+            document.getElementById('cartStep2')?.classList.remove('is-hidden');
             syncCheckoutStepForSession();
         });
     }
     if (btnBack) {
         btnBack.addEventListener('click', () => {
-            document.getElementById('cartStep2').style.display = 'none';
-            document.getElementById('cartStep1').style.display = 'block';
+            document.getElementById('cartStep2')?.classList.add('is-hidden');
+            document.getElementById('cartStep1')?.classList.remove('is-hidden');
             const tf = document.getElementById('cartTransferForm');
-            if (tf) tf.style.display = 'none';
+            if (tf) tf.classList.add('is-hidden');
         });
     }
     if (btnPayTransfer) {
         btnPayTransfer.addEventListener('click', () => {
             const tf = document.getElementById('cartTransferForm');
-            if (tf) tf.style.display = 'block';
+            if (tf) tf.classList.remove('is-hidden');
             syncCheckoutStepForSession();
         });
     }
@@ -190,20 +186,22 @@ export function initCart() {
             const statusEl = document.getElementById('cartStripeStatus');
             if (pw && pw !== pwc) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'A jelszavak nem egyeznek.';
                 }
                 return;
             }
             if (pw && !email) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'Jelszó megadásához e-mail cím is kell.';
                 }
                 return;
             }
             if (statusEl) {
-                statusEl.style.color = '';
+                statusEl.classList.remove('form-status--success', 'form-status--danger');
                 statusEl.textContent = 'Átirányítás a fizetéshez…';
             }
             try {
@@ -223,13 +221,15 @@ export function initCart() {
                     return;
                 }
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent =
                         typeof data.detail === 'string' ? data.detail : 'Nem sikerült elindítani a fizetést.';
                 }
             } catch {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'Hálózati hiba.';
                 }
             }
@@ -246,21 +246,23 @@ export function initCart() {
             const statusEl = document.getElementById('cartTransferStatus');
             if (!email || !name) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'E-mail és név kötelező.';
                 }
                 return;
             }
             if (!address || address.length < 5) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'Számlázási cím megadása kötelező.';
                 }
                 return;
             }
             if (statusEl) {
                 statusEl.textContent = 'Küldés…';
-                statusEl.style.color = '';
+                statusEl.classList.remove('form-status--success', 'form-status--danger');
             }
             try {
                 const res = await fetch(`${apiBase()}/api/payments/request-bank-transfer`, {
@@ -277,17 +279,20 @@ export function initCart() {
                 const data = await res.json().catch(() => ({}));
                 if (res.ok && data.message) {
                     if (statusEl) {
-                        statusEl.style.color = 'var(--success)';
+                        statusEl.classList.remove('form-status--danger');
+                        statusEl.classList.add('form-status--success');
                         statusEl.textContent = data.message;
                     }
                     setCart({ items: [] });
                 } else if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = typeof data.detail === 'string' ? data.detail : 'Hiba történt.';
                 }
             } catch {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'Hálózati hiba.';
                 }
             }
@@ -306,7 +311,7 @@ export function initCart() {
         .then((j) => {
             if (j && j.enabled) {
                 const w = document.getElementById('cartStripeWrap');
-                if (w) w.style.display = 'block';
+                if (w) w.classList.remove('is-hidden');
             }
         })
         .catch(() => {});
@@ -330,8 +335,7 @@ async function loadPlansForAppCart() {
     if (monthlyPlan && monthlyPlan.price_monthly != null) {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'btn btn-secondary cart-btn-full';
-        b.style.marginBottom = '0.5rem';
+        b.className = 'btn btn-secondary cart-btn-full cart-plan-btn-spaced';
         b.textContent = `${monthlyPlan.display_name || 'Havi'} – kosárba (${formatPrice(monthlyPlan.price_monthly)} Ft)`;
         b.addEventListener('click', () => {
             setCart({

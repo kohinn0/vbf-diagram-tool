@@ -1,3 +1,11 @@
+function vbfMeasSetInputState(el, state) {
+    if (!el) return;
+    el.classList.remove('vbf-meas-input--error', 'vbf-meas-input--warn', 'vbf-meas-input--ok');
+    if (state === 'error') el.classList.add('vbf-meas-input--error');
+    else if (state === 'warn') el.classList.add('vbf-meas-input--warn');
+    else if (state === 'ok') el.classList.add('vbf-meas-input--ok');
+}
+
 export function initMeasurements() {
     window.VBF = window.VBF || {};
 
@@ -51,7 +59,7 @@ export function initMeasurements() {
                 const photoBtn = tr.querySelector('label.meas-photo-label');
                 const fid = photoBtn?.getAttribute('for');
                 if (photoBtn && fid) {
-                    photoBtn.innerHTML = `Fotó ✓<input type="file" id="${fid}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">`;
+                    photoBtn.innerHTML = `Fotó ✓<input type="file" id="${fid}" accept="image/*" class="hidden" onchange="window.attachMeasurementPhoto(this)">`;
                     photoBtn.title = 'Kép csatolva! Kattints a cseréhez.';
                 }
             });
@@ -76,7 +84,7 @@ export function initMeasurements() {
                     <button type="button" class="btn btn-secondary btn-small vbf-meas-row-btn" title="Hiba felvitele a hibajegyzékbe" onclick="typeof window.addDefectFromMeasurementRow==='function'&&window.addDefectFromMeasurementRow(this.closest('tr'))">Hiba</button>
                     <label for="${measPhotoId}" class="btn btn-secondary btn-small vbf-meas-row-btn meas-photo-label" title="Fotó csatolása">
                         Fotó
-                        <input type="file" id="${measPhotoId}" accept="image/*" style="display:none;" onchange="window.attachMeasurementPhoto(this)">
+                        <input type="file" id="${measPhotoId}" accept="image/*" class="hidden" onchange="window.attachMeasurementPhoto(this)">
                     </label>
                     <button type="button" class="btn btn-danger btn-small vbf-meas-row-btn" onclick="this.closest('tr').remove()" title="Sor törlése">Törlés</button>
                 </div>
@@ -112,13 +120,13 @@ export function initMeasurements() {
 
         // Jellemzően védővezető folytonosságnál szigorúan max. 1.0 Ohm
         if (val > 1.0) {
-            valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
+            vbfMeasSetInputState(valInput, 'error');
             passSelect.value = 'Nem';
         } else if (val > 0.5) {
-            valInput.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber/Warning
+            vbfMeasSetInputState(valInput, 'warn');
             passSelect.value = 'Igen';
         } else {
-            valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
+            vbfMeasSetInputState(valInput, 'ok');
             passSelect.value = 'Igen';
         }
         window.vbfSyncMeasPassUI(tr);
@@ -155,13 +163,13 @@ export function initMeasurements() {
             if (!isNaN(val)) {
                 anyFilled = true;
                 if (val < limit) {
-                    input.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
+                    vbfMeasSetInputState(input, 'error');
                     isOk = false;
                 } else {
-                    input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                    vbfMeasSetInputState(input, 'ok');
                 }
             } else {
-                input.style.backgroundColor = ''; // clear if empty
+                vbfMeasSetInputState(input, null);
             }
         });
 
@@ -220,10 +228,10 @@ export function initMeasurements() {
         // Ha nincs maxZs (pl. betétes biztosító), nem tudunk automatizáltan minősíteni
         if (maxZs !== null) {
             if (zsVal > maxZs) {
-                zsInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
+                vbfMeasSetInputState(zsInput, 'error');
                 passSelect.value = 'Nem';
             } else {
-                zsInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
+                vbfMeasSetInputState(zsInput, 'ok');
                 passSelect.value = 'Igen';
             }
             window.vbfSyncMeasPassUI(tr);
@@ -272,39 +280,39 @@ export function initMeasurements() {
         // 1. Általános RCD max kioldási idő 300ms a HD 60364-4-41 alapján
         if (!isNaN(t1)) {
             if (t1 > 300) {
-                t1Input.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
+                vbfMeasSetInputState(t1Input, 'error');
                 isOk = false;
             } else {
-                t1Input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                vbfMeasSetInputState(t1Input, 'ok');
             }
         }
 
         // 5x Idn teszt (jellemzően max 40 ms)
         if (!isNaN(t5)) {
             if (t5 > 40) {
-                t5Input.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber
+                vbfMeasSetInputState(t5Input, 'warn');
             } else {
-                t5Input.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                vbfMeasSetInputState(t5Input, 'ok');
             }
         }
 
         // 2. Kioldóáram RAMP (Szabványosan: 50% < I_kioldás <= 100%)
         if (!isNaN(idn) && !isNaN(ramp)) {
             if (ramp <= idn * 0.5 || ramp > idn) {
-                rampInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
+                vbfMeasSetInputState(rampInput, 'error');
                 isOk = false;
             } else {
-                rampInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                vbfMeasSetInputState(rampInput, 'ok');
             }
         }
 
         // 3. Érintési feszültség Uc (Max 50V általános esetben)
         if (!isNaN(uc)) {
             if (uc > 50) {
-                if (ucInput) ucInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
+                if (ucInput) vbfMeasSetInputState(ucInput, 'error');
                 isOk = false;
             } else {
-                if (ucInput) ucInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                if (ucInput) vbfMeasSetInputState(ucInput, 'ok');
             }
         }
 
@@ -334,10 +342,10 @@ export function initMeasurements() {
 
         // Szabványosan a kéziszerszámok szigetelési ellenállása > 2.0 MΩ
         if (val < 2.0) {
-            valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
+            vbfMeasSetInputState(valInput, 'error');
             passSelect.value = 'Nem';
         } else {
-            valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
+            vbfMeasSetInputState(valInput, 'ok');
             passSelect.value = 'Igen';
         }
         window.vbfSyncMeasPassUI(tr);
@@ -383,13 +391,13 @@ export function initMeasurements() {
 
         // EPH folytonosságnál maximum 1.0 Ohm, de inkább kevesebb!
         if (val > 1.0) {
-            valInput.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'; // Red
+            vbfMeasSetInputState(valInput, 'error');
             passSelect.value = 'Nem';
         } else if (val > 0.3) {
-            valInput.style.backgroundColor = 'rgba(245, 158, 11, 0.3)'; // Amber/Warning
+            vbfMeasSetInputState(valInput, 'warn');
             passSelect.value = 'Igen';
         } else {
-            valInput.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Green
+            vbfMeasSetInputState(valInput, 'ok');
             passSelect.value = 'Igen';
         }
         window.vbfSyncMeasPassUI(tr);

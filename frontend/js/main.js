@@ -1,4 +1,5 @@
-// A belépési pont: tokenek → Tailwind → app shell (style.css + modul importok)
+// A belépési pont: reset → tokenek → Tailwind → app shell (style.css + modul importok)
+import '../css/reset.css';
 import '../css/tokens.css';
 import '../css/tw.css';
 import '../css/style.css';
@@ -30,7 +31,7 @@ import { initBugReportLinks } from './ui/bug-report.js';
 window.API_BASE_URL = '';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 VBF App Inicializálása (Moduláris)");
+    console.log('VBF App inicializálása (moduláris)');
 
     // Toast (korán, hogy showToast mindenhol elérhető legyen)
     initToast();
@@ -80,20 +81,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnShowKeyboardShortcuts && keyboardModal) {
             btnShowKeyboardShortcuts.addEventListener('click', () => {
                 closeHelp();
-                keyboardModal.style.display = 'flex';
+                keyboardModal.classList.remove('is-hidden');
                 keyboardModal.setAttribute('aria-hidden', 'false');
             });
         }
         if (btnCloseKeyboardShortcuts && keyboardModal) {
             btnCloseKeyboardShortcuts.addEventListener('click', () => {
-                keyboardModal.style.display = 'none';
+                keyboardModal.classList.add('is-hidden');
                 keyboardModal.setAttribute('aria-hidden', 'true');
             });
         }
         if (keyboardModal) {
             keyboardModal.addEventListener('click', (e) => {
                 if (e.target === keyboardModal) {
-                    keyboardModal.style.display = 'none';
+                    keyboardModal.classList.add('is-hidden');
                     keyboardModal.setAttribute('aria-hidden', 'true');
                 }
             });

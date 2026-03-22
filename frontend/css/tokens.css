@@ -1,39 +1,59 @@
-/* Közös design tokenek – minden oldal (app, shop, főoldal) */
+/* Közös design tokenek – minden oldal (app, shop, főoldal)
+ * VBF Premium Design System: hex / rgb színek csak itt (és body.light-mode alatt).
+ * Komponensekben: csak var(--token), egyedi # tiltott. */
+
 :root {
-    --bg-base: #040914;
-    --bg-panel: rgba(11, 21, 39, 0.7);
-    --bg-glass: rgba(18, 30, 54, 0.5);
+    /* --- Hivatalos paletta (sötét mód) --- */
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --bg-input: #334155;
 
-    --text-main: #ffffff;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --accent: #fbbf24;
+
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --text-muted-strong: #cbd5e1;
 
-    /* Tomított, kevésbé „neon” alapszínek (sötét mód) – professzionálisabb megjelenés */
-    --primary: #4a9ec4;
-    --primary-hover: #3d89ad;
-    --secondary: #121e36;
-    --secondary-hover: #1e293b;
-    --danger: #d97070;
-    --danger-hover: #c45c5c;
+    --radius: 8px;
+    --padding-panel: 24px;
+    --gap-small: 12px;
 
-    --accent: #c9a04a;
+    /* --- Régi / kompatibilitási nevek (származtatva, hex nélkül) --- */
+    --bg-base: var(--bg-main);
+    --bg-color: var(--bg-main);
+    --secondary: var(--bg-card);
+    --secondary-hover: color-mix(in srgb, var(--bg-card) 90%, var(--primary) 10%);
+    --surface-color: var(--bg-card);
+    --surface-light: var(--bg-input);
+    --bg-panel: color-mix(in srgb, var(--bg-card) 82%, transparent);
+    --bg-glass: color-mix(in srgb, var(--bg-card) 55%, transparent);
 
-    /* Állapot / banner – tompított, nem neon */
-    --success: #6eb89a;
-    --success-muted: #8cc9ae;
-    --warning: #c9a55a;
-    --warning-strong: #b8924a;
-    --info-banner-from: #3d6d8a;
-    --info-banner-to: #4a85a3;
+    --text-muted-strong: color-mix(in srgb, var(--text-muted) 38%, var(--text-main));
+    --text-color: var(--text-main);
+    --primary-light: color-mix(in srgb, var(--primary) 72%, var(--text-main));
+    --primary-dark: var(--primary-hover);
 
-    --border-color: rgba(255, 255, 255, 0.08);
-    --grid-color: rgba(255, 255, 255, 0.04);
+    --danger-hover: color-mix(in srgb, var(--danger) 88%, var(--bg-main));
+    --success-muted: color-mix(in srgb, var(--success) 78%, var(--text-main));
+    --warning-strong: color-mix(in srgb, var(--warning) 82%, var(--bg-main));
 
-    --radius: 12px;
-    --radius-sm: 8px;
+    --info-banner-from: color-mix(in srgb, var(--primary) 48%, var(--bg-main));
+    --info-banner-to: color-mix(in srgb, var(--primary) 68%, var(--bg-card));
+
+    --border-color: color-mix(in srgb, var(--text-main) 9%, transparent);
+    --grid-color: color-mix(in srgb, var(--text-main) 5%, transparent);
+    --glass-bg: var(--bg-panel);
+    --glass-border: var(--border-color);
+
+    --btn-radius: var(--radius);
+    --radius-sm: var(--radius);
 
     /* Gombok – egy forma minden felületen (app, shop, főoldal) */
-    --btn-radius: 10px;
     --btn-min-height: 42px;
     --btn-min-height-sm: 34px;
     --btn-pad-y: 0.55rem;
@@ -46,16 +66,6 @@
 
     --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-
-    /* Főoldal / kosár / régi osztálynevek – aliasok (--primary / --secondary alapú) */
-    --bg-color: var(--bg-base);
-    --text-color: var(--text-main);
-    --surface-color: #0b1527;
-    --surface-light: var(--secondary);
-    --glass-bg: var(--bg-panel);
-    --glass-border: var(--border-color);
-    --primary-dark: var(--primary-hover);
-    --primary-light: #7eb8d4;
 }
 
 * {
@@ -100,7 +110,11 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background-image: radial-gradient(circle at 50% 0%, #0b1527 0%, var(--bg-base) 60%);
+    background-image: radial-gradient(
+        circle at 50% 0%,
+        color-mix(in srgb, var(--bg-card) 55%, var(--bg-main)) 0%,
+        var(--bg-base) 60%
+    );
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -122,6 +136,11 @@ body.landing-page {
     display: block;
 }
 
+/* Helyszínfa sor behúzás – érték sitetree.js-ből */
+.vbf-site-tree-row-indent {
+    padding-inline-start: var(--vbf-site-tree-row-indent, 0.45rem);
+}
+
 /* Helyszínfa: függőleges vezető – mélység a --vbf-d custom property-ből (sitetree.js) */
 [data-vbf-tree-children] {
     position: relative;
@@ -139,40 +158,142 @@ body.landing-page {
 }
 
 body.light-mode {
-    --bg-base: #f8fafc;
-    --bg-color: var(--bg-base);
-    --bg-panel: rgba(255, 255, 255, 0.88);
-    --bg-glass: rgba(255, 255, 255, 0.72);
+    /* Világos téma – hex csak itt (tokenfelülírás) */
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-input: #e2e8f0;
+
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --accent: #d97706;
+
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+
     --text-main: #0f172a;
-    --text-muted: #475569;
-    --text-muted-strong: #64748b;
-    --border-color: rgba(15, 23, 42, 0.09);
-    --grid-color: rgba(0, 0, 0, 0.05);
+    --text-muted: #64748b;
+
+    --bg-base: var(--bg-main);
+    --bg-color: var(--bg-main);
+    --secondary: var(--bg-input);
+    --secondary-hover: color-mix(in srgb, var(--bg-input) 85%, var(--primary) 15%);
+    --surface-color: var(--bg-card);
+    --surface-light: color-mix(in srgb, var(--bg-input) 92%, var(--text-main));
+    --bg-panel: color-mix(in srgb, var(--bg-card) 90%, transparent);
+    --bg-glass: color-mix(in srgb, var(--bg-card) 78%, transparent);
+
+    --text-muted-strong: color-mix(in srgb, var(--text-muted) 45%, var(--text-main));
     --text-color: var(--text-main);
+    --primary-light: color-mix(in srgb, var(--primary) 65%, var(--text-main));
+    --primary-dark: var(--primary-hover);
+
+    --danger-hover: color-mix(in srgb, var(--danger) 88%, var(--bg-main));
+    --success-muted: color-mix(in srgb, var(--success) 72%, var(--text-main));
+    --warning-strong: color-mix(in srgb, var(--warning) 80%, var(--bg-main));
+
+    --info-banner-from: color-mix(in srgb, var(--primary) 42%, var(--bg-main));
+    --info-banner-to: color-mix(in srgb, var(--primary) 58%, var(--bg-card));
+
+    --border-color: color-mix(in srgb, var(--text-main) 8%, transparent);
+    --grid-color: color-mix(in srgb, var(--text-main) 4%, transparent);
     --glass-bg: var(--bg-panel);
     --glass-border: var(--border-color);
-    --surface-light: #e8edf3;
-    --surface-color: #eef2f6;
-
-    --primary: #3d7a96;
-    --primary-hover: #32657d;
-    --primary-light: #5c92ad;
-    --primary-dark: var(--primary-hover);
-    --secondary: #e2e8f0;
-    --secondary-hover: #cbd5e1;
-    --danger: #b85c5c;
-    --danger-hover: #a34d4d;
-    --accent: #a67c2e;
-
-    --success: #4a9078;
-    --success-muted: #5c9e86;
-    --warning: #b8974a;
-    --warning-strong: #9e823e;
-    --info-banner-from: #2f5f78;
-    --info-banner-to: #3d7a96;
 
     --btn-min-height: 44px;
     --btn-min-height-sm: 36px;
 
-    background-image: radial-gradient(circle at 50% 0%, #e8edf3 0%, var(--bg-base) 58%);
+    background-image: radial-gradient(
+        circle at 50% 0%,
+        color-mix(in srgb, var(--surface-light) 70%, var(--bg-main)) 0%,
+        var(--bg-base) 58%
+    );
+}
+
+/* ==========================================================================
+   Brand – VBF logó (egyetlen SVG: img/logo.svg; tipográfia: Outfit)
+   ========================================================================== */
+:root {
+    --logo-font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    --logo-mark-size: 28px;
+    --logo-mark-size-footer: 22px;
+    --logo-gap: 0.5rem;
+    --logo-word-size: 1.1rem;
+    --logo-word-weight: 700;
+    --logo-letter-spacing: -0.02em;
+    --logo-line-height: 1.15;
+}
+
+.logo {
+    font-family: var(--logo-font-family);
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--logo-gap);
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: var(--logo-word-size);
+    font-weight: var(--logo-word-weight);
+    letter-spacing: var(--logo-letter-spacing);
+    line-height: var(--logo-line-height);
+    flex-shrink: 0;
+}
+
+a.logo {
+    cursor: pointer;
+}
+
+.logo-img {
+    width: var(--logo-mark-size);
+    height: var(--logo-mark-size);
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.logo-wordmark {
+    white-space: nowrap;
+}
+
+/* Főoldal fejléc: gradient csak a szövegen (ikon az SVG-ben) */
+.landing-page .logo .logo-wordmark {
+    background: linear-gradient(135deg, var(--text-main), var(--primary), var(--primary-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Lábléc: egyszínű fehér szöveg, kisebb ikon */
+.landing-page .footer-logo .logo-wordmark {
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: unset;
+    color: var(--text-main);
+}
+
+.logo--footer {
+    font-size: var(--logo-word-size);
+    font-weight: var(--logo-word-weight);
+    letter-spacing: var(--logo-letter-spacing);
+    color: var(--text-main);
+}
+
+.logo--footer .logo-img {
+    width: var(--logo-mark-size-footer);
+    height: var(--logo-mark-size-footer);
+}
+
+body.light-mode.landing-page .footer-logo .logo-wordmark,
+body.light-mode.landing-page .logo--footer {
+    color: var(--text-main);
+}
+
+@media (max-width: 520px) {
+    :root {
+        --logo-mark-size: 24px;
+        --logo-mark-size-footer: 20px;
+        --logo-word-size: 1rem;
+    }
 }

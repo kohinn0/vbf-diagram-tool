@@ -33,13 +33,13 @@ export function initAdmin() {
                 if (data.logo_path) {
                     const img = document.getElementById('adminCompLogoPreview');
                     img.src = `${window.API_BASE_URL.replace('/api', '')}/${data.logo_path}`;
-                    img.style.display = 'block';
+                    img.classList.remove('is-hidden');
                 }
                 if (data.signature_path) {
                     const sigImg = document.getElementById('adminCompSignaturePreview');
                     if (sigImg) {
                         sigImg.src = `${window.API_BASE_URL.replace('/api', '')}/${data.signature_path}`;
-                        sigImg.style.display = 'block';
+                        sigImg.classList.remove('is-hidden');
                     }
                 }
                 const certStatus = document.getElementById('adminCompCertStatus');
@@ -105,7 +105,7 @@ export function initAdmin() {
                     const data = await res.json();
                     const img = document.getElementById('adminCompLogoPreview');
                     img.src = `${window.API_BASE_URL.replace('/api', '')}/${data.logo_path}?t=${new Date().getTime()}`;
-                    img.style.display = 'block';
+                    img.classList.remove('is-hidden');
                     alert('Logó sikeresen feltöltve!');
                 } else {
                     alert('Hiba történt a logó feltöltésekor.');
@@ -136,7 +136,7 @@ export function initAdmin() {
                     const img = document.getElementById('adminCompSignaturePreview');
                     if (img) {
                         img.src = `${window.API_BASE_URL.replace('/api', '')}/${data.signature_path}?t=${Date.now()}`;
-                        img.style.display = 'block';
+                        img.classList.remove('is-hidden');
                     }
                     if (window.showToast) window.showToast('Aláírás feltöltve!', 'success'); else alert('Aláírás feltöltve!');
                 } else {
@@ -205,11 +205,11 @@ export function initAdmin() {
         const pendingOrdersSection = document.getElementById('adminPendingOrdersSection');
         const companyWrap = document.getElementById('adminNewCompanyWrap');
         const roleSelect = document.getElementById('adminNewRole');
-        if (companiesSection) companiesSection.style.display = isSuperAdmin() ? 'block' : 'none';
-        if (plansSection) plansSection.style.display = isSuperAdmin() ? 'block' : 'none';
-        if (pendingOrdersSection) pendingOrdersSection.style.display = isSuperAdmin() ? 'block' : 'none';
+        if (companiesSection) companiesSection.classList.toggle('is-hidden', !isSuperAdmin());
+        if (plansSection) plansSection.classList.toggle('is-hidden', !isSuperAdmin());
+        if (pendingOrdersSection) pendingOrdersSection.classList.toggle('is-hidden', !isSuperAdmin());
         const dijbekeroSection = document.getElementById('adminDijbekeroSection');
-        if (dijbekeroSection) dijbekeroSection.style.display = isSuperAdmin() ? 'block' : 'none';
+        if (dijbekeroSection) dijbekeroSection.classList.toggle('is-hidden', !isSuperAdmin());
         if (isSuperAdmin()) {
             window.fetchAdminCompanies();
             if (window.fetchAdminPlans) window.fetchAdminPlans();
@@ -217,7 +217,7 @@ export function initAdmin() {
             if (window.fetchAdminPaymentHistory) window.fetchAdminPaymentHistory();
             if (window.loadAdminDijbekeroPresets) window.loadAdminDijbekeroPresets();
         }
-        if (companyWrap) companyWrap.style.display = 'none';
+        if (companyWrap) companyWrap.classList.add('is-hidden');
         if (roleSelect) {
             roleSelect.innerHTML = '<option value="TECH">Villanyszerelő</option><option value="COMPANY_ADMIN">Céges vezető</option>';
             if (isSuperAdmin()) roleSelect.innerHTML += '<option value="ADMIN">Főadmin</option>';
@@ -248,7 +248,7 @@ export function initAdmin() {
                 const expiry = u.subscription_expires ? new Date(u.subscription_expires).toISOString().split('T')[0] : '';
                 const safeEmail = (u.email || '').replace(/"/g, '&quot;');
                 const safeCompany = (u.company_name || '').replace(/</g, '&lt;');
-                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" style="width:150px;padding:0.2rem;" placeholder="E-mail"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button class="btn btn-danger btn-small" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
+                tr.innerHTML = '<td>' + u.id + '</td><td>' + u.username + '</td><td><input type="email" class="vbf-admin-user-email" value="' + safeEmail + '" onchange="updateUser(' + u.id + ', {email: this.value})" placeholder="e-mail@pelda.hu" autocomplete="email"></td><td><select onchange="updateUser(' + u.id + ', {is_active: this.value === \'active\'})"><option value="active" ' + (u.is_active ? 'selected' : '') + '>Aktív</option><option value="inactive" ' + (!u.is_active ? 'selected' : '') + '>Tiltott</option></select></td><td><select onchange="updateUser(' + u.id + ', {role: this.value})">' + roleOpts(u) + '</select></td><td>' + safeCompany + '</td><td><input type="date" value="' + expiry + '" onchange="updateUser(' + u.id + ', {subscription_expires: this.value})"></td><td><button type="button" class="btn btn-danger btn-small vbf-admin-user-delete" onclick="deleteUser(' + u.id + ')">Törlés</button></td>';
                 list.appendChild(tr);
             });
         } catch (err) { console.error(err); }
@@ -260,7 +260,7 @@ export function initAdmin() {
         const role = this.value;
         if (!isSuperAdmin() || !wrap || !sel) return;
         if (role === 'TECH' || role === 'COMPANY_ADMIN') {
-            wrap.style.display = 'block';
+            wrap.classList.remove('is-hidden');
             if (sel.options.length <= 1) {
                 try {
                     const r = await fetch(`${window.API_BASE_URL}/api/admin/companies`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
@@ -271,7 +271,7 @@ export function initAdmin() {
                     }
                 } catch (e) { console.error(e); }
             }
-        } else { wrap.style.display = 'none'; }
+        } else { wrap.classList.add('is-hidden'); }
     });
 
     window.fetchAdminCompanies = async function () {
@@ -318,27 +318,34 @@ export function initAdmin() {
         if (!listEl) return;
         try {
             const res = await fetch(`${window.API_BASE_URL}/api/admin/plans`, { headers: { 'Authorization': `Bearer ${window.currentToken}` } });
-            if (!res.ok) { listEl.innerHTML = '<p style="color:var(--text-muted);">Nem sikerült betölteni a csomagokat.</p>'; return; }
+            if (!res.ok) { listEl.innerHTML = '<p class="vbf-admin-muted-p">Nem sikerült betölteni a csomagokat.</p>'; return; }
             const plans = await res.json();
             listEl.innerHTML = '';
             plans.forEach(p => {
                 const card = document.createElement('div');
-                card.style.cssText = 'background: rgba(0,0,0,0.2); border-radius: 10px; padding: 1rem; min-width: 200px; flex: 1; max-width: 280px;';
-                const priceMon = p.price_monthly != null ? p.price_monthly + ' Ft/hó' : '–';
-                const priceYr = p.price_yearly != null ? p.price_yearly + ' Ft/év' : '';
-                const repLim = p.reports_per_month_limit != null ? p.reports_per_month_limit + ' jegyzőkönyv/hó' : 'Korlátlan';
-                const userLim = p.max_users != null ? p.max_users + ' felhasználó' : 'Korlátlan';
-                const feats = Array.isArray(p.features) && p.features.length ? '<ul style="margin:8px 0 0 0; padding-left:1.2rem; font-size:0.9rem;">' + p.features.map(f => '<li>' + String(f).replace(/</g, '&lt;') + '</li>').join('') + '</ul>' : '';
-                card.innerHTML = '<div style="font-weight:bold; color: var(--accent); margin-bottom:6px;">' + String(p.display_name).replace(/</g, '&lt;') + '</div>' +
-                    '<div style="font-size:0.95rem;">' + priceMon + (priceYr ? ' · ' + priceYr : '') + '</div>' +
-                    '<div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">' + repLim + ' · ' + userLim + '</div>' + feats +
-                    '<button type="button" class="btn btn-secondary btn-small" style="margin-top:10px;">Szerkesztés</button>';
+                card.className = 'vbf-admin-plan-card';
+                const priceParts = [];
+                if (p.price_monthly != null && p.price_monthly !== '') priceParts.push(Number(p.price_monthly) + ' Ft/hó');
+                if (p.price_yearly != null && p.price_yearly !== '') priceParts.push(Number(p.price_yearly) + ' Ft/év');
+                const priceHtml = priceParts.length
+                    ? '<div class="vbf-admin-plan-price">' + priceParts.join('<span aria-hidden="true"> · </span>') + '</div>'
+                    : '<div class="vbf-admin-plan-price vbf-admin-plan-price--muted">Nincs megadott ár</div>';
+                const repLim = p.reports_per_month_limit != null ? p.reports_per_month_limit + ' jegyzőkönyv/hó' : 'Korlátlan jegyzőkönyv/hó';
+                const userLim = p.max_users != null ? p.max_users + ' felhasználó' : 'Korlátlan felhasználó';
+                const feats = Array.isArray(p.features) && p.features.length
+                    ? '<ul class="vbf-admin-plan-features">' + p.features.map(f => '<li>' + String(f).replace(/</g, '&lt;') + '</li>').join('') + '</ul>'
+                    : '<ul class="vbf-admin-plan-features vbf-admin-plan-features--empty"><li class="vbf-admin-plan-price--muted">Nincs felsorolt funkció</li></ul>';
+                card.innerHTML = '<div class="vbf-admin-plan-card-title">' + String(p.display_name).replace(/</g, '&lt;') + '</div>' +
+                    priceHtml +
+                    '<div class="vbf-admin-plan-limits">' + repLim + '<br>' + userLim + '</div>' +
+                    feats +
+                    '<button type="button" class="btn btn-primary btn-small">Szerkesztés</button>';
                 const btn = card.querySelector('button');
                 btn.addEventListener('click', () => window.openPlanModal(p));
                 listEl.appendChild(card);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            listEl.innerHTML = '<p class="vbf-admin-muted-p">Hiba: ' + String(e.message) + '</p>';
         }
     };
 
@@ -353,11 +360,11 @@ export function initAdmin() {
         document.getElementById('adminPlanReportsLimit').value = plan.reports_per_month_limit != null ? plan.reports_per_month_limit : '';
         document.getElementById('adminPlanMaxUsers').value = plan.max_users != null ? plan.max_users : '';
         document.getElementById('adminPlanFeatures').value = Array.isArray(plan.features) ? plan.features.join('\n') : '';
-        planModal.style.display = 'flex';
+        planModal.classList.remove('is-hidden');
     };
 
-    document.getElementById('adminPlanModalCancel')?.addEventListener('click', () => { if (planModal) planModal.style.display = 'none'; });
-    planModal?.addEventListener('click', (e) => { if (e.target === planModal) planModal.style.display = 'none'; });
+    document.getElementById('adminPlanModalCancel')?.addEventListener('click', () => { if (planModal) planModal.classList.add('is-hidden'); });
+    planModal?.addEventListener('click', (e) => { if (e.target === planModal) planModal.classList.add('is-hidden'); });
     document.getElementById('adminPlanModalSave')?.addEventListener('click', async () => {
         const key = document.getElementById('adminPlanModalKey').value;
         if (!key) return;
@@ -387,7 +394,7 @@ export function initAdmin() {
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Csomag mentve.', 'success'); else alert('Csomag mentve.');
-                planModal.style.display = 'none';
+                planModal.classList.add('is-hidden');
                 await window.fetchAdminPlans();
             } else {
                 const d = await res.json();
@@ -406,13 +413,13 @@ export function initAdmin() {
             const res = await fetch(`${window.API_BASE_URL}/api/admin/pending-orders`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
-            if (!res.ok) { listEl.innerHTML = '<p style="color:var(--text-muted);">Nem sikerült betölteni a megrendeléseket.</p>'; return; }
+            if (!res.ok) { listEl.innerHTML = '<p class="vbf-admin-muted-p">Nem sikerült betölteni a megrendeléseket.</p>'; return; }
             const orders = await res.json();
             if (!orders || orders.length === 0) {
-                listEl.innerHTML = '<p style="color:var(--text-muted);">Nincs függő megrendelés.</p>';
+                listEl.innerHTML = '<p class="vbf-admin-muted-p">Nincs függő megrendelés.</p>';
                 return;
             }
-            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Dátum</th><th></th></tr></thead><tbody></tbody></table>';
+            listEl.innerHTML = '<table class="data-table vbf-admin-table-wrap"><thead><tr><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Dátum</th><th></th></tr></thead><tbody></tbody></table>';
             const tbody = listEl.querySelector('tbody');
             orders.forEach(o => {
                 const tr = document.createElement('tr');
@@ -440,7 +447,7 @@ export function initAdmin() {
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            listEl.innerHTML = '<p class="vbf-admin-muted-p">Hiba: ' + String(e.message) + '</p>';
         }
     };
 
@@ -449,18 +456,18 @@ export function initAdmin() {
         const listEl = document.getElementById('adminPaymentHistoryList');
         const sectionEl = document.getElementById('adminPaymentHistorySection');
         if (!listEl || !sectionEl) return;
-        sectionEl.style.display = 'block';
+        sectionEl.classList.remove('is-hidden');
         try {
             const res = await fetch(`${window.API_BASE_URL}/api/admin/payment-history`, {
                 headers: { 'Authorization': `Bearer ${window.currentToken}` }
             });
-            if (!res.ok) { listEl.innerHTML = '<p style="color:var(--text-muted);">Nem sikerült betölteni az előzményeket.</p>'; return; }
+            if (!res.ok) { listEl.innerHTML = '<p class="vbf-admin-muted-p">Nem sikerült betölteni az előzményeket.</p>'; return; }
             const logs = await res.json();
             if (!logs || logs.length === 0) {
-                listEl.innerHTML = '<p style="color:var(--text-muted);">Még nincs rögzített vásárlás.</p>';
+                listEl.innerHTML = '<p class="vbf-admin-muted-p">Még nincs rögzített vásárlás.</p>';
                 return;
             }
-            listEl.innerHTML = '<table class="data-table" style="width:100%"><thead><tr><th>Dátum</th><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Fizetés</th><th>Státusz</th><th></th></tr></thead><tbody></tbody></table>';
+            listEl.innerHTML = '<table class="data-table vbf-admin-table-wrap"><thead><tr><th>Dátum</th><th>E-mail</th><th>Név</th><th>Csomag</th><th>Összeg</th><th>Fizetés</th><th>Státusz</th><th></th></tr></thead><tbody></tbody></table>';
             const tbody = listEl.querySelector('tbody');
             logs.forEach(log => {
                 const tr = document.createElement('tr');
@@ -498,7 +505,7 @@ export function initAdmin() {
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            listEl.innerHTML = '<p style="color:var(--text-muted);">Hiba: ' + String(e.message) + '</p>';
+            listEl.innerHTML = '<p class="vbf-admin-muted-p">Hiba: ' + String(e.message) + '</p>';
         }
     };
 

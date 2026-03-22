@@ -14,9 +14,11 @@
 
 <body class="landing-page">
 
-    <nav>
-        <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" style="text-decoration:none;cursor:pointer;">
-            <img src="img/logo.svg" alt="" class="logo-img" width="32" height="32"> VBF Premium
+    <nav class="landing-nav" aria-label="Fő navigáció">
+        <div class="lp-container landing-nav-inner">
+        <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+            <img src="img/logo.svg" alt="" class="logo-img" width="28" height="28">
+            <span class="logo-wordmark">VBF Premium</span>
         </a>
         <div class="nav-links">
             <a href="#features">Funkciók</a>
@@ -26,82 +28,85 @@
             <a href="#partners">Partnereink</a>
             <a href="#experts">Szakemberkereső</a>
             <a href="#faq">Gyakori kérdések</a>
-            <a href="#" class="nav-bug-report" data-bug-report title="Visszajelzés e-mailben (béta verzió)">📩 Visszajelzés küldése</a>
+            <a href="#" class="btn btn-secondary btn-small nav-cta-compact" data-bug-report title="Visszajelzés e-mailben (béta verzió)">Visszajelzés</a>
         </div>
         <div class="nav-actions">
-            <button type="button" id="btnCart" class="nav-icon-btn" title="Kosár"><span>🛒</span><span id="cartBadge" class="nav-cart-badge">0</span></button>
-            <a href="app.html" class="btn btn-outline nav-cta-compact">Bejelentkezés</a>
+            <button type="button" id="btnCart" class="nav-icon-btn" title="Kosár"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span id="cartBadge" class="nav-cart-badge">0</span></button>
+            <a href="app.html" class="btn btn-secondary nav-cta-compact">Bejelentkezés</a>
             <a href="#shop" class="btn btn-primary nav-cta-compact">Regisztráció és Vásárlás</a>
+        </div>
         </div>
     </nav>
 
     <!-- Kosár panel (modal): tartalom + utalásos számla kérés -->
-    <div id="cartPanel" class="modal-overlay" style="display: none;">
+    <div id="cartPanel" class="cart-drawer-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Kosár">
         <div id="cartDrawer">
             <div class="cart-drawer-header">
-                <h2>🛒 Kosár</h2>
+                <h2>Kosár</h2>
                 <button type="button" id="cartPanelClose" class="cart-close-btn" aria-label="Bezárás">×</button>
             </div>
             <div id="cartStep1" class="cart-step">
                 <div id="cartEmpty" class="cart-empty-msg">A kosár üres. Válassz egy csomagot az Árak és Vásárlás szekcióból.</div>
-                <div id="cartContent" class="cart-content" style="display: none;">
+                <div id="cartContent" class="cart-content is-hidden">
                     <ul id="cartItemsList" class="cart-items-list"></ul>
                     <p id="cartTotal" class="cart-total-line"></p>
                     <button type="button" id="btnCartCheckout" class="btn btn-primary cart-btn-full">Megrendelés folytatása</button>
                 </div>
             </div>
-            <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
-                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Megrendelés és fizetés</h3>
-                <label style="display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer; font-size: 0.88rem;">
-                    <input type="checkbox" id="cartTermsAccept" required style="margin-top: 3px;">
+            <div id="cartStep2" class="cart-step cart-step2 is-hidden">
+                <h3 class="cart-step2-title">Megrendelés és fizetés</h3>
+                <label class="cart-terms-label">
+                    <input type="checkbox" id="cartTermsAccept" required>
                     <span>Vállalkozóként vagy jogi személyként, üzleti célból vásárolok. Elfogadom a <a href="#" id="cartLinkTerms" target="_blank" rel="noopener">Felhasználási feltételek</a> és az <a href="#" id="cartLinkAszf" target="_blank" rel="noopener">ÁSZF</a> hatályát. A jegyzőkönyvek tartalmáért kizárólag én vállalok felelősséget.</span>
                 </label>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt intézhető: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong> (nem vesznek el napok). Bankkártyával azonnal fizethetsz; <strong>utaláshoz</strong> elég a lenti számlázási adat – jelszó nem kell. A hozzáférés a fizetés (vagy utalás jóváhagyása) után aktiválódik; érdemes <strong>uganazt az e-mail címet</strong> megadni, mint a fiókodnál.</p>
-                <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 1.25rem 0; line-height: 1.55;">Be vagy jelentkezve a jegyzőkönyv-alkalmazásba? Nyisd meg az <a href="app.html" style="color: var(--accent);">alkalmazást</a> – ugyanezt a kosarat ott is eléred (azonos böngészőben).</p>
-                <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
-                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártyás fizetés (Stripe)</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali, biztonságos fizetés. Új fiók esetén megadhatsz jelszót is (e-mail kötelező); ha üresen hagyod, ideiglenes jelszót küldünk e-mailben.</p>
-                    <label for="cartStripeEmail" style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
-                    <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartStripePassword" style="display:block; margin-bottom: 4px;">Jelszó (opcionális, új fiókhoz)</label>
-                    <input type="password" id="cartStripePassword" placeholder="Ha kitöltöd, min. 8 karakter, nagy+kis+szám" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartStripePasswordConfirm" style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
-                    <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a bankkártyás fizetéshez</button>
-                    <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
-                    <p style="text-align: center; font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0 0;">— vagy utalással —</p>
+                <p class="cart-help-p"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt intézhető: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong> (nem vesznek el napok). Bankkártyával azonnal fizethetsz; <strong>utaláshoz</strong> elég a lenti számlázási adat – jelszó nem kell. A hozzáférés a fizetés (vagy utalás jóváhagyása) után aktiválódik; érdemes <strong>uganazt az e-mail címet</strong> megadni, mint a fiókodnál.</p>
+                <p class="cart-app-hint">Be vagy jelentkezve a jegyzőkönyv-alkalmazásba? Nyisd meg az <a href="app.html">alkalmazást</a> – ugyanezt a kosarat ott is eléred (azonos böngészőben).</p>
+                <div id="cartStripeWrap" class="cart-stripe-block is-hidden">
+                    <h4>Bankkártyás fizetés (Stripe)</h4>
+                    <p class="cart-stripe-intro">Azonnali, biztonságos fizetés. Új fiók esetén megadhatsz jelszót is (e-mail kötelező); ha üresen hagyod, ideiglenes jelszót küldünk e-mailben.</p>
+                    <label for="cartStripeEmail" class="cart-form-label">E-mail (ajánlott)</label>
+                    <input type="email" id="cartStripeEmail" class="cart-input" placeholder="pelda@ceg.hu" autocomplete="email">
+                    <label for="cartStripePassword" class="cart-form-label">Jelszó (opcionális, új fiókhoz)</label>
+                    <input type="password" id="cartStripePassword" class="cart-input" placeholder="Ha kitöltöd, min. 8 karakter, nagy+kis+szám" autocomplete="new-password">
+                    <label for="cartStripePasswordConfirm" class="cart-form-label">Jelszó megerősítése</label>
+                    <input type="password" id="cartStripePasswordConfirm" class="cart-input" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password">
+                    <button type="button" id="btnCartPayCard" class="btn btn-secondary cart-btn-full">Tovább a bankkártyás fizetéshez</button>
+                    <p id="cartStripeStatus"></p>
+                    <p class="cart-stripe-or">— vagy utalással —</p>
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Utalásos fizetés – számla kérése</button>
+                <div class="cart-transfer-actions">
+                    <button type="button" id="cartPayTransfer" class="btn btn-primary">Utalásos fizetés – számla kérése</button>
                 </div>
-                <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
-                    <label for="cartEmail" style="display:block; margin-bottom: 4px;">E-mail *</label>
-                    <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartName" style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
-                    <input type="text" id="cartName" placeholder="Kovács Kft." style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartAddress" style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
-                    <input type="text" id="cartAddress" required placeholder="Irányítószám, város, utca, házszám" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartTax" style="display:block; margin-bottom: 4px;">Adószám (opcionális)</label>
-                    <input type="text" id="cartTax" placeholder="12345678-2-41" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <button type="button" id="btnCartRequestInvoice" class="btn btn-primary" style="width: 100%;">Számla kérése utaláshoz</button>
-                    <p id="cartTransferStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
+                <div id="cartTransferForm" class="is-hidden">
+                    <label for="cartEmail" class="cart-form-label">E-mail *</label>
+                    <input type="email" id="cartEmail" class="cart-input" placeholder="pelda@ceg.hu" autocomplete="email">
+                    <label for="cartName" class="cart-form-label">Név / Cégnév *</label>
+                    <input type="text" id="cartName" class="cart-input" placeholder="Kovács Kft.">
+                    <label for="cartAddress" class="cart-form-label">Számlázási cím *</label>
+                    <input type="text" id="cartAddress" class="cart-input" required placeholder="Irányítószám, város, utca, házszám">
+                    <label for="cartTax" class="cart-form-label">Adószám (opcionális)</label>
+                    <input type="text" id="cartTax" class="cart-input" placeholder="12345678-2-41">
+                    <button type="button" id="btnCartRequestInvoice" class="btn btn-primary cart-btn-full">Számla kérése utaláshoz</button>
+                    <p id="cartTransferStatus"></p>
                 </div>
-                <button type="button" id="cartBackToStep1" class="btn btn-secondary" style="margin-top: 1rem;">← Vissza a kosárhoz</button>
+                <button type="button" id="cartBackToStep1" class="btn btn-secondary">← Vissza a kosárhoz</button>
             </div>
         </div>
     </div>
 
     <!-- Sikeres vásárlás üzenet (Stripe visszatérés a webshopra) -->
-    <div id="paymentSuccessBanner" class="payment-success-banner" style="display: none;">
-        <p style="margin: 0 0 0.75rem 0; font-weight: 600;">✓ Köszönjük a vásárlást!</p>
-        <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">Belépési adataidat emailben küldtük. Az alkalmazás (jegyzőkönyv készítő) használatához kattints a <strong>Bejelentkezés</strong> gombra a menüben.</p>
-        <a href="app.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Bejelentkezés az alkalmazásba</a>
+    <div id="paymentSuccessBanner" class="payment-success-banner is-hidden">
+        <p class="lp-banner-title">Köszönjük a vásárlást!</p>
+        <p class="lp-banner-text">Belépési adataidat emailben küldtük. Az alkalmazás (jegyzőkönyv készítő) használatához kattints a <strong>Bejelentkezés</strong> gombra a menüben.</p>
+        <a href="app.html" class="btn btn-primary">Bejelentkezés az alkalmazásba</a>
     </div>
 
+    <main class="landing-main" id="main-content">
     <section class="hero">
+        <div class="lp-container hero-row">
         <div class="hero-content">
-            <div class="badge">⚡ VBF-szakértő fejlesztette – szakembereknek, szakemberektől.</div>
-            <p class="hero-kicker">✨ VBF- és EPH-jegyzőkönyv, elosztórajz, Metrel mérések – minden, amire szüksége van.</p>
+            <div class="badge"><svg class="lp-ic-gold" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2 3 14h7v8l11-12h-7l5-8z"/></svg><span>VBF-szakértő fejlesztette – szakembereknek, szakemberektől.</span></div>
+            <p class="hero-kicker"><svg class="lp-ic-gold" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg><span>VBF- és EPH-jegyzőkönyv, elosztórajz, Metrel mérések – minden, amire szüksége van.</span></p>
             <h1>Villamos biztonsági felülvizsgálat.<br>Gyorsabban, pontosabban, szakszerűen.</h1>
             <p class="hero-lead">A programot VBF-szakértő fejlesztette – aki maga is terepen dolgozik. Szakembertől szakembereknek.</p>
             <p class="hero-lead-muted">Olyan szoftvert készítettünk, amit a saját felülvizsgálatokhoz is használnánk: tudjuk, mire van szükség a terepen és a jegyzőkönyvnél.</p>
@@ -109,9 +114,9 @@
                 <li><strong>Minden egy helyen:</strong> VBF/EPH, rajzkészítő, PADFX beolvasás, automatikus hibajegyzék, naptár és offline munkavégzés.</li>
                 <li><strong>Szabványos és hiteles:</strong> MSZ, TvMI és OTSZ megfelelőség, saját logó, Word/PDF export, QR-kódos azonosítás.</li>
             </ul>
-            <div class="cta-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="#shop" class="btn btn-accent btn-large">Előfizetés megrendelése</a>
-                <a href="app.html?register=1" class="btn btn-outline btn-large">Demó és regisztráció</a>
+            <div class="cta-group">
+                <a href="#shop" class="btn btn-primary btn-large">Előfizetés megrendelése</a>
+                <a href="app.html?register=1" class="btn btn-secondary btn-large">Demó és regisztráció</a>
             </div>
             <p class="hero-footnote">A demóhoz fiók szükséges; a bemutató videót lent találod. A webshopban előfizethetsz a teljes PDF exportért.</p>
 
@@ -125,7 +130,7 @@
             <div class="floating-card">
                 <div class="hero-preview-shell">
                     <!-- Egyvonalas elosztó rajz stílusú dekoráció -->
-                    <svg viewBox="0 0 400 120" width="100%" height="120" style="position: absolute; top: 0; left: 0; opacity: 0.5;" preserveAspectRatio="xMidYMid slice">
+                    <svg class="hero-preview-wire" viewBox="0 0 400 120" width="100%" height="120" preserveAspectRatio="xMidYMid slice">
                         <defs><linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5a92ad"/><stop offset="100%" stop-color="#b8934a"/></linearGradient></defs>
                         <line x1="0" y1="30" x2="400" y2="30" stroke="url(#wireGrad)" stroke-width="3" stroke-dasharray="8 4"/>
                         <line x1="80" y1="30" x2="80" y2="70" stroke="url(#wireGrad)" stroke-width="2"/>
@@ -135,11 +140,14 @@
                         <rect x="180" y="65" width="40" height="25" rx="4" fill="rgba(90,146,173,0.28)" stroke="rgba(90,146,173,0.5)"/>
                         <rect x="300" y="65" width="40" height="25" rx="4" fill="rgba(184,147,74,0.18)" stroke="rgba(184,147,74,0.42)"/>
                     </svg>
-                    <div style="position: relative; z-index: 1; margin-top: 110px; text-align: center;">
-                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚡📋</div>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--primary-light);">VBF · EPH Jegyzőkönyv</div>
-                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">MSZ HD 60364 · OTSZ · Elosztó rajz</div>
-                        <div style="margin-top: 1rem; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <div class="hero-preview-body">
+                        <div class="hero-preview-icons" aria-hidden="true">
+                            <svg class="lp-ic-gold" width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2 3 14h7v8l11-12h-7l5-8z"/></svg>
+                            <svg class="lp-ic-gold" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg>
+                        </div>
+                        <div class="hero-preview-title">VBF · EPH Jegyzőkönyv</div>
+                        <div class="hero-preview-sub">MSZ HD 60364 · OTSZ · Elosztó rajz</div>
+                        <div class="hero-preview-chips">
                             <span class="hero-chip hero-chip--success">Saját logó</span>
                             <span class="hero-chip hero-chip--accent">Szakértői</span>
                         </div>
@@ -147,90 +155,91 @@
                 </div>
             </div>
         </div>
+        </div>
     </section>
 
-    <section id="demo" class="shop-section section-tint-strong" style="padding: 4rem 5%;">
+    <section id="demo" class="shop-section section-tint-strong lp-sec-pad-md">
         <div class="section-header">
             <h2 class="section-title">Próbáld ki ingyen – VBF jegyzőkönyv demó</h2>
             <p class="section-subtitle">Regisztráció után a teljes jegyzőkönyv-készítőt használhatod: villamos biztonsági felülvizsgálat és EPH egy helyen.</p>
         </div>
-        <div style="max-width: 880px; margin: 0 auto;">
-            <div id="demoVideoWrap" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); margin-bottom: 1.25rem;">
+        <div class="lp-container lp-narrow-880">
+            <div id="demoVideoWrap" class="demo-video-wrap">
                 <!-- Ha kész a videó: ide illeszd a YouTube / Vimeo beágyazott iframe-jét (width/height 100%, position absolute, top 0, left 0). -->
-                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--text-muted); padding: 1.5rem; text-align: center;">
-                    <span style="font-size: 2.5rem; margin-bottom: 0.5rem;">▶</span>
-                    <p style="margin: 0; font-size: 1rem;">A bemutató videó hamarosan itt jelenik meg.</p>
+                <div class="demo-video-placeholder">
+                    <span class="demo-video-play" aria-hidden="true">▶</span>
+                    <p class="demo-video-msg">A bemutató videó hamarosan itt jelenik meg.</p>
                 </div>
             </div>
-            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 1rem;">
-                Regisztráció után a teljes jegyzőkönyv-készítő elérhető; a PDF export demó / ingyenes csomagban <strong style="color: var(--primary-light);">vízjel</strong> formájában készül. Előfizetéssel kapsz aláírt, vízjel nélküli PDF-et.
+            <p class="lp-muted-block--sm lp-mb-1">
+                Regisztráció után a teljes jegyzőkönyv-készítő elérhető; a PDF export demó / ingyenes csomagban <strong class="demo-strong-primary">vízjel</strong> formájában készül. Előfizetéssel kapsz aláírt, vízjel nélküli PDF-et.
             </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <div class="demo-actions">
                 <a href="app.html?register=1" class="btn btn-primary">Regisztráció és demó</a>
-                <a href="#shop" class="btn btn-outline">Előfizetés (teljes PDF)</a>
+                <a href="#shop" class="btn btn-secondary">Előfizetés (teljes PDF)</a>
             </div>
-            <div style="margin-top: 2rem; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); max-width: 520px;">
-                <h3 style="margin: 0 0 0.5rem; font-size: 1.1rem;">Hírlevél &amp; újdonságok</h3>
-                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Tippek, funkciók – nem spamelünk. A feliratkozás önkéntes; leiratkozás később egy kattintással (e-mailben vagy az adatkezelési tájékoztató szerint).</p>
-                <form id="newsletterForm" style="display: flex; flex-direction: column; gap: 0.65rem;">
-                    <label for="newsletterEmail" style="font-size: 0.82rem; color: var(--text-muted);">E-mail *</label>
-                    <input type="email" id="newsletterEmail" required placeholder="pelda@ceg.hu" style="padding: 10px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="newsletterName" style="font-size: 0.82rem; color: var(--text-muted);">Név (opcionális)</label>
-                    <input type="text" id="newsletterName" placeholder="Teljes név" style="padding: 10px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label style="font-size: 0.82rem; display: flex; gap: 8px; align-items: flex-start; cursor: pointer;">
-                        <input type="checkbox" id="newsletterConsent" required style="margin-top: 3px;">
+            <div class="newsletter-box">
+                <h3>Hírlevél &amp; újdonságok</h3>
+                <p class="lp-muted-block--sm">Tippek, funkciók – nem spamelünk. A feliratkozás önkéntes; leiratkozás később egy kattintással (e-mailben vagy az adatkezelési tájékoztató szerint).</p>
+                <form id="newsletterForm">
+                    <label for="newsletterEmail">E-mail *</label>
+                    <input type="email" id="newsletterEmail" class="lp-input-landing" required placeholder="pelda@ceg.hu">
+                    <label for="newsletterName">Név (opcionális)</label>
+                    <input type="text" id="newsletterName" class="lp-input-landing" placeholder="Teljes név">
+                    <label class="lp-check-label">
+                        <input type="checkbox" id="newsletterConsent" required>
                         <span>Hozzájárulok, hogy a megadott e-mail címre marketing (hírlevél) üzeneteket küldjetek.</span>
                     </label>
-                    <button type="submit" class="btn btn-primary btn-small" id="newsletterSubmit" style="align-self: flex-start;">Feliratkozom</button>
-                    <p id="newsletterStatus" style="font-size: 0.85rem; min-height: 1.2em; margin: 0; color: var(--accent);"></p>
+                    <button type="submit" class="btn btn-primary btn-small" id="newsletterSubmit">Feliratkozom</button>
+                    <p id="newsletterStatus"></p>
                 </form>
             </div>
         </div>
     </section>
 
-    <section id="about" class="shop-section section-tint-soft" style="padding: 4rem 5%;">
+    <section id="about" class="shop-section section-tint-soft lp-sec-pad-md">
         <div class="section-header">
             <h2 class="section-title">Rólunk</h2>
             <p class="section-subtitle">Miért jött létre a VBF Premium?</p>
         </div>
-        <div style="max-width: 680px; margin: 0 auto; text-align: center;">
-            <p style="font-size: 1.1rem; line-height: 1.75; color: var(--text-muted); margin-bottom: 1rem;">
+        <div class="lp-narrow-680 lp-text-center">
+            <p class="lp-about-text">
                 Tudjuk, milyen időrabló, ha mérésről mérésre Excelbe vagy Wordbe gépelsz, otthon összerakod a képeket, kézzel utánanézel a szabványoknak – miközben a következő vizsgálat már vár. Én magam is ezt csináltam – ezért vágtam bele a fejlesztésbe.
             </p>
-            <p style="font-size: 1.1rem; line-height: 1.75; color: var(--text-muted); margin-bottom: 1.25rem;">
-                Innen indult a VBF Premium: egy olyan villamos biztonsági jegyzőkönyv-szoftver, ami rengeteg órát spórol, mindent egy helyen tart – mérésekkel, szabványokkal, dokumentumokkal. <strong style="color: var(--text-color);">VBF szakértő készítette – szakembertől szakembereknek.</strong> Magyar fejlesztés, a terepi gyakorlatból született.
+            <p class="lp-about-text lp-about-text--last">
+                Innen indult a VBF Premium: egy olyan villamos biztonsági jegyzőkönyv-szoftver, ami rengeteg órát spórol, mindent egy helyen tart – mérésekkel, szabványokkal, dokumentumokkal. <strong class="lp-strong-light">VBF szakértő készítette – szakembertől szakembereknek.</strong> Magyar fejlesztés, a terepi gyakorlatból született.
             </p>
-            <a href="#contact" class="btn btn-outline nav-cta-compact">Kapcsolat</a>
+            <a href="#contact" class="btn btn-secondary nav-cta-compact">Kapcsolat</a>
         </div>
     </section>
 
-    <section id="how-it-works" class="shop-section" style="padding: 6rem 5%;">
+    <section id="how-it-works" class="shop-section lp-sec-pad-lg">
         <div class="section-header">
             <h2 class="section-title">Működés</h2>
             <p class="section-subtitle">Az előfizetés kiválasztásától a kész jegyzőkönyvig – villamos biztonsági felülvizsgálat, négy lépésben összefoglalva.</p>
         </div>
-        <div style="max-width: 800px; margin: 0 auto;">
-            <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem;">
+        <div class="lp-narrow-800">
+            <p class="lp-how-intro">
                 Regisztráció, csomag kiválasztása, utalásos számla – a hozzáférés aktiválása után azonnal dolgozhatsz. A céges vezető kiosztja a villamos biztonsági vizsgálatokat a technikusoknak; ők a naptárban látják a feladatokat, tableten vagy telefonon rögzítik a méréseket – akár offline a terepen. Metrel PADFX import, elosztó rajz, hibajegyzék – végül egy kattintással kész a Word jegyzőkönyv és az aláírt PDF. Átlátható, naplózott, GDPR-kompatibilis.
             </p>
             <div class="how-step-grid">
                 <div class="how-step-card">
-                    <div class="how-step-num" aria-hidden="true">1️⃣</div>
+                    <div class="how-step-num" aria-hidden="true">1</div>
                     <h4>Előfizetés és regisztráció</h4>
                     <p>Válaszd a csomagot, kérj utalásos számlát – a belépési adatok az utalás jóváhagyása után kerülnek kiküldésre.</p>
                 </div>
                 <div class="how-step-card">
-                    <div class="how-step-num" aria-hidden="true">2️⃣</div>
+                    <div class="how-step-num" aria-hidden="true">2</div>
                     <h4>Munkakiosztás</h4>
                     <p>A céges vezető kiosztja a vizsgálatokat – a technikusok a naptárban látják a feladatokat.</p>
                 </div>
                 <div class="how-step-card">
-                    <div class="how-step-num" aria-hidden="true">3️⃣</div>
+                    <div class="how-step-num" aria-hidden="true">3</div>
                     <h4>Terepi munka</h4>
                     <p>Rajz, mérések, fotók – tableten is, akár offline; később egy kattintással szinkron.</p>
                 </div>
                 <div class="how-step-card">
-                    <div class="how-step-num" aria-hidden="true">4️⃣</div>
+                    <div class="how-step-num" aria-hidden="true">4</div>
                     <h4>Jegyzőkönyv és aláírás</h4>
                     <p>Word és PDF generálás, elektronikus aláírás, megosztás az ügyféllel.</p>
                 </div>
@@ -242,41 +251,41 @@
         <div class="section-header">
             <h2 class="section-title">VBF és EPH jegyzőkönyv – minden egy helyen</h2>
             <p class="section-subtitle">Szakmai szoftver villamos biztonsági felülvizsgálatra: a terepi méréstől a kész dokumentumig.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">A VBF Premium az MSZ HD 60364-6, TvMI 7 és OTSZ szerinti sablonokkal dolgozik – villamos szakembereknek tervezve. Egyvonalas elosztó rajz, Metrel PADFX mérésimport, automatikus hibajegyzék a hurok-, szigetelés- és RCD tesztek alapján. Munkakiosztás, naptár, villámvédelem (LPS) blokk. Word és PDF export saját logóval, elektronikus aláírással. QR kód az elosztóra – egyszerűsítve a következő karbantartást.</p>
+            <p class="features-lead">A VBF Premium az MSZ HD 60364-6, TvMI 7 és OTSZ szerinti sablonokkal dolgozik – villamos szakembereknek tervezve. Egyvonalas elosztó rajz, Metrel PADFX mérésimport, automatikus hibajegyzék a hurok-, szigetelés- és RCD tesztek alapján. Munkakiosztás, naptár, villámvédelem (LPS) blokk. Word és PDF export saját logóval, elektronikus aláírással. QR kód az elosztóra – egyszerűsítve a következő karbantartást.</p>
         </div>
         <div class="feature-grid">
             <div class="feature-card">
-                <div class="feature-icon">📐</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
                 <h3>Egyvonalas Rajzoló</h3>
                 <p>Elosztó rajz tabletről vagy gépről: kismegszakítók, ÁVK-k behúzása, egy kattintás és bekerül a jegyzőkönyvbe.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🔌</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><rect x="7" y="8" width="10" height="10" rx="1"/><path d="M10 12h4M10 15h4"/></svg></div>
                 <h3>Metrel PADFX import</h3>
                 <p>PADFX fájl feltöltése – a mérések automatikusan bekerülnek a táblázatba, a hibás értékek kiemelődnek.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🤖</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M12 10V7M9 7h6"/><circle cx="9" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/></svg></div>
                 <h3>Automatikus hibajegyzék</h3>
                 <p>Ha a hurok-, szigetelés- vagy RCD teszt nem felel meg, egy gombnyomásra szabványos hibaleírás kerül a hibajegyzékbe.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🏢</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V8l6-4 6 4v14"/><path d="M10 22V12h4v10"/></svg></div>
                 <h3>Saját céges arculat</h3>
                 <p>Logó, céges adatok és aláírás az Admin panelen – minden generált dokumentum a te megjelenésedben készül.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">📱</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 18h4"/></svg></div>
                 <h3>QR kód az elosztón</h3>
                 <p>QR kód az elosztóra – legközebbi karbantartáskor leolvasod, és azonnal betölti a korábbi mérési eredményeket.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">📅</div>
+                <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
                 <h3>Munkakiosztás és naptár</h3>
                 <p>Feladatok kiosztása a technikusoknak; minden munkához ICS naptárbejegyzés megy e-mailben.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
+                <div class="feature-icon feature-icon--gold" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2 3 14h7v8l11-12h-7l5-8z"/></svg></div>
                 <h3>Villámvédelem (LPS)</h3>
                 <p>Villámhárító mérések rögzítése – felfogók, levezetők, földelés. A VVF modul bővül.</p>
             </div>
@@ -287,7 +296,7 @@
         <div class="section-header">
             <h2 class="section-title">Árak és előfizetés</h2>
             <p class="section-subtitle">Válaszd ki a neked való jegyzőkönyv-előfizetést – átláthatóan, rejtett költségek nélkül.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
+            <p class="features-lead">
                 Havi vagy éves csomag – villamos szakembereknek és villanyszerelő cégeknek. A havi előfizetés kipróbáláshoz és kisebb volumenhez ideális; az éves csomaggal akár két havi használatot ajándékba kapsz. Utalásos számlázás, az aktiválás 1–2 munkanap. Online szolgáltatás – nincs szállítás, minden azonnal elérhető.
             </p>
         </div>
@@ -303,12 +312,10 @@
                     <li><span class="check">✔</span> Havonta maximum 15 jegyzőkönyv</li>
                     <li><span class="check">✔</span> Rajzoló eszköz használata</li>
                     <li><span class="check">✔</span> Alap sablonok elérése</li>
-                    <li style="color: #64748b; text-decoration: line-through;"><span class="check"
-                            style="background:transparent; color:#475569;">✖</span> Auto-Hibagenerálás</li>
-                    <li style="color: #64748b; text-decoration: line-through;"><span class="check"
-                            style="background:transparent; color:#475569;">✖</span> Saját céges logó használata</li>
+                    <li class="pricing-li-muted"><span class="check">✖</span> Auto-Hibagenerálás</li>
+                    <li class="pricing-li-muted"><span class="check">✖</span> Saját céges logó használata</li>
                 </ul>
-                <button type="button" class="btn btn-outline btn-add-cart" data-plan="monthly" data-label="Havi előfizetés" data-price="12990" style="width: 100%;">Kosárba 🛒</button>
+                <button type="button" class="btn btn-secondary btn-add-cart btn-add-cart--full" data-plan="monthly" data-label="Havi előfizetés" data-price="12990">Kosárba</button>
             </div>
 
             <!-- Pro Plan (Popular) -->
@@ -326,86 +333,86 @@
                     <li><span class="check">✔</span> Munkakiosztás és csoportos használat</li>
                     <li><span class="check">✔</span> Kiemelt támogatás</li>
                 </ul>
-                <button type="button" class="btn btn-primary btn-add-cart" data-plan="yearly" data-label="Éves előfizetés" data-price="99000" style="width: 100%; font-size: 1.1rem; padding: 1rem;">Kosárba 🛒</button>
+                <button type="button" class="btn btn-primary btn-add-cart btn-add-cart--featured" data-plan="yearly" data-label="Éves előfizetés" data-price="99000">Kosárba</button>
             </div>
 
             <!-- Céges / egyedi árazás -->
-            <div class="pricing-card" style="border: 1px solid var(--glass-border);">
+            <div class="pricing-card pricing-card--bordered">
                 <div class="plan-name">Céges / egyedi</div>
-                <div class="price" style="font-size: 1.1rem;">Egyedi árazás</div>
+                <div class="price pricing-custom-price">Egyedi árazás</div>
                 <div class="billing-period">Nagyobb csomag, szerződéskötés</div>
                 <ul class="features-list">
                     <li><span class="check">✔</span> Korlátlan felhasználó és jegyzőkönyv</li>
                     <li><span class="check">✔</span> Dedikált támogatás</li>
                     <li><span class="check">✔</span> Egyedi sablonok, integráció</li>
                 </ul>
-                <a href="#contact" class="btn btn-outline" style="width: 100%; text-align: center; text-decoration: none; display: block; box-sizing: border-box;">Kapcsolat</a>
+                <a href="#contact" class="btn btn-secondary btn-block-center">Kapcsolat</a>
             </div>
         </div>
 
-        <p style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-top: 1.5rem;">Válaszd ki a csomagot, tedd a kosárba, majd a menüben a kosár ikonnál fejezd be a megrendelést (bankkártya vagy utalás).</p>
+        <p class="pricing-note">Válaszd ki a csomagot, tedd a kosárba, majd a menüben a kosár ikonnál fejezd be a megrendelést (bankkártya vagy utalás).</p>
     </section>
 
-    <section id="partners" class="shop-section" style="padding: 6rem 5%;">
+    <section id="partners" class="shop-section lp-sec-pad-lg">
         <div class="section-header">
-            <h2 class="section-title">🤝 Együttműködő Partnereink</h2>
+            <h2 class="section-title">Együttműködő partnereink</h2>
             <p class="section-subtitle">Cégek és szolgáltatók, akik a VBF Premium megoldást használják vagy támogatják.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
+            <p class="features-lead">
                 Cégek és szakemberek, akik a VBF Premiumot használják vagy támogatják. Ha te is szeretnél partner lenni – cégként vagy területi képviselőként –, írj nekünk.
             </p>
         </div>
-        <div class="feature-grid" id="partnersGrid" style="max-width: 1000px; margin: 0 auto;">
-            <a href="https://vizvillanyfutes.hu/" target="_blank" rel="noopener" class="feature-card" style="padding: 2rem; text-align: center; text-decoration: none; color: inherit; display: block;">
-                <div style="min-height: 70px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                    <img src="https://vizvillanyfutes.hu/wp-content/uploads/2024/10/vizvillanyfutes-logo.png" alt="VízVillanyFűtés" style="max-width: 180px; max-height: 70px; width: auto; height: auto; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <span style="display: none; font-size: 1.75rem; font-weight: 700; color: var(--primary-light);">VízVillanyFűtés</span>
+        <div class="feature-grid partners-grid" id="partnersGrid">
+            <a href="https://vizvillanyfutes.hu/" target="_blank" rel="noopener" class="feature-card partner-card">
+                <div class="partner-logo-wrap">
+                    <img src="https://vizvillanyfutes.hu/wp-content/uploads/2024/10/vizvillanyfutes-logo.png" alt="VízVillanyFűtés" class="partner-card-img" onerror="this.classList.add('is-hidden'); var s=this.nextElementSibling; if(s) s.classList.add('is-visible');">
+                    <span class="partner-fallback-title">VízVillanyFűtés</span>
                 </div>
-                <h3 style="margin-bottom: 0.5rem;">VízVillanyFűtés</h3>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">Szakiközvetítő portál Budapesten és Pest megyében: víz-, villany- és fűtésszerelők egy helyen. Munkát adsz fel, az ellenőrzött szakemberek ajánlatot adnak – akár sürgősségi ügyben is. Örülünk, hogy partnereink között vannak.</p>
-                <span style="font-size: 0.9rem; color: var(--primary-light); font-weight: 500;">Weboldal →</span>
+                <h3>VízVillanyFűtés</h3>
+                <p class="partner-desc">Szakiközvetítő portál Budapesten és Pest megyében: víz-, villany- és fűtésszerelők egy helyen. Munkát adsz fel, az ellenőrzött szakemberek ajánlatot adnak – akár sürgősségi ügyben is. Örülünk, hogy partnereink között vannak.</p>
+                <span class="partner-link-cta">Weboldal →</span>
             </a>
-            <div class="feature-card" style="padding: 2rem; text-align: center;">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏢</div>
-                <h3 style="margin-bottom: 0.5rem;">Partner cég</h3>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">Ide kerülnek további együttműködő cégek logói és nevei.</p>
+            <div class="feature-card partner-card partner-card--static">
+                <div class="partner-placeholder-icon" aria-hidden="true"></div>
+                <h3>Partner cég</h3>
+                <p class="partner-desc">Ide kerülnek további együttműködő cégek logói és nevei.</p>
             </div>
         </div>
-        <p style="text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.9rem;">Partner lenni szeretnél? <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light);">info@vbfpremium.hu</a></p>
+        <p class="experts-footer-note">Partner lenni szeretnél? <a href="mailto:info@vbfpremium.hu" class="lp-link-primary">info@vbfpremium.hu</a></p>
     </section>
 
-    <section id="experts" class="shop-section" style="padding: 6rem 5%;">
+    <section id="experts" class="shop-section lp-sec-pad-lg">
         <div class="section-header">
-            <h2 class="section-title">👷 Szakemberkereső</h2>
+            <h2 class="section-title">Szakemberkereső</h2>
             <p class="section-subtitle">Villamos biztonsági (VBF), EPH és villámvédelem (VVF) szolgáltató szakemberek.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 720px; margin: 1.5rem auto 0;">
+            <p class="features-lead">
                 Minősített VBF és EPH szakemberek – ha vizsgálatra vagy jegyzőkönyvre van szükséged, fordulj hozzájuk. Szakemberként megjelenni szeretnél? Írj nekünk a feltételekért.
             </p>
         </div>
-        <div class="feature-grid" id="expertsGrid" style="max-width: 1000px; margin: 0 auto;">
-            <div class="feature-card" style="padding: 2rem; text-align: center;">
-                <div style="width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, var(--primary), var(--accent)); position: relative;">
-                    <img src="img/experts/szikora-zoltan.jpg" alt="Szikora Zoltán" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <span style="display: none; position: absolute; inset: 0; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; color: white;">SZ</span>
+        <div class="feature-grid partners-grid" id="expertsGrid">
+            <div class="feature-card partner-card partner-card--static">
+                <div class="expert-photo-wrap">
+                    <img src="img/experts/szikora-zoltan.jpg" alt="Szikora Zoltán" class="expert-photo" onerror="this.classList.add('is-hidden'); var s=this.nextElementSibling; if(s) s.classList.add('is-visible');">
+                    <span class="expert-initials" aria-hidden="true">SZ</span>
                 </div>
-                <h3 style="margin-bottom: 0.5rem;">Szikora Zoltán</h3>
-                <p style="color: var(--accent); font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem;">VBF · EPH szakértő</p>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Villamos biztonsági (VBF) és EPH felülvizsgálatok, vizsgabizonyítványok. A VBF Premium fejlesztője – szakembertől szakembereknek.</p>
-                <a href="mailto:info@vbfpremium.hu" class="btn btn-outline btn-small">Kapcsolat: info@vbfpremium.hu</a>
+                <h3>Szikora Zoltán</h3>
+                <p class="expert-role">VBF · EPH szakértő</p>
+                <p class="expert-bio">Villamos biztonsági (VBF) és EPH felülvizsgálatok, vizsgabizonyítványok. A VBF Premium fejlesztője – szakembertől szakembereknek.</p>
+                <a href="mailto:info@vbfpremium.hu" class="btn btn-secondary btn-small">Kapcsolat: info@vbfpremium.hu</a>
             </div>
         </div>
-        <p style="text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.9rem;">Szakemberként megjelenni szeretnél? <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light);">info@vbfpremium.hu</a></p>
+        <p class="experts-footer-note">Szakemberként megjelenni szeretnél? <a href="mailto:info@vbfpremium.hu" class="lp-link-primary">info@vbfpremium.hu</a></p>
     </section>
 
-    <section id="faq" class="shop-section" style="padding: 6rem 5%;">
+    <section id="faq" class="shop-section lp-sec-pad-lg">
         <div class="section-header">
-            <h2 class="section-title">❓ Gyakori kérdések</h2>
+            <h2 class="section-title">Gyakori kérdések</h2>
             <p class="section-subtitle">Válaszok a VBF Premiumról: árazás, fizetés, Metrel-import, sablonok és egyebek.</p>
         </div>
         <div class="faq-list">
             <div class="faq-item">
                 <button type="button" class="faq-question">Béta verzió – hogyan küldhetek visszajelzést?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">A VBF Premiumot jelenleg <strong>béta verzióban</strong> fejlesztjük és tesszük egyre jobbá. Ha valami nem úgy működik, ahogy kellene, furcsán jelenik meg a képernyőn, vagy van ötleted a javításhoz: kattints a <strong>„Visszajelzés küldése”</strong> linkre vagy gombra a főoldalon, a jegyzőkönyv-készítőben vagy a cég admin felületen. A böngésző megnyitja a leveledet egy előre kitöltött sablonnal (melyik oldalon voltál, milyen böngészőt használsz) – így gyorsabban rá tudunk nézni. Köszönjük, ha írsz! <button type="button" class="btn btn-outline nav-cta-compact" style="margin-top: 0.75rem;" data-bug-report>📩 Visszajelzés küldése</button></div>
+                    <div class="faq-answer-inner">A VBF Premiumot jelenleg <strong>béta verzióban</strong> fejlesztjük és tesszük egyre jobbá. Ha valami nem úgy működik, ahogy kellene, furcsán jelenik meg a képernyőn, vagy van ötleted a javításhoz: kattints a <strong>„Visszajelzés küldése”</strong> linkre vagy gombra a főoldalon, a jegyzőkönyv-készítőben vagy a cég admin felületen. A böngésző megnyitja a leveledet egy előre kitöltött sablonnal (melyik oldalon voltál, milyen böngészőt használsz) – így gyorsabban rá tudunk nézni. Köszönjük, ha írsz! <button type="button" class="btn btn-secondary nav-cta-compact faq-bug-btn" data-bug-report>Visszajelzés küldése</button></div>
                 </div>
             </div>
             <div class="faq-item">
@@ -417,7 +424,7 @@
             <div class="faq-item">
                 <button type="button" class="faq-question">Milyen csomagok vannak, és mennyibe kerül?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Havi és éves csomag is van: a havit havonta számlázzuk, az éveset egyszerre fizeted, és így olcsóbban jössz ki. Ha több felhasználóval vagy több jegyzőkönyvvel dolgozol, írj az <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light);">info@vbfpremium.hu</a> címen, és egyedi árat készítünk.</div>
+                    <div class="faq-answer-inner">Havi és éves csomag is van: a havit havonta számlázzuk, az éveset egyszerre fizeted, és így olcsóbban jössz ki. Ha több felhasználóval vagy több jegyzőkönyvvel dolgozol, írj az <a href="mailto:info@vbfpremium.hu" class="lp-link-primary">info@vbfpremium.hu</a> címen, és egyedi árat készítünk.</div>
                 </div>
             </div>
             <div class="faq-item">
@@ -429,7 +436,7 @@
             <div class="faq-item">
                 <button type="button" class="faq-question">Kipróbálhatom ingyen vagy próbaidővel?</button>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Nagyobb csomagnál vagy partneri együttműködésnél tudunk próbaidőt vagy demót adni. Írj az <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light);">info@vbfpremium.hu</a> címre, 1–2 munkanapon belül válaszolunk.</div>
+                    <div class="faq-answer-inner">Nagyobb csomagnál vagy partneri együttműködésnél tudunk próbaidőt vagy demót adni. Írj az <a href="mailto:info@vbfpremium.hu" class="lp-link-primary">info@vbfpremium.hu</a> címre, 1–2 munkanapon belül válaszolunk.</div>
                 </div>
             </div>
             <div class="faq-item">
@@ -465,47 +472,52 @@
         </div>
     </section>
 
-    <section class="shop-section section-tint-block" style="padding: 2rem 5%;">
-        <div style="max-width: 640px; margin: 0 auto; text-align: center;">
-            <p style="margin: 0 0 0.75rem 0; font-size: 1.1rem; font-weight: 600;">Nem találtad a választ?</p>
-            <p style="margin: 0 0 1rem 0; color: var(--text-muted); font-size: 0.95rem;">Nézd át a <a href="#faq" style="color: var(--primary-light); font-weight: 500;">gyakori kérdéseket</a>, vagy írj nekünk az <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light); font-weight: 500;">info@vbfpremium.hu</a> címre: általában egy-két munkanapon belül válaszolunk. A szolgáltatás <strong>béta verzióban</strong> fut – ha elírást vagy hibát látsz, <button type="button" class="inline-bug-link" data-bug-report>jelezd egy kattintással e-mailben</button> (megnyílik a leveled, előre kitöltött tárggyal).</p>
-            <a href="#contact" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">Írj nekünk</a>
+    <section class="shop-section section-tint-block lp-sec-pad-sm">
+        <div class="lp-narrow-640 lp-text-center">
+            <p class="faq-cta-title">Nem találtad a választ?</p>
+            <p class="faq-cta-text">Nézd át a <a href="#faq" class="link-inline-primary">gyakori kérdéseket</a>, vagy írj nekünk az <a href="mailto:info@vbfpremium.hu" class="link-inline-primary">info@vbfpremium.hu</a> címre: általában egy-két munkanapon belül válaszolunk. A szolgáltatás <strong>béta verzióban</strong> fut – ha elírást vagy hibát látsz, <button type="button" class="inline-bug-link" data-bug-report>jelezd egy kattintással e-mailben</button> (megnyílik a leveled, előre kitöltött tárggyal).</p>
+            <a href="#contact" class="btn btn-primary faq-cta-primary">Írj nekünk</a>
         </div>
     </section>
 
-    <section id="contact" class="shop-section" style="padding: 4rem 5%;">
+    <section id="contact" class="shop-section lp-sec-pad-md">
         <div class="section-header">
             <h2 class="section-title">Kapcsolat</h2>
             <p class="section-subtitle">Egyedi ár, partnerség, szakemberi megjelenés vagy bármilyen kérdés: írj nekünk bizalommal.</p>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 640px; margin: 1rem auto 0;">
+            <p class="contact-lead">
                 Egyedi árazást kérsz nagyobb csomaghoz? Szeretnél partnerként megjelenni az oldalunkon? Szakemberként hirdetnéd magad villamos biztonsági (VBF), EPH vagy villámvédelem (VVF) szolgáltatással? Bármilyen kérdésed van, írd meg az üzenetben – válaszolunk 1–2 munkanapon belül.
             </p>
-            <p style="margin: 0 0 1.5rem 0; font-size: 1rem;"><strong>E-mail:</strong> <a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light); font-weight: 500;">info@vbfpremium.hu</a> · <strong>Telefon:</strong> <a href="tel:+36303419594" style="color: var(--primary-light); font-weight: 500;">+36 30 341 9594</a></p>
-            <p style="margin: -0.5rem auto 1.25rem; max-width: 520px; font-size: 0.95rem; color: var(--text-muted);">A program <strong>béta verzióban</strong> érhető el. Ha elírást vagy működési hibát tapasztalsz, itt jelezheted: <button type="button" class="btn btn-outline nav-cta-compact" data-bug-report>📩 Visszajelzés e-mailben</button></p>
+            <p class="contact-channels"><strong>E-mail:</strong> <a href="mailto:info@vbfpremium.hu" class="link-inline-primary">info@vbfpremium.hu</a> · <strong>Telefon:</strong> <a href="tel:+36303419594" class="link-inline-primary">+36 30 341 9594</a></p>
+            <p class="contact-beta-row">A program <strong>béta verzióban</strong> érhető el. Ha elírást vagy működési hibát tapasztalsz, itt jelezheted: <button type="button" class="btn btn-secondary nav-cta-compact" data-bug-report>Visszajelzés e-mailben</button></p>
         </div>
-        <div class="cart-total" style="max-width: 500px; margin: 0 auto;">
-            <form id="contactForm" style="text-align: left;">
-                <label for="contactName" style="display:block; margin-bottom: 4px;">Név *</label>
-                <input type="text" id="contactName" required placeholder="Kovács János" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                <label for="contactEmail" style="display:block; margin-bottom: 4px;">E-mail *</label>
-                <input type="email" id="contactEmail" required placeholder="pelda@ceg.hu" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                <label for="contactCompany" style="display:block; margin-bottom: 4px;">Cég (opcionális)</label>
-                <input type="text" id="contactCompany" placeholder="Zöldfülű Kft." style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                <label for="contactMessage" style="display:block; margin-bottom: 4px;">Üzenet *</label>
-                <textarea id="contactMessage" required rows="4" placeholder="Kérem a céges ajánlatot…" style="width:100%; padding: 8px; margin-bottom: 16px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit; resize: vertical;"></textarea>
-                <button type="submit" id="btnContactSubmit" class="btn btn-primary" style="width: 100%;">Üzenet küldése</button>
+        <div class="cart-total lp-narrow-500">
+            <form id="contactForm">
+                <label for="contactName">Név *</label>
+                <input type="text" id="contactName" class="lp-input-landing" required placeholder="Kovács János">
+                <label for="contactEmail">E-mail *</label>
+                <input type="email" id="contactEmail" class="lp-input-landing" required placeholder="pelda@ceg.hu">
+                <label for="contactCompany">Cég (opcionális)</label>
+                <input type="text" id="contactCompany" class="lp-input-landing" placeholder="Zöldfülű Kft.">
+                <label for="contactMessage">Üzenet *</label>
+                <textarea id="contactMessage" class="lp-input-landing" required rows="4" placeholder="Kérem a céges ajánlatot…"></textarea>
+                <button type="submit" id="btnContactSubmit" class="btn btn-primary">Üzenet küldése</button>
             </form>
-            <p id="contactStatus" style="margin-top: 12px; font-weight: 600; color: var(--accent); min-height: 1.5em;"></p>
-            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.95rem; color: var(--text-muted);">Hírek és tippek: <a href="https://instagram.com/vbfpremium" target="_blank" rel="noopener noreferrer" style="color: var(--primary-light); font-weight: 500;">Instagram – @vbfpremium</a></p>
+            <p id="contactStatus"></p>
+            <p class="contact-instagram">Hírek és tippek: <a href="https://instagram.com/vbfpremium" target="_blank" rel="noopener noreferrer" class="link-inline-primary">Instagram – @vbfpremium</a></p>
         </div>
     </section>
 
     <footer>
         <div class="footer-grid">
             <div>
-                <div class="footer-logo"><img src="img/logo.svg" alt="" width="24" height="24" style="vertical-align: middle; margin-right: 6px;"> VBF Premium</div>
+                <div class="footer-logo">
+                    <a href="index.html" class="logo logo--footer" title="VBF Premium – főoldal">
+                        <img src="img/logo.svg" alt="" class="logo-img" width="22" height="22">
+                        <span class="logo-wordmark">VBF Premium</span>
+                    </a>
+                </div>
                 <p class="footer-desc">VBF Premium – magyar villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver. VBF szakértő készítette – szakembertől szakembereknek. MSZ HD 60364, OTSZ szerinti sablonok, elosztó rajz, Metrel PADFX import, hibajegyzék, munkakiosztás. Magyar fejlesztés, felhőalapú.</p>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem;"><a href="mailto:info@vbfpremium.hu" style="color: var(--primary-light);">info@vbfpremium.hu</a> · <a href="tel:+36303419594" style="color: var(--primary-light);">+36 30 341 9594</a></p>
+                <p class="footer-contact-line"><a href="mailto:info@vbfpremium.hu" class="lp-link-primary">info@vbfpremium.hu</a> · <a href="tel:+36303419594" class="lp-link-primary">+36 30 341 9594</a></p>
                 <div class="footer-social">
                     <div class="footer-social-title">Kövess minket</div>
                     <div class="social-links">
@@ -531,7 +543,7 @@
                     <li><a href="#">Dokumentáció</a></li>
                     <li><a href="#faq">Gyakori kérdések</a></li>
                     <li><a href="#contact">Kapcsolat</a></li>
-                    <li><a href="#" data-bug-report>📩 Visszajelzés (béta verzió)</a></li>
+                    <li><a href="#" data-bug-report>Visszajelzés (béta verzió)</a></li>
                 </ul>
             </div>
             <div>
@@ -545,7 +557,7 @@
         </div>
         <div class="copyright">
             &copy; 2026 VBF Premium SaaS. Minden jog fenntartva. Készült a magyar villanyszerelőkért.
-            <br><small style="opacity:0.85;">Az oldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. Részletek: <a href="#" id="footerPrivacyLink" style="color: inherit;">Adatkezelési tájékoztató</a>.</small>
+            <br><small class="footer-legal-note">Az oldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. Részletek: <a href="#" id="footerPrivacyLink">Adatkezelési tájékoztató</a>.</small>
         </div>
     </footer>
 
@@ -553,13 +565,15 @@
     <div class="sticky-cta-mobile" id="stickyCtaMobile" role="navigation">
         <a href="#shop" class="btn-sticky-primary">Árak</a>
         <a href="app.html" class="btn-sticky-outline">Bejelentkezés</a>
-        <button type="button" class="btn-sticky-bug" data-bug-report title="Visszajelzés – béta verzió">📩 Visszajelzés</button>
+        <button type="button" class="btn-sticky-bug" data-bug-report title="Visszajelzés – béta verzió">Visszajelzés</button>
     </div>
 
     <!-- Cookie / GDPR banner (megjelenik, ha még nincs elfogadva) -->
-    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface-color); border-top: 1px solid var(--glass-border); padding: 1rem 5%; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; z-index: 9999; box-shadow: 0 -4px 20px rgba(0,0,0,0.3);">
-        <p style="margin: 0; font-size: 0.95rem; flex: 1; min-width: 260px;">A weboldal a bejelentkezéshez és a működéshez szükséges adatokat (pl. munkamenet) tárolja. Részletek: <a href="#" id="cookieBannerPrivacyLink" style="color: var(--primary-light);">Adatkezelési tájékoztató</a>.</p>
-        <button type="button" id="cookieBannerAccept" class="btn btn-primary" style="white-space: nowrap;">Elfogadom</button>
+    <div id="cookieBanner" class="cookie-banner is-hidden" role="dialog" aria-label="Adatkezelés">
+        <div class="lp-container">
+            <p>A weboldal a bejelentkezéshez és a működéshez szükséges adatokat (pl. munkamenet) tárolja. Részletek: <a href="#" id="cookieBannerPrivacyLink">Adatkezelési tájékoztató</a>.</p>
+            <button type="button" id="cookieBannerAccept" class="btn btn-primary">Elfogadom</button>
+        </div>
     </div>
 
     <script>
@@ -575,7 +589,7 @@
                 fetch(API_BASE_URL + '/payments/session-status?session_id=' + encodeURIComponent(sid))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
-                        if (data && data.paid && banner) banner.style.display = 'block';
+                        if (data && data.paid && banner) banner.classList.remove('is-hidden');
                         history.replaceState({}, '', window.location.pathname + window.location.hash);
                     })
                     .catch(function () { history.replaceState({}, '', window.location.pathname); });
@@ -588,7 +602,7 @@
                 var j = await r.json();
                 if (j && j.enabled) {
                     var w = document.getElementById('cartStripeWrap');
-                    if (w) w.style.display = 'block';
+                    if (w) w.classList.remove('is-hidden');
                 }
             } catch (e) { /* Stripe szekció rejtve marad */ }
         })();
@@ -603,8 +617,8 @@
         (function () {
             var banner = document.getElementById('cookieBanner');
             var accept = document.getElementById('cookieBannerAccept');
-            if (banner && !localStorage.getItem('cookie_consent')) banner.style.display = 'flex';
-            if (accept) accept.addEventListener('click', function () { localStorage.setItem('cookie_consent', '1'); if (banner) banner.style.display = 'none'; });
+            if (banner && !localStorage.getItem('cookie_consent')) banner.classList.remove('is-hidden');
+            if (accept) accept.addEventListener('click', function () { localStorage.setItem('cookie_consent', '1'); if (banner) banner.classList.add('is-hidden'); });
         })();
 
         (function () {
@@ -620,11 +634,18 @@
                 var email = emailEl ? emailEl.value.trim() : '';
                 var name = nameEl ? nameEl.value.trim() : '';
                 if (!consentEl || !consentEl.checked) {
-                    if (status) status.textContent = 'Kérjük, jelöld be a hozzájárulást.';
+                    if (status) {
+                        status.classList.remove('form-status--success');
+                        status.classList.add('form-status--danger');
+                        status.textContent = 'Kérjük, jelöld be a hozzájárulást.';
+                    }
                     return;
                 }
                 if (btn) btn.disabled = true;
-                if (status) status.textContent = '';
+                if (status) {
+                    status.textContent = '';
+                    status.classList.remove('form-status--success', 'form-status--danger');
+                }
                 try {
                     var res = await fetch(API_BASE_URL + '/marketing/subscribe', {
                         method: 'POST',
@@ -633,14 +654,26 @@
                     });
                     var data = await res.json().catch(function () { return {}; });
                     if (res.ok) {
-                        if (status) { status.textContent = data.message || 'Köszönjük a feliratkozást!'; status.style.color = 'var(--success)'; }
+                        if (status) {
+                            status.textContent = data.message || 'Köszönjük a feliratkozást!';
+                            status.classList.remove('form-status--danger');
+                            status.classList.add('form-status--success');
+                        }
                         form.reset();
                     } else {
                         var msg = (typeof data.detail === 'string') ? data.detail : (Array.isArray(data.detail) ? data.detail.map(function (x) { return x.msg || x; }).join(' ') : 'Hiba történt.');
-                        if (status) { status.textContent = msg; status.style.color = 'var(--danger)'; }
+                        if (status) {
+                            status.textContent = msg;
+                            status.classList.remove('form-status--success');
+                            status.classList.add('form-status--danger');
+                        }
                     }
                 } catch (err) {
-                    if (status) { status.textContent = 'Hálózati hiba.'; status.style.color = 'var(--danger)'; }
+                    if (status) {
+                        status.textContent = 'Hálózati hiba.';
+                        status.classList.remove('form-status--success');
+                        status.classList.add('form-status--danger');
+                    }
                 }
                 if (btn) btn.disabled = false;
             });
@@ -708,60 +741,95 @@
             var list = document.getElementById('cartItemsList');
             var totalEl = document.getElementById('cartTotal');
             if (badge) {
-                if (cart.items.length) { badge.textContent = cart.items.length; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
+                if (cart.items.length) {
+                    badge.textContent = cart.items.length;
+                    badge.classList.add('cart-badge--visible');
+                } else {
+                    badge.classList.remove('cart-badge--visible');
+                }
             }
             if (cart.items.length === 0) {
-                if (empty) empty.style.display = 'block';
-                if (content) content.style.display = 'none';
+                if (empty) empty.classList.remove('is-hidden');
+                if (content) content.classList.add('is-hidden');
                 return;
             }
-            if (empty) empty.style.display = 'none';
-            if (content) content.style.display = 'block';
+            if (empty) empty.classList.add('is-hidden');
+            if (content) content.classList.remove('is-hidden');
             var total = 0;
             list.innerHTML = cart.items.map(function (it) {
                 total += it.price;
-                return '<li style="padding: 10px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between;"><span>' + (it.label || it.plan_type) + '</span><strong>' + formatPrice(it.price) + ' Ft</strong></li>';
+                return '<li><span>' + (it.label || it.plan_type) + '</span><strong>' + formatPrice(it.price) + ' Ft</strong></li>';
             }).join('');
             if (totalEl) totalEl.textContent = 'Összesen: ' + formatPrice(total) + ' Ft';
         }
+        function openCartDrawer() {
+            var panel = document.getElementById('cartPanel');
+            if (panel) {
+                panel.classList.add('is-open');
+                panel.setAttribute('aria-hidden', 'false');
+            }
+        }
+        function closeCartDrawer() {
+            var panel = document.getElementById('cartPanel');
+            if (panel) {
+                panel.classList.remove('is-open');
+                panel.setAttribute('aria-hidden', 'true');
+            }
+        }
         document.getElementById('btnCart')?.addEventListener('click', function () {
-            document.getElementById('cartPanel').style.display = 'flex';
-            document.getElementById('cartStep2').style.display = 'none';
-            document.getElementById('cartStep1').style.display = 'block';
-            document.getElementById('cartTransferForm').style.display = 'none';
-            document.getElementById('cartTransferStatus').textContent = '';
+            openCartDrawer();
+            var s2 = document.getElementById('cartStep2');
+            var s1 = document.getElementById('cartStep1');
+            var tf = document.getElementById('cartTransferForm');
+            if (s2) s2.classList.add('is-hidden');
+            if (s1) s1.classList.remove('is-hidden');
+            if (tf) tf.classList.add('is-hidden');
+            var ts = document.getElementById('cartTransferStatus');
+            if (ts) ts.textContent = '';
         });
-        document.getElementById('cartPanel')?.addEventListener('click', function (e) { if (e.target.id === 'cartPanel') e.target.style.display = 'none'; });
-        document.getElementById('cartPanelClose')?.addEventListener('click', function () { document.getElementById('cartPanel').style.display = 'none'; });
+        document.getElementById('cartPanel')?.addEventListener('click', function (e) { if (e.target.id === 'cartPanel') closeCartDrawer(); });
+        document.getElementById('cartPanelClose')?.addEventListener('click', closeCartDrawer);
         document.querySelectorAll('.btn-add-cart').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var plan = this.getAttribute('data-plan') || 'yearly';
                 var label = this.getAttribute('data-label') || plan;
                 var price = this.getAttribute('data-price') || '0';
                 addToCart(plan, label, price);
-                document.getElementById('cartPanel').style.display = 'flex';
-                document.getElementById('cartStep2').style.display = 'none';
-                document.getElementById('cartStep1').style.display = 'block';
+                openCartDrawer();
+                var s2 = document.getElementById('cartStep2');
+                var s1 = document.getElementById('cartStep1');
+                if (s2) s2.classList.add('is-hidden');
+                if (s1) s1.classList.remove('is-hidden');
             });
         });
         document.getElementById('btnCartCheckout')?.addEventListener('click', function () {
-            document.getElementById('cartStep1').style.display = 'none';
-            document.getElementById('cartStep2').style.display = 'block';
+            var s2 = document.getElementById('cartStep2');
+            var s1 = document.getElementById('cartStep1');
+            if (s1) s1.classList.add('is-hidden');
+            if (s2) s2.classList.remove('is-hidden');
         });
         document.getElementById('cartBackToStep1')?.addEventListener('click', function () {
-            document.getElementById('cartStep2').style.display = 'none';
-            document.getElementById('cartStep1').style.display = 'block';
-            document.getElementById('cartTransferForm').style.display = 'none';
+            var s2 = document.getElementById('cartStep2');
+            var s1 = document.getElementById('cartStep1');
+            var tf = document.getElementById('cartTransferForm');
+            if (s2) s2.classList.add('is-hidden');
+            if (s1) s1.classList.remove('is-hidden');
+            if (tf) tf.classList.add('is-hidden');
         });
         document.getElementById('cartPayTransfer')?.addEventListener('click', function () {
-            document.getElementById('cartTransferForm').style.display = 'block';
+            var tf = document.getElementById('cartTransferForm');
+            if (tf) tf.classList.remove('is-hidden');
         });
         document.getElementById('btnCartPayCard')?.addEventListener('click', async function () {
             var cart = getCart();
             if (!cart.items.length) return;
             if (!document.getElementById('cartTermsAccept')?.checked) {
                 var st = document.getElementById('cartStripeStatus');
-                if (st) { st.style.color = 'var(--danger)'; st.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
+                if (st) {
+                    st.classList.remove('form-status--success');
+                    st.classList.add('form-status--danger');
+                    st.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.';
+                }
                 return;
             }
             var email = document.getElementById('cartStripeEmail')?.value?.trim() || null;
@@ -769,14 +837,25 @@
             var pwc = document.getElementById('cartStripePasswordConfirm')?.value || '';
             var st = document.getElementById('cartStripeStatus');
             if (pw && pw !== pwc) {
-                if (st) { st.style.color = 'var(--danger)'; st.textContent = 'A jelszavak nem egyeznek.'; }
+                if (st) {
+                    st.classList.remove('form-status--success');
+                    st.classList.add('form-status--danger');
+                    st.textContent = 'A jelszavak nem egyeznek.';
+                }
                 return;
             }
             if (pw && !email) {
-                if (st) { st.style.color = 'var(--danger)'; st.textContent = 'Jelszó megadásához e-mail cím is kell.'; }
+                if (st) {
+                    st.classList.remove('form-status--success');
+                    st.classList.add('form-status--danger');
+                    st.textContent = 'Jelszó megadásához e-mail cím is kell.';
+                }
                 return;
             }
-            if (st) { st.style.color = ''; st.textContent = 'Átirányítás a fizetéshez…'; }
+            if (st) {
+                st.classList.remove('form-status--success', 'form-status--danger');
+                st.textContent = 'Átirányítás a fizetéshez…';
+            }
             try {
                 var res = await fetch(API_BASE_URL + '/payments/create-checkout-session', {
                     method: 'POST',
@@ -794,19 +873,28 @@
                     return;
                 }
                 if (st) {
-                    st.style.color = 'var(--danger)';
+                    st.classList.remove('form-status--success');
+                    st.classList.add('form-status--danger');
                     st.textContent = typeof data.detail === 'string' ? data.detail : 'Nem sikerült elindítani a fizetést.';
                 }
             } catch (e) {
-                if (st) { st.style.color = 'var(--danger)'; st.textContent = 'Hálózati hiba.'; }
+                if (st) {
+                    st.classList.remove('form-status--success');
+                    st.classList.add('form-status--danger');
+                    st.textContent = 'Hálózati hiba.';
+                }
             }
         });
         document.getElementById('btnCartRequestInvoice')?.addEventListener('click', async function () {
             var cart = getCart();
             if (!cart.items.length) return;
             if (!document.getElementById('cartTermsAccept')?.checked) {
-                var statusEl = document.getElementById('cartTransferStatus');
-                if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.'; }
+                var statusEl0 = document.getElementById('cartTransferStatus');
+                if (statusEl0) {
+                    statusEl0.classList.remove('form-status--success');
+                    statusEl0.classList.add('form-status--danger');
+                    statusEl0.textContent = 'A megrendeléshez el kell fogadnod a Felhasználási feltételek és az ÁSZF hatályát.';
+                }
                 return;
             }
             var email = document.getElementById('cartEmail')?.value?.trim();
@@ -814,10 +902,26 @@
             var address = document.getElementById('cartAddress')?.value?.trim();
             var tax = document.getElementById('cartTax')?.value?.trim() || null;
             var statusEl = document.getElementById('cartTransferStatus');
-            if (!email || !name) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'E-mail és név kötelező.'; return; }
-            if (!address || address.length < 5) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Számlázási cím megadása kötelező.'; return; }
-            statusEl.textContent = 'Küldés…';
-            statusEl.style.color = '';
+            if (!email || !name) {
+                if (statusEl) {
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
+                    statusEl.textContent = 'E-mail és név kötelező.';
+                }
+                return;
+            }
+            if (!address || address.length < 5) {
+                if (statusEl) {
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
+                    statusEl.textContent = 'Számlázási cím megadása kötelező.';
+                }
+                return;
+            }
+            if (statusEl) {
+                statusEl.textContent = 'Küldés…';
+                statusEl.classList.remove('form-status--success', 'form-status--danger');
+            }
             try {
                 var res = await fetch(API_BASE_URL + '/payments/request-bank-transfer', {
                     method: 'POST',
@@ -826,15 +930,18 @@
                 });
                 var data = await res.json();
                 if (res.ok && data.message) {
-                    statusEl.style.color = 'var(--success)';
+                    statusEl.classList.remove('form-status--danger');
+                    statusEl.classList.add('form-status--success');
                     statusEl.textContent = data.message;
                     setCart({ items: [] });
                 } else {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = data.detail || 'Hiba történt.';
                 }
             } catch (e) {
-                statusEl.style.color = 'var(--danger)';
+                statusEl.classList.remove('form-status--success');
+                statusEl.classList.add('form-status--danger');
                 statusEl.textContent = 'Hálózati hiba.';
             }
         });
@@ -850,13 +957,17 @@
             var btn = document.getElementById('btnContactSubmit');
             if (!email || !message) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'E-mail és üzenet kötelező.';
                 }
                 return;
             }
             if (btn) btn.disabled = true;
-            if (statusEl) statusEl.textContent = 'Küldés…';
+            if (statusEl) {
+                statusEl.classList.remove('form-status--success', 'form-status--danger');
+                statusEl.textContent = 'Küldés…';
+            }
             try {
                 var res = await fetch(API_BASE_URL + '/contact', {
                     method: 'POST',
@@ -865,16 +976,19 @@
                 });
                 var data = await res.json().catch(function () { return {}; });
                 if (res.ok && data.message) {
-                    statusEl.style.color = 'var(--success)';
+                    statusEl.classList.remove('form-status--danger');
+                    statusEl.classList.add('form-status--success');
                     statusEl.textContent = data.message;
                     document.getElementById('contactForm').reset();
                 } else {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = (data.detail || 'Hiba történt. Próbáld újra később.');
                 }
             } catch (err) {
                 if (statusEl) {
-                    statusEl.style.color = 'var(--danger)';
+                    statusEl.classList.remove('form-status--success');
+                    statusEl.classList.add('form-status--danger');
                     statusEl.textContent = 'Hálózati hiba.';
                 }
             }
@@ -883,7 +997,7 @@
     </script>
 
     <!-- Cookie / helyi tárolás nyilatkozat -->
-    <div id="cookieConsentBanner" class="cookie-consent-banner" role="dialog" aria-label="Cookie nyilatkozat" style="display: none;">
+    <div id="cookieConsentBanner" class="cookie-consent-banner is-hidden" role="dialog" aria-label="Cookie nyilatkozat">
         <div class="cookie-consent-inner">
             <p class="cookie-consent-text">
                 Az oldal cookie-kat és helyi tárolást (localStorage) használ a bejelentkezés, téma és offline működés megjegyzéséhez.
@@ -895,7 +1009,7 @@
             </div>
         </div>
     </div>
-    <div id="cookieConsentModal" class="cookie-consent-modal" style="display: none;" aria-hidden="true">
+    <div id="cookieConsentModal" class="cookie-consent-modal is-hidden" aria-hidden="true">
         <div class="cookie-consent-modal-content">
             <h3>Cookie és helyi tárolás</h3>
             <p>Az alkalmazás a következő célokra használ helyi tárolást (localStorage), illetve szükség esetén cookie-kat:</p>
@@ -915,16 +1029,27 @@
             var banner = document.getElementById('cookieConsentBanner');
             var modal = document.getElementById('cookieConsentModal');
             if (!banner) return;
-            if (localStorage.getItem(key) === '1') { banner.style.display = 'none'; return; }
-            banner.style.display = 'block';
+            if (localStorage.getItem(key) === '1') return;
+            banner.classList.remove('is-hidden');
             document.getElementById('cookieConsentAccept').addEventListener('click', function () {
                 try { localStorage.setItem(key, '1'); } catch (e) {}
-                banner.style.display = 'none';
+                banner.classList.add('is-hidden');
             });
             var details = document.getElementById('cookieConsentDetails');
-            if (details) details.addEventListener('click', function (e) { e.preventDefault(); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); });
+            if (details) details.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (modal) {
+                    modal.classList.remove('is-hidden');
+                    modal.setAttribute('aria-hidden', 'false');
+                }
+            });
             var closeBtn = document.getElementById('cookieConsentModalClose');
-            if (closeBtn) closeBtn.addEventListener('click', function () { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); });
+            if (closeBtn) closeBtn.addEventListener('click', function () {
+                if (modal) {
+                    modal.classList.add('is-hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                }
+            });
         })();
     </script>
     <script type="module" src="./js/index-page.js"></script>

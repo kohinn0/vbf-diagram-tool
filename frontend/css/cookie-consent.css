@@ -1,4 +1,12 @@
 /* Cookie / helyi tárolás nyilatkozat – app.html (VBF Premium szerkesztő) */
+.cookie-consent-banner.is-hidden {
+    display: none !important;
+}
+
+.cookie-consent-modal.is-hidden {
+    display: none !important;
+}
+
 .cookie-consent-banner {
     position: fixed;
     bottom: 0;

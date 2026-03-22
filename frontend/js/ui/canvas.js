@@ -3,23 +3,6 @@ export function initCanvas() {
     const wrapper = document.querySelector('.canvas-container-wrapper');
     if (!wrapper) return;
 
-    // Offline Indicator Logic
-    function updateOnlineStatus() {
-        const indicator = document.getElementById('offlineIndicator');
-        if (!indicator) return;
-        const dot = indicator.querySelector('span');
-        if (navigator.onLine) {
-            dot.style.background = '#6eb89a';
-            indicator.lastChild.textContent = ' Online';
-        } else {
-            dot.style.background = '#c97b7b';
-            indicator.lastChild.textContent = ' Offline (Helyi mentés)';
-        }
-    }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
-
     canvas = new fabric.Canvas('diagramCanvas', {
         width: wrapper.clientWidth,
         height: wrapper.clientHeight,

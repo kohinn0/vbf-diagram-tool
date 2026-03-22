@@ -37,9 +37,9 @@
     <!-- Top Navigation System -->
     <header class="app-header">
         <nav class="main-nav">
-            <a href="index.html" class="nav-brand" title="Vissza a főoldalra">
-                <img src="img/logo.svg" alt="" class="nav-brand-img" width="28" height="28">
-                <span class="nav-brand-text">VBF Premium</span>
+            <a href="index.html" class="nav-brand logo" title="Vissza a főoldalra">
+                <img src="img/logo.svg" alt="" class="logo-img" width="28" height="28">
+                <span class="logo-wordmark">VBF Premium</span>
             </a>
             <div class="nav-section-dropdown">
                 <button type="button" class="nav-section-trigger" id="navSectionTrigger" aria-haspopup="true" aria-expanded="false" title="Szekció kiválasztása">
@@ -56,43 +56,42 @@
                 <button type="button" class="nav-tab" data-target="tab-lps">Villámvédelem</button>
                 <div class="nav-group-label">Szervezet</div>
                 <button type="button" class="nav-tab" data-target="tab-jobs">Naptár & Feladatok</button>
-                <button type="button" class="nav-tab" data-target="tab-cloud">Mentett ügyek</button>
-                <button type="button" class="nav-tab" data-target="tab-master-data">Törzsadatok</button>
-                <a href="shop.html" id="linkShopAdmin" class="nav-tab nav-tab-link" style="display: none;">Cég admin</a>
+                <button type="button" class="nav-tab is-hidden" data-target="tab-cloud">Mentett ügyek</button>
+                <button type="button" class="nav-tab is-hidden" data-target="tab-master-data">Törzsadatok</button>
+                <a href="shop.html" id="linkShopAdmin" class="nav-tab nav-tab-link is-hidden">Cég admin</a>
             </div>
         </div>
         <div id="headerReportContext" class="nav-context" aria-live="polite">
             <span class="nav-context-title"></span>
-            <span class="nav-context-chip" id="headerReportContextChip" style="display: none;"></span>
+            <span class="nav-context-chip is-hidden" id="headerReportContextChip"></span>
         </div>
         <div class="user-controls">
             <!-- Report Actions: desktop = 5 gomb; keskeny képernyőn = "Műveletek" dropdown -->
             <div class="report-actions-wrapper">
                 <button type="button" class="report-actions-trigger btn btn-secondary btn-small nav-util-btn" id="reportActionsTrigger" aria-haspopup="true" aria-expanded="false" title="Jegyzőkönyv műveletek">Műveletek ▾</button>
                 <div id="reportActionsGroup">
-                    <button type="button" class="btn btn-primary btn-small vbf-header-doc-btn" id="btnSaveCloud" style="display: none;">Mentés</button>
-                    <button type="button" class="btn btn-secondary btn-small vbf-header-doc-btn" id="btnFinalize" style="display: none;">Zárás</button>
-                    <button class="btn btn-accent btn-small" id="btnExportWord" style="display: none;">Word</button>
-                    <button class="btn btn-accent btn-small" id="btnExportPdfReport" style="display: none;">PDF</button>
-                    <button class="btn btn-accent btn-small" id="btnEmailReport" style="display: none;">Küldés</button>
+                    <button type="button" class="btn btn-primary btn-small vbf-header-doc-btn is-hidden" id="btnSaveCloud">Mentés</button>
+                    <button type="button" class="btn btn-secondary btn-small vbf-header-doc-btn is-hidden" id="btnFinalize">Zárás</button>
+                    <button type="button" class="btn btn-primary btn-small is-hidden" id="btnExportWord">Word</button>
+                    <button type="button" class="btn btn-primary btn-small is-hidden" id="btnExportPdfReport">PDF</button>
+                    <button type="button" class="btn btn-primary btn-small is-hidden" id="btnEmailReport">Küldés</button>
                 </div>
             </div>
             <div class="nav-help-dropdown">
                 <button type="button" class="nav-help-trigger btn btn-secondary btn-small vbf-header-doc-btn" id="navHelpTrigger" aria-haspopup="true" aria-expanded="false" title="Súgó">Súgó</button>
                 <div class="nav-help-panel" id="navHelpPanel" role="menu">
                     <button type="button" class="nav-help-item" id="btnStartTour">Bemutató</button>
-                    <button type="button" class="nav-help-item" id="btnShowKeyboardShortcuts">⌨️ Billentyűk</button>
-                    <button type="button" class="nav-help-item" data-bug-report>📩 Visszajelzés küldése (béta verzió)</button>
+                    <button type="button" class="nav-help-item" id="btnShowKeyboardShortcuts">Billentyűk</button>
+                    <button type="button" class="nav-help-item" data-bug-report>Visszajelzés (béta verzió)</button>
                 </div>
             </div>
-            <button type="button" class="nav-feedback-icon" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">📩</button>
             <div class="nav-system-group">
                 <div id="offlineIndicator" class="offline-badge">
                     <span id="offlineDot" class="offline-dot"></span>
                     <span id="offlineText">Online</span>
                 </div>
-                <button id="btnSyncOffline" class="btn btn-primary btn-small nav-util-btn" style="display: none;">🔄 Szinkronizálás (<span id="offlineCount">0</span>)</button>
-                <div id="navUserMenu" class="nav-user-menu" style="display: none;">
+                <button type="button" id="btnSyncOffline" class="btn btn-primary btn-small nav-util-btn is-hidden">Szinkronizálás (<span id="offlineCount">0</span>)</button>
+                <div id="navUserMenu" class="nav-user-menu is-hidden">
                     <button type="button" id="navUserMenuTrigger" class="nav-user-menu-trigger" aria-haspopup="true" aria-expanded="false" title="Fiók és beállítások">
                         <span class="nav-user-menu-icon" aria-hidden="true">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
@@ -111,7 +110,7 @@
                         <a href="#" id="linkDeleteAccount" role="menuitem" class="nav-user-menu-item nav-user-menu-item--danger">Fiók törlése</a>
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary btn-small nav-util-btn" id="btnCart" title="Előfizetés – kosár" aria-label="Kosár"><span aria-hidden="true">🛒</span><span id="cartBadge">0</span></button>
+                <button type="button" class="btn btn-secondary btn-small nav-util-btn" id="btnCart" title="Előfizetés – kosár" aria-label="Kosár">Kosár <span id="cartBadge">0</span></button>
                 <button class="btn btn-secondary btn-small nav-util-btn" id="btnLoginNav">Bejelentkezés</button>
                 <button class="btn btn-secondary btn-small nav-util-btn" id="btnToggleTheme" title="Téma váltása" aria-label="Téma váltása">☀️</button>
             </div>
@@ -120,83 +119,83 @@
     </header>
 
     <!-- Billentyűparancsok (Súgó → Billentyűk) -->
-    <div id="keyboardShortcutsModal" class="modal-overlay" style="display: none;" aria-hidden="true">
+    <div id="keyboardShortcutsModal" class="modal-overlay is-hidden" aria-hidden="true">
         <div class="modal-content panel-glass keyboard-shortcuts-modal">
-            <h2 style="margin: 0 0 1rem 0; font-size: 1.25rem;">⌨️ Billentyűparancsok</h2>
+            <h2 class="modal-title-lg">Billentyűparancsok</h2>
             <ul class="keyboard-shortcuts-list">
                 <li><kbd>Ctrl</kbd> + <kbd>S</kbd> <span>Jegyzőkönyv mentése a felhőbe</span></li>
                 <li><kbd>Ctrl</kbd> + <kbd>E</kbd> <span>Word dokumentum generálása (mentés + export)</span></li>
             </ul>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 1rem 0 0 0;">A billentyűk nem működnek beviteli mezők (szöveg, szám) fókuszálásakor.</p>
-            <button type="button" class="btn btn-secondary" id="btnCloseKeyboardShortcuts" style="margin-top: 1.25rem;">Bezárás</button>
+            <p class="keyboard-shortcuts-footnote">A billentyűk nem működnek beviteli mezők (szöveg, szám) fókuszálásakor.</p>
+            <button type="button" class="btn btn-secondary keyboard-shortcuts-close" id="btnCloseKeyboardShortcuts">Bezárás</button>
         </div>
     </div>
 
     <!-- Kosár (ugyanaz a localStorage kulcs, mint a főoldalon: vbf_cart) -->
-    <div id="cartPanel" class="cart-drawer-overlay" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Kosár">
+    <div id="cartPanel" class="cart-drawer-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Kosár">
         <div id="cartDrawer">
             <div class="cart-drawer-header">
-                <h2>🛒 Kosár</h2>
+                <h2>Kosár</h2>
                 <button type="button" id="cartPanelClose" class="cart-close-btn" aria-label="Bezárás">×</button>
             </div>
             <div id="cartStep1" class="cart-step">
                 <div id="cartEmpty" class="cart-empty-msg">
                     <p>A kosár üres.</p>
-                    <p style="margin-top: 0.75rem;"><a href="index.html#shop">Főoldal – Árak és Vásárlás (csomag a kosárba)</a></p>
-                    <p style="margin-top: 1rem; font-size: 0.9rem;">Gyors választás – elérhető csomagok:</p>
-                    <div id="cartAppPlanButtons" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;"></div>
+                    <p class="cart-empty-link"><a href="index.html#shop">Főoldal – Árak és Vásárlás (csomag a kosárba)</a></p>
+                    <p class="cart-plans-intro">Gyors választás – elérhető csomagok:</p>
+                    <div id="cartAppPlanButtons" class="cart-app-plan-buttons"></div>
                 </div>
-                <div id="cartContent" class="cart-content" style="display: none;">
+                <div id="cartContent" class="cart-content is-hidden">
                     <ul id="cartItemsList" class="cart-items-list"></ul>
                     <p id="cartTotal" class="cart-total-line"></p>
                     <button type="button" id="btnCartCheckout" class="btn btn-primary cart-btn-full">Megrendelés folytatása</button>
                 </div>
             </div>
-            <div id="cartStep2" class="cart-step cart-step2" style="display: none;">
-                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Megrendelés és fizetés</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong>.</p>
-                <p id="cartLoggedInNote" class="cart-logged-in-note" style="display: none;"></p>
-                <div id="cartGuestRegBlock" style="margin-bottom: 1.25rem;">
-                    <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Nem vagy bejelentkezve: az utalásos számlához add meg lent a számlázási adatokat. Érdemes <strong>uganazt az e-mail címet</strong> használni, mint a későbbi fiókodnál.</p>
+            <div id="cartStep2" class="cart-step cart-step2 is-hidden">
+                <h3 class="cart-step2-title">Megrendelés és fizetés</h3>
+                <p class="cart-step2-lead"><strong>Új előfizetés</strong> és <strong>időtartam hosszabbítása</strong> egyaránt itt: jóváhagyás után az új időszak a még érvényes előfizetés lejárati dátumára <strong>ráépül</strong>.</p>
+                <p id="cartLoggedInNote" class="cart-logged-in-note is-hidden"></p>
+                <div id="cartGuestRegBlock" class="cart-guest-block">
+                    <p>Nem vagy bejelentkezve: az utalásos számlához add meg lent a számlázási adatokat. Érdemes <strong>uganazt az e-mail címet</strong> használni, mint a későbbi fiókodnál.</p>
                 </div>
-                <div id="cartStripeWrap" style="display: none; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
-                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.05rem;">Bankkártyás fizetés (Stripe)</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">Azonnali fizetés. Bejelentkezve hagyd üresen a jelszómezőket. Vendégként opcionálisan adhatsz meg jelszót új fiókhoz (e-mail kötelező); egyébként ideiglenes jelszót küldünk e-mailben.</p>
-                    <label for="cartStripeEmail" style="display:block; margin-bottom: 4px;">E-mail (ajánlott)</label>
-                    <input type="email" id="cartStripeEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartStripePassword" style="display:block; margin-bottom: 4px;">Jelszó (opcionális)</label>
-                    <input type="password" id="cartStripePassword" placeholder="Új fiókhoz, vagy üres" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartStripePasswordConfirm" style="display:block; margin-bottom: 4px;">Jelszó megerősítése</label>
-                    <input type="password" id="cartStripePasswordConfirm" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <button type="button" id="btnCartPayCard" class="btn btn-outline cart-btn-full" style="margin-top: 4px;">💳 Tovább a bankkártyás fizetéshez</button>
-                    <p id="cartStripeStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
-                    <p style="text-align: center; font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0 0;">— vagy utalással —</p>
+                <div id="cartStripeWrap" class="cart-stripe-block is-hidden">
+                    <h4>Bankkártyás fizetés (Stripe)</h4>
+                    <p class="cart-stripe-intro">Azonnali fizetés. Bejelentkezve hagyd üresen a jelszómezőket. Vendégként opcionálisan adhatsz meg jelszót új fiókhoz (e-mail kötelező); egyébként ideiglenes jelszót küldünk e-mailben.</p>
+                    <label for="cartStripeEmail" class="cart-form-label">E-mail (ajánlott)</label>
+                    <input type="email" id="cartStripeEmail" class="cart-input" placeholder="pelda@ceg.hu" autocomplete="email">
+                    <label for="cartStripePassword" class="cart-form-label">Jelszó (opcionális)</label>
+                    <input type="password" id="cartStripePassword" class="cart-input" placeholder="Új fiókhoz, vagy üres" autocomplete="new-password">
+                    <label for="cartStripePasswordConfirm" class="cart-form-label">Jelszó megerősítése</label>
+                    <input type="password" id="cartStripePasswordConfirm" class="cart-input" placeholder="Csak ha jelszót adtál meg" autocomplete="new-password">
+                    <button type="button" id="btnCartPayCard" class="btn btn-secondary cart-btn-full">Tovább a bankkártyás fizetéshez</button>
+                    <p id="cartStripeStatus"></p>
+                    <p class="cart-stripe-or">— vagy utalással —</p>
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <button type="button" id="cartPayTransfer" class="btn btn-primary" style="flex: 1;">🏦 Utalásos fizetés – számla kérése</button>
+                <div class="cart-transfer-row">
+                    <button type="button" id="cartPayTransfer" class="btn btn-primary cart-pay-transfer-flex">Utalásos fizetés – számla kérése</button>
                 </div>
-                <div id="cartTransferForm" style="display: none; margin-top: 1rem;">
-                    <label for="cartEmail" style="display:block; margin-bottom: 4px;">E-mail *</label>
-                    <input type="email" id="cartEmail" placeholder="pelda@ceg.hu" autocomplete="email" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartName" style="display:block; margin-bottom: 4px;">Név / Cégnév *</label>
-                    <input type="text" id="cartName" placeholder="Kovács Kft." style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartAddress" style="display:block; margin-bottom: 4px;">Számlázási cím *</label>
-                    <input type="text" id="cartAddress" required placeholder="Irányítószám, város, utca, házszám" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <label for="cartTax" style="display:block; margin-bottom: 4px;">Adószám (opcionális)</label>
-                    <input type="text" id="cartTax" placeholder="12345678-2-41" style="width:100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-light); color: inherit;">
-                    <button type="button" id="btnCartRequestInvoice" class="btn btn-primary" style="width: 100%;">Számla kérése utaláshoz</button>
-                    <p id="cartTransferStatus" style="margin-top: 10px; font-weight: 600; min-height: 1.4em; font-size: 0.9rem;"></p>
+                <div id="cartTransferForm" class="is-hidden cart-transfer-form">
+                    <label for="cartEmail" class="cart-form-label">E-mail *</label>
+                    <input type="email" id="cartEmail" class="cart-input" placeholder="pelda@ceg.hu" autocomplete="email">
+                    <label for="cartName" class="cart-form-label">Név / Cégnév *</label>
+                    <input type="text" id="cartName" class="cart-input" placeholder="Kovács Kft.">
+                    <label for="cartAddress" class="cart-form-label">Számlázási cím *</label>
+                    <input type="text" id="cartAddress" class="cart-input" required placeholder="Irányítószám, város, utca, házszám">
+                    <label for="cartTax" class="cart-form-label">Adószám (opcionális)</label>
+                    <input type="text" id="cartTax" class="cart-input" placeholder="12345678-2-41">
+                    <button type="button" id="btnCartRequestInvoice" class="btn btn-primary cart-btn-full">Számla kérése utaláshoz</button>
+                    <p id="cartTransferStatus"></p>
                 </div>
-                <button type="button" id="cartBackToStep1" class="btn btn-secondary" style="margin-top: 1rem;">← Vissza a kosárhoz</button>
+                <button type="button" id="cartBackToStep1" class="btn btn-secondary cart-back-step">← Vissza a kosárhoz</button>
             </div>
         </div>
     </div>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
-        <div class="modal-content panel-glass login-modal-inner" style="max-width: 400px; position: relative;">
+    <div id="loginModal" class="modal-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <div class="modal-content panel-glass login-modal-inner">
             <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 id="loginModalTitle" style="font-size: 1.25rem; margin: 0 0 1rem 0; font-weight: 600;">Bejelentkezés</h2>
+            <h2 id="loginModalTitle" class="modal-title-lg">Bejelentkezés</h2>
 
             <div id="panelLogin">
                 <div class="prop-group">
@@ -207,14 +206,14 @@
                     <label for="loginPass">Jelszó</label>
                     <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
                 </div>
-                <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
-                <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-                <button type="button" class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Bejelentkezés</button>
-                <p style="margin-top: 1rem; text-align: center;"><a href="#" id="linkToRegister" style="font-size: 0.9rem; color: var(--primary-light);">Regisztráció</a></p>
+                <div id="loginError" class="form-error-text"></div>
+                <p class="form-link-muted form-link-muted--mb"><a href="#" id="linkForgotPassword" class="form-link-muted">Elfelejtettem a jelszavam</a></p>
+                <button type="button" class="btn btn-primary btn-block" id="btnSubmitLogin">Bejelentkezés</button>
+                <p class="form-link-center"><a href="#" id="linkToRegister" class="form-link-primary">Regisztráció</a></p>
             </div>
 
-            <div id="panelRegister" style="display: none;">
-                <p id="loginRegisterInfo" class="login-modal-info" style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">Demó fiók – PDF vízjellel. Teljes verzió: főoldalon csomag választása → megrendelés és fizetés → számla → hozzáférés aktiválása.</p>
+            <div id="panelRegister" class="is-hidden">
+                <p id="loginRegisterInfo" class="login-modal-info">Demó fiók – PDF vízjellel. Teljes verzió: főoldalon csomag választása → megrendelés és fizetés → számla → hozzáférés aktiválása.</p>
                 <div class="prop-group">
                     <label for="regUser">Felhasználónév *</label>
                     <input type="text" id="regUser" placeholder="kovacsbela" autocomplete="username">
@@ -231,26 +230,26 @@
                     <label for="regPass">Jelszó *</label>
                     <input type="password" id="regPass" placeholder="min. 8 karakter" autocomplete="new-password">
                 </div>
-                <label style="font-size: 0.82rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.75rem; cursor: pointer;">
-                    <input type="checkbox" id="regTerms" required style="margin-top: 3px;">
+                <label class="reg-check-label">
+                    <input type="checkbox" id="regTerms" required>
                     <span>Vállalkozóként / jogi személyként, üzleti célból veszem igénybe a szolgáltatást. Elfogadom a <a href="#" id="linkRegTerms" target="_blank" rel="noopener">Felhasználási feltételek</a> és az <a href="#" id="linkRegAszf" target="_blank" rel="noopener">ÁSZF</a> hatályát. A jegyzőkönyvek tartalmáért kizárólag én vállalok felelősséget.</span>
                 </label>
-                <label style="font-size: 0.8rem; display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 1rem; cursor: pointer;">
-                    <input type="checkbox" id="regMarketing" style="margin-top: 3px;">
+                <label class="reg-check-label reg-check-label--sm">
+                    <input type="checkbox" id="regMarketing">
                     <span>Hírlevél (opcionális)</span>
                 </label>
-                <div id="registerError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
-                <button type="button" class="btn btn-primary" id="btnSubmitRegister" style="width: 100%;">Fiók létrehozása</button>
-                <p style="margin-top: 1rem; text-align: center;"><a href="#" id="linkToLogin" style="font-size: 0.9rem; color: var(--primary-light);">Már van fiókom – Bejelentkezés</a></p>
+                <div id="registerError" class="form-error-text"></div>
+                <button type="button" class="btn btn-primary btn-block" id="btnSubmitRegister">Fiók létrehozása</button>
+                <p class="form-link-center"><a href="#" id="linkToLogin" class="form-link-primary">Már van fiókom – Bejelentkezés</a></p>
             </div>
         </div>
     </div>
 
     <!-- Jelszó módosítása modal -->
-    <div id="passwordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+    <div id="passwordModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400">
             <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
+            <h2 class="modal-title-md">Jelszó módosítása</h2>
             <div class="prop-group">
                 <label for="passwordCurrent">Jelenlegi jelszó</label>
                 <input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password">
@@ -263,74 +262,74 @@
                 <label for="passwordNewConfirm">Új jelszó még egyszer</label>
                 <input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password">
             </div>
-            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
-            <button class="btn btn-primary" id="btnPasswordSubmit" style="width: 100%;">Jelszó mentése</button>
+            <p id="passwordModalError" class="form-error-text"></p>
+            <button type="button" class="btn btn-primary btn-block" id="btnPasswordSubmit">Jelszó mentése</button>
         </div>
     </div>
 
     <!-- Profil / Beállítások modal -->
-    <div id="profileModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 420px;">
-            <h2 style="margin-bottom: 1rem;">Profil és beállítások</h2>
+    <div id="profileModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--420">
+            <h2 class="modal-title-md">Profil és beállítások</h2>
             <div class="prop-group">
                 <span class="field-label">Felhasználónév</span>
-                <p id="profileUsername" style="margin: 0; font-weight: 600;"></p>
+                <p id="profileUsername" class="profile-username"></p>
             </div>
             <div class="prop-group">
                 <label for="profileEmail">E-mail</label>
-                <input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;">
-                <button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button>
+                <input type="email" id="profileEmail" class="profile-email-input" placeholder="email@pelda.hu">
+                <button type="button" class="btn btn-small btn-primary profile-save-email-btn" id="btnProfileSaveEmail">E-mail mentése</button>
             </div>
             <div class="prop-group">
                 <span class="field-label">Cég</span>
-                <p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p>
+                <p id="profileCompany" class="profile-muted"></p>
             </div>
             <div class="prop-group">
                 <span class="field-label">Előfizetés lejár</span>
-                <p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p>
+                <p id="profileExpiry" class="profile-muted"></p>
             </div>
-            <hr style="border-color: var(--border-color); margin: 1rem 0;">
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <hr class="modal-hr">
+            <div class="profile-actions-col">
                 <button type="button" class="btn btn-secondary btn-small" id="btnProfileChangePassword">Jelszó módosítása</button>
-                <a href="#" id="btnProfileExportZip" class="btn btn-secondary btn-small" style="text-align: center;">Teljes adatcsomag (ZIP)</a>
-                <a href="#" id="linkDeleteAccountFromProfile" class="btn btn-danger btn-small" style="text-align: center;">Fiók törlése</a>
+                <a href="#" id="btnProfileExportZip" class="btn btn-secondary btn-small profile-btn-link">Teljes adatcsomag (ZIP)</a>
+                <a href="#" id="linkDeleteAccountFromProfile" class="btn btn-danger btn-small profile-btn-link">Fiók törlése</a>
             </div>
-            <button type="button" class="btn btn-secondary" id="btnProfileClose" style="margin-top: 1rem;">Bezárás</button>
+            <button type="button" class="btn btn-secondary profile-close-btn" id="btnProfileClose">Bezárás</button>
         </div>
     </div>
 
     <!-- Elfelejtett jelszó: link kérése -->
-    <div id="forgotPasswordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+    <div id="forgotPasswordModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400">
             <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
+            <h2 class="modal-title-sm">Elfelejtett jelszó</h2>
+            <p class="form-text-muted">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
             <div class="prop-group">
                 <label for="forgotPasswordEmail">E-mail</label>
                 <input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu">
             </div>
-            <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
-            <button class="btn btn-primary" id="btnForgotPasswordSubmit" style="width: 100%;">Link kérése</button>
+            <p id="forgotPasswordStatus" class="form-status-text"></p>
+            <button type="button" class="btn btn-primary btn-block" id="btnForgotPasswordSubmit">Link kérése</button>
         </div>
     </div>
 
     <!-- Előfizetés lejárat banner (dismissible) -->
-    <div id="expiryBanner" class="app-banner-expiry" style="display: none;">
+    <div id="expiryBanner" class="app-banner-expiry is-hidden">
         <span id="expiryBannerText"></span>
-        <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
+        <button type="button" id="expiryBannerDismiss" class="app-banner-dismiss">Értem</button>
     </div>
 
     <!-- Demó / FREE: PDF vízjel tájékoztató -->
-    <div id="pdfWatermarkBanner" class="app-banner-pdf-watermark" style="display: none;">
+    <div id="pdfWatermarkBanner" class="app-banner-pdf-watermark is-hidden">
         <span id="pdfWatermarkBannerText">Demó / ingyenes csomag: a letöltött PDF vízjellel készül, nem minősül teljes értékű hiteles dokumentumnak. Teljes PDF az előfizetéssel.</span>
-        <button type="button" id="pdfWatermarkBannerDismiss" style="background: rgba(255,255,255,0.22); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
+        <button type="button" id="pdfWatermarkBannerDismiss" class="app-banner-dismiss">Értem</button>
     </div>
 
     <!-- Jelszó visszaállítás (app.html?reset=TOKEN) -->
-    <div id="resetPasswordPanel" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
-            <h2 style="margin-bottom: 1rem;">Új jelszó megadása</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az új jelszót (min. 8 karakter, nagybetű, kisbetű, szám).</p>
+    <div id="resetPasswordPanel" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400">
+            <h2 class="modal-title-md">Új jelszó megadása</h2>
+            <p class="form-text-muted">Add meg az új jelszót (min. 8 karakter, nagybetű, kisbetű, szám).</p>
             <div class="prop-group">
                 <label for="resetNewPassword">Új jelszó</label>
                 <input type="password" id="resetNewPassword" placeholder="••••••••" autocomplete="new-password">
@@ -339,14 +338,14 @@
                 <label for="resetNewPasswordConfirm">Új jelszó még egyszer</label>
                 <input type="password" id="resetNewPasswordConfirm" placeholder="••••••••" autocomplete="new-password">
             </div>
-            <p id="resetPasswordError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
+            <p id="resetPasswordError" class="form-error-text"></p>
             <button type="button" class="btn btn-primary" id="btnResetPasswordSubmit">Jelszó mentése</button>
         </div>
     </div>
 
-    <!-- Cookie banner (ugyanúgy mint index) -->
-    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-glass); border-top: 1px solid var(--border-color); padding: 1rem 1.5rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; z-index: 9999;">
-        <p style="margin: 0; font-size: 0.9rem; flex: 1; min-width: 220px;">A weboldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. <a href="#" id="cookieBannerPrivacyLink" style="color: var(--accent);">Adatkezelési tájékoztató</a>.</p>
+    <!-- Cookie banner -->
+    <div id="cookieBanner" class="app-cookie-banner is-hidden">
+        <p>A weboldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. <a href="#" id="cookieBannerPrivacyLink">Adatkezelési tájékoztató</a>.</p>
         <button type="button" id="cookieBannerAccept" class="btn btn-primary btn-small">Elfogadom</button>
     </div>
 
@@ -360,7 +359,7 @@
                 <span class="vbf-completeness-title">Jegyzőkönyv állapota</span>
             </div>
             <button type="button" id="btnToggleChecklist"
-                onclick="(function(){var d=document.getElementById('checklistDetails');var b=document.getElementById('btnToggleChecklist');var vis=window.getComputedStyle(d).display!=='none';d.style.display=vis?'none':'block';b.textContent=vis?'▶':'▼';b.setAttribute('aria-expanded',vis?'false':'true');})();"
+                onclick="(function(){var d=document.getElementById('checklistDetails');var b=document.getElementById('btnToggleChecklist');var hidden=d.classList.contains('is-hidden');if(hidden){d.classList.remove('is-hidden');b.textContent='▼';b.setAttribute('aria-expanded','true');}else{d.classList.add('is-hidden');b.textContent='▶';b.setAttribute('aria-expanded','false');}})();"
                 class="vbf-completeness-toggle shrink-0"
                 aria-expanded="false"
                 title="Részletek ki/be">▶</button>
@@ -374,8 +373,8 @@
             <span id="completenessStatus" class="vbf-completeness-status" role="status"></span>
         </div>
 
-        <div id="checklistDetails" style="display: none;"
-            class="vbf-completeness-details max-h-[min(28rem,58vh)] overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] sm:max-h-[min(26rem,50vh)]">
+        <div id="checklistDetails"
+            class="vbf-completeness-details is-hidden max-h-[min(28rem,58vh)] overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] sm:max-h-[min(26rem,50vh)]">
             <div id="checkItems" class="vbf-completeness-list"></div>
         </div>
     </div>
@@ -390,8 +389,8 @@
                 <aside class="sidebar panel-glass">
                     <div class="sidebar-header">
                         <h2>VBF Diagram</h2>
-                        <button class="btn btn-secondary btn-small" id="btnScanQr"
-                            style="width: 100%; margin-top: 1rem; padding: 0.5rem;">📷 QR Kód Szkennelés</button>
+                        <button class="btn btn-secondary btn-small sidebar-qr-btn" id="btnScanQr"
+                            type="button">QR-kód szkennelés</button>
                     </div>
 
                     <div class="tool-section">
@@ -472,13 +471,12 @@
 
         <!-- 5. TAB: CLOUD / MENTETT JEGYZŐKÖNYVEK (Eredeti) -->
         <div id="tab-cloud" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 1000px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">☁️ Felhőbe Mentett Jegyzőkönyvek</h2>
-                <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
-                    <span style="color: var(--text-muted); font-size: 0.9rem;">Új jegyzőkönyv:</span>
+            <div class="form-container panel-glass tab-form-wide">
+                <h2 class="section-title-accent">Felhőbe mentett jegyzőkönyvek</h2>
+                <div class="cloud-toolbar-row">
+                    <span class="cloud-toolbar-label">Új jegyzőkönyv:</span>
                     <button type="button" class="btn btn-secondary btn-small" id="btnNewReportEmpty">Új üres</button>
-                    <select id="reportTemplateSelect" class="btn btn-secondary btn-small" style="width: auto; min-width: 180px;">
+                    <select id="reportTemplateSelect" class="btn btn-secondary btn-small report-template-select">
                         <option value="">Új sablonból...</option>
                         <option value="lako">Lakóépület</option>
                         <option value="iroda">Iroda / Kereskedelmi</option>
@@ -486,72 +484,65 @@
                         <option value="eph">EPH felülvizsgálat</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                    <label for="reportSearchInput" style="color: var(--text-muted); font-size: 0.9rem;">🔍 Keresés:</label>
-                    <input type="text" id="reportSearchInput" placeholder="Cím, megrendelő, dokumentum..." style="flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-main);">
-                    <span style="color: var(--text-muted); font-size: 0.85rem;" id="reportSearchHint"></span>
+                <div class="cloud-search-row">
+                    <label for="reportSearchInput" class="cloud-search-label">Keresés:</label>
+                    <input type="text" id="reportSearchInput" class="cloud-search-input" placeholder="Cím, megrendelő, dokumentum...">
+                    <span class="cloud-search-hint" id="reportSearchHint"></span>
                 </div>
-                <div id="cloudLoginPrompt" class="panel-glass cloud-login-cta" style="display: none; padding: 2rem; text-align: center; border-radius: 12px; border: 1px dashed var(--border-color); margin-bottom: 1.5rem;">
-                    <p style="margin-bottom: 1rem; color: var(--text-muted-strong, var(--text-muted));">A mentett jegyzőkönyvek megtekintéséhez jelentkezz be.</p>
+                <div id="cloudLoginPrompt" class="panel-glass cloud-login-cta is-hidden">
+                    <p>A mentett jegyzőkönyvek megtekintéséhez jelentkezz be.</p>
                     <button type="button" class="btn btn-primary" id="btnCloudLoginPrompt">Bejelentkezés vagy regisztráció</button>
                 </div>
-                <div id="reportListContainer" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+                <div id="reportListContainer" class="report-list-stack"></div>
             </div>
         </div>
 
         <!-- LPS TAB placeholder -->
         <div id="tab-lps" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🌩️ Villámvédelmi Felülvizsgálat</h2>
+            <div class="form-container panel-glass tab-form-medium">
+                <h2 class="section-title-accent">Villámvédelmi felülvizsgálat</h2>
                 <p>Ez a modul fejlesztés alatt áll; a VVF (villámvédelmi felülvizsgálat) később kerül bele. Itt tudod majd rögzíteni a felfogók, levezetők és a földelés méréseit.</p>
             </div>
         </div>
 
         <!-- 6. TAB: TÖRZSDATATOK (Master Data) -->
         <div id="tab-master-data" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 1200px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🏢 Ügyfél és Felülvizsgáló Kezelés</h2>
+            <div class="form-container panel-glass tab-form-master">
+                <h2 class="section-title-accent">Ügyfél és felülvizsgáló kezelés</h2>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="master-grid-2">
                     <!-- Ügyfelek Oszlop -->
-                    <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
-                        <h3 class="vbf-report-section-heading">👥 Mentett Ügyfelek</h3>
+                    <div class="panel-glass master-panel">
+                        <h3 class="vbf-report-section-heading">Mentett ügyfelek</h3>
 
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4>Új Ügyfél Hozzáadása</h4>
+                        <div class="master-section-spaced">
+                            <h4>Új ügyfél hozzáadása</h4>
                             <div class="prop-group"><label for="mdCustName">Cégnév / Név</label><input type="text" id="mdCustName" placeholder="Pl. Kovács Kft."></div>
                             <div class="prop-group"><label for="mdCustAddr">Cím</label><input type="text" id="mdCustAddr" placeholder="Irányítószám, város, utca"></div>
                             <div class="prop-group"><label for="mdCustHrsz">Helyrajzi szám</label><input type="text" id="mdCustHrsz" placeholder="HRSZ"></div>
                             <div class="prop-group"><label for="mdCustPurpose">Épület rendeltetése</label><input type="text" id="mdCustPurpose" placeholder="Pl. Iroda, lakóépület"></div>
-                            <button class="btn btn-primary btn-small" id="btnSaveCustomer" style="width: 100%;">➕ Ügyfél
-                                Mentése</button>
+                            <button type="button" class="btn btn-primary btn-small btn-block" id="btnSaveCustomer">Ügyfél mentése</button>
                         </div>
 
-                        <div id="customerListContainer"
-                            style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;">
+                        <div id="customerListContainer" class="customer-list-scroll">
                             <!-- JS fills this -->
                         </div>
                     </div>
 
                     <!-- Felülvizsgálók Oszlop -->
-                    <div class="panel-glass" style="padding: 1.5rem; background: rgba(0,0,0,0.2);">
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--primary-light);">
-                            👨‍🔧 Mentett Felülvizsgálók</h3>
+                    <div class="panel-glass master-panel">
+                        <h3 class="inspector-heading">Mentett felülvizsgálók</h3>
 
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4>Új Felülvizsgáló / Eszköz</h4>
+                        <div class="master-section-spaced">
+                            <h4>Új felülvizsgáló / eszköz</h4>
                             <div class="prop-group"><label for="mdInspName">Név / Cégnév</label><input type="text" id="mdInspName" placeholder="Pl. Nagy János"></div>
                             <div class="prop-group"><label for="mdInspLic">Vizsgabizonyítvány száma</label><input type="text" id="mdInspLic" placeholder="Regisztrációs szám"></div>
                             <div class="prop-group"><label for="mdInspInst">Műszer típusa</label><input type="text" id="mdInspInst" placeholder="Pl. Metrel MI 3152"></div>
                             <div class="prop-group"><label for="mdInspCal">Kalibrálás érvényes</label><input type="text" id="mdInspCal" placeholder="Pl. 2026.10.12"></div>
-                            <button class="btn btn-primary btn-small" id="btnSaveInspector" style="width: 100%;">➕
-                                Felülvizsgáló Mentése</button>
+                            <button type="button" class="btn btn-primary btn-small btn-block" id="btnSaveInspector">Felülvizsgáló mentése</button>
                         </div>
 
-                        <div id="inspectorListContainer"
-                            style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;">
+                        <div id="inspectorListContainer" class="customer-list-scroll">
                             <!-- JS fills this -->
                         </div>
                     </div>
@@ -560,16 +551,14 @@
         </div>
         <!-- 2. TAB: JEGYZŐKÖNYV ADATOK -->
         <div id="tab-report" class="tab-pane">
-            <div class="form-container panel-glass"
-                style="max-width: 900px; margin: 0 auto; overflow-y: auto; height: 100%; padding-bottom: 4rem;">
-                <h2 style="margin-bottom: 1rem; color: var(--accent);">📊 Jegyzőkönyv Típusa és Alapadatok</h2>
-                <p class="workflow-hint" style="margin-bottom: 2rem; font-size: 0.9rem; color: var(--text-muted-strong, var(--text-muted));">Rajz → Adatok → Hibák → Mérések → Mentés</p>
+            <div class="form-container panel-glass tab-form-report">
+                <h2 class="report-tab-title">Jegyzőkönyv típusa és alapadatok</h2>
+                <p class="workflow-hint">Rajz → Adatok → Hibák → Mérések → Mentés</p>
 
                 <div
                     class="mb-8 rounded-2xl border-0 border-l-[3px] border-l-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg-panel))] p-5 shadow-[var(--shadow-glass)] sm:p-6">
                     <label for="loadTemplateSelect"
-                        class="mb-3 block text-[0.95rem] font-bold leading-snug text-[var(--accent)]">📝 Gyorskitöltő
-                        sablon betöltése</label>
+                        class="mb-3 block text-[0.95rem] font-bold leading-snug text-[var(--accent)]">Gyorskitöltő sablon betöltése</label>
                     <div
                         class="vbf-quickfill-actions flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-4">
                         <select id="loadTemplateSelect"
@@ -589,15 +578,14 @@
                             </option>
                             <option value="TPL_EPH_BOILER">Csak EPH - Kazán, gázmérő és fémcsövek</option>
                         </select>
-                        <button type="button" class="btn btn-primary whitespace-nowrap" id="btnSaveCustomTemplate">Mentés
-                            saját sablonként 💾</button>
+                        <button type="button" class="btn btn-primary whitespace-nowrap" id="btnSaveCustomTemplate">Mentés saját sablonként</button>
                     </div>
                 </div>
 
-                <div class="prop-group" style="margin-bottom: 2rem;">
-                    <label for="docType" style="font-size: 1.1rem; color: var(--text-main);">Vizsgálat Típusa (MSZ HD 60364 /
+                <div class="prop-group report-doc-type-group">
+                    <label for="docType" class="report-doc-type-label">Vizsgálat Típusa (MSZ HD 60364 /
                         OTSZ)</label>
-                    <select id="docType" style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.3);">
+                    <select id="docType" class="report-doc-type-select">
                         <option value="VBF_IDOSZAKOS">VBF - Időszakos felülvizsgálat (OTSZ szerint)</option>
                         <option value="VBF_ELSO">VBF - Első felülvizsgálat (Üzembe helyezés előtti)</option>
                         <option value="VBF_BERBEADAS">VBF - Bérbeadás előtti felülvizsgálat (40/2017. NGM)</option>
@@ -606,16 +594,14 @@
                     </select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="report-two-col-grid">
                     <!-- Megrendelő és Helyszín -->
                     <div>
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                            🏢 Helyszín és Megrendelő</h3>
-                        <div class="prop-group"
-                            style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label for="loadCustomerSelect" style="color: var(--accent);">🔄 Mentett Ügyfél Betöltése</label>
-                            <select id="loadCustomerSelect" style="background: rgba(0,0,0,0.5);">
+                        <h3 class="report-subheading-bordered">
+                            Helyszín és megrendelő</h3>
+                        <div class="prop-group report-load-banner report-load-banner--success">
+                            <label for="loadCustomerSelect" class="report-load-label">Mentett ügyfél betöltése</label>
+                            <select id="loadCustomerSelect" class="report-select-dark">
                                 <option value="">-- Válassz Ügyfelet --</option>
                             </select>
                         </div>
@@ -633,10 +619,10 @@
                         </div>
                         <div class="prop-group">
                             <span class="field-label">Épület Rendeltetése és OTSZ Kockázati Osztály</span>
-                            <div style="display:flex; gap: 10px;">
-                                <input type="text" id="buildingPurpose"
-                                    placeholder="Pl. Iroda, Ipari csarnok, Társasház" style="flex:2;">
-                                <select id="buildingOtsz" style="flex:1; background: rgba(0,0,0,0.5);" aria-label="OTSZ kockázati osztály">
+                            <div class="building-purpose-row">
+                                <input type="text" id="buildingPurpose" class="building-purpose-input"
+                                    placeholder="Pl. Iroda, Ipari csarnok, Társasház">
+                                <select id="buildingOtsz" class="building-otsz-select report-select-dark" aria-label="OTSZ kockázati osztály">
                                     <option value="">OTSZ Osztály</option>
                                     <option value="AK">Alacsony Kockázat (AK)</option>
                                     <option value="KK">Közepes Kockázat (KK)</option>
@@ -649,13 +635,11 @@
 
                     <!-- Felülvizsgáló és Műszer -->
                     <div>
-                        <h3
-                            style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                            👨‍🔧 Előadó és Eszközök</h3>
-                        <div class="prop-group"
-                            style="background: color-mix(in srgb, var(--primary) 10%, transparent); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <label for="loadInspectorSelect" style="color: var(--accent);">🔄 Mentett Felülvizsgáló Betöltése</label>
-                            <select id="loadInspectorSelect" style="background: rgba(0,0,0,0.5);">
+                        <h3 class="report-subheading-bordered">
+                            Előadó és eszközök</h3>
+                        <div class="prop-group report-load-banner report-load-banner--primary">
+                            <label for="loadInspectorSelect" class="report-load-label">Mentett felülvizsgáló betöltése</label>
+                            <select id="loadInspectorSelect" class="report-select-dark">
                                 <option value="">-- Válassz Felülvizsgálót --</option>
                             </select>
                         </div>
@@ -668,45 +652,42 @@
                             <input type="text" id="inspectorLicense" placeholder="Pl. VBF-12345/2023">
                         </div>
                         <div class="prop-group">
-                            <label for="instrumentType" style="display:flex; align-items:center; gap:5px;">
+                            <label for="instrumentType" class="label-row-hint">
                                 Mérőműszer (Típus és Gyári Szám)
                                 <span class="label-required-hint">kötelező</span>
                                 <span
-                                    title="A mérőműszer típusa és gyári száma nélkül a jegyzőkönyv bírósági eljárásban hiteltelen! Pl.: Metrel MI 3152, SN:21070123"
-                                    style="cursor:help; background:color-mix(in srgb, var(--accent) 35%, var(--border-color)); color:var(--text-main); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:600;">?</span>
+                                    class="help-tooltip-badge"
+                                    title="A mérőműszer típusa és gyári száma nélkül a jegyzőkönyv bírósági eljárásban hiteltelen! Pl.: Metrel MI 3152, SN:21070123">?</span>
                             </label>
                             <input type="text" id="instrumentType" placeholder="Pl. Metrel MI 3152, SN:123456" required>
-                            <small
-                                style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">
-                                💡 Írd be a műszer nevét ÉS gyári számát! Pl.: "Metrel MI 3152, SN:21070123"
+                            <small class="field-hint-muted">
+                                Írd be a műszer nevét és gyári számát. Pl.: „Metrel MI 3152, SN:21070123”
                             </small>
                         </div>
                         <div class="prop-group">
-                            <label for="instrumentCal" style="display:flex; align-items:center; gap:5px;">
+                            <label for="instrumentCal" class="label-row-hint">
                                 Műszer Kalibrálás Érvényessége
                                 <span class="label-required-hint">kötelező</span>
                                 <span
-                                    title="Lejárt kalibrálású műszerrel végzett mérés jogilag érvénytelen! A rendszer automatikusan blokkolja a 'Megfelelő' minősítést lejárt kalibrálás esetén."
-                                    style="cursor:help; background:color-mix(in srgb, var(--accent) 35%, var(--border-color)); color:var(--text-main); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:600;">?</span>
+                                    class="help-tooltip-badge"
+                                    title="Lejárt kalibrálású műszerrel végzett mérés jogilag érvénytelen! A rendszer automatikusan blokkolja a 'Megfelelő' minősítést lejárt kalibrálás esetén.">?</span>
                             </label>
                             <input type="date" id="instrumentCal" placeholder="Érvényesség dátuma">
-                            <small id="calHelper"
-                                style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">
-                                📅 Válaszd ki a kalibrálás lejárati dátumát. Lejárt = nem adható "Megfelelő"!
+                            <small id="calHelper" class="field-hint-muted">
+                                Válaszd ki a kalibrálás lejárati dátumát. Lejárt esetén nem adható „Megfelelő”.
                             </small>
                         </div>
                     </div>
                 </div>
 
                 <!-- EPH and Földelés Mérés Section -->
-                <div id="sectionEPH"
-                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;">
-                    <h3 style="margin-bottom: 1rem; color: #2563eb;">⚡ EPH és Földelés Specifikus Adatok</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div id="sectionEPH" class="section-eph">
+                    <h3 class="section-eph-title">EPH és földelés specifikus adatok</h3>
+                    <div class="report-two-col-grid">
                         <div>
                             <div class="prop-group">
                                 <label for="ephGasRequired">Gázszolgáltató (Gázmérő) bevonása szükséges?</label>
-                                <select id="ephGasRequired" style="background: rgba(0,0,0,0.5);">
+                                <select id="ephGasRequired" class="report-select-dark">
                                     <option value="Nem">Nem</option>
                                     <option value="Igen">Igen</option>
                                 </select>
@@ -723,7 +704,7 @@
                         <div>
                             <div class="prop-group">
                                 <label for="ephEarthMethod">Földelési Ellenállás Mérési Módszer (Metrel)</label>
-                                <select id="ephEarthMethod" style="background: rgba(0,0,0,0.5);">
+                                <select id="ephEarthMethod" class="report-select-dark">
                                     <option value="3-vezetékes">3-vezetékes mérési módszer</option>
                                     <option value="2-lakatfogós">2-lakatfogós hurok mérés</option>
                                     <option value="Fajlagos">Fajlagos Talajellenállás</option>
@@ -742,10 +723,9 @@
                 </div>
 
                 <!-- Szemrevételezés Section (MEEVET/OTSZ/VMBSZ) -->
-                <div id="sectionVisual"
-                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <h3 class="vbf-report-section-heading">👁️ Szemrevételezéses Ellenőrzések (MEEVET)</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="visualChecklist">
+                <div id="sectionVisual" class="section-visual">
+                    <h3 class="vbf-report-section-heading">Szemrevételezéses ellenőrzések (MEEVET)</h3>
+                    <div class="visual-checklist-grid" id="visualChecklist">
                         <div class="prop-group checkbox-group">
                             <input type="checkbox" id="check_id_marks" checked> <label for="check_id_marks">Azonosító
                                 jelek, feliratok megléte</label>
@@ -773,13 +753,11 @@
                     </div>
                 </div>
 
-                <div
-                    style="margin-top: 2rem; background: color-mix(in srgb, var(--primary) 6%, transparent); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
-                    <h3 style="margin-bottom: 1rem;">📝 Összefoglaló Minősítés</h3>
+                <div class="report-summary-panel">
+                    <h3 class="report-summary-title">Összefoglaló minősítés</h3>
                     <div class="prop-group">
                         <label for="reportResult">A Vizsgált Berendezés / Rendszer Állapota:</label>
-                        <select id="reportResult"
-                            style="font-size: 1.1rem; padding: 0.8rem; background: rgba(0,0,0,0.5);">
+                        <select id="reportResult" class="report-result-select">
                             <option value="MEGFELELŐ">✅ MEGFELELŐ - Üzemeltetésre alkalmas, nincsenek feltárt hibák.
                             </option>
                             <option value="VÁLTOZAT_A">A Változat: PÓTLÓLAGOS - Az érintésvédelmi berendezés a hibák
@@ -836,12 +814,11 @@
 
         <!-- 4. TAB: MÉRÉSI ADATOK -->
         <div id="tab-measurements" class="tab-pane">
-            <div class="measurements-container panel-glass vbf-meas-page"
-                style="margin: 0 auto; overflow-y: auto; height: 100%; min-height: 0; max-width: 100%; padding: 1rem 1rem 4rem; padding-right: max(1rem, env(safe-area-inset-right));">
+            <div class="measurements-container panel-glass vbf-meas-page vbf-meas-page-full">
                 <div class="vbf-meas-page-head">
                     <h2 class="vbf-meas-page-title">Mérési adatok (kézi bevitel)</h2>
                     <div class="vbf-meas-page-actions">
-                        <input type="file" id="inputPadfx" accept=".padfx,.xml" style="display: none;" />
+                        <input type="file" id="inputPadfx" accept=".padfx,.xml" class="hidden" />
                         <button type="button" class="btn btn-primary btn-small vbf-meas-toolbar-btn" id="btnLoadPadfx">
                             <svg class="vbf-meas-btn-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             <span id="btnLoadPadfxLabel">Metrel PADFX import</span>
@@ -889,10 +866,9 @@
                     <h3 class="vbf-meas-section-title">
                         1. Védővezető folytonosság (Rpe)</h3>
                     <div class="vbf-meas-table-scroll">
-                    <table class="data-table vbf-meas-table" id="table-rpe"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-rpe">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Pont</th>
                                 <th>Mérés Helye</th>
                                 <th>Rpe [Ω]</th>
@@ -908,10 +884,9 @@
                     <h3 class="vbf-meas-section-title">
                         2. Szigetelési ellenállás (500V DC)</h3>
                     <div class="vbf-meas-table-scroll">
-                    <table class="data-table vbf-meas-table" id="table-insulation"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-insulation">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Áramkör neve</th>
                                 <th>Riso L-N [MΩ]</th>
                                 <th>Riso L-PE [MΩ]</th>
@@ -928,10 +903,9 @@
                     <h3 class="vbf-meas-section-title">
                         3. Hurokellenállás (Zs) és Hibavédelem</h3>
                     <div class="vbf-meas-table-scroll">
-                    <table class="data-table vbf-meas-table" id="table-loop"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-loop">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Áramkör / Pont</th>
                                 <th>Kikapcsoló szerv (pl. B16)</th>
                                 <th>Helye (X/n)</th>
@@ -948,10 +922,9 @@
                     <h3 class="vbf-meas-section-title">
                         4. FI-relé (ÁVK) Részletes vizsgálat (MEEVET M5)</h3>
                     <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
-                    <table class="data-table vbf-meas-table" id="table-rcd"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-rcd">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Áramkör</th>
                                 <th>Típus</th>
                                 <th>IΔn [mA]</th>
@@ -971,10 +944,9 @@
                     <h3 class="vbf-meas-section-title">
                         5. Kéziszerszámok felülvizsgálata (MEEVET M3)</h3>
                     <div class="vbf-meas-table-scroll">
-                    <table class="data-table vbf-meas-table" id="table-tools"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-tools">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Megnevezés</th>
                                 <th>Azonosító</th>
                                 <th>Szig. ell. [MΩ]</th>
@@ -990,10 +962,9 @@
                     <h3 class="vbf-meas-section-title">
                         6. SELV / PELV / Villamos elválasztás (MEEVET M2)</h3>
                     <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
-                    <table class="data-table vbf-meas-table" id="table-selv"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-selv">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Hely / Tr. áttétel</th>
                                 <th>Szek. fesz. [V]</th>
                                 <th>P-S szig. [MΩ]</th>
@@ -1010,14 +981,13 @@
                 </div>
 
                 <!-- EPH MÉRÉSEK -->
-                <div id="eph-measurements" style="display: none;">
+                <div id="eph-measurements" class="is-hidden">
                     <h3 class="vbf-meas-section-title">
                         EPH bekötések folytonossága</h3>
                     <div class="vbf-meas-table-scroll vbf-meas-table-scroll--wide">
-                    <table class="data-table vbf-meas-table" id="table-eph"
-                        style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <table class="data-table vbf-meas-table" id="table-eph">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
+                            <tr>
                                 <th>Sorszám</th>
                                 <th>Bekötött Elem (pl. Gázcső)</th>
                                 <th>Bekötés Helye</th>
@@ -1042,12 +1012,12 @@
 
         <!-- NAPTÁR ÉS FELADATOK (JOBS) -->
         <div id="tab-jobs" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 900px; margin: 0 auto; min-height: 80vh;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">📅 Kiosztott Feladatok & Munkák</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Itt találod a rád bízott közelgő vizsgálatokat
+            <div class="form-container panel-glass tab-form-jobs">
+                <h2 class="job-tab-title">Kiosztott feladatok és munkák</h2>
+                <p class="job-tab-lead">Itt találod a rád bízott közelgő vizsgálatokat
                     és a naptáradat.</p>
 
-                <div id="jobListContainer" style="display:flex; flex-direction:column; gap: 1rem;">
+                <div id="jobListContainer" class="job-list-stack">
                     <!-- Javascript fogja ide tölteni a kártyákat -->
                 </div>
             </div>
@@ -1055,7 +1025,7 @@
     </div> <!-- /app-content-wrapper -->
 
     <!-- Guided Tour Overlay -->
-    <div id="tourOverlay" class="tour-overlay">
+    <div id="tourOverlay" class="tour-overlay is-hidden">
         <div class="tour-card panel-glass">
             <div class="tour-badge">Új felhasználóknak</div>
             <h2 id="tourTitle">Üdv a VBF Jegyzőkönyv szerkesztőben</h2>
@@ -1064,9 +1034,9 @@
                 és a felhőbe menteni.
             </p>
             <div class="tour-footer">
-                <div class="flex items-start gap-2" style="margin-bottom: 0.75rem;">
-                    <input type="checkbox" id="tourDontShow" style="margin-top: 3px;">
-                    <label for="tourDontShow" style="margin: 0; cursor: pointer; font-size: 0.9rem;">Ne mutasd automatikusan legközelebb</label>
+                <div class="tour-dont-show-row">
+                    <input type="checkbox" id="tourDontShow">
+                    <label for="tourDontShow">Ne mutasd automatikusan legközelebb</label>
                 </div>
                 <div class="tour-actions">
                     <button class="btn btn-secondary btn-small btn-ghost" id="tourPrev">Előző</button>
@@ -1078,25 +1048,24 @@
     </div>
 
     <!-- QR Scan Modal -->
-    <div id="qrModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; text-align: center;">
-            <h2 style="margin-bottom: 1.5rem;">QR-kód beolvasása</h2>
-            <div id="qrReaderPlaceholder"
-                style="width: 100%; height: 250px; background: #000; border-radius: var(--radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; color: #fff;">
-                <p style="margin: 0; font-size: 0.9rem; opacity: 0.85;">A kamera képe itt jelenik meg.</p>
+    <div id="qrModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--qr">
+            <h2 class="qr-modal-title">QR-kód beolvasása</h2>
+            <div id="qrReaderPlaceholder" class="qr-reader-box">
+                <p>A kamera képe itt jelenik meg.</p>
             </div>
-            <p style="margin-bottom: 1rem; font-size: 0.9rem;">Vagy írd be kézzel a jegyzőkönyv azonosítóját:</p>
-            <input type="text" id="manualQrId" placeholder="Pl. R-1023" style="width: 100%; margin-bottom: 1.5rem;">
+            <p class="qr-modal-hint">Vagy írd be kézzel a jegyzőkönyv azonosítóját:</p>
+            <input type="text" id="manualQrId" class="qr-modal-input" placeholder="Pl. R-1023">
 
-            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <button class="btn btn-primary" id="btnSubmitManualQr" style="flex: 1; min-width: 120px;">Betöltés</button>
-                <button class="btn btn-secondary" id="btnCloseQr" style="flex: 1; min-width: 120px;">Mégse</button>
+            <div class="qr-modal-actions">
+                <button type="button" class="btn btn-primary" id="btnSubmitManualQr">Betöltés</button>
+                <button type="button" class="btn btn-secondary" id="btnCloseQr">Mégse</button>
             </div>
         </div>
     </div>
 
     <!-- Cookie / helyi tárolás nyilatkozat -->
-    <div id="cookieConsentBanner" class="cookie-consent-banner" role="dialog" aria-label="Cookie nyilatkozat" style="display: none;">
+    <div id="cookieConsentBanner" class="cookie-consent-banner is-hidden" role="dialog" aria-label="Cookie nyilatkozat">
         <div class="cookie-consent-inner">
             <p class="cookie-consent-text">
                 Az alkalmazás cookie-kat és helyi tárolást (localStorage) használ a bejelentkezés, a téma és az offline működés megjegyzéséhez.
@@ -1108,7 +1077,7 @@
             </div>
         </div>
     </div>
-    <div id="cookieConsentModal" class="cookie-consent-modal" style="display: none;" aria-hidden="true">
+    <div id="cookieConsentModal" class="cookie-consent-modal is-hidden" aria-hidden="true">
         <div class="cookie-consent-modal-content">
             <h3>Cookie és helyi tárolás</h3>
             <p>Az alkalmazás a következő célokra használ helyi tárolást (localStorage), illetve szükség esetén cookie-kat:</p>
@@ -1144,16 +1113,16 @@
             syncCookiePrivacyLink();
             document.addEventListener('DOMContentLoaded', syncCookiePrivacyLink);
             if (!banner) return;
-            if (localStorage.getItem(key) === '1') { banner.style.display = 'none'; return; }
-            banner.style.display = 'block';
+            if (localStorage.getItem(key) === '1') { banner.classList.add('is-hidden'); return; }
+            banner.classList.remove('is-hidden');
             document.getElementById('cookieConsentAccept').addEventListener('click', function () {
                 try { localStorage.setItem(key, '1'); } catch (e) {}
-                banner.style.display = 'none';
+                banner.classList.add('is-hidden');
             });
             var details = document.getElementById('cookieConsentDetails');
-            if (details) details.addEventListener('click', function (e) { e.preventDefault(); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); });
+            if (details) details.addEventListener('click', function (e) { e.preventDefault(); modal.classList.remove('is-hidden'); modal.setAttribute('aria-hidden', 'false'); });
             var closeBtn = document.getElementById('cookieConsentModalClose');
-            if (closeBtn) closeBtn.addEventListener('click', function () { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); });
+            if (closeBtn) closeBtn.addEventListener('click', function () { modal.classList.add('is-hidden'); modal.setAttribute('aria-hidden', 'true'); });
         })();
     </script>
 

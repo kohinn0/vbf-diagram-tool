@@ -342,11 +342,11 @@ export function initSiteTree() {
 
                 const row = document.createElement('div');
                 row.className = [
-                    'group flex min-h-11 min-w-0 w-full flex-wrap items-start gap-x-1 gap-y-1.5 border-l-[3px] border-transparent py-1.5 pr-1 transition-colors sm:min-h-[2.35rem] sm:items-center sm:gap-y-1 sm:py-2 sm:pr-2',
+                    'vbf-site-tree-row-indent group flex min-h-11 min-w-0 w-full flex-wrap items-start gap-x-1 gap-y-1.5 border-l-[3px] border-transparent py-1.5 pr-1 transition-colors sm:min-h-[2.35rem] sm:items-center sm:gap-y-1 sm:py-2 sm:pr-2',
                     'hover:bg-[color-mix(in_srgb,white_4%,transparent)]',
                     isActive ? 'border-l-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)]' : ''
                 ].filter(Boolean).join(' ');
-                row.style.paddingInlineStart = `${0.45 + depth * 1.05}rem`;
+                row.style.setProperty('--vbf-site-tree-row-indent', `${0.45 + depth * 1.05}rem`);
 
                 const toggle = node.children !== undefined
                     ? `<span class="flex h-7 w-4 shrink-0 select-none items-center justify-center text-[0.65rem] text-[var(--text-muted)] transition-transform hover:text-[var(--text-main)] sm:h-4 ${node.collapsed ? '-rotate-90' : ''}" data-action="toggle" data-id="${node.id}" role="button" tabindex="0">

@@ -6,26 +6,43 @@
     <meta name="theme-color" content="#0e1726">
     <meta name="description" content="VBF Cég admin és Irányítópult – Felhasználók, előfizetések, munkakiosztás.">
     <title>VBF Cég admin | Irányítópult és Admin</title>
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body class="shop-page">
     <nav class="main-nav panel-glass flex min-h-[3.25rem] w-full max-w-full flex-wrap items-center justify-between gap-3 border-b border-[var(--border-color)] px-[5%] py-3 backdrop-blur-md md:flex-nowrap md:gap-4">
-        <a href="index.html" class="nav-brand inline-flex shrink-0 items-center gap-2 border-0 border-r-0 pr-2 text-[1.1rem] font-bold text-[var(--text-main)] no-underline transition-colors hover:text-[var(--primary)] md:border-r md:border-[var(--border-color)] md:pr-3" title="Főoldal">⚡ VBF Premium</a>
+        <a href="index.html" class="nav-brand logo shrink-0 border-0 border-r-0 pr-2 no-underline transition-colors hover:text-[var(--primary)] md:border-r md:border-[var(--border-color)] md:pr-3" title="Főoldal">
+            <img src="img/logo.svg" alt="" class="logo-img" width="28" height="28">
+            <span class="logo-wordmark">VBF Premium</span>
+        </a>
         <div class="nav-tabs inline-flex min-w-0 max-w-full items-center gap-1 overflow-x-auto">
-            <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">📊 Irányítópult</button>
-            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">🔑 Cégadmin</button>
+            <button type="button" class="nav-tab active shrink-0" data-target="tab-dashboard">Irányítópult</button>
+            <button type="button" class="nav-tab hidden shrink-0" data-target="tab-admin" id="navAdminShop">Cégadmin</button>
         </div>
         <div class="user-controls flex w-full min-w-0 flex-wrap items-center justify-start gap-2 border-t border-[var(--border-color)] pt-2 pl-0 md:ml-auto md:w-auto md:flex-nowrap md:justify-end md:border-t-0 md:border-l md:border-[var(--border-color)] md:pt-0 md:pl-4">
-            <button type="button" class="nav-feedback-icon !m-0 shrink-0" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">📩</button>
-            <a href="app.html" class="btn btn-outline btn-small !m-0 shrink-0 whitespace-nowrap">📝 Jegyzőkönyv alkalmazás</a>
-            <a href="#" id="linkProfile" class="text-sm font-medium text-[var(--accent)] no-underline hover:underline"></a>
-            <span id="userInfo" class="text-sm font-medium text-[var(--accent)]"></span>
-            <div id="gdprLinks" class="hidden flex-wrap items-center gap-2 gap-x-3">
-                <a href="mailto:info@vbfpremium.hu" class="text-xs text-[var(--primary)] no-underline hover:underline">info@vbfpremium.hu</a>
-                <a href="#" id="linkChangePassword" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary)]">Jelszó módosítása</a>
-                <a href="#" id="linkDataExportZip" class="text-xs text-[var(--primary)] hover:underline">Teljes adatcsomag (ZIP)</a>
-                <a href="#" id="linkDeleteAccount" class="text-xs text-[var(--danger)] hover:text-[var(--danger-hover)]">Fiók törlése</a>
+            <button type="button" class="nav-feedback-icon !m-0 shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] border border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,white_8%,transparent)] hover:text-[var(--text-main)]" data-bug-report title="Visszajelzés e-mailben – béta verzió" aria-label="Visszajelzés e-mailben">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 6-10 7L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <a href="app.html" class="btn btn-secondary btn-small !m-0 shrink-0 whitespace-nowrap">Jegyzőkönyv alkalmazás</a>
+            <div id="navUserMenu" class="nav-user-menu is-hidden">
+                <button type="button" id="navUserMenuTrigger" class="nav-user-menu-trigger" aria-haspopup="true" aria-expanded="false" title="Fiók és beállítások">
+                    <span class="nav-user-menu-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    <span id="userInfo" class="nav-user-menu-label"></span>
+                    <span class="nav-user-menu-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div class="nav-user-menu-panel" id="navUserMenuPanel" role="menu" aria-label="Fiók menü">
+                    <a href="#" id="linkProfile" role="menuitem" class="nav-user-menu-item">Profil és adatok</a>
+                    <a href="#" id="linkChangePassword" role="menuitem" class="nav-user-menu-item">Jelszó módosítása</a>
+                    <a href="#" id="linkDataExportZip" role="menuitem" class="nav-user-menu-item" title="Jegyzőkönyvek, fényképek – ZIP">Teljes adatcsomag (ZIP)</a>
+                    <a href="#" id="linkDataExport" role="menuitem" class="nav-user-menu-item" title="Összefoglaló JSON">Adataim (JSON)</a>
+                    <div class="nav-user-menu-sep" aria-hidden="true"></div>
+                    <a href="mailto:info@vbfpremium.hu" class="nav-user-menu-item nav-user-menu-item--muted" role="menuitem">info@vbfpremium.hu</a>
+                    <div class="nav-user-menu-sep" aria-hidden="true"></div>
+                    <a href="#" id="linkDeleteAccount" role="menuitem" class="nav-user-menu-item nav-user-menu-item--danger">Fiók törlése</a>
+                </div>
             </div>
             <button type="button" class="btn btn-secondary btn-small !m-0 shrink-0" id="btnLoginNav">Bejelentkezés</button>
         </div>
@@ -33,96 +50,96 @@
 
     <div class="app-content-wrapper">
         <div id="tab-dashboard" class="tab-pane active">
-            <div class="form-container" style="max-width: 1200px; margin: 0 auto;" id="dashboardContainer">
-                <p style="color:var(--text-muted); text-align:center; padding: 3rem;">Jelentkezz be cégvezetői, admin vagy főadmin jogosultsággal az Irányítópult és a cégadmin felület megtekintéséhez.</p>
+            <div class="form-container vbf-shop-dashboard-wrap" id="dashboardContainer">
+                <p class="vbf-shop-dashboard-hint">Jelentkezz be cégvezetői, admin vagy főadmin jogosultsággal az Irányítópult és a cégadmin felület megtekintéséhez.</p>
             </div>
         </div>
         <div id="tab-admin" class="tab-pane">
-            <div class="form-container panel-glass" style="max-width: 1000px; margin: 0 auto;">
-                <h2 style="margin-bottom: 2rem; color: var(--accent);">🔑 Cégadminisztráció</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-muted);">Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.</p>
+            <div class="form-container panel-glass vbf-admin vbf-shop-admin-wrap">
+                <h2 class="vbf-admin-page-title">Cégadminisztráció</h2>
+                <p class="vbf-admin-lead">Felhasználók, előfizetések, cégadatok, díjbekérők és kiszállások kezelése egy helyen.</p>
 
-                <div id="adminPlansSection" style="display: none; margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">💰 Előfizetési csomagok</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Árak (HUF) és hozzáférések beállítása.</p>
-                    <div id="adminPlansList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 1rem;"></div>
+                <div id="adminPlansSection" class="vbf-admin-super-section is-hidden">
+                    <h3 class="vbf-admin-section-title">Előfizetési csomagok</h3>
+                    <p class="vbf-admin-muted-p vbf-admin-mb-1">Árak (HUF) és hozzáférések beállítása.</p>
+                    <div id="adminPlansList" class="prop-group vbf-admin-plans-grid"></div>
                 </div>
-                <div id="adminPlanModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
-                    <div class="panel-glass" style="max-width: 480px; width: 100%; padding: 1.5rem; border-radius: 12px;">
-                        <h4 style="margin: 0 0 1rem 0; color: var(--accent);">Csomag szerkesztése: <span id="adminPlanModalTitle"></span></h4>
+                <div id="adminPlanModal" class="modal-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="adminPlanModalHeading">
+                    <div class="modal-content panel-glass vbf-admin-plan-modal-inner">
+                        <h4 id="adminPlanModalHeading">Csomag szerkesztése: <span id="adminPlanModalTitle"></span></h4>
                         <input type="hidden" id="adminPlanModalKey" value="">
                         <label for="adminPlanDisplayName">Megjelenített név</label>
-                        <input type="text" id="adminPlanDisplayName" placeholder="Pl. Pro" style="width: 100%; margin-bottom: 10px;">
+                        <input type="text" id="adminPlanDisplayName" class="vbf-admin-modal-field" placeholder="Pl. Pro">
                         <label for="adminPlanPriceMonthly">Ár havi (HUF)</label>
-                        <input type="number" id="adminPlanPriceMonthly" min="0" placeholder="0 = ingyenes" style="width: 100%; margin-bottom: 10px;">
+                        <input type="number" id="adminPlanPriceMonthly" class="vbf-admin-modal-field" min="0" placeholder="0 = ingyenes">
                         <label for="adminPlanPriceYearly">Ár éves (HUF, opcionális)</label>
-                        <input type="number" id="adminPlanPriceYearly" min="0" placeholder="Üres = nincs" style="width: 100%; margin-bottom: 10px;">
+                        <input type="number" id="adminPlanPriceYearly" class="vbf-admin-modal-field" min="0" placeholder="Üres = nincs">
                         <label for="adminPlanReportsLimit">Havi jegyzőkönyv limit (üres = korlátlan)</label>
-                        <input type="number" id="adminPlanReportsLimit" min="0" placeholder="Pl. 50" style="width: 100%; margin-bottom: 10px;">
+                        <input type="number" id="adminPlanReportsLimit" class="vbf-admin-modal-field" min="0" placeholder="Pl. 50">
                         <label for="adminPlanMaxUsers">Max. felhasználó / cég (üres = korlátlan)</label>
-                        <input type="number" id="adminPlanMaxUsers" min="0" placeholder="Pl. 10" style="width: 100%; margin-bottom: 10px;">
+                        <input type="number" id="adminPlanMaxUsers" class="vbf-admin-modal-field" min="0" placeholder="Pl. 10">
                         <label for="adminPlanFeatures">Tartalom / hozzáférések (soronként egy elem)</label>
-                        <textarea id="adminPlanFeatures" rows="4" placeholder="PDF export&#10;E-mail küldés" style="width: 100%; resize: vertical; margin-bottom: 1rem;"></textarea>
-                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <textarea id="adminPlanFeatures" class="vbf-admin-modal-field" rows="4" placeholder="PDF export&#10;E-mail küldés"></textarea>
+                        <div class="vbf-admin-plan-modal-actions">
                             <button type="button" class="btn btn-secondary" id="adminPlanModalCancel">Mégse</button>
-                            <button type="button" class="btn btn-primary" id="adminPlanModalSave">💾 Mentés</button>
+                            <button type="button" class="btn btn-primary" id="adminPlanModalSave">Mentés</button>
                         </div>
                     </div>
                 </div>
-                <div id="adminPendingOrdersSection" style="display: none; margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏦 Utalásos megrendelések</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Függő megrendelések jóváhagyása.</p>
-                    <div id="adminPendingOrdersList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;"><p style="color: var(--text-muted);">Nincs függő megrendelés.</p></div>
+                <div id="adminPendingOrdersSection" class="vbf-admin-super-section is-hidden">
+                    <h3 class="vbf-admin-section-title">Utalásos megrendelések</h3>
+                    <p class="vbf-admin-muted-p">Függő megrendelések jóváhagyása.</p>
+                    <div id="adminPendingOrdersList" class="prop-group vbf-admin-panel-muted vbf-admin-mt-10"><p class="vbf-admin-muted-p">Nincs függő megrendelés.</p></div>
                 </div>
-                <div id="adminPaymentHistorySection" style="display: none; margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📋 Fizetési előzmények</h3>
-                    <div id="adminPaymentHistoryList" class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;"><p style="color: var(--text-muted);">Betöltés…</p></div>
+                <div id="adminPaymentHistorySection" class="vbf-admin-super-section is-hidden">
+                    <h3 class="vbf-admin-section-title">Fizetési előzmények</h3>
+                    <div id="adminPaymentHistoryList" class="prop-group vbf-admin-panel-muted vbf-admin-mt-10"><p class="vbf-admin-muted-p">Betöltés…</p></div>
                 </div>
-                <div id="adminDijbekeroSection" style="display: none; margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📄 Díjbekérő PDF</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Fizetési felszólítás PDF-ben, a cégadataid és az Impresszum alapján. Nem NAV-online számla; sorszám és közlemény automatikusan kerül a PDF-re.</p>
-                    <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; max-width: 520px;">
+                <div id="adminDijbekeroSection" class="vbf-admin-super-section is-hidden">
+                    <h3 class="vbf-admin-section-title">Díjbekérő PDF</h3>
+                    <p class="vbf-admin-muted-p vbf-admin-mb-1">Fizetési felszólítás PDF-ben, a cégadataid és az Impresszum alapján. Nem NAV-online számla; sorszám és közlemény automatikusan kerül a PDF-re.</p>
+                    <div class="prop-group vbf-admin-panel-muted vbf-admin-dijbekero-box">
                         <label for="dijbekeroPresetSelect">Sablon (gyors kitöltés)</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-                            <select id="dijbekeroPresetSelect" style="flex: 1; min-width: 180px;">
+                        <div class="vbf-admin-dijbekero-row">
+                            <select id="dijbekeroPresetSelect" class="vbf-admin-dijbekero-select">
                                 <option value="">— Válassz sablont —</option>
                             </select>
-                            <button type="button" class="btn btn-secondary btn-small" id="btnDijbekeroSavePreset">💾 Mentés sablonként</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="btnDijbekeroSavePreset">Mentés sablonként</button>
                         </div>
                         <label for="dijbekeroAmount">Összeg (Ft, opcionális)</label>
-                        <input type="number" id="dijbekeroAmount" min="0" placeholder="Pl. 99000" style="width: 100%; margin-bottom: 10px;">
+                        <input type="number" id="dijbekeroAmount" class="vbf-admin-modal-field" min="0" placeholder="Pl. 99000">
                         <label for="dijbekeroDesc">Leírás (opcionális)</label>
-                        <input type="text" id="dijbekeroDesc" placeholder="Pl. VBF Premium Pro – 1 év" style="width: 100%; margin-bottom: 10px;">
+                        <input type="text" id="dijbekeroDesc" class="vbf-admin-modal-field" placeholder="Pl. VBF Premium Pro – 1 év">
                         <label for="dijbekeroDue">Fizetési határidő (opcionális, pl. 2026.04.15)</label>
-                        <input type="text" id="dijbekeroDue" placeholder="2026.04.15" style="width: 100%; margin-bottom: 10px;">
+                        <input type="text" id="dijbekeroDue" class="vbf-admin-modal-field" placeholder="2026.04.15">
                         <label for="dijbekeroVevoNev">Vevő neve (opcionális)</label>
-                        <input type="text" id="dijbekeroVevoNev" placeholder="Vevő neve" style="width: 100%; margin-bottom: 10px;">
+                        <input type="text" id="dijbekeroVevoNev" class="vbf-admin-modal-field" placeholder="Vevő neve">
                         <label for="dijbekeroVevoCim">Vevő címe (opcionális)</label>
-                        <input type="text" id="dijbekeroVevoCim" placeholder="Cím" style="width: 100%; margin-bottom: 10px;">
+                        <input type="text" id="dijbekeroVevoCim" class="vbf-admin-modal-field" placeholder="Cím">
                         <label for="dijbekeroEmail">E-mail címzett (küldéshez)</label>
-                        <input type="email" id="dijbekeroEmail" placeholder="vevo@example.com" style="width: 100%; margin-bottom: 12px;">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-primary" id="btnDijbekeroPdf">📥 Letöltés</button>
-                            <button type="button" class="btn btn-secondary" id="btnDijbekeroEmail">📧 Küldés e-mailben</button>
-                            <button type="button" class="btn btn-secondary" id="btnDijbekeroDuplikatum">📋 Duplikátum</button>
+                        <input type="email" id="dijbekeroEmail" class="vbf-admin-modal-field vbf-admin-mb-12" placeholder="vevo@example.com">
+                        <div class="vbf-admin-dijbekero-actions">
+                            <button type="button" class="btn btn-primary" id="btnDijbekeroPdf">PDF letöltése</button>
+                            <button type="button" class="btn btn-secondary" id="btnDijbekeroEmail">Küldés e-mailben</button>
+                            <button type="button" class="btn btn-secondary" id="btnDijbekeroDuplikatum">Utolsó adatok betöltése</button>
                         </div>
-                        <p id="dijbekeroStatus" style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);"></p>
+                        <p id="dijbekeroStatus"></p>
                     </div>
                 </div>
-                <div id="adminCompaniesSection" style="display: none; margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏛️ Cégek</h3>
-                    <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 200px;">
+                <div id="adminCompaniesSection" class="vbf-admin-super-section is-hidden">
+                    <h3 class="vbf-admin-section-title">Cégek</h3>
+                    <div class="prop-group vbf-admin-panel-muted">
+                        <div class="vbf-admin-inline-row">
+                            <div class="vbf-admin-inline-row__field">
                                 <label for="adminNewCompanyName">Új cég neve</label>
                                 <input type="text" id="adminNewCompanyName" placeholder="Pl. Zöldfülű Vill Kft.">
                             </div>
-                            <button class="btn btn-primary" id="btnAdminCreateCompany">➕ Cég létrehozása</button>
+                            <button type="button" class="btn btn-primary vbf-admin-primary-action" id="btnAdminCreateCompany">Cég létrehozása</button>
                         </div>
-                        <p id="adminCompaniesList" style="margin-top: 10px; color: var(--text-muted); font-size: 0.9rem;"></p>
+                        <p id="adminCompaniesList"></p>
                     </div>
                 </div>
-                <table class="data-table" id="table-admin-users" style="width: 100%;">
+                <table class="data-table vbf-admin-table-wrap" id="table-admin-users">
                     <thead>
                         <tr>
                             <th>ID</th><th>Felhasználónév</th><th>E-mail</th><th>Státusz</th><th>Jogosultság</th><th>Cég</th><th>Előfizetés lejárata</th><th>Műveletek</th>
@@ -130,142 +147,142 @@
                     </thead>
                     <tbody id="adminUserList"></tbody>
                 </table>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">🏢 Cégadatok és arculat</h3>
-                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                <h3 class="vbf-admin-section-title vbf-admin-section-title--spaced">Cégadatok és arculat</h3>
+                <div class="prop-group vbf-admin-panel-muted">
                     <label for="adminCompName">Cégnév</label>
                     <input type="text" id="adminCompName" placeholder="Zöldfülű Vill Kft.">
-                    <label for="adminCompTax" style="margin-top: 10px;">Adószám</label>
+                    <label for="adminCompTax" class="vbf-admin-label-spaced">Adószám</label>
                     <input type="text" id="adminCompTax" placeholder="12345678-2-41">
-                    <label for="adminCompAddress" style="margin-top: 10px;">Székhely / Számlázási Cím</label>
+                    <label for="adminCompAddress" class="vbf-admin-label-spaced">Székhely / Számlázási Cím</label>
                     <input type="text" id="adminCompAddress" placeholder="1111 Bp., Pelikán u. 2.">
-                    <label for="adminCompBank" style="margin-top: 10px;">Bankszámlaszám</label>
+                    <label for="adminCompBank" class="vbf-admin-label-spaced">Bankszámlaszám</label>
                     <input type="text" id="adminCompBank" placeholder="11773000-12345678">
-                    <button class="btn btn-primary" id="btnAdminSaveCompany" style="margin-top: 15px;">💾 Cégadatok mentése</button>
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <button type="button" class="btn btn-primary vbf-admin-primary-action vbf-admin-mt-15" id="btnAdminSaveCompany">Cégadatok mentése</button>
+                    <hr class="vbf-admin-hr">
                     <label for="adminCompLogoInput">Cég logója</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                        <img id="adminCompLogoPreview" src="" alt="Nincs logó" style="max-height: 60px; display: none; border-radius: 5px;">
-                        <input type="file" id="adminCompLogoInput" accept="image/png, image/jpeg" style="display: none;">
-                        <button class="btn btn-secondary btn-small" id="btnAdminUploadLogo" style="margin:0;">🖼️ Logó</button>
+                    <div class="vbf-admin-flex-row">
+                        <img id="adminCompLogoPreview" class="vbf-admin-logo-preview is-hidden" src="" alt="Nincs logó">
+                        <input type="file" id="adminCompLogoInput" class="hidden" accept="image/png, image/jpeg">
+                        <button type="button" class="btn btn-secondary btn-small vbf-admin-btn-tight" id="btnAdminUploadLogo">Logó feltöltése</button>
                     </div>
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <hr class="vbf-admin-hr">
                     <label for="adminCompSignatureInput">Aláírás kép</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                        <img id="adminCompSignaturePreview" src="" alt="Nincs aláírás" style="max-height: 50px; display: none; border-radius: 5px; background: #fff;">
-                        <input type="file" id="adminCompSignatureInput" accept="image/png, image/jpeg, image/webp" style="display: none;">
-                        <button class="btn btn-secondary btn-small" id="btnAdminUploadSignature" style="margin:0;">✍️ Aláírás</button>
+                    <div class="vbf-admin-flex-row">
+                        <img id="adminCompSignaturePreview" class="vbf-admin-signature-preview is-hidden" src="" alt="Nincs aláírás">
+                        <input type="file" id="adminCompSignatureInput" class="hidden" accept="image/png, image/jpeg, image/webp">
+                        <button type="button" class="btn btn-secondary btn-small vbf-admin-btn-tight" id="btnAdminUploadSignature">Aláírás feltöltése</button>
                     </div>
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                    <hr class="vbf-admin-hr">
                     <label for="adminCompCertInput">Hitelesítő tanúsítvány (.pfx) – PDF aláíráshoz</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
-                        <span id="adminCompCertStatus" style="font-size: 0.9rem; color: var(--text-muted);">Nincs feltöltött tanúsítvány</span>
-                        <input type="file" id="adminCompCertInput" accept=".pfx,.p12,application/x-pkcs12" style="display: none;">
-                        <button class="btn btn-secondary btn-small" id="btnAdminUploadCert" style="margin:0;">🔐 Tanúsítvány</button>
+                    <div class="vbf-admin-flex-row vbf-admin-flex-row--tight">
+                        <span id="adminCompCertStatus" class="vbf-admin-cert-status">Nincs feltöltött tanúsítvány</span>
+                        <input type="file" id="adminCompCertInput" class="hidden" accept=".pfx,.p12,application/x-pkcs12">
+                        <button type="button" class="btn btn-secondary btn-small vbf-admin-btn-tight" id="btnAdminUploadCert">Tanúsítvány feltöltése</button>
                     </div>
                 </div>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">👤 Új felhasználó</h3>
-                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                <h3 class="vbf-admin-section-title vbf-admin-section-title--spaced">Új felhasználó</h3>
+                <div class="prop-group vbf-admin-panel-muted">
                     <label for="adminNewUsername">Felhasználónév</label>
                     <input type="text" id="adminNewUsername" placeholder="pl. jeno.kovacs">
-                    <label for="adminNewPassword" style="margin-top: 10px;">Jelszó</label>
+                    <label for="adminNewPassword" class="vbf-admin-label-spaced">Jelszó</label>
                     <input type="password" id="adminNewPassword" placeholder="titkos_jelszo">
-                    <label for="adminNewEmail" style="margin-top: 10px;">E-mail</label>
+                    <label for="adminNewEmail" class="vbf-admin-label-spaced">E-mail</label>
                     <input type="email" id="adminNewEmail" placeholder="jeno@gmail.com">
-                    <label for="adminNewRole" style="margin-top: 10px;">Jogosultság</label>
+                    <label for="adminNewRole" class="vbf-admin-label-spaced">Jogosultság</label>
                     <select id="adminNewRole">
                         <option value="TECH">Villanyszerelő</option>
                         <option value="COMPANY_ADMIN">Céges vezető</option>
                         <option value="ADMIN">Főadmin</option>
                     </select>
-                    <div id="adminNewCompanyWrap" style="margin-top: 10px; display: none;">
+                    <div id="adminNewCompanyWrap" class="vbf-admin-new-company-wrap is-hidden">
                         <label for="adminNewCompanyId">Cég</label>
                         <select id="adminNewCompanyId"><option value="">-- Válassz céget --</option></select>
                     </div>
-                    <button class="btn btn-primary" id="btnAdminCreateUser" style="margin-top: 15px;">Felhasználó létrehozása</button>
-                    <div id="adminCreateUserError" style="color: var(--danger); margin-top: 10px; font-size: 0.85rem;"></div>
+                    <button type="button" class="btn btn-primary vbf-admin-primary-action vbf-admin-mt-15" id="btnAdminCreateUser">Felhasználó létrehozása</button>
+                    <div id="adminCreateUserError" class="vbf-admin-create-user-error"></div>
                 </div>
-                <h3 style="margin-top: 3rem; color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">📅 Kiszállás és feladat kiosztása</h3>
-                <div class="prop-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                <h3 class="vbf-admin-section-title vbf-admin-section-title--spaced">Kiszállás és feladat kiosztása</h3>
+                <div class="prop-group vbf-admin-panel-muted">
                     <label for="adminJobTitle">Feladat címe</label>
                     <input type="text" id="adminJobTitle" placeholder="Cím">
-                    <label for="adminJobAddress" style="margin-top: 10px;">Cím / Helyszín</label>
+                    <label for="adminJobAddress" class="vbf-admin-label-spaced">Cím / Helyszín</label>
                     <input type="text" id="adminJobAddress" placeholder="1011 Bp., Fő u. 1.">
-                    <label for="adminJobDesc" style="margin-top: 10px;">Leírás</label>
-                    <textarea id="adminJobDesc" rows="2" placeholder="Kontakt, megjegyzés"></textarea>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <div style="flex: 1;"><label for="adminJobDate">Dátum & Idő</label><input type="datetime-local" id="adminJobDate"></div>
-                        <div style="flex: 1;"><label for="adminJobAssignSelect">Kijelölt szerelő</label><select id="adminJobAssignSelect"><option value="">-- Válassz kollégát --</option></select></div>
+                    <label for="adminJobDesc" class="vbf-admin-label-spaced">Leírás</label>
+                    <textarea id="adminJobDesc" rows="2" placeholder="Kapcsolattartó, megjegyzés a helyszínhez (pl. kaputelefon, parkolás)"></textarea>
+                    <div class="vbf-admin-job-row">
+                        <div class="vbf-admin-inline-grow"><label for="adminJobDate">Dátum & Idő</label><input type="datetime-local" id="adminJobDate"></div>
+                        <div class="vbf-admin-inline-grow"><label for="adminJobAssignSelect">Kijelölt szerelő</label><select id="adminJobAssignSelect"><option value="">-- Válassz kollégát --</option></select></div>
                     </div>
-                    <button class="btn btn-primary" id="btnAdminCreateJob" style="margin-top: 15px; width: 100%;">Munkavégzés kiosztása</button>
+                    <button type="button" class="btn btn-primary vbf-admin-primary-action vbf-admin-mt-15" id="btnAdminCreateJob">Munkavégzés kiosztása</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Auth modals (same IDs as app for auth.js) -->
-    <div id="loginModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="position: relative;">
+    <div id="loginModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--relative">
             <button type="button" class="modal-close-x" id="btnCloseLogin" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="margin-bottom: 1.25rem;">Bejelentkezés</h2>
+            <h2 class="modal-title-md">Bejelentkezés</h2>
             <div class="prop-group"><label for="loginUser">Felhasználónév</label><input type="text" id="loginUser" placeholder="admin" autocomplete="username"></div>
             <div class="prop-group"><label for="loginPass">Jelszó</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
-            <div id="loginError" style="color: var(--danger); margin-bottom: 0.75rem; font-size: 0.85rem; min-height: 1.2em;"></div>
-            <p style="margin: 0 0 1rem 0;"><a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--text-muted);">Elfelejtettem a jelszavam</a></p>
-            <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%;">Bejelentkezés</button>
+            <div id="loginError" class="form-error-text"></div>
+            <p class="form-link-muted form-link-muted--mb"><a href="#" id="linkForgotPassword" class="form-link-muted">Elfelejtettem a jelszavam</a></p>
+            <button type="button" class="btn btn-primary btn-block" id="btnSubmitLogin">Bejelentkezés</button>
         </div>
     </div>
-    <div id="passwordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+    <div id="passwordModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400 modal-content--relative">
             <button type="button" class="modal-close-x" id="btnPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="margin-bottom: 1rem;">Jelszó módosítása</h2>
+            <h2 class="modal-title-md">Jelszó módosítása</h2>
             <div class="prop-group"><label for="passwordCurrent">Jelenlegi jelszó</label><input type="password" id="passwordCurrent" placeholder="••••••••" autocomplete="current-password"></div>
             <div class="prop-group"><label for="passwordNew">Új jelszó</label><input type="password" id="passwordNew" placeholder="••••••••" autocomplete="new-password"></div>
             <div class="prop-group"><label for="passwordNewConfirm">Új jelszó még egyszer</label><input type="password" id="passwordNewConfirm" placeholder="••••••••" autocomplete="new-password"></div>
-            <p id="passwordModalError" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
-            <button class="btn btn-primary" id="btnPasswordSubmit" style="width: 100%;">Mentés</button>
+            <p id="passwordModalError" class="form-error-text"></p>
+            <button type="button" class="btn btn-primary btn-block" id="btnPasswordSubmit">Mentés</button>
         </div>
     </div>
-    <div id="profileModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 420px;">
-            <h2 style="margin-bottom: 1rem;">Profil</h2>
-            <div class="prop-group"><span class="field-label">Felhasználónév</span><p id="profileUsername" style="margin: 0; font-weight: 600;"></p></div>
-            <div class="prop-group"><label for="profileEmail">E-mail</label><input type="email" id="profileEmail" placeholder="email@pelda.hu" style="width: 100%;"><button type="button" class="btn btn-small btn-primary" id="btnProfileSaveEmail" style="margin-top: 6px;">E-mail mentése</button></div>
-            <div class="prop-group"><span class="field-label">Cég</span><p id="profileCompany" style="margin: 0; color: var(--text-muted);"></p></div>
-            <div class="prop-group"><span class="field-label">Előfizetés lejár</span><p id="profileExpiry" style="margin: 0; color: var(--text-muted);"></p></div>
-            <hr style="border-color: var(--border-color); margin: 1rem 0;">
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div id="profileModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--420">
+            <h2 class="modal-title-md">Profil</h2>
+            <div class="prop-group"><span class="field-label">Felhasználónév</span><p id="profileUsername" class="profile-username"></p></div>
+            <div class="prop-group"><label for="profileEmail">E-mail</label><input type="email" id="profileEmail" class="profile-email-input" placeholder="email@pelda.hu"><button type="button" class="btn btn-small btn-primary profile-save-email-btn" id="btnProfileSaveEmail">E-mail mentése</button></div>
+            <div class="prop-group"><span class="field-label">Cég</span><p id="profileCompany" class="profile-muted"></p></div>
+            <div class="prop-group"><span class="field-label">Előfizetés lejár</span><p id="profileExpiry" class="profile-muted"></p></div>
+            <hr class="modal-hr">
+            <div class="profile-actions-col">
                 <button type="button" class="btn btn-secondary btn-small" id="btnProfileChangePassword">Jelszó módosítása</button>
-                <a href="#" id="btnProfileExportZip" class="btn btn-secondary btn-small" style="text-align: center;">Teljes adatcsomag (ZIP)</a>
-                <a href="#" id="linkDeleteAccountFromProfile" class="btn btn-danger btn-small" style="text-align: center;">Fiók törlése</a>
+                <a href="#" id="btnProfileExportZip" class="btn btn-secondary btn-small profile-btn-link">Teljes adatcsomag (ZIP)</a>
+                <a href="#" id="linkDeleteAccountFromProfile" class="btn btn-danger btn-small profile-btn-link">Fiók törlése</a>
             </div>
-            <button type="button" class="btn btn-secondary" id="btnProfileClose" style="margin-top: 1rem;">Bezárás</button>
+            <button type="button" class="btn btn-secondary vbf-shop-profile-close" id="btnProfileClose">Bezárás</button>
         </div>
     </div>
-    <div id="forgotPasswordModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content panel-glass" style="max-width: 400px; position: relative;">
+    <div id="forgotPasswordModal" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400 modal-content--relative">
             <button type="button" class="modal-close-x" id="btnForgotPasswordClose" title="Bezárás" aria-label="Bezárás">&times;</button>
-            <h2 style="margin-bottom: 0.5rem;">Elfelejtett jelszó</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
+            <h2 class="modal-title-sm">Elfelejtett jelszó</h2>
+            <p class="forgot-password-lead">Add meg az e-mail címed – jelszó-visszaállító linket küldünk.</p>
             <div class="prop-group"><label for="forgotPasswordEmail">E-mail</label><input type="email" id="forgotPasswordEmail" placeholder="email@pelda.hu"></div>
-            <p id="forgotPasswordStatus" style="font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em;"></p>
-            <button class="btn btn-primary" id="btnForgotPasswordSubmit" style="width: 100%;">Link kérése</button>
+            <p id="forgotPasswordStatus" class="form-status-text"></p>
+            <button type="button" class="btn btn-primary btn-block" id="btnForgotPasswordSubmit">Link kérése</button>
         </div>
     </div>
-    <div id="expiryBanner" class="app-banner-expiry" style="display: none;">
+    <div id="expiryBanner" class="app-banner-expiry is-hidden">
         <span id="expiryBannerText"></span>
-        <button type="button" id="expiryBannerDismiss" style="background: rgba(255,255,255,0.25); border: none; color: inherit; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Értem</button>
+        <button type="button" id="expiryBannerDismiss" class="app-banner-dismiss">Értem</button>
     </div>
-    <div id="resetPasswordPanel" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content panel-glass" style="max-width: 400px;">
-            <h2 style="margin-bottom: 1rem;">Új jelszó</h2>
+    <div id="resetPasswordPanel" class="modal-overlay is-hidden">
+        <div class="modal-content panel-glass modal-content--400">
+            <h2 class="modal-title-md">Új jelszó</h2>
             <div class="prop-group"><label for="resetNewPassword">Új jelszó</label><input type="password" id="resetNewPassword" placeholder="••••" autocomplete="new-password"></div>
             <div class="prop-group"><label for="resetNewPasswordConfirm">Új jelszó még egyszer</label><input type="password" id="resetNewPasswordConfirm" placeholder="••••" autocomplete="new-password"></div>
-            <p id="resetPasswordError" style="color: var(--danger); font-size: 0.85rem; min-height: 1.2em;"></p>
+            <p id="resetPasswordError" class="form-error-text"></p>
             <button type="button" class="btn btn-primary" id="btnResetPasswordSubmit">Jelszó mentése</button>
         </div>
     </div>
-    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-glass); border-top: 1px solid var(--border-color); padding: 1rem; z-index: 9999; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-        <p style="margin: 0; font-size: 0.9rem; flex: 1;">A weboldal sütiket használ. <a href="#" id="cookieBannerPrivacyLink" style="color: var(--accent);">Adatkezelési tájékoztató</a>.</p>
+    <div id="cookieBanner" class="shop-cookie-banner is-hidden">
+        <p>A weboldal sütiket használ. <a href="#" id="cookieBannerPrivacyLink" class="cookie-banner-privacy-link">Adatkezelési tájékoztató</a>.</p>
         <button type="button" id="cookieBannerAccept" class="btn btn-primary btn-small">Elfogadom</button>
     </div>
 

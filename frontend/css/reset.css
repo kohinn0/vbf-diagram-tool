@@ -1,0 +1,33 @@
+/* Minimális CSS reset – egységes alap minden oldalon (tokens előtt töltsd) */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+/* Központi rejtés (inline style="display:none" helyett) */
+.is-hidden {
+    display: none !important;
+}

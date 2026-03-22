@@ -1,6 +1,7 @@
 /**
  * Cég admin: Irányítópult + Cégadmin. Külön HTML (shop.html).
  */
+import '../css/reset.css';
 import '../css/tokens.css';
 import '../css/tw.css';
 import '../css/style.css';

@@ -31,7 +31,7 @@ export function initTour() {
         {
             id: 'cloud',
             title: '4/4 – Mentés és felhő',
-            body: 'Ha be vagy jelentkezve, a jobb felső ☁️ gombbal menthetsz a felhőbe, a „Mentett ügyek” fülön pedig bármikor visszatöltheted őket.',
+            body: 'Ha be vagy jelentkezve, a jobb felső Mentés a felhőbe gombbal menthetsz, a „Mentett ügyek” fülön pedig bármikor visszatöltheted őket.',
             targetTab: 'tab-cloud',
         },
     ];
@@ -56,7 +56,6 @@ export function initTour() {
 
         if (btnPrev) {
             btnPrev.disabled = currentIndex === 0;
-            btnPrev.style.opacity = currentIndex === 0 ? '0.5' : '1';
         }
         if (btnNext) {
             btnNext.textContent = currentIndex === steps.length - 1 ? 'Befejezés' : 'Következő';
@@ -64,7 +63,7 @@ export function initTour() {
     }
 
     function openTour(auto = false) {
-        overlay.style.display = 'flex';
+        overlay.classList.remove('is-hidden');
         currentIndex = 0;
         renderStep();
         if (auto && dontShowCheckbox) {
@@ -73,7 +72,7 @@ export function initTour() {
     }
 
     function closeTour() {
-        overlay.style.display = 'none';
+        overlay.classList.add('is-hidden');
         if (dontShowCheckbox && dontShowCheckbox.checked) {
             try {
                 localStorage.setItem('vbf_tour_dismissed', '1');

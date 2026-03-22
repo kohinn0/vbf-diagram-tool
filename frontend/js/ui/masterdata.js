@@ -47,21 +47,13 @@ export function initMasterData() {
         }
         customersData.forEach(c => {
             const div = document.createElement('div');
-            div.className = 'prop-group';
-            div.style.background = 'rgba(255,255,255,0.05)';
-            div.style.padding = '10px';
-            div.style.borderRadius = '5px';
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
-            div.style.alignItems = 'center';
-            div.style.gap = '8px';
-            div.style.flexWrap = 'wrap';
+            div.className = 'prop-group master-data-card';
             div.innerHTML = `
-                <div style="flex:1; min-width:0;">
+                <div class="master-data-card__body">
                     <strong>${escapeHtml(c.name)}</strong><br>
-                    <small style="color:#aaa;">${escapeHtml(c.address || '')} | ${escapeHtml(c.hrsz || '')}</small>
+                    <small class="master-data-card__meta">${escapeHtml(c.address || '')} | ${escapeHtml(c.hrsz || '')}</small>
                 </div>
-                <div style="display:flex; gap:6px;">
+                <div class="master-data-card__actions">
                     <button type="button" class="btn btn-primary btn-small btn-use-customer" data-customer-id="${c.id}" title="Kitölti a jegyzőkönyv Megrendelő/Cím mezőit">Használj ezt</button>
                     <button class="btn btn-danger btn-small" onclick="deleteCustomer(${c.id})">Del</button>
                 </div>
@@ -80,21 +72,13 @@ export function initMasterData() {
         }
         inspectorsData.forEach(i => {
             const div = document.createElement('div');
-            div.className = 'prop-group';
-            div.style.background = 'rgba(255,255,255,0.05)';
-            div.style.padding = '10px';
-            div.style.borderRadius = '5px';
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
-            div.style.alignItems = 'center';
-            div.style.gap = '8px';
-            div.style.flexWrap = 'wrap';
+            div.className = 'prop-group master-data-card';
             div.innerHTML = `
-                <div style="flex:1; min-width:0;">
+                <div class="master-data-card__body">
                     <strong>${escapeHtml(i.name)}</strong><br>
-                    <small style="color:#aaa;">${escapeHtml(i.license || '')} | ${escapeHtml(i.instrument_type || '')}</small>
+                    <small class="master-data-card__meta">${escapeHtml(i.license || '')} | ${escapeHtml(i.instrument_type || '')}</small>
                 </div>
-                <div style="display:flex; gap:6px;">
+                <div class="master-data-card__actions">
                     <button type="button" class="btn btn-primary btn-small btn-use-inspector" data-inspector-id="${i.id}" title="Kitölti a jegyzőkönyv Felülvizsgáló/Műszer mezőit">Használj ezt</button>
                     <button class="btn btn-danger btn-small" onclick="deleteInspector(${i.id})">Del</button>
                 </div>

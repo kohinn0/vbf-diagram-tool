@@ -10,7 +10,7 @@
   "lang": "hu",
   "icons": [
     {
-      "src": "/img/logo.svg",
+      "src": "img/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

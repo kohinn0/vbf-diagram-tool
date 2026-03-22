@@ -106,15 +106,21 @@ export function initCompleteness() {
         const pct = Math.round((allFilled / totalChecks) * 100);
         const canSave = requiredItems.every(c => c.ok);
 
-        bar.style.width = pct + '%';
+        bar.style.setProperty('--vbf-complete-pct', `${pct}%`);
+        bar.classList.remove(
+            'vbf-completeness-bar-fill--ready',
+            'vbf-completeness-bar-fill--high',
+            'vbf-completeness-bar-fill--mid',
+            'vbf-completeness-bar-fill--low'
+        );
         if (canSave) {
-            bar.style.background = 'linear-gradient(90deg, #34d399, #6ee7b7)';
+            bar.classList.add('vbf-completeness-bar-fill--ready');
         } else if (pct >= 66) {
-            bar.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+            bar.classList.add('vbf-completeness-bar-fill--high');
         } else if (pct >= 33) {
-            bar.style.background = 'linear-gradient(90deg, #2563eb, #3b82f6)';
+            bar.classList.add('vbf-completeness-bar-fill--mid');
         } else {
-            bar.style.background = 'linear-gradient(90deg, #1d4ed8, #60a5fa)';
+            bar.classList.add('vbf-completeness-bar-fill--low');
         }
 
         if (panel) panel.classList.toggle('is-blocked', !canSave);
@@ -137,10 +143,10 @@ export function initCompleteness() {
             const reportMissing = requiredItems.filter(c => c.fieldId && !c.ok).length;
             if (reportMissing > 0) {
                 reportTabBadge.textContent = reportMissing;
-                reportTabBadge.style.display = 'inline';
+                reportTabBadge.classList.add('tab-badge--visible');
             } else {
                 reportTabBadge.textContent = '';
-                reportTabBadge.style.display = 'none';
+                reportTabBadge.classList.remove('tab-badge--visible');
             }
         }
         const measurementsBadge = document.getElementById('tabMeasurementsBadge');
@@ -148,10 +154,10 @@ export function initCompleteness() {
             const measMissing = requiredItems.filter(c => c.tabTarget === 'tab-measurements' && !c.ok).length;
             if (measMissing > 0) {
                 measurementsBadge.textContent = measMissing;
-                measurementsBadge.style.display = 'inline';
+                measurementsBadge.classList.add('tab-badge--visible');
             } else {
                 measurementsBadge.textContent = '';
-                measurementsBadge.style.display = 'none';
+                measurementsBadge.classList.remove('tab-badge--visible');
             }
         }
 
@@ -202,12 +208,11 @@ export function initCompleteness() {
         const highlightField = (id, isOk) => {
             const el = document.getElementById(id);
             if (!el) return;
+            el.classList.remove('vbf-field-validity--ok', 'vbf-field-validity--bad');
             if (!el.value || !el.value.trim()) {
-                el.style.borderColor = '';
                 return;
             }
-            el.style.borderColor = isOk ? '#5eb89a' : '#b88282';
-            el.style.boxShadow = isOk ? '0 0 0 2px rgba(94,184,154,0.2)' : '0 0 0 2px rgba(184,130,130,0.22)';
+            el.classList.add(isOk ? 'vbf-field-validity--ok' : 'vbf-field-validity--bad');
         };
 
         highlightField('instrumentType', !!(instrType && instrType.match(/\d/)));
@@ -219,11 +224,11 @@ export function initCompleteness() {
         const calHelper = document.getElementById('calHelper');
         if (calHelper && instrCal) {
             if (!calOk) {
-                calHelper.innerHTML = `<span style="color:#c98a8a; font-weight:600;">Lejárt kalibrálás</span> — A kalibrálás (${instrCal}) a múltban van. „Megfelelő” minősítés nem adható.`;
+                calHelper.innerHTML = `<span class="vbf-cal-hint-strong--error">Lejárt kalibrálás</span> — A kalibrálás (${instrCal}) a múltban van. „Megfelelő” minősítés nem adható.`;
             } else if (calExpiringSoon) {
-                calHelper.innerHTML = `<span style="color:#c9a55a; font-weight:600;">Hamarosan lejár</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
+                calHelper.innerHTML = `<span class="vbf-cal-hint-strong--warn">Hamarosan lejár</span> — Lejárat: ${instrCal} (${calDaysLeft} nap múlva). Érdemes időben újrakalibrálni.`;
             } else {
-                calHelper.innerHTML = `<span style="color:#6eb89a; font-weight:600;">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
+                calHelper.innerHTML = `<span class="vbf-cal-hint-strong--ok">Érvényes kalibrálás</span> — Lejárat: ${instrCal}`;
             }
         }
     }
@@ -241,13 +246,10 @@ export function initCompleteness() {
             tabPane.classList.add('active');
         }
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.style.transition = 'all 0.3s ease';
-        el.style.boxShadow = '0 0 0 4px rgba(201,165,90,0.45)';
-        el.style.borderColor = '#c9a55a';
+        el.classList.add('vbf-nav-flash');
         el.focus();
         setTimeout(() => {
-            el.style.boxShadow = '';
-            el.style.borderColor = '';
+            el.classList.remove('vbf-nav-flash');
         }, 2000);
     };
 
@@ -263,9 +265,8 @@ export function initCompleteness() {
         const section = sectionSelector ? document.querySelector(sectionSelector) : targetPane;
         if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            section.style.transition = 'box-shadow 0.3s ease';
-            section.style.boxShadow = '0 0 0 3px rgba(201,165,90,0.42)';
-            setTimeout(() => { section.style.boxShadow = ''; }, 2500);
+            section.classList.add('vbf-section-nav-flash');
+            setTimeout(() => { section.classList.remove('vbf-section-nav-flash'); }, 2500);
         }
     };
 
