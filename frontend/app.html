@@ -341,8 +341,8 @@
     </div>
 
     <!-- Floating Report Completeness Panel (mobilon is olvasható, tördelhető lista) -->
-    <div id="completenessPanel" class="fixed z-[9000] left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-[min(100vw-2rem,26rem)] rounded-xl border border-[var(--border-color)] bg-[var(--bg-glass)] p-3 shadow-[var(--shadow-glass)] backdrop-blur-xl transition-all duration-300 sm:rounded-2xl sm:p-4 md:max-w-[23.75rem]">
-        <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+    <div id="completenessPanel" class="fixed z-[9000] left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] w-auto min-w-0 max-w-[100%] sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-[min(100vw-2rem,28rem)] rounded-2xl border-2 border-[color-mix(in_srgb,var(--accent)_38%,var(--border-color))] bg-[var(--bg-glass)] p-4 shadow-[0_10px_40px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] backdrop-blur-xl transition-all duration-300 sm:rounded-[1.35rem] sm:p-5 md:max-w-[27.5rem]">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-2 sm:gap-3">
             <span class="min-w-0 flex-1 text-[0.88rem] font-bold leading-tight text-[var(--accent)] sm:text-[0.95rem]">📋 Jegyzőkönyv készültség</span>
             <button type="button" id="btnToggleChecklist"
                 onclick="(function(){var d=document.getElementById('checklistDetails');var b=document.getElementById('btnToggleChecklist');var vis=window.getComputedStyle(d).display!=='none';d.style.display=vis?'none':'block';b.textContent=vis?'▶':'▼';b.setAttribute('aria-expanded',vis?'false':'true');})();"
@@ -351,20 +351,20 @@
                 title="Részletek ki/be">▶</button>
         </div>
 
-        <div class="mb-2 h-2.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--text-main)_12%,transparent)] sm:h-3 sm:rounded-[0.625rem]">
+        <div class="mb-3 h-2.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--text-main)_14%,transparent)] sm:h-3 sm:rounded-[0.625rem]">
             <div id="completenessBar"
                 class="h-full w-0 rounded-full transition-[width,background] duration-500 ease-out bg-gradient-to-r from-[var(--danger)] to-[var(--accent)] sm:rounded-[0.625rem]">
             </div>
         </div>
-        <div class="mb-2 flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
+        <div class="mb-1 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
             <span id="completenessText" class="text-[0.78rem] text-[var(--text-muted)] sm:text-[0.8rem]">0% kész</span>
             <span id="completenessStatus" class="text-[0.78rem] font-semibold text-[var(--text-main)] sm:shrink-0 sm:text-[0.8rem]">❌ Nem menthető</span>
         </div>
 
         <div id="checklistDetails"
             style="display: none;"
-            class="max-h-[min(22rem,52vh)] overflow-x-hidden overflow-y-auto overscroll-contain border-t border-[var(--border-color)] pt-2 [-webkit-overflow-scrolling:touch] sm:max-h-[min(20rem,45vh)]">
-            <div id="checkItems" class="text-[0.82rem] leading-relaxed"></div>
+            class="mt-2 max-h-[min(22rem,52vh)] overflow-x-hidden overflow-y-auto overscroll-contain border-t-2 border-[color-mix(in_srgb,var(--accent)_28%,var(--border-color))] pt-4 [-webkit-overflow-scrolling:touch] sm:max-h-[min(20rem,45vh)] sm:pt-5">
+            <div id="checkItems" class="space-y-3 text-[0.82rem] leading-relaxed"></div>
         </div>
     </div>
 
