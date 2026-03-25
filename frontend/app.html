@@ -452,6 +452,12 @@
                                 id="btnAutodiagram"
                                 title="Egyvonalas rajz automatikus generálása a helyszínfából">⚡
                                 Auto</button>
+                            <div class="mx-1 h-6 w-px shrink-0 self-center bg-[var(--border-color)]"></div>
+                            <button type="button"
+                                class="inline-flex h-9 min-w-9 w-auto shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-transparent bg-transparent px-2 text-[0.75rem] font-medium text-[#10b981] transition-colors hover:bg-[color-mix(in_srgb,#10b981_12%,transparent)]"
+                                id="btnEphTemplate"
+                                title="EPH Bekötés Sablon automatikus rajzolása">🌍
+                                EPH Sablon</button>
                         </div>
                     </header>
 
@@ -631,6 +637,10 @@
                                     <option value="MK">Magas Kockázat (MK)</option>
                                     <option value="NA">Nem besorolható</option>
                                 </select>
+                            </div>
+                            <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                                <label for="nextInspectionDate" class="label-row-hint" style="margin: 0; white-space: nowrap;">Következő felülvizsgálat esedékessége:</label>
+                                <input type="date" id="nextInspectionDate" style="flex: 1; min-width: 140px; max-width: 200px; padding: 0.4rem; border-radius: 0.4rem; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 0.85rem;" title="Automatikusan kalkulálva az OTSZ és jegyzőkönyv típus alapján, de felülírható.">
                             </div>
                         </div>
                         
@@ -817,7 +827,10 @@
 
                 <!-- Felülvizsgálói megjegyzés rovat: Word-be kerül -->
                 <div class="report-summary-panel" style="margin-top:1.25rem;">
-                    <h3 class="report-summary-title">📋 Felülvizsgálói megjegyzés <small style="font-size:0.72rem;font-weight:400;opacity:0.7">(dokumentumba kerül)</small></h3>
+                    <h3 class="report-summary-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <span>📋 Felülvizsgálói megjegyzés <small style="font-size:0.72rem;font-weight:400;opacity:0.7">(dokumentumba kerül)</small></span>
+                        <button type="button" id="btnGenerateSummaryAi" class="btn btn-primary btn-small" title="Adatok alapján automatikus jogi/szakmai összefoglaló generálása">✨ AI Összefoglaló</button>
+                    </h3>
                     <div class="prop-group">
                         <label for="inspectorNotes" style="font-size:0.82rem;color:var(--text-muted)">Megjegyzések, különleges körülmények, megfigyelések – ez a szöveg és a csatolt képek bekerülnek a Word/PDF dokumentumba:</label>
                         <textarea id="inspectorNotes" rows="6" style="width:100%;border-radius:0.5rem;border:1px solid var(--border-color);background:var(--bg-base);padding:0.65rem 0.75rem;font-size:0.875rem;color:var(--text-main);resize:vertical" placeholder="pl. A felülvizsgálat során az épület 2. emeleti folyosóján az elosztószekrény ajtaja sérült, a mérési hozzáférés korlátozott volt..."></textarea>

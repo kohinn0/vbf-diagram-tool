@@ -61,7 +61,40 @@ export function initReports() {
 
         docTypeSelect.addEventListener('change', (e) => {
             applyDocTypeVisibility(e.target.value);
+            calculateNextInspectionDate_UI();
         });
+    }
+
+    document.getElementById('buildingOtsz')?.addEventListener('change', calculateNextInspectionDate_UI);
+
+    function calculateNextInspectionDate_UI() {
+        const otszClass = document.getElementById('buildingOtsz')?.value;
+        const docType = document.getElementById('docType')?.value;
+        if (!otszClass || !docType) return;
+        
+        let yearsUntilNext = 6;
+        if (docType === 'VVF' || docType === 'VÁK') { // Villámvédelem
+            switch (otszClass) {
+                case 'AK': yearsUntilNext = 6; break;
+                case 'KK': yearsUntilNext = 3; break;
+                case 'MK': yearsUntilNext = 1; break;
+            }
+        } else if (docType.startsWith('VBF')) { // Érintésvédelem
+            switch (otszClass) {
+                case 'MK': yearsUntilNext = 3; break;
+                case 'KK': yearsUntilNext = 3; break;
+                case 'AK': yearsUntilNext = 6; break;
+            }
+        } else if (docType === 'EPH') {
+            yearsUntilNext = 3; 
+        }
+
+        const now = new Date();
+        now.setFullYear(now.getFullYear() + yearsUntilNext);
+        const nextDateStr = now.toISOString().split('T')[0];
+        
+        const nextDateField = document.getElementById('nextInspectionDate');
+        if (nextDateField) nextDateField.value = nextDateStr;
     }
 
     // -- Áramkör nevek Datalist betöltése --
@@ -365,19 +398,7 @@ export function initReports() {
         return 'MEGFELELŐ';
     }
 
-    function calculateNextInspectionDate(otszClass) {
-        const now = new Date();
-        let yearsUntilNext = 6;
-        switch (otszClass) {
-            case 'AK': yearsUntilNext = 6; break;
-            case 'KK': yearsUntilNext = 3; break;
-            case 'MK': yearsUntilNext = 1; break;
-            default: return null;
-        }
-        const nextDate = new Date(now);
-        nextDate.setFullYear(nextDate.getFullYear() + yearsUntilNext);
-        return nextDate.toISOString().split('T')[0];
-    }
+
 
     function buildReportPayload() {
         const clientDataObj = {
@@ -415,7 +436,7 @@ export function initReports() {
             buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
             standardReference: 'TvMI 7.7:2026.02.01',
             autoQualification: document.getElementById('reportResult')?.value || '',
-            nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
+            nextInspectionDate: document.getElementById('nextInspectionDate')?.value || '',
             siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
         };
 
@@ -503,6 +524,13 @@ export function initReports() {
                             row.photo = await compress(row.photo, { maxWidth: 720, quality: 0.6 });
                         }
                     }
+                }
+            }
+        }
+        if (payload.note_photos && payload.note_photos.length > 0) {
+            for (let i = 0; i < payload.note_photos.length; i++) {
+                if (payload.note_photos[i] && payload.note_photos[i].startsWith('data:image')) {
+                    payload.note_photos[i] = await compress(payload.note_photos[i], { maxWidth: 800, quality: 0.7 });
                 }
             }
         }
@@ -696,7 +724,7 @@ export function initReports() {
         ipIds.forEach((id, i) => { const el = document.getElementById(id); if (el) el.value = ip[ipKeys[i]] || (id === 'inPhaseCount' ? '3' : ''); });
 
         const c = rep.client_data || {};
-        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'];
+        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits', 'nextInspectionDate'];
         fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || ''; });
         if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = c['ephDeclaration'] ?? false;
         if (document.getElementById('ephEarthNotMeasurable')) document.getElementById('ephEarthNotMeasurable').checked = c['ephEarthNotMeasurable'] ?? false;
@@ -926,7 +954,7 @@ export function initReports() {
         const defectList = document.getElementById('defectList');
         if (defectList) defectList.innerHTML = '';
         if (window.canvas && window.canvas.clear) window.canvas.clear();
-        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'].forEach(id => {
+        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'nextInspectionDate', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
         });
@@ -952,6 +980,39 @@ export function initReports() {
 
     if (window.currentToken) {
         window.fetchReports();
+    }
+
+    // AI Összefoglaló Generálása (Szimulált / Előkészített endpoint hívás)
+    const btnGenerateSummaryAi = document.getElementById('btnGenerateSummaryAi');
+    if (btnGenerateSummaryAi) {
+        btnGenerateSummaryAi.addEventListener('click', () => {
+            const notesField = document.getElementById('inspectorNotes');
+            if (!notesField) return;
+            
+            btnGenerateSummaryAi.disabled = true;
+            btnGenerateSummaryAi.innerHTML = '⏳ Generálás folyamatban...';
+            
+            setTimeout(() => {
+                const bPurpose = document.getElementById('buildingPurpose')?.value || 'az épület';
+                let bOtsz = document.getElementById('buildingOtsz')?.value || '';
+                if (bOtsz) bOtsz = ' (OTSZ: ' + bOtsz + ')';
+                const qResult = document.getElementById('reportResult')?.value || 'MEGFELELŐ';
+                const isOk = qResult.includes('MEGFELELŐ') && !qResult.includes('NEM');
+                
+                let summary = `A felülvizsgálat során megállapításra került, hogy ${bPurpose}${bOtsz} villamos berendezéseinek biztonságtechnikai ellenőrzése az MSZ HD 60364-6 és vonatkozó szabványok alapján megtörtént.\n\n`;
+                
+                if (isOk) {
+                    summary += `A vizsgálat megállapította, hogy nyomvonalakon és az elosztóberendezéseken közvetlen baleset- vagy tűzveszélyt okozó kritikus hiba nem volt azonosítható. A berendezések részben vagy maradéktalanul teljesítik a velük szemben támasztott követelményeket, a normál működés folytatása engedélyezett.`;
+                } else {
+                    summary += `A felülvizsgálat alatt feltárt hiányosságok az érintésvédelmi és tűzvédelmi szempontból a biztonságos üzemeltetést korlátozzák (ld. Hibajegyzék részletei). A jegyzőkönyv "Nem Megfelelő" illetve "Javításra szorul" minősítést kapott, így a hibalista pontjainak javítása az életvédelmi feltételek és a további biztonságos üzem miatt határidőre kötelező.`;
+                }
+                
+                notesField.value = summary;
+                btnGenerateSummaryAi.disabled = false;
+                btnGenerateSummaryAi.innerHTML = '✨ AI Összefoglaló';
+                if (window.showToast) window.showToast('AI Szakmai összefoglaló sikeresen legenerálva.', 'success');
+            }, 800);
+        });
     }
 
     // ═══════════════════════════════════════════

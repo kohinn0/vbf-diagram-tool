@@ -1015,6 +1015,25 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             except Exception as e:
                 print(f"Javítás aláírás kép beillesztési hiba: {e}")
 
+    # Fényképes Melléklet (Megjegyzések fotói)
+    if getattr(report, "note_photos", None) and isinstance(report.note_photos, list):
+        has_valid_photo = any(isinstance(p, str) and p.startswith("data:image") for p in report.note_photos)
+        if has_valid_photo:
+            doc.add_page_break()
+            doc.add_heading('Melléklet: Fényképes Dokumentáció', level=1)
+            for i, photo_b64 in enumerate(report.note_photos):
+                if isinstance(photo_b64, str) and photo_b64.startswith("data:image"):
+                    try:
+                        b_str = photo_b64.split(",")[1]
+                        img_data = io.BytesIO(base64.b64decode(b_str))
+                        p_img = doc.add_paragraph()
+                        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        p_img.add_run().add_picture(img_data, width=Cm(12))
+                        p_desc = doc.add_paragraph(f"{i+1}. Kép")
+                        p_desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    except Exception as e:
+                        logger.error(f"Failed to add note photo to Word: {e}")
+
     stream = io.BytesIO()
     doc.save(stream)
     stream.seek(0)

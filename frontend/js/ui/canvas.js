@@ -510,6 +510,63 @@ export function initCanvas() {
         });
     }
 
+    // 7.5 EPH Sablon Generátor
+    const btnEphTemplate = document.getElementById('btnEphTemplate');
+    if (btnEphTemplate) {
+        btnEphTemplate.addEventListener('click', () => {
+            if (!window.canvas) return;
+            const w = wrapper.clientWidth / 2;
+            const h = wrapper.clientHeight / 2;
+            const busWidth = 360;
+            const startX = w - busWidth / 2;
+
+            // Fő EPH Sín vonal
+            const mainBusBar = new fabric.Line([startX, h, startX + busWidth, h], {
+                stroke: '#10b981',
+                strokeWidth: 5,
+                selectable: true
+            });
+            mainBusBar.vbfData = { type: 'EPH Sín', name: 'Fő EPH Sín', locked: false, isArch: false };
+            
+            const label = new fabric.Text('EPH Főcsomópont', {
+                left: w,
+                top: h - 30,
+                fontSize: 16,
+                fill: '#10b981',
+                originX: 'center',
+                selectable: true
+            });
+
+            // Kis leágazások wrapper
+            const addBranch = (xOffset, text) => {
+                const lineX = startX + 30 + xOffset;
+                const line = new fabric.Line([lineX, h, lineX, h + 50], {
+                    stroke: '#10b981',
+                    strokeWidth: 2,
+                    selectable: true
+                });
+                const t = new fabric.Text(text, {
+                    left: lineX,
+                    top: h + 60,
+                    fontSize: 12,
+                    fill: '#a0aec0',
+                    originX: 'center',
+                    selectable: true
+                });
+                window.canvas.add(line, t);
+            };
+
+            window.canvas.add(mainBusBar, label);
+            addBranch(0, 'Főelosztó PE');
+            addBranch(75, 'Vízcső-hál.');
+            addBranch(150, 'Gázcső-hál.');
+            addBranch(225, 'Fűtéscső-hál.');
+            addBranch(300, 'Földelő szonda');
+            
+            window.canvas.renderAll();
+        });
+    }
+
     // 8. Background Image Logic
     const btnUploadBg = document.getElementById('btnUploadBg');
     if (btnUploadBg) {

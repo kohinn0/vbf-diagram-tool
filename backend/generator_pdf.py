@@ -433,6 +433,34 @@ def generate_pdf_reportlab_stream(
             pass
     story.append(Paragraph("Aláírás és Bélyegző", styles['Body']))
 
+    # Fényképes Melléklet (Megjegyzések fotói)
+    if getattr(report, "note_photos", None) and isinstance(report.note_photos, list):
+        has_valid_photo = any(isinstance(p, str) and p.startswith("data:image") for p in report.note_photos)
+        if has_valid_photo:
+            story.append(PageBreak())
+            story.append(Paragraph("Melléklet: Fényképes Dokumentáció", styles['H1']))
+            for i, photo_b64 in enumerate(report.note_photos):
+                if isinstance(photo_b64, str) and photo_b64.startswith("data:image"):
+                    try:
+                        b_str = photo_b64.split(",")[1]
+                        img_data = io.BytesIO(base64.b64decode(b_str))
+                        from PIL import Image as PILImage
+                        im = PILImage.open(img_data)
+                        w, h = im.size
+                        img_data.seek(0)
+                        aspect = h / w
+                        target_w = 12 * cm
+                        target_h = target_w * aspect
+                        if target_h > 15 * cm:
+                            target_h = 15 * cm
+                            target_w = target_h / aspect
+                        story.append(Image(img_data, width=target_w, height=target_h))
+                        story.append(Spacer(1, 0.2 * cm))
+                        story.append(Paragraph(f"<i>{i+1}. Kép</i>", styles['Body']))
+                        story.append(Spacer(1, 1 * cm))
+                    except Exception as e:
+                        pass
+
     doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
     buffer.seek(0)
     return buffer
