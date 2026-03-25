@@ -114,10 +114,14 @@ class ReportBase(BaseModel):
     client_data: Optional[Dict[str, Any]] = None
     diagram_data: Optional[Dict[str, Any]] = None
     diagram_image: Optional[str] = None
+    floor_plan_image: Optional[str] = None
     defects_data: Optional[List[Dict[str, Any]]] = None
     measurements_data: Optional[List[Dict[str, Any]]] = None
     company_shared: bool = True
     notes: Optional[str] = None
+    inspector_notes: Optional[str] = None
+    note_photos: Optional[List[str]] = None
+    incoming_phases: Optional[Dict[str, Any]] = None
 
 class ReportCreate(ReportBase):
     pass

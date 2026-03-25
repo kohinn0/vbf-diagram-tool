@@ -102,14 +102,18 @@ class Report(Base):
     status = Column(String, default="DRAFT") # DRAFT or FINAL
     company_shared = Column(Boolean, default=True) # Share internally with company users
     notes = Column(Text, nullable=True) # Belső megjegyzés (szabad szöveg)
+    inspector_notes = Column(Text, nullable=True) # Felülvizsgálói megjegyzés (Word-be kerül)
     
     # Store JSON strings for complex nested data structures from the frontend
     # For SQLite, SQLAlchemy JSON column type will handle serialization
     client_data = Column(JSON, nullable=True)
     diagram_data = Column(JSON, nullable=True) # the fabric.js canvas JSON
     diagram_image = Column(Text, nullable=True) # base64 PNG rendered diagram for docx export
+    floor_plan_image = Column(Text, nullable=True) # base64 alaprajz kép
     defects_data = Column(JSON, nullable=True) # array of defects
     measurements_data = Column(JSON, nullable=True)
+    incoming_phases = Column(JSON, nullable=True) # bejövő hálózati paraméterek (L1/L2/L3, típus, főbiz.)
+    note_photos = Column(JSON, nullable=True) # felülvizsgálói megjegyzés csatolt képek (base64 list)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -496,6 +500,24 @@ if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
                     conn.commit()
             except Exception:
                 pass
+        except Exception:
+            pass
+        # Új mezők: inspector_notes, floor_plan_image, incoming_phases, note_photos
+        try:
+            r_rep = conn.execute(text("PRAGMA table_info(reports)"))
+            cols_rep = [row[1] for row in r_rep.fetchall()]
+            for col_def in [
+                ("inspector_notes", "TEXT"),
+                ("floor_plan_image", "TEXT"),
+            ]:
+                col_name, col_type = col_def
+                if col_name not in cols_rep:
+                    conn.execute(text(f"ALTER TABLE reports ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+            for col_name in ["incoming_phases", "note_photos"]:
+                if col_name not in cols_rep:
+                    conn.execute(text(f"ALTER TABLE reports ADD COLUMN {col_name} JSON"))
+                    conn.commit()
         except Exception:
             pass
 

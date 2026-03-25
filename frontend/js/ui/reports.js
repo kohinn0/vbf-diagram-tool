@@ -411,6 +411,19 @@ export function initReports() {
             nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
             siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
         };
+
+        // Bejövő hálózati paraméterek
+        const incomingPhases = {
+            l1: document.getElementById('inPhaseL1')?.value || '',
+            l2: document.getElementById('inPhaseL2')?.value || '',
+            l3: document.getElementById('inPhaseL3')?.value || '',
+            systemType: document.getElementById('inSystemType')?.value || '',
+            phaseCount: document.getElementById('inPhaseCount')?.value || '3',
+            mainFuse: document.getElementById('inMainFuse')?.value || '',
+            mainFuseType: document.getElementById('inMainFuseType')?.value || '',
+            note: document.getElementById('inPhaseNote')?.value || ''
+        };
+
         const canvasJson = window.canvas ? window.canvas.toJSON(['vbfData']) : null;
         let diagramImage = null;
         if (window.canvas && window.canvas.getObjects().length > 0) {
@@ -419,6 +432,14 @@ export function initReports() {
             } catch (_) {}
             if (!diagramImage) diagramImage = window.canvas.toDataURL({ format: 'png', multiplier: 1 });
         }
+
+        // Alaprajz kép (canvas background) kinyerése
+        let floorPlanImage = null;
+        const bgObj = window.canvas && window.canvas.backgroundImage;
+        if (bgObj && typeof bgObj.toDataURL === 'function') {
+            try { floorPlanImage = bgObj.toDataURL({ format: 'jpeg', quality: 0.85 }); } catch (_) {}
+        }
+
         const defectsArr = [];
         document.querySelectorAll('#defectList [data-vbf-defect-card]').forEach(card => {
             defectsArr.push({
@@ -430,16 +451,24 @@ export function initReports() {
                 photo: card.getAttribute('data-photo') || ''
             });
         });
+
+        // Összegyűjti a csatolt megjegyzés képeket
+        const notePhotos = (window._notePhotos || []).map(p => p.data);
+
         return {
             title: `${clientDataObj.type} - ${clientDataObj.siteAddress || 'Új Jegyzőkönyv'}`,
             report_type: (clientDataObj.type || 'vbf').toLowerCase(),
             client_data: clientDataObj,
             diagram_data: canvasJson,
             diagram_image: diagramImage,
+            floor_plan_image: floorPlanImage,
             defects_data: defectsArr,
             measurements_data: [(window.VBF && window.VBF.measurements) ? window.VBF.measurements.collectAll() : {}],
+            incoming_phases: incomingPhases,
             company_shared: document.getElementById('chkCompanyShared') ? document.getElementById('chkCompanyShared').checked : true,
-            notes: document.getElementById('reportNotes')?.value?.trim() || ''
+            notes: document.getElementById('reportNotes')?.value?.trim() || '',
+            inspector_notes: document.getElementById('inspectorNotes')?.value?.trim() || '',
+            note_photos: notePhotos
         };
     }
 
@@ -645,6 +674,19 @@ export function initReports() {
         // Notes (belső megjegyzés)
         const notesEl = document.getElementById('reportNotes');
         if (notesEl) notesEl.value = rep.notes || '';
+        // Felülvizsgálói megjegyzés
+        const inspNotesEl = document.getElementById('inspectorNotes');
+        if (inspNotesEl) inspNotesEl.value = rep.inspector_notes || '';
+        // Megjegyzés képek visszatöltése
+        window._notePhotos = [];
+        if (rep.note_photos && Array.isArray(rep.note_photos)) {
+            rep.note_photos.forEach(dataUrl => addNotePhotoPreview(dataUrl));
+        }
+        // Bejövő fázisok visszatöltése
+        const ip = rep.incoming_phases || {};
+        const ipIds = ['inPhaseL1','inPhaseL2','inPhaseL3','inSystemType','inPhaseCount','inMainFuse','inMainFuseType','inPhaseNote'];
+        const ipKeys = ['l1','l2','l3','systemType','phaseCount','mainFuse','mainFuseType','note'];
+        ipIds.forEach((id, i) => { const el = document.getElementById(id); if (el) el.value = ip[ipKeys[i]] || (id === 'inPhaseCount' ? '3' : ''); });
 
         const c = rep.client_data || {};
         const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor'];
@@ -900,4 +942,55 @@ export function initReports() {
     if (window.currentToken) {
         window.fetchReports();
     }
+
+    // ═══════════════════════════════════════════
+    // Megjegyzés képcsatolás logika
+    // ═══════════════════════════════════════════
+    window._notePhotos = window._notePhotos || [];
+
+    window._addNotePhotoPreview = function addNotePhotoPreview(dataUrl) {
+        if ((window._notePhotos || []).length >= 5) return;
+        window._notePhotos = window._notePhotos || [];
+        const idx = window._notePhotos.length;
+        window._notePhotos.push({ data: dataUrl });
+        const container = document.getElementById('notePhotosContainer');
+        if (!container) return;
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;display:inline-block;';
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.style.cssText = 'width:110px;height:85px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);';
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.textContent = '×';
+        del.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:1rem;line-height:1;padding:0;';
+        del.onclick = function() {
+            const i = window._notePhotos.indexOf(window._notePhotos[idx]);
+            if (i !== -1) window._notePhotos.splice(i, 1);
+            wrap.remove();
+            const cnt = document.getElementById('notePhotosCount');
+            if (cnt) cnt.textContent = `${window._notePhotos.length} / 5 kép csatolva`;
+        };
+        wrap.appendChild(img); wrap.appendChild(del);
+        container.appendChild(wrap);
+        const cnt = document.getElementById('notePhotosCount');
+        if (cnt) cnt.textContent = `${window._notePhotos.length} / 5 kép csatolva`;
+    };
+
+    document.getElementById('inputNotePhoto')?.addEventListener('change', function() {
+        const remaining = 5 - (window._notePhotos || []).length;
+        Array.from(this.files || []).slice(0, remaining).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const raw = e.target.result;
+                const compress = typeof window.VBF_compressImage === 'function'
+                    ? window.VBF_compressImage(raw, { maxWidth: 1200, maxHeight: 1200, quality: 0.80 })
+                    : Promise.resolve(raw);
+                compress.then(data => window._addNotePhotoPreview(data));
+            };
+            reader.readAsDataURL(file);
+        });
+        this.value = '';
+    });
 }
+

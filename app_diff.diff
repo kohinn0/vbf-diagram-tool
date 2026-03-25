@@ -1,0 +1,94 @@
+diff --git a/frontend/app.html b/frontend/app.html
+index b274e33..e9e0576 100644
+--- a/frontend/app.html
++++ b/frontend/app.html
+@@ -781,9 +781,28 @@
+                         <textarea id="reportNotes" rows="4" style="width:100%;border-radius:0.5rem;border:1px solid var(--border-color);background:var(--bg-base);padding:0.65rem 0.75rem;font-size:0.875rem;color:var(--text-main);resize:vertical" placeholder="pl. Az elosztó hátsó oldalán is vannak csatlakozók, de nem volt hozzáférhető..."></textarea>
+                     </div>
+                 </div>
++
++                <!-- Felülvizsgálói megjegyzés rovat: Word-be kerül -->
++                <div class="report-summary-panel" style="margin-top:1.25rem;">
++                    <h3 class="report-summary-title">📋 Felülvizsgálói megjegyzés <small style="font-size:0.72rem;font-weight:400;opacity:0.7">(dokumentumba kerül)</small></h3>
++                    <div class="prop-group">
++                        <label for="inspectorNotes" style="font-size:0.82rem;color:var(--text-muted)">Megjegyzések, különleges körülmények, megfigyelések – ez a szöveg és a csatolt képek bekerülnek a Word/PDF dokumentumba:</label>
++                        <textarea id="inspectorNotes" rows="6" style="width:100%;border-radius:0.5rem;border:1px solid var(--border-color);background:var(--bg-base);padding:0.65rem 0.75rem;font-size:0.875rem;color:var(--text-main);resize:vertical" placeholder="pl. A felülvizsgálat során az épület 2. emeleti folyosóján az elosztószekrény ajtaja sérült, a mérési hozzáférés korlátozott volt..."></textarea>
++                    </div>
++                    <!-- Képcsatolás -->
++                    <div id="notePhotosContainer" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem;"></div>
++                    <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.75rem;">
++                        <label for="inputNotePhoto" class="btn btn-secondary btn-small" style="cursor:pointer;margin:0">
++                            📷 Kép csatolása
++                            <input type="file" id="inputNotePhoto" accept="image/*" class="hidden" multiple>
++                        </label>
++                        <span id="notePhotosCount" style="font-size:0.8rem;color:var(--text-muted)">Max. 5 kép</span>
++                    </div>
++                </div>
+             </div>
+         </div>
+ 
++
+         <!-- 3. TAB: HIBAJEGYZÉK (Tailwind: flex/grid, mobilra fix alsó műveletsáv) -->
+         <div id="tab-defects" class="tab-pane">
+             <div class="flex h-full min-h-0 w-full max-w-[62.5rem] flex-col self-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-panel)]/80 p-6 shadow-[var(--shadow-glass)] backdrop-blur-md md:p-8">
+@@ -848,9 +867,60 @@
+                 </div>
+ 
+                 <div class="vbf-meas-layout-main min-w-0">
++
++                <!-- Bejövő hálózati paraméterek panel -->
++                <div id="incomingPhasesPanel" class="mb-6 rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--bg-panel))] p-4 sm:p-5">
++                    <h3 class="vbf-meas-section-title mb-4" style="margin-top:0">⚡ Bejövő hálózati paraméterek</h3>
++                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">L1 feszültség [V]</label>
++                            <input type="number" id="inPhaseL1" placeholder="230" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">L2 feszültség [V]</label>
++                            <input type="number" id="inPhaseL2" placeholder="230" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">L3 feszültség [V]</label>
++                            <input type="number" id="inPhaseL3" placeholder="230" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">Rendszer típusa</label>
++                            <select id="inSystemType" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                                <option value="">-- Válassz --</option>
++                                <option value="TN-S">TN-S (PE és N szétválasztva)</option>
++                                <option value="TN-C">TN-C (PEN vezető)</option>
++                                <option value="TN-C-S">TN-C-S (vegyes)</option>
++                                <option value="TT">TT (független földelés)</option>
++                                <option value="IT">IT (elszigetelt)</option>
++                            </select>
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">Fázisszám</label>
++                            <select id="inPhaseCount" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                                <option value="1">1 fázis (egyfázisú)</option>
++                                <option value="3" selected>3 fázis (háromfázisú)</option>
++                            </select>
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">Főbiztosíték [A]</label>
++                            <input type="number" id="inMainFuse" placeholder="63" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">Főbiz. karakterisztika</label>
++                            <input type="text" id="inMainFuseType" placeholder="gG / B / C / D" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                        <div class="flex flex-col gap-1">
++                            <label class="text-[0.78rem] text-[var(--text-muted)]">Megjegyzés (bejövő)</label>
++                            <input type="text" id="inPhaseNote" placeholder="pl. L2 fázisjel gyenge" class="min-h-10 rounded-md border border-[color-mix(in_srgb,var(--text-main)_18%,transparent)] bg-[color-mix(in_srgb,black_35%,transparent)] px-3 py-2 text-[0.9rem] text-[var(--text-main)]">
++                        </div>
++                    </div>
++                </div>
++
+                 <!-- Gyors hozzárendelés: kis képernyőn egymás alatt -->
+                 <div
+                     class="mb-8 rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,white_3%,transparent)] p-3 sm:p-4 md:p-5">
++
+                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end sm:gap-5">
+                         <div class="min-w-0">
+                             <label for="globalLocation"

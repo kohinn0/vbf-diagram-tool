@@ -1,17 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request # <--- Add hozzá a Request-et
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 import os
 import sys
-import tempfile
-import zipfile
-import sqlite3
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
+
 
 router = APIRouter()
 
@@ -167,76 +164,4 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     db.refresh(db_job)
     return db_job
 
-from routers.auth import limiter as rate_limiter
 
-
-@router.post("/api/padfx/parse")
-@rate_limiter.limit("5/minute")
-async def parse_padfx_file(
-    request: Request, # <--- EZT ADTAM HOZZÁ, ez kötelező a limiternek!
-    file: UploadFile = File(...),
-    current_user: database.User = Depends(auth.get_current_user),
-):
-    # A függvény többi része maradhat változatlan...
-    with tempfile.TemporaryDirectory() as temp_dir:
-        input_file = os.path.join(temp_dir, file.filename)
-        # Read file contents
-        content = await file.read()
-        with open(input_file, "wb") as f:
-            f.write(content)
-
-        padf_path = None
-        # Check if it's a zip file
-        if zipfile.is_zipfile(input_file):
-            try:
-                with zipfile.ZipFile(input_file, 'r') as zf:
-                    zf.extractall(temp_dir)
-                padf_path = os.path.join(temp_dir, "DataSource.padf")
-                if not os.path.exists(padf_path):
-                    # Try to find any .padf or .padfx or .xml / .sqlite
-                    for root, dirs, files in os.walk(temp_dir):
-                        for f in files:
-                            if f.endswith((".padf", ".sqlite", ".db", ".xml")):
-                                padf_path = os.path.join(root, f)
-                                break
-            except Exception as e:
-                return {"status": "error", "message": f"Hiba a kicsomagolás során: {str(e)}"}
-        else:
-            padf_path = input_file
-
-        if not padf_path or not os.path.exists(padf_path):
-            return {"status": "error", "message": "Nem találtam a (DataSource.padf vagy XML) adatbázist a fájlban!"}
-
-        try:
-            # Try to connect and list tables
-            conn = sqlite3.connect(padf_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = [r[0] for r in cursor.fetchall()]
-            
-            schema = {}
-            data_sample = {}
-            for table_name in tables:
-                cursor.execute(f"PRAGMA table_info('{table_name}')")
-                schema[table_name] = [r[1] for r in cursor.fetchall()]
-                try:
-                    cursor.execute(f"SELECT * FROM '{table_name}' LIMIT 5")
-                    data_sample[table_name] = cursor.fetchall()
-                except Exception:
-                    pass
-                    
-            conn.close()
-            return {"status": "success", "schema": schema, "data_sample": data_sample, "is_sqlite": True}
-        except sqlite3.DatabaseError:
-            # Parse XML
-            if not padf_path:
-                 return {"status": "error", "message": "Nincs elérhető adatfájl."}
-            try:
-                with open(padf_path, "r", encoding='utf-8') as xf:
-                    xml_content = xf.read()
-                
-                import analyzer2
-                measurements = analyzer2.parse_padfx_xml(xml_content)
-                return {"status": "success", "is_sqlite": False, "measurements": measurements}
-            except Exception as e:
-                 return {"status": "error", "message": f"Nem olvasható XML fájl! {str(e)}"}

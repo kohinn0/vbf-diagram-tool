@@ -111,23 +111,53 @@ export function initMeasurements() {
             `);
     });
 
+    // ═══════════════════════════════════════════
+    // Validációs segédfüggvények (MSZ HD 60364-6)
+    // ═══════════════════════════════════════════
+
+    /** Tooltip beállítása egy inputra */
+    function setMeasTooltip(input, msg) {
+        if (!input) return;
+        input.title = msg || '';
+    }
+
+    /** Zs max számítása: Zs ≤ (U0 × 0.95) / Ia  [MSZ HD 60364-6, §61.3.6] */
+    function calcZsMax(deviceStr) {
+        const s = (deviceStr || '').toUpperCase().trim();
+        const curve = s.match(/^([A-Z]+)/)?.[1];
+        const In = parseFloat(s.match(/([0-9.]+)$/)?.[1]);
+        if (!curve || isNaN(In) || In <= 0) return null;
+        // Biztosíték kioldási szorzók (MSZ HD 60364-4-41, IEC 60898-1 B/C/D/K/gG)
+        const factors = { B: 5, C: 10, D: 20, K: 14, Z: 3.75 };
+        // gG olvadó biztosítékok (MSZ IEC 60269-2): ~6× In
+        let Ia = null;
+        if (factors[curve]) { Ia = In * factors[curve]; }
+        else if (s.startsWith('GG') || s.startsWith('GL')) { Ia = In * 6; }
+        if (!Ia || Ia <= 0) return null;
+        return (230 * 0.95) / Ia;  // Ω
+    }
+
+    // ─── RPE — Védővezető folytonosság ───────────────────────────────────────
     window.validateRpe = function (tr) {
         const valInput = tr.querySelector('.meas-val');
         const val = parseFloat(valInput.value);
         const passSelect = tr.querySelector('.meas-pass');
-
         if (isNaN(val)) return;
 
-        // Jellemzően védővezető folytonosságnál szigorúan max. 1.0 Ohm
+        // MSZ HD 60364-6:2017 §61.3.2: R_pe ≤ 1 Ω (± mérési bizonytalanság)
+        // Megjegyzés: a zöld határ 0.5 Ω (komplex hálózatoknál ajánlott)
         if (val > 1.0) {
             vbfMeasSetInputState(valInput, 'error');
             passSelect.value = 'Nem';
+            setMeasTooltip(valInput, `❌ NEM MEGFELELŐ: ${val} Ω > 1,00 Ω (MSZ HD 60364-6 §61.3.2 max. limit)`);
         } else if (val > 0.5) {
             vbfMeasSetInputState(valInput, 'warn');
             passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `⚠️ FIGYELEM: ${val} Ω – megfelel, de 0,5 Ω felett érdemes ellenőrizni a csatlakozásokat`);
         } else {
             vbfMeasSetInputState(valInput, 'ok');
             passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `✅ MEGFELELŐ: ${val} Ω ≤ 0,50 Ω (MSZ HD 60364-6 §61.3.2)`);
         }
         window.vbfSyncMeasPassUI(tr);
     };
@@ -153,29 +183,30 @@ export function initMeasurements() {
         const lpeI = tr.querySelector('.meas-lpe');
         const npeI = tr.querySelector('.meas-npe');
         const passSelect = tr.querySelector('.meas-pass');
-
-        const limit = 1.0; // Szabvány szerint kisfeszültségre: >= 1.0 MOhm
-        let isOk = true;
-        let anyFilled = false;
-
-        [lnI, lpeI, npeI].forEach(input => {
-            const val = parseFloat(input.value);
-            if (!isNaN(val)) {
+        // MSZ HD 60364-6:2017 §61.3.3: Riso ≥ 1,0 MΩ (kisfeszültségű hálózat, 500V DC teszt)
+        // SELV/PELV körök külön kezelés: ≥ 0,5 MΩ (az áramkör neve alapján nem azonosítható itt)
+        const LIMIT = 1.0;
+        const WARN  = 2.0;  // sárga: megfelel, de közel a határhoz
+        let isOk = true; let anyFilled = false;
+        [lnI, lpeI, npeI].forEach(inp => {
+            if (!inp) return;
+            const v = parseFloat(inp.value);
+            if (!isNaN(v)) {
                 anyFilled = true;
-                if (val < limit) {
-                    vbfMeasSetInputState(input, 'error');
+                if (v < LIMIT) {
+                    vbfMeasSetInputState(inp, 'error');
+                    setMeasTooltip(inp, `❌ NEM MEGFELELŐ: ${v} MΩ < ${LIMIT} MΩ (MSZ HD 60364-6 §61.3.3)`);
                     isOk = false;
+                } else if (v < WARN) {
+                    vbfMeasSetInputState(inp, 'warn');
+                    setMeasTooltip(inp, `⚠️ FIGYELEM: ${v} MΩ – megfelel, de közel a ${LIMIT} MΩ határhoz`);
                 } else {
-                    vbfMeasSetInputState(input, 'ok');
+                    vbfMeasSetInputState(inp, 'ok');
+                    setMeasTooltip(inp, `✅ MEGFELELŐ: ${v} MΩ ≥ ${LIMIT} MΩ (MSZ HD 60364-6 §61.3.3)`);
                 }
-            } else {
-                vbfMeasSetInputState(input, null);
-            }
+            } else { vbfMeasSetInputState(inp, null); }
         });
-
-        if (anyFilled) {
-            passSelect.value = isOk ? 'Igen' : 'Nem';
-        }
+        if (anyFilled) passSelect.value = isOk ? 'Igen' : 'Nem';
         window.vbfSyncMeasPassUI(tr);
     };
 
@@ -198,44 +229,31 @@ export function initMeasurements() {
     });
 
     window.validateZs = function (tr) {
-        const deviceInput = tr.querySelector('.meas-device').value.toUpperCase(); // pl: B16, C20
+        const deviceVal = (tr.querySelector('.meas-device')?.value || '').toUpperCase().trim();
         const zsInput = tr.querySelector('.meas-zs');
-        const zsVal = parseFloat(zsInput.value);
+        const zsVal = parseFloat(zsInput?.value);
         const passSelect = tr.querySelector('.meas-pass');
+        if (!deviceVal || isNaN(zsVal)) return;
 
-        if (!deviceInput || isNaN(zsVal)) return;
+        const maxZs = calcZsMax(deviceVal);
 
-        // Parse: kioldási karakterisztika és névleges áram
-        const curve = deviceInput.match(/[A-Z]+/)?.[0];
-        const nominalStr = deviceInput.match(/[0-9.]+/)?.[0];
-        const In = parseFloat(nominalStr);
-
-        let maxZs = null;
-
-        if (curve && !isNaN(In)) {
-            let Ia = 0;
-            // Szabványos kioldási szorzók: B -> 5x, C -> 10x, D -> 20x
-            if (curve === 'B') Ia = In * 5;
-            else if (curve === 'C') Ia = In * 10;
-            else if (curve === 'D') Ia = In * 20;
-
-            if (Ia > 0) {
-                // Zs ≤ (U₀ × 0.95) / Ia  — MSZ HD 60364-6 képlet biztonsági szorzóval
-                maxZs = (230 * 0.95) / Ia;
-            }
-        }
-
-        // Ha nincs maxZs (pl. betétes biztosító), nem tudunk automatizáltan minősíteni
         if (maxZs !== null) {
+            const limit = maxZs.toFixed(3);
             if (zsVal > maxZs) {
                 vbfMeasSetInputState(zsInput, 'error');
                 passSelect.value = 'Nem';
+                setMeasTooltip(zsInput, `❌ NEM MEGFELELŐ: ${zsVal} Ω > ${limit} Ω (MSZ HD 60364-6 §61.3.6, képlet: Zs ≤ U₀×0,95/Ia = 230×0,95/Ia)`);
             } else {
                 vbfMeasSetInputState(zsInput, 'ok');
                 passSelect.value = 'Igen';
+                setMeasTooltip(zsInput, `✅ MEGFELELŐ: ${zsVal} Ω ≤ ${limit} Ω (max. Zs ${deviceVal})`);
             }
-            window.vbfSyncMeasPassUI(tr);
+        } else {
+            // Ismeretlen védelem (pl. NH biztosíték szám nélkül) – nem tudunk automatikusan minősíteni
+            vbfMeasSetInputState(zsInput, null);
+            setMeasTooltip(zsInput, `ℹ️ Nem ismert biztosíték típus: "${deviceVal}" – pl. B16, C20, D10, GG63`);
         }
+        window.vbfSyncMeasPassUI(tr);
     };
 
     // ═══════════════════════════════════════════
@@ -257,62 +275,87 @@ export function initMeasurements() {
     });
 
     window.validateRcd = function (tr) {
-        const idn = parseFloat(tr.querySelector('.meas-idn').value);
+        const idnInput = tr.querySelector('.meas-idn');
+        const idn = parseFloat(idnInput?.value);
+        const typeSelect = tr.querySelector('.meas-type');
+        const rcdType = typeSelect?.value || 'A';  // AC, A, B, F, S
         const t1Input = tr.querySelector('.meas-t1');
-        const t1 = parseFloat(t1Input.value);
+        const t1 = parseFloat(t1Input?.value);
         const t5Input = tr.querySelector('.meas-t5');
-        const t5 = parseFloat(t5Input.value);
+        const t5 = parseFloat(t5Input?.value);
         const rampInput = tr.querySelector('.meas-ramp');
-        const ramp = parseFloat(rampInput.value);
+        const ramp = parseFloat(rampInput?.value);
         const ucInput = tr.querySelector('.meas-uc');
-        const uc = parseFloat(ucInput?.value || 0);
-
+        const uc = parseFloat(ucInput?.value);
         const test05Select = tr.querySelector('.meas-05');
         const passSelect = tr.querySelector('.meas-pass');
-
         let isOk = true;
 
-        // 0. Fél Idn teszt
-        if (test05Select.value !== 'OK (Nem oldott)') {
+        // MSZ HD 60364-6:2017 §61.3.7 + IEC 61008-1 / EN 61009-1
+        // Max kioldási idők IΔn áramnál:
+        //   Általános (AC/A/B/F): 300 ms (időfüggetlen)
+        //   S (késleltetett): 1000 ms
+        // 5×IΔn áramnál: általános → 40 ms, S → 150 ms
+        const isSTypeDelay = rcdType === 'S';
+        const maxT1 = isSTypeDelay ? 1000 : 300;   // ms @ IΔn
+        const maxT5 = isSTypeDelay ? 150  : 40;    // ms @ 5×IΔn
+
+        // 0. Fél IΔn teszt (nem szabad kioldani 0,5×IΔn-nél)
+        if (test05Select?.value !== 'OK (Nem oldott)') {
             isOk = false;
         }
 
-        // 1. Általános RCD max kioldási idő 300ms a HD 60364-4-41 alapján
+        // 1. t1 @ 1×IΔn
         if (!isNaN(t1)) {
-            if (t1 > 300) {
+            if (t1 > maxT1) {
                 vbfMeasSetInputState(t1Input, 'error');
+                setMeasTooltip(t1Input, `❌ NEM MEGFELELŐ: ${t1} ms > ${maxT1} ms (IEC 61008-1, ${rcdType} típus, 1×IΔn)`);
                 isOk = false;
+            } else if (t1 > maxT1 * 0.8) {
+                vbfMeasSetInputState(t1Input, 'warn');
+                setMeasTooltip(t1Input, `⚠️ FIGYELEM: ${t1} ms – közel a ${maxT1} ms határhoz`);
             } else {
                 vbfMeasSetInputState(t1Input, 'ok');
+                setMeasTooltip(t1Input, `✅ ${t1} ms ≤ ${maxT1} ms`);
             }
         }
 
-        // 5x Idn teszt (jellemzően max 40 ms)
+        // 2. t5 @ 5×IΔn
         if (!isNaN(t5)) {
-            if (t5 > 40) {
-                vbfMeasSetInputState(t5Input, 'warn');
+            if (t5 > maxT5) {
+                vbfMeasSetInputState(t5Input, 'error');
+                setMeasTooltip(t5Input, `❌ NEM MEGFELELŐ: ${t5} ms > ${maxT5} ms (IEC 61008-1, ${rcdType} típus, 5×IΔn)`);
+                isOk = false;
             } else {
                 vbfMeasSetInputState(t5Input, 'ok');
+                setMeasTooltip(t5Input, `✅ ${t5} ms ≤ ${maxT5} ms`);
             }
         }
 
-        // 2. Kioldóáram RAMP (Szabványosan: 50% < I_kioldás <= 100%)
+        // 3. Kioldóáram RAMP: 50% < I_kioldás ≤ 100% × IΔn (IEC 61008-1 §8.6)
         if (!isNaN(idn) && !isNaN(ramp)) {
-            if (ramp <= idn * 0.5 || ramp > idn) {
+            const rampLo = idn * 0.5;
+            const rampHi = idn * 1.0;
+            if (ramp <= rampLo || ramp > rampHi) {
                 vbfMeasSetInputState(rampInput, 'error');
+                setMeasTooltip(rampInput, `❌ NEM MEGFELELŐ: ${ramp} mA – szükséges: ${rampLo}–${rampHi} mA (IEC 61008-1 §8.6)`);
                 isOk = false;
             } else {
                 vbfMeasSetInputState(rampInput, 'ok');
+                setMeasTooltip(rampInput, `✅ ${ramp} mA a ${rampLo}–${rampHi} mA tarton belül`);
             }
         }
 
-        // 3. Érintési feszültség Uc (Max 50V általános esetben)
+        // 4. Érintési feszültség Uc (MSZ HD 60364-4-41 §411.3.2: Uc ≤ 50 V AC általános,
+        //    nedves/kültéri: ≤ 25 V – ez utóbbit a felhasználó manuálisan állítja)
         if (!isNaN(uc)) {
             if (uc > 50) {
-                if (ucInput) vbfMeasSetInputState(ucInput, 'error');
+                if (ucInput) { vbfMeasSetInputState(ucInput, 'error'); setMeasTooltip(ucInput, `❌ ${uc} V > 50 V max (MSZ HD 60364-4-41 §411.3.2)`); }
                 isOk = false;
+            } else if (uc > 25) {
+                if (ucInput) { vbfMeasSetInputState(ucInput, 'warn'); setMeasTooltip(ucInput, `⚠️ ${uc} V > 25 V – nedves/kültéri helyen nem megfelelő`); }
             } else {
-                if (ucInput) vbfMeasSetInputState(ucInput, 'ok');
+                if (ucInput) { vbfMeasSetInputState(ucInput, 'ok'); setMeasTooltip(ucInput, `✅ ${uc} V ≤ 25 V`); }
             }
         }
 
@@ -358,7 +401,7 @@ export function initMeasurements() {
     document.getElementById('btnAddSelv')?.addEventListener('click', () => {
         window.createRow('table-selv', `
                 <td><input type="text" class="meas-loc" placeholder="Fszt. folyosó / 230-24V"></td>
-                <td><input type="number" step="0.1" class="meas-v" placeholder="26.4"></td>
+                <td><input type="number" step="0.1" class="meas-v" placeholder="26.4" oninput="validateSelv(this.closest('tr'))"></td>
                 <td><input type="number" step="1" class="meas-ps" placeholder="999"></td>
                 <td><input type="number" step="1" class="meas-pt" placeholder="999"></td>
                 <td><input type="number" step="1" class="meas-st" placeholder="999"></td>
@@ -384,21 +427,69 @@ export function initMeasurements() {
 
     window.validateEph = function (tr) {
         const valInput = tr.querySelector('.meas-val');
-        const val = parseFloat(valInput.value);
+        const val = parseFloat(valInput?.value);
         const passSelect = tr.querySelector('.meas-pass');
-
         if (isNaN(val)) return;
-
-        // EPH folytonosságnál maximum 1.0 Ohm, de inkább kevesebb!
+        // MSZ HD 60364-5-54:2011 §544 + 60364-4-41 §411.3.1.2: R_EPH ≤ 1 Ω
         if (val > 1.0) {
             vbfMeasSetInputState(valInput, 'error');
             passSelect.value = 'Nem';
+            setMeasTooltip(valInput, `❌ NEM MEGFELELŐ: ${val} Ω > 1,0 Ω (MSZ HD 60364-5-54 §544)`);
         } else if (val > 0.3) {
             vbfMeasSetInputState(valInput, 'warn');
             passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `⚠️ FIGYELEM: ${val} Ω – megfelel, de 0,3 Ω felett érdemes ellenőrizni`);
         } else {
             vbfMeasSetInputState(valInput, 'ok');
             passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `✅ MEGFELELŐ: ${val} Ω ≤ 0,30 Ω (MSZ HD 60364-5-54 §544)`);
+        }
+        window.vbfSyncMeasPassUI(tr);
+    };
+
+    // SELV/PELV validáció
+    window.validateSelv = function (tr) {
+        const vInput = tr.querySelector('.meas-v');
+        const v = parseFloat(vInput?.value);
+        const passSelect = tr.querySelector('.meas-pass');
+        if (!vInput || isNaN(v)) return;
+        // MSZ HD 60364-4-41:2017 §414: SELV max feszültség
+        // Száraz helyiség: ≤ 25 V AC  |  Nedves/kültéri: ≤ 12 V AC
+        if (v > 25) {
+            vbfMeasSetInputState(vInput, 'error');
+            passSelect.value = 'Nem';
+            setMeasTooltip(vInput, `❌ NEM MEGFELELŐ: ${v} V > 25 V AC max (MSZ HD 60364-4-41 §414, SELV száraz helyiség)`);
+        } else if (v > 12) {
+            vbfMeasSetInputState(vInput, 'warn');
+            passSelect.value = 'Igen';
+            setMeasTooltip(vInput, `⚠️ FIGYELEM: ${v} V > 12 V – nedves/kültéri helyiségben nem megfelelő SELV`);
+        } else {
+            vbfMeasSetInputState(vInput, 'ok');
+            passSelect.value = 'Igen';
+            setMeasTooltip(vInput, `✅ MEGFELELŐ: ${v} V ≤ 12 V AC (MSZ HD 60364-4-41 §414)`);
+        }
+        window.vbfSyncMeasPassUI(tr);
+    };
+
+    window.validateTool = function (tr) {
+        const valInput = tr.querySelector('.meas-val');
+        const val = parseFloat(valInput?.value);
+        const passSelect = tr.querySelector('.meas-pass');
+        if (isNaN(val)) return;
+        // MSZ EN 60745-1:2009 + MSZ EN 62841-1 §16:
+        // Kéziszerszám szigetelési ellenállás (500V DC próba): ≥ 2 MΩ
+        if (val < 2.0) {
+            vbfMeasSetInputState(valInput, 'error');
+            passSelect.value = 'Nem';
+            setMeasTooltip(valInput, `❌ NEM MEGFELELŐ: ${val} MΩ < 2,0 MΩ (MSZ EN 60745-1 §16)`);
+        } else if (val < 5.0) {
+            vbfMeasSetInputState(valInput, 'warn');
+            passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `⚠️ FIGYELEM: ${val} MΩ – megfelel, de közel a 2 MΩ határhoz`);
+        } else {
+            vbfMeasSetInputState(valInput, 'ok');
+            passSelect.value = 'Igen';
+            setMeasTooltip(valInput, `✅ MEGFELELŐ: ${val} MΩ ≥ 5,0 MΩ (MSZ EN 60745-1 §16)`);
         }
         window.vbfSyncMeasPassUI(tr);
     };

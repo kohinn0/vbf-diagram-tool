@@ -786,9 +786,96 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
                     doc.add_paragraph(f"[Hiba a kép beillesztésekor: {str(e)}]")
     
     section_num += 1
+
+    # ── Bejövő hálózati paraméterek ──
+    incoming = getattr(report, 'incoming_phases', None) or {}
+    
+    if incoming and isinstance(incoming, dict) and any(incoming.get(k) for k in ['l1','l2','l3','systemType','mainFuse']):
+        doc.add_heading(f'{section_num}. Bejövő Hálózati Paraméterek', level=1)
+        in_table = doc.add_table(rows=1, cols=2)
+        in_table.style = 'Table Grid'
+        _style_table_header(in_table)
+        in_table.rows[0].cells[0].text = 'Paraméter'
+        in_table.rows[0].cells[1].text = 'Érték'
+        in_rows = [
+            ('Rendszer típusa', incoming.get('systemType', 'N/A')),
+            ('Fázisszám', f"{incoming.get('phaseCount', '3')} fázis"),
+            ('L1 feszültség', f"{incoming.get('l1', 'N/A')} V" if incoming.get('l1') else 'N/A'),
+            ('L2 feszültség', f"{incoming.get('l2', 'N/A')} V" if incoming.get('l2') else 'N/A'),
+            ('L3 feszültség', f"{incoming.get('l3', 'N/A')} V" if incoming.get('l3') else 'N/A'),
+            ('Főbiztosíték (névleges)', f"{incoming.get('mainFuse', 'N/A')} A" if incoming.get('mainFuse') else 'N/A'),
+            ('Főbiztosíték (karakterisztika)', incoming.get('mainFuseType', 'N/A') or 'N/A'),
+            ('Megjegyzés', incoming.get('note', '') or '—'),
+        ]
+        for label, val in in_rows:
+            rr = in_table.add_row().cells
+            rr[0].text = label
+            rr[1].text = str(val)
+        doc.add_paragraph()
+        section_num += 1
+
+    # ── Felülvizsgálói megjegyzés (képekkel) ──
+    inspector_notes = getattr(report, 'inspector_notes', '') or ''
+    note_photos = getattr(report, 'note_photos', []) or []
+    if inspector_notes or note_photos:
+        doc.add_page_break()
+        doc.add_heading(f'{section_num}. Felülvizsgálói Megjegyzések', level=1)
+        if inspector_notes:
+            notes_p = doc.add_paragraph(inspector_notes)
+            notes_p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        if note_photos:
+            doc.add_paragraph()
+            doc.add_heading(f'{section_num}.1 Csatolt képek', level=2)
+            for i, photo_data in enumerate(note_photos, 1):
+                if not photo_data or not isinstance(photo_data, str):
+                    continue
+                try:
+                    b64_str = photo_data.split(',')[1] if ',' in photo_data else photo_data
+                    img_bytes = io.BytesIO(base64.b64decode(b64_str))
+                    photo_p = doc.add_paragraph()
+                    photo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    photo_p.add_run().add_picture(img_bytes, width=Cm(14))
+                    cap_p = doc.add_paragraph(f'{i}. kép – Felülvizsgálói melléklet')
+                    cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    for r in cap_p.runs:
+                        r.font.size = Pt(9)
+                        r.font.color.rgb = RGBColor(107, 114, 128)
+                        r.italic = True
+                except Exception as e:
+                    logger.warning('Hiba a megjegyzés kép beillesztésekor: %s', e)
+                    doc.add_paragraph(f'[Megjegyzés kép #{i}: {str(e)}]')
+        section_num += 1
+
+    # ── Alaprajz melléklet ──
+    floor_plan_b64 = getattr(report, 'floor_plan_image', None)
+    if floor_plan_b64 and isinstance(floor_plan_b64, str) and floor_plan_b64.startswith('data:image'):
+        doc.add_page_break()
+        doc.add_heading(f'{section_num}. Alaprajz Melléklet', level=1)
+        doc.add_paragraph(
+            'Az alábbi alaprajz a vizsgált épület / helyszín elrendezését mutatja be, '
+            'amelyre az egyvonalas rajz és a mérési eredmények vonatkoznak.'
+        )
+        try:
+            b64_str = floor_plan_b64.split(',')[1] if ',' in floor_plan_b64 else floor_plan_b64
+            img_bytes = io.BytesIO(base64.b64decode(b64_str))
+            fp_p = doc.add_paragraph()
+            fp_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            fp_p.add_run().add_picture(img_bytes, width=Cm(16))
+            cap_p = doc.add_paragraph('Alaprajz – vizsgált helyszín elrendezése')
+            cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for r in cap_p.runs:
+                r.font.size = Pt(9)
+                r.font.color.rgb = RGBColor(107, 114, 128)
+                r.italic = True
+        except Exception as e:
+            logger.warning('Hiba az alaprajz beillesztésekor: %s', e)
+            doc.add_paragraph(f'[Alaprajz beillesztési hiba: {str(e)}]')
+        section_num += 1
             
     # Result - MEE Handbook Minősítő Irat Változat kezelése
     doc.add_heading(f'{section_num}. Összefoglaló Minősítés (MEE Handbook)', level=1)
+
+
     res_p = doc.add_paragraph()
     r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
     
