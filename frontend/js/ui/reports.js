@@ -425,6 +425,14 @@ export function initReports() {
             appliedStandards: document.getElementById('appliedStandards')?.value?.trim() || 'MSZ HD 60364-6:2017, 40/2017. (XII. 4.) NGM rendelet, 27/2020. (XII. 21.) ITM rendelet',
             inspectionLimits: document.getElementById('inspectionLimits')?.value?.trim() || '',
             instrumentError: document.getElementById('instrumentError')?.value?.trim() || '',
+            pvDcSwitch: document.getElementById('pvDcSwitch')?.value || 'Nem releváns',
+            pvDcLocation: document.getElementById('pvDcLocation')?.value || '',
+            evRcdType: document.getElementById('evRcdType')?.value || 'Nem releváns',
+            evNote: document.getElementById('evNote')?.value || '',
+            spdType: document.getElementById('spdType')?.value || 'Nem releváns',
+            spdStatus: document.getElementById('spdStatus')?.value || 'Nincs / Nem ellenőrizhető',
+            afddStatus: document.getElementById('afddStatus')?.value || 'Nem releváns',
+            afddNote: document.getElementById('afddNote')?.value || '',
             visualChecks: {
                 id_marks: document.getElementById('check_id_marks')?.checked || false,
                 protection: document.getElementById('check_protection')?.checked || false,
@@ -724,7 +732,7 @@ export function initReports() {
         ipIds.forEach((id, i) => { const el = document.getElementById(id); if (el) el.value = ip[ipKeys[i]] || (id === 'inPhaseCount' ? '3' : ''); });
 
         const c = rep.client_data || {};
-        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits', 'nextInspectionDate'];
+        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits', 'nextInspectionDate', 'pvDcSwitch', 'pvDcLocation', 'evRcdType', 'evNote', 'spdType', 'spdStatus', 'afddStatus', 'afddNote'];
         fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || ''; });
         if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = c['ephDeclaration'] ?? false;
         if (document.getElementById('ephEarthNotMeasurable')) document.getElementById('ephEarthNotMeasurable').checked = c['ephEarthNotMeasurable'] ?? false;
@@ -954,9 +962,9 @@ export function initReports() {
         const defectList = document.getElementById('defectList');
         if (defectList) defectList.innerHTML = '';
         if (window.canvas && window.canvas.clear) window.canvas.clear();
-        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'nextInspectionDate', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'].forEach(id => {
+        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'nextInspectionDate', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits', 'pvDcSwitch', 'pvDcLocation', 'evRcdType', 'evNote', 'spdType', 'spdStatus', 'afddStatus', 'afddNote'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
+            if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : (['pvDcSwitch', 'evRcdType', 'spdType', 'afddStatus'].includes(id) ? 'Nem releváns' : (id === 'spdStatus' ? 'Nincs / Nem ellenőrizhető' : '')));
         });
         if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = false;
         if (document.getElementById('ephEarthNotMeasurable')) document.getElementById('ephEarthNotMeasurable').checked = false;

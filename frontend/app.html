@@ -767,6 +767,87 @@
                     </div>
                 </div>
 
+                <!-- Speciális és modern energetikai modulok (PV, EV) -->
+                <div id="sectionSpecial" class="section-eph" style="margin-top:1.5rem; border-color:#8b5cf6;">
+                    <h3 class="section-eph-title" style="color:#ceb4ff; border-bottom:1px solid color-mix(in srgb, #8b5cf6 30%, transparent);">Speciális és modern energetikai modulok (PV, EV)</h3>
+                    <div class="report-two-col-grid">
+                        <!-- PV Modul -->
+                        <div style="background:var(--bg-glass); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                            <h4 style="font-size:0.9rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">☀️ Napelemes Rendszerek (PV)</h4>
+                            <div class="prop-group">
+                                <label for="pvDcSwitch" class="label-row-hint" title="MSZ HD 60364-7-712">DC oldali távlekapcsoló a főkapcsoló mellett? <span class="label-required-hint">kötelező</span></label>
+                                <select id="pvDcSwitch" class="report-select-dark" onchange="this.style.borderColor = this.value === 'Nem' ? '#ef4444' : 'var(--border-color)';">
+                                    <option value="Nem releváns">Nem releváns (Nincs PV)</option>
+                                    <option value="Igen">Igen, megfelelő</option>
+                                    <option value="Nem">Nem (HIBA)</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="pvDcLocation">Távlekapcsoló elhelyezése</label>
+                                <input type="text" id="pvDcLocation" placeholder="Pl. Inverter mellett / Főépület külső falán">
+                            </div>
+                        </div>
+
+                        <!-- EV Modul -->
+                        <div style="background:var(--bg-glass); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                            <h4 style="font-size:0.9rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">🚗 Elektromos Autótöltők (EV)</h4>
+                            <div class="prop-group">
+                                <label for="evRcdType" class="label-row-hint" title="MSZ HD 60364-7-722">EV RCD Védelem Típusa <span class="label-required-hint">kötelező</span></label>
+                                <select id="evRcdType" class="report-select-dark" onchange="const isErr = this.value !== 'Nem releváns' && this.value !== 'A-típus + 6mA DC' && this.value !== 'B-típus'; this.style.borderColor = isErr ? '#ef4444' : 'var(--border-color)';">
+                                    <option value="Nem releváns">Nem releváns (Nincs EV)</option>
+                                    <option value="Nincs">Nincs</option>
+                                    <option value="AC-típus">AC-típus (Nem megfelelő)</option>
+                                    <option value="A-típus">A-típus (Önmagában nem megfelelő)</option>
+                                    <option value="A-típus + 6mA DC">A-típus + 6mA DC (Megfelelő)</option>
+                                    <option value="B-típus">B-típus (Megfelelő)</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="evNote">Töltő pozíciója, típusa</label>
+                                <input type="text" id="evNote" placeholder="Pl. Wallbox 11kW, Épület északi falán">
+                            </div>
+                        <!-- SPD Modul -->
+                        <div style="background:var(--bg-glass); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                            <h4 style="font-size:0.9rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">⚡ Túlfeszültség-védelem (SPD)</h4>
+                            <div class="prop-group">
+                                <label for="spdType" class="label-row-hint" title="MSZ HD 60364-4-44">Beépített fokozat <span class="label-required-hint">kötelező</span></label>
+                                <select id="spdType" class="report-select-dark">
+                                    <option value="Nem releváns">Nincs beépítve / Nem releváns</option>
+                                    <option value="T1 típus (1. típus)">T1 típus (1. típus)</option>
+                                    <option value="T2 típus (2. típus)">T2 típus (2. típus)</option>
+                                    <option value="T1+T2 típus kombinált">T1+T2 típus kombinált</option>
+                                    <option value="T3 típus (3. típus)">T3 típus (3. típus)</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="spdStatus">Állapot / Jelzőablak</label>
+                                <select id="spdStatus" class="report-select-dark" onchange="this.style.borderColor = this.value.includes('Hibás') ? '#ef4444' : 'var(--border-color)';">
+                                    <option value="Nincs / Nem ellenőrizhető">Nincs / Nem ellenőrizhető</option>
+                                    <option value="Megfelelő (Zöld ablak)">Megfelelő (Zöld ablak)</option>
+                                    <option value="Hibás / Leoldott (HIBA)">Hibás / Leoldott (HIBA)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- AFDD Modul -->
+                        <div style="background:var(--bg-glass); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                            <h4 style="font-size:0.9rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">🔥 Ívhiba-védelem (AFDD)</h4>
+                            <div class="prop-group">
+                                <label for="afddStatus" class="label-row-hint" title="MSZ HD 60364-4-42">AFDD Készülék állapota</label>
+                                <select id="afddStatus" class="report-select-dark" onchange="this.style.borderColor = this.value.includes('Hibás') ? '#ef4444' : 'var(--border-color)';">
+                                    <option value="Nem releváns">Nincs beépítve / Nem releváns</option>
+                                    <option value="Beépítve és működőképes">Beépítve és működőképes</option>
+                                    <option value="Beépítve, de hibás (HIBA)">Beépítve, de hibás (HIBA)</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label for="afddNote">Érintett áramkörök</label>
+                                <input type="text" id="afddNote" placeholder="Pl. Tetőtér hálószobák">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Szemrevételezés Section -->
                 <div id="sectionVisual" class="section-visual">
                     <h3 class="vbf-report-section-heading">Szemrevételezéses ellenőrzések</h3>
@@ -893,10 +974,10 @@
                 <div class="vbf-meas-page-head">
                     <h2 class="vbf-meas-page-title">Mérési adatok (kézi bevitel)</h2>
                     <div class="vbf-meas-page-actions">
-                        <input type="file" id="inputPadfx" accept=".padfx,.xml" class="hidden" />
+                        <input type="file" id="inputPadfx" accept=".padfx,.xml,.csv,.txt" class="hidden" />
                         <button type="button" class="btn btn-primary btn-small vbf-meas-toolbar-btn" id="btnLoadPadfx">
                             <svg class="vbf-meas-btn-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span id="btnLoadPadfxLabel">Metrel PADFX import</span>
+                            <span id="btnLoadPadfxLabel">Műszer Adat Import (PADFX, CSV, Fluke, Megger)</span>
                         </button>
                         <button type="button" class="btn btn-secondary btn-small vbf-meas-toolbar-btn" id="btnExportMeasurementsCsv">
                             <svg class="vbf-meas-btn-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>

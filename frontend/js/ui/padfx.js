@@ -15,10 +15,104 @@ export function initPadfx() {
             formData.append('file', file);
 
             try {
-                console.log("[PADFX] Új fájl feltöltése:", file.name);
+                console.log("[PADFX/CSV] Új fájl feltöltése:", file.name);
                 const padfxLbl = document.getElementById('btnLoadPadfxLabel');
                 if (padfxLbl) padfxLbl.textContent = 'Feldolgozás…';
                 else btnLoadPadfx.textContent = 'Feldolgozás…';
+
+                const fileName = file.name.toLowerCase();
+                
+                // --- CSV / TXT import (Fluke, Megger, or generic VBF) ---
+                if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+                    const text = await file.text();
+                    const lines = text.split('\n');
+                    let rpeCount = 0;
+                    let foundAny = false;
+                    
+                    lines.forEach(line => {
+                        const l = line.toLowerCase();
+                        // Find numbers like 0.12 or 12,3
+                        const numMatches = line.replace(',', '.').match(/\d+\.\d+|\d+/g);
+                        const val = numMatches ? parseFloat(numMatches[numMatches.length - 1]) : "";
+                        
+                        // RPE
+                        if (l.includes('rpe') || l.includes('continuity') || l.includes('folytonosság')) {
+                            if (val !== "") {
+                                window.createRow('table-rpe', `
+                                    <td><input type="number" class="meas-point" value="${++rpeCount}"></td>
+                                    <td><input type="text" class="meas-loc" value="CSV Import"></td>
+                                    <td><input type="number" step="0.01" class="meas-val" value="${val}" oninput="validateRpe(this.closest('tr'))"></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
+                                `);
+                                const lastRow = document.querySelector('#table-rpe tbody tr:last-child');
+                                if (lastRow) window.validateRpe(lastRow);
+                                foundAny = true;
+                            }
+                        }
+                        // RISO
+                        else if (l.includes('riso') || l.includes('insulation') || l.includes('szigetelés')) {
+                            if (val !== "") {
+                                window.createRow('table-insulation', `
+                                    <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
+                                    <td><input type="number" step="0.1" class="meas-ln" value="${val}" oninput="validateIns(this.closest('tr'))"></td>
+                                    <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                    <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
+                                `);
+                                const lastRow = document.querySelector('#table-insulation tbody tr:last-child');
+                                if (lastRow) window.validateIns(lastRow);
+                                foundAny = true;
+                            }
+                        }
+                        // ZS
+                        else if (l.includes('zs') || l.includes('loop') || l.includes('hurok')) {
+                            if (val !== "") {
+                                window.createRow('table-loop', `
+                                    <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
+                                    <td><input type="text" class="meas-device" value="C16" oninput="validateZs(this.closest('tr'))"></td>
+                                    <td><input type="text" class="meas-loc" value=""></td>
+                                    <td><input type="number" step="0.01" class="meas-zs" value="${val}" oninput="validateZs(this.closest('tr'))"></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
+                                `);
+                                const lastRow = document.querySelector('#table-loop tbody tr:last-child');
+                                if (lastRow) window.validateZs(lastRow);
+                                foundAny = true;
+                            }
+                        }
+                        // RCD
+                        else if (l.includes('rcd') || l.includes('trip') || l.includes('fi-relé')) {
+                            if (val !== "") {
+                                window.createRow('table-rcd', `
+                                    <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
+                                    <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
+                                    <td><input type="number" class="meas-idn" value="30" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
+                                    <td><input type="number" step="1" class="meas-t1" value="${val}" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                                    ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
+                                `);
+                                const lastRow = document.querySelector('#table-rcd tbody tr:last-child');
+                                if (lastRow) window.validateRcd(lastRow);
+                                foundAny = true;
+                            }
+                        }
+                    });
+                    
+                    if (foundAny) {
+                        alert("✅ Sikeres CSV Import: Adatok betöltve a táblázatokba!");
+                    } else {
+                        alert("⚠️ Hiba: Nem találtam automatikusan feldolgozható mérési sorkifejezéseket a CSV-ben.");
+                    }
+                    
+                    if (padfxLbl) padfxLbl.textContent = 'Műszer Adat Import (PADFX, CSV, Fluke, Megger)';
+                    else btnLoadPadfx.textContent = 'Műszer Adat Import (PADFX, CSV, Fluke, Megger)';
+                    e.target.value = '';
+                    return;
+                }
+                
+                // --- Metrel PADFX fallback ---
                 const fetchHeaders = {};
                 if (window.currentToken) {
                     fetchHeaders['Authorization'] = `Bearer ${window.currentToken}`;
@@ -119,8 +213,8 @@ export function initPadfx() {
                 alert('Hiba a fájl feltöltésekor: ' + err.message);
             } finally {
                 const padfxLblDone = document.getElementById('btnLoadPadfxLabel');
-                if (padfxLblDone) padfxLblDone.textContent = 'Metrel PADFX import';
-                else btnLoadPadfx.textContent = 'Metrel PADFX import';
+                if (padfxLblDone) padfxLblDone.textContent = 'Műszer Adat Import (PADFX, CSV, Fluke, Megger)';
+                else btnLoadPadfx.textContent = 'Műszer Adat Import (PADFX, CSV, Fluke, Megger)';
                 e.target.value = '';
             }
         });

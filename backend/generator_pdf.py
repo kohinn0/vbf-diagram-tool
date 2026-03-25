@@ -301,6 +301,49 @@ def generate_pdf_reportlab_stream(
     story.append(Paragraph(instr_str, styles['Body']))
     story.append(Spacer(1, 0.3 * cm))
 
+    # Speciális Berendezések (PV, EV, SPD, AFDD)
+    pv_switch = c_data.get('pvDcSwitch', 'Nem releváns')
+    ev_rcd = c_data.get('evRcdType', 'Nem releváns')
+    spd_type = c_data.get('spdType', 'Nem releváns')
+    afdd_status = c_data.get('afddStatus', 'Nem releváns')
+    
+    has_special = (
+        pv_switch != 'Nem releváns' or 
+        ev_rcd != 'Nem releváns' or 
+        spd_type != 'Nem releváns' or 
+        afdd_status != 'Nem releváns'
+    )
+    
+    if has_special:
+        story.append(Paragraph("3.1. Speciális és modern energetikai berendezések", styles['H2']))
+        if pv_switch != 'Nem releváns':
+            pv_str = f"<b>☀️ Napelemes Rendszerek (PV) [MSZ HD 60364-7-712]</b><br/>DC oldali távlekapcsoló a tűzeseti főkapcsoló mellett: {pv_switch}"
+            if c_data.get('pvDcLocation'):
+                pv_str += f"<br/>Kialakítás/Elhelyezés: {c_data.get('pvDcLocation')}"
+            story.append(Paragraph(pv_str, styles['Body']))
+            story.append(Spacer(1, 0.2 * cm))
+            
+        if ev_rcd != 'Nem releváns':
+            ev_str = f"<b>🚗 Elektromos Autótöltők (EV) [MSZ HD 60364-7-722]</b><br/>RCD Védelem típusa: {ev_rcd}"
+            if c_data.get('evNote'):
+                ev_str += f"<br/>Megjegyzés (Töltő pozíciója/típusa): {c_data.get('evNote')}"
+            story.append(Paragraph(ev_str, styles['Body']))
+            story.append(Spacer(1, 0.2 * cm))
+            
+        if spd_type != 'Nem releváns':
+            spd_status = c_data.get('spdStatus', 'Nincs / Nem ellenőrizhető')
+            spd_str = f"<b>⚡ Túlfeszültség-védelem (SPD) [MSZ HD 60364-4-44]</b><br/>Beépített fokozat: {spd_type}<br/>Állapot / Jelzőablak: {spd_status}"
+            story.append(Paragraph(spd_str, styles['Body']))
+            story.append(Spacer(1, 0.2 * cm))
+            
+        if afdd_status != 'Nem releváns':
+            afdd_str = f"<b>🔥 Ívhiba-védelem (AFDD) [MSZ HD 60364-4-42]</b><br/>Készülék állapota: {afdd_status}"
+            if c_data.get('afddNote'):
+                afdd_str += f"<br/>Érintett áramkörök: {c_data.get('afddNote')}"
+            story.append(Paragraph(afdd_str, styles['Body']))
+            
+        story.append(Spacer(1, 0.3 * cm))
+
     # Diagram
     diagram_b64 = getattr(report, 'diagram_image', None)
     if diagram_b64 and ',' in str(diagram_b64):

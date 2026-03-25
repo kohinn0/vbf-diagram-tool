@@ -377,11 +377,56 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p2.add_run(c_data.get('instrumentCal', 'N/A') + '\n')
     
     if c_data.get('instrumentError'):
-        p2.add_run('Műszer Mérési Bizonytalansága: ').bold = True
         p2.add_run(c_data.get('instrumentError') + '\n')
 
-    # Visual Checklist
     section_num = 4
+    
+    # Speciális Berendezések (PV, EV, SPD, AFDD)
+    pv_switch = c_data.get('pvDcSwitch', 'Nem releváns')
+    ev_rcd = c_data.get('evRcdType', 'Nem releváns')
+    spd_type = c_data.get('spdType', 'Nem releváns')
+    afdd_status = c_data.get('afddStatus', 'Nem releváns')
+    
+    has_special = (
+        pv_switch != 'Nem releváns' or 
+        ev_rcd != 'Nem releváns' or 
+        spd_type != 'Nem releváns' or 
+        afdd_status != 'Nem releváns'
+    )
+    
+    if has_special:
+        doc.add_heading(f'{section_num}. Speciális és modern energetikai berendezések', level=1)
+        if pv_switch != 'Nem releváns':
+            p_pv = doc.add_paragraph()
+            p_pv.add_run('☀️ Napelemes Rendszerek (PV) [MSZ HD 60364-7-712]\n').bold = True
+            p_pv.add_run(f'DC oldali távlekapcsoló a tűzeseti főkapcsoló mellett: {pv_switch}\n')
+            if c_data.get('pvDcLocation'):
+                p_pv.add_run(f'Kialakítás/Elhelyezés: {c_data.get("pvDcLocation")}\n')
+        
+        if ev_rcd != 'Nem releváns':
+            p_ev = doc.add_paragraph()
+            p_ev.add_run('🚗 Elektromos Autótöltők (EV) [MSZ HD 60364-7-722]\n').bold = True
+            p_ev.add_run(f'RCD Védelem típusa: {ev_rcd}\n')
+            if c_data.get('evNote'):
+                p_ev.add_run(f'Megjegyzés (Töltő pozíciója/típusa): {c_data.get("evNote")}\n')
+                
+        if spd_type != 'Nem releváns':
+            p_spd = doc.add_paragraph()
+            p_spd.add_run('⚡ Túlfeszültség-védelem (SPD) [MSZ HD 60364-4-44]\n').bold = True
+            p_spd.add_run(f'Beépített fokozat: {spd_type}\n')
+            spd_status = c_data.get('spdStatus', 'Nincs / Nem ellenőrizhető')
+            p_spd.add_run(f'Állapot / Jelzőablak: {spd_status}\n')
+
+        if afdd_status != 'Nem releváns':
+            p_afdd = doc.add_paragraph()
+            p_afdd.add_run('🔥 Ívhiba-védelem (AFDD) [MSZ HD 60364-4-42]\n').bold = True
+            p_afdd.add_run(f'Készülék állapota: {afdd_status}\n')
+            if c_data.get('afddNote'):
+                p_afdd.add_run(f'Érintett áramkörök: {c_data.get("afddNote")}\n')
+
+        section_num = 5
+
+    # Visual Checklist
     visual = c_data.get('visualChecks', {})
     if isinstance(visual, dict) and visual:
         doc.add_heading(f'{section_num}. Szemrevételezéses Ellenőrzések (6.4.2 MSZ HD 60364-6)', level=1)
