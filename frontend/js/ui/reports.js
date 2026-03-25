@@ -396,6 +396,7 @@ export function initReports() {
             ephPenSep: document.getElementById('ephPenSep')?.value || '',
             ephEarthMethod: document.getElementById('ephEarthMethod')?.value || '',
             ephRaValue: document.getElementById('ephRaValue')?.value || '',
+            ephEarthNotMeasurable: document.getElementById('ephEarthNotMeasurable')?.checked || false,
             ephConductor: document.getElementById('ephConductor')?.value || '',
             ephDeclaration: document.getElementById('ephDeclaration')?.checked || false,
             envTemp: document.getElementById('envTemp')?.value || '',
@@ -698,6 +699,7 @@ export function initReports() {
         const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'];
         fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || ''; });
         if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = c['ephDeclaration'] ?? false;
+        if (document.getElementById('ephEarthNotMeasurable')) document.getElementById('ephEarthNotMeasurable').checked = c['ephEarthNotMeasurable'] ?? false;
 
         const visual = c.visualChecks || {};
         ['id_marks', 'protection', 'fire', 'conduction', 'connection', 'access'].forEach(f => {
@@ -929,6 +931,7 @@ export function initReports() {
             if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
         });
         if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = false;
+        if (document.getElementById('ephEarthNotMeasurable')) document.getElementById('ephEarthNotMeasurable').checked = false;
         if (window.updateHeaderReportContext) window.updateHeaderReportContext('Új jegyzőkönyv', null);
         if (window.showToast) window.showToast('Üres jegyzőkönyv kész.', 'success');
     });

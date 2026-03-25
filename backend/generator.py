@@ -459,7 +459,10 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         p3.add_run(c_data.get('ephEarthMethod', 'N/A') + '\n')
         
         p3.add_run('Mért Földelési Ellenállás (Ra): ').bold = True
-        p3.add_run(c_data.get('ephRaValue', 'N/A') + ' Ω\n')
+        if c_data.get('ephEarthNotMeasurable'):
+            p3.add_run('A mérés a helyszín adottságai (pl. társasház, zárt mérési pont) miatt nem volt kivitelezhető (Rpe folytonosság mérve).\n')
+        else:
+            p3.add_run(str(c_data.get('ephRaValue', 'N/A')) + ' Ω\n')
         
         p3.add_run('EPH Fővezeték Keresztmetszete: ').bold = True
         p3.add_run(c_data.get('ephConductor', 'N/A') + ' mm²\n')
