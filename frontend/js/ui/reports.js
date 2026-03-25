@@ -397,6 +397,12 @@ export function initReports() {
             ephEarthMethod: document.getElementById('ephEarthMethod')?.value || '',
             ephRaValue: document.getElementById('ephRaValue')?.value || '',
             ephConductor: document.getElementById('ephConductor')?.value || '',
+            ephDeclaration: document.getElementById('ephDeclaration')?.checked || false,
+            envTemp: document.getElementById('envTemp')?.value || '',
+            envHumidity: document.getElementById('envHumidity')?.value || '',
+            appliedStandards: document.getElementById('appliedStandards')?.value?.trim() || 'MSZ HD 60364-6:2017, 40/2017. (XII. 4.) NGM rendelet, 27/2020. (XII. 21.) ITM rendelet',
+            inspectionLimits: document.getElementById('inspectionLimits')?.value?.trim() || '',
+            instrumentError: document.getElementById('instrumentError')?.value?.trim() || '',
             visualChecks: {
                 id_marks: document.getElementById('check_id_marks')?.checked || false,
                 protection: document.getElementById('check_protection')?.checked || false,
@@ -689,8 +695,9 @@ export function initReports() {
         ipIds.forEach((id, i) => { const el = document.getElementById(id); if (el) el.value = ip[ipKeys[i]] || (id === 'inPhaseCount' ? '3' : ''); });
 
         const c = rep.client_data || {};
-        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor'];
+        const fields = ['customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'ephGasRequired', 'ephGasMeter', 'ephPenSep', 'ephEarthMethod', 'ephRaValue', 'ephConductor', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'];
         fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = c[f] || ''; });
+        if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = c['ephDeclaration'] ?? false;
 
         const visual = c.visualChecks || {};
         ['id_marks', 'protection', 'fire', 'conduction', 'connection', 'access'].forEach(f => {
@@ -917,10 +924,11 @@ export function initReports() {
         const defectList = document.getElementById('defectList');
         if (defectList) defectList.innerHTML = '';
         if (window.canvas && window.canvas.clear) window.canvas.clear();
-        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'reportResult'].forEach(id => {
+        ['documentTitle', 'docType', 'customerName', 'siteAddress', 'siteHrsz', 'buildingPurpose', 'buildingOtsz', 'inspectorName', 'inspectorLicense', 'instrumentType', 'instrumentCal', 'instrumentError', 'reportResult', 'envTemp', 'envHumidity', 'appliedStandards', 'inspectionLimits'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = (id === 'docType') ? 'VBF_LAKO' : (id === 'documentTitle' ? 'Új jegyzőkönyv' : '');
         });
+        if (document.getElementById('ephDeclaration')) document.getElementById('ephDeclaration').checked = false;
         if (window.updateHeaderReportContext) window.updateHeaderReportContext('Új jegyzőkönyv', null);
         if (window.showToast) window.showToast('Üres jegyzőkönyv kész.', 'success');
     });

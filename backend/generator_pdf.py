@@ -262,22 +262,43 @@ def generate_pdf_reportlab_stream(
 
     # 2. Alapadatok
     story.append(Paragraph("2. Alapadatok és Helyszín", styles['H1']))
-    story.append(Paragraph(
+    otsz = c_data.get('buildingOtsz', '')
+    otsz_str = f" [{otsz}]" if otsz else ""
+    alap_str = (
         f"<b>Megrendelő / Üzemeltető:</b> {c_data.get('customerName', 'N/A')}<br/>"
         f"<b>Vizsgálat helyszíne:</b> {c_data.get('siteAddress', 'N/A')}<br/>"
         f"<b>Helyrajzi Szám (HRSZ):</b> {c_data.get('siteHrsz', 'N/A')}<br/>"
-        f"<b>Épület rendeltetése:</b> {c_data.get('buildingPurpose', 'N/A')}"
-    , styles['Body']))
+        f"<b>Épület rendeltetése:</b> {c_data.get('buildingPurpose', 'N/A')}{otsz_str}"
+    )
+    story.append(Paragraph(alap_str, styles['Body']))
+    
+    env_lines = []
+    if c_data.get('envTemp'): env_lines.append(f"<b>Hőmérséklet:</b> {c_data.get('envTemp')} °C")
+    if c_data.get('envHumidity'): env_lines.append(f"<b>Páratartalom:</b> {c_data.get('envHumidity')} %")
+    if env_lines:
+        story.append(Spacer(1, 0.1 * cm))
+        story.append(Paragraph(" | ".join(env_lines), styles['Body']))
+        
+    story.append(Spacer(1, 0.1 * cm))
+    story.append(Paragraph(f"<b>Alkalmazott Szabványok:</b> {c_data.get('appliedStandards', 'MSZ HD 60364-6:2017')}", styles['Body']))
+    
+    if c_data.get('inspectionLimits'):
+        story.append(Spacer(1, 0.1 * cm))
+        story.append(Paragraph(f"<b>Felülvizsgálat Korlátai:</b> {c_data.get('inspectionLimits')}", styles['Body']))
+        
     story.append(Spacer(1, 0.3 * cm))
 
     # 3. Felülvizsgáló
     story.append(Paragraph("3. Felülvizsgáló és Műszerek", styles['H1']))
-    story.append(Paragraph(
+    instr_str = (
         f"<b>Felülvizsgáló neve/cége:</b> {c_data.get('inspectorName', 'N/A')}<br/>"
         f"<b>Vizsgabizonyítvány száma:</b> {c_data.get('inspectorLicense', 'N/A')}<br/>"
         f"<b>Alkalmazott Mérőműszer:</b> {c_data.get('instrumentType', 'N/A')}<br/>"
         f"<b>Kalibrálás érvényessége:</b> {c_data.get('instrumentCal', 'N/A')}"
-    , styles['Body']))
+    )
+    if c_data.get('instrumentError'):
+        instr_str += f"<br/><b>Mérési Bizonytalanság:</b> {c_data.get('instrumentError')}"
+    story.append(Paragraph(instr_str, styles['Body']))
     story.append(Spacer(1, 0.3 * cm))
 
     # Diagram
@@ -322,6 +343,9 @@ def generate_pdf_reportlab_stream(
                 for r in eph_list:
                     rows.append([str(r.get(k, '')) for k in ['idx', 'elem', 'loc', 'mat', 'conn', 'val', 'pass']])
                 story.append(_table_from_rows(rows))
+            if c_data.get('ephDeclaration'):
+                story.append(Spacer(1, 0.3 * cm))
+                story.append(Paragraph("<i>EPH Nyilatkozat: Alulírott nyilatkozom, hogy az egyidejűleg érinthető idegen fémszerkezeteket megfelelően bekötötték a hálózatba.</i>", styles['Body']))
         section_num += 1
 
     # Hibák
@@ -348,51 +372,52 @@ def generate_pdf_reportlab_stream(
     )
     story.append(Paragraph(disclaimer, styles['BodyJustify']))
 
-    # Digitális Integritás – csak PDF-ben, SHA-256
-    section_num += 1
-    story.append(PageBreak())
-    story.append(Paragraph(f"{section_num}. Digitális Integritás és Nyomonkövethetőség", styles['H1']))
+    # Digitális Integritás – csak PDF-ben, SHA-256, ha az állapot FINAL
+    if report.status == 'FINAL':
+        section_num += 1
+        story.append(PageBreak())
+        story.append(Paragraph(f"{section_num}. Digitális Integritás és Nyomonkövethetőség", styles['H1']))
 
-    m0 = report.measurements_data[0] if report.measurements_data else {}
-    meas_counts = {
-        'rpe': len(m0.get('rpe', [])) if isinstance(m0, dict) else 0,
-        'riso': len(m0.get('insulation', [])) if isinstance(m0, dict) else 0,
-        'loop': len(m0.get('loop', [])) if isinstance(m0, dict) else 0,
-        'rcd': len(m0.get('rcd', [])) if isinstance(m0, dict) else 0,
-    }
-    integrity_data = _build_integrity_data(report, c_data, d_data, r_val, rep_id_str)
-    integrity_data['measurement_count'] = meas_counts
-    payload_json = json.dumps(integrity_data, ensure_ascii=False, sort_keys=True)
-    content_hash = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
+        m0 = report.measurements_data[0] if report.measurements_data else {}
+        meas_counts = {
+            'rpe': len(m0.get('rpe', [])) if isinstance(m0, dict) else 0,
+            'riso': len(m0.get('insulation', [])) if isinstance(m0, dict) else 0,
+            'loop': len(m0.get('loop', [])) if isinstance(m0, dict) else 0,
+            'rcd': len(m0.get('rcd', [])) if isinstance(m0, dict) else 0,
+        }
+        integrity_data = _build_integrity_data(report, c_data, d_data, r_val, rep_id_str)
+        integrity_data['measurement_count'] = meas_counts
+        payload_json = json.dumps(integrity_data, ensure_ascii=False, sort_keys=True)
+        content_hash = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
 
-    # QR kód
-    qr_payload = json.dumps({
-        'id': rep_id_str,
-        'hash': content_hash[:16],
-        'date': datetime.now().strftime('%Y-%m-%d'),
-        'result': r_val,
-    }, ensure_ascii=False)
-    try:
-        import qrcode
-        qr = qrcode.QRCode(version=1, box_size=6, border=2)
-        qr.add_data(qr_payload)
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color="black", back_color="white")
-        qr_buf = io.BytesIO()
-        qr_img.save(qr_buf, format='PNG')
-        qr_buf.seek(0)
-        story.append(Image(qr_buf, width=4 * cm, height=4 * cm))
-    except Exception:
-        pass
+        # QR kód
+        qr_payload = json.dumps({
+            'id': rep_id_str,
+            'hash': content_hash[:16],
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'result': r_val,
+        }, ensure_ascii=False)
+        try:
+            import qrcode
+            qr = qrcode.QRCode(version=1, box_size=6, border=2)
+            qr.add_data(qr_payload)
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            qr_buf = io.BytesIO()
+            qr_img.save(qr_buf, format='PNG')
+            qr_buf.seek(0)
+            story.append(Image(qr_buf, width=4 * cm, height=4 * cm))
+        except Exception:
+            pass
 
-    story.append(Paragraph(f"<b>Azonosító:</b> {rep_id_str}", styles['Body']))
-    story.append(Paragraph(f"<b>Generálás dátuma:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Body']))
-    story.append(Paragraph(f"<b>SHA-256 Hash:</b> {content_hash}", styles['Body']))
-    story.append(Paragraph(
-        "A fenti SHA-256 hash a dokumentum minden lényeges adatából számított egyedi lenyomat. "
-        "Bármilyen módosítás esetén a hash megváltozik, ezáltal a manipuláció kimutatható.",
-        styles['BodyJustify']
-    ))
+        story.append(Paragraph(f"<b>Azonosító:</b> {rep_id_str}", styles['Body']))
+        story.append(Paragraph(f"<b>Generálás dátuma:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Body']))
+        story.append(Paragraph(f"<b>SHA-256 Hash:</b> {content_hash}", styles['Body']))
+        story.append(Paragraph(
+            "A fenti SHA-256 hash a dokumentum minden lényeges adatából számított egyedi lenyomat. "
+            "Bármilyen módosítás esetén a hash megváltozik, ezáltal a manipuláció kimutatható.",
+            styles['BodyJustify']
+        ))
 
     # Aláírás kép
     if settings and getattr(settings, 'signature_path', None) and os.path.exists(settings.signature_path):

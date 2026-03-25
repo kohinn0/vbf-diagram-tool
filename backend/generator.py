@@ -344,6 +344,22 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         if next_insp:
             p.add_run('Következő kötelező felülvizsgálat (OTSZ): ').bold = True
             p.add_run(next_insp + '\n')
+            
+    # Mérés Körülményei & Alkalmazott Szabványok (Új)
+    doc.add_heading('2.1 Mérés Körülményei és Jogszabályok', level=2)
+    p_env = doc.add_paragraph()
+    if c_data.get('envTemp') or c_data.get('envHumidity'):
+        p_env.add_run('Hőmérséklet a vizsgálat idején: ').bold = True
+        p_env.add_run(f"{c_data.get('envTemp', 'N/A')} °C, ")
+        p_env.add_run('Páratartalom: ').bold = True
+        p_env.add_run(f"{c_data.get('envHumidity', 'N/A')} %\n")
+    
+    p_env.add_run('Alkalmazott szabványok és jogszabályok: ').bold = True
+    p_env.add_run(c_data.get('appliedStandards', 'MSZ HD 60364-6:2017') + '\n')
+    
+    if c_data.get('inspectionLimits'):
+        p_env.add_run('Felülvizsgálat korlátai (mi nem lett vizsgálva): ').bold = True
+        p_env.add_run(c_data.get('inspectionLimits') + '\n')
     
     # Inspector Data
     doc.add_heading('3. Felülvizsgáló és Műszerek', level=1)
@@ -359,6 +375,10 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     
     p2.add_run('Kalibrálás érvényessége: ').bold = True
     p2.add_run(c_data.get('instrumentCal', 'N/A') + '\n')
+    
+    if c_data.get('instrumentError'):
+        p2.add_run('Műszer Mérési Bizonytalansága: ').bold = True
+        p2.add_run(c_data.get('instrumentError') + '\n')
 
     # Visual Checklist
     section_num = 4
@@ -443,6 +463,10 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         
         p3.add_run('EPH Fővezeték Keresztmetszete: ').bold = True
         p3.add_run(c_data.get('ephConductor', 'N/A') + ' mm²\n')
+        
+        if c_data.get('ephDeclaration'):
+            doc.add_paragraph().add_run('EPH Nyilatkozat: Alulírott nyilatkozom, hogy az egyidejűleg érinthető idegen fémszerkezeteket megfelelően bekötötték a hálózatba.').italic = True
+
         section_num += 1
     
     # Measurements – measurements_data a DB-ben dict, nem lista
@@ -918,102 +942,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p_disc = doc.add_paragraph(disclaimer)
     p_disc.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     
-    # Digitális Integritás (SHA-256) – csak PDF-ben; Word = piszkozat, nincs hash
-    if not include_integrity:
-        stream = io.BytesIO()
-        doc.save(stream)
-        stream.seek(0)
-        return stream
-    
-    # ═══════════════════════════════════════════════════════
-    # DIGITÁLIS INTEGRITÁS - QR Kód és Hash (PDF exportnál)
-    # ═══════════════════════════════════════════════════════
-    doc.add_heading(f'{section_num}. Digitális Integritás és Nyomonkövethetőség', level=1)
-    
-    # Payload for hashing
-    integrity_data = {
-        'report_id': rep_id_str,
-        'client': c_data.get('clientName', ''),
-        'address': c_data.get('siteAddress', ''),
-        'inspector': c_data.get('inspectorName', ''),
-        'instrument': c_data.get('instrumentType', ''),
-        'calibration': c_data.get('instrumentCal', ''),
-        'result': r_val,
-        'issued': datetime.now().isoformat(),
-        'measurement_count': {
-            'rpe': len(c_data.get('rpeData', [])),
-            'riso': len(c_data.get('insulationData', [])),
-            'loop': len(c_data.get('loopData', [])),
-            'rcd': len(c_data.get('rcdData', [])),
-        },
-        'defect_count': len(d_data),
-    }
-    
-    # SHA-256 hash a tartalomra
-    payload_json = json.dumps(integrity_data, ensure_ascii=False, sort_keys=True)
-    content_hash = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
-    integrity_data['sha256'] = content_hash
-    
-    # QR kód payload
-    qr_payload = json.dumps({
-        'id': rep_id_str,
-        'hash': content_hash[:16],  # Első 16 karakter (ellenőrzéshez elég)
-        'date': datetime.now().strftime('%Y-%m-%d'),
-        'result': r_val,
-        'inspector': c_data.get('inspectorName', '')[:30],
-    }, ensure_ascii=False)
-    
-    # QR kód generálás
-    try:
-        qr = qrcode.QRCode(version=1, box_size=6, border=2, error_correction=qrcode.constants.ERROR_CORRECT_M)
-        qr.add_data(qr_payload)
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color="black", back_color="white")
-        
-        qr_buffer = io.BytesIO()
-        qr_img.save(qr_buffer, format='PNG')
-        qr_buffer.seek(0)
-        
-        # QR kód beillesztése
-        qr_para = doc.add_paragraph()
-        qr_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        qr_run = qr_para.add_run()
-        qr_run.add_picture(qr_buffer, width=Cm(4))
-        
-        qr_label = doc.add_paragraph(f"Hitelesítési QR kód — Azonosító: {rep_id_str}")
-        qr_label.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        
-    except ImportError:
-        doc.add_paragraph("[QR kód generálás nem elérhető — telepítsd: pip install qrcode[pil]]")
-    except Exception as e:
-        doc.add_paragraph(f"[QR kód generálási hiba: {str(e)}]")
-    
-    # Integritási adatok szöveges formában
-    int_p = doc.add_paragraph()
-    int_p.add_run("Dokumentum Integritási Adatok:\n").bold = True
-    int_p.add_run(f"Azonosító: {rep_id_str}\n")
-    int_p.add_run(f"Generálás dátuma: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-    
-    m_counts = integrity_data.get('measurement_count', {})
-    rpe_c = m_counts.get('rpe', 0)
-    riso_c = m_counts.get('riso', 0)
-    loop_c = m_counts.get('loop', 0)
-    rcd_c = m_counts.get('rcd', 0)
-    
-    int_p.add_run(f"SHA-256 Hash: {content_hash}\n")
-    int_p.add_run(f"Mérések: Rpe={rpe_c} db, "
-                  f"Riso={riso_c} db, "
-                  f"Zs={loop_c} db, "
-                  f"RCD={rcd_c} db\n")
-    int_p.add_run(f"Feltárt hibák: {integrity_data.get('defect_count', 0)} db\n")
-    
-    hash_note = doc.add_paragraph(
-        "A fenti SHA-256 hash a dokumentum minden lényeges adatából (megrendelő, cím, felülvizsgáló, "
-        "műszer, mérési eredmények száma, hibák száma, minősítés) számított egyedi lenyomat. "
-        "Bármilyen módosítás esetén a hash megváltozik, ezáltal a manipuláció kimutatható. "
-        "A QR kód a hitelesítési adatokat tartalmazza."
-    )
-    hash_note.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    # Word formátum (tervezet / szerkeszthető) nem tartalmaz SHA-256 időbélyeget és QR kódot.
     
     # Következő felülvizsgálat dátuma (OTSZ alapján)
     otsz_class = c_data.get('buildingOtsz', '')
