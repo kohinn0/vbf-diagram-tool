@@ -182,7 +182,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         return any(kw in desc for kw in serious_kw)
     cnt_a = sum(1 for d in d_data if _is_critical((d.get('description') or '').lower()))
     cnt_b = sum(1 for d in d_data if _is_serious((d.get('description') or '').lower()) and not _is_critical((d.get('description') or '').lower()))
-    r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
+    r_val = c_data.get('reportResult', c_data.get('autoQualification', 'N/A'))
     
     card_p = doc.add_paragraph()
     card_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -360,7 +360,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     p2.add_run('Kalibrálás érvényessége: ').bold = True
     p2.add_run(c_data.get('instrumentCal', 'N/A') + '\n')
 
-    # Visual Checklist (MEEVET / MSZ HD 60364-6)
+    # Visual Checklist
     section_num = 4
     visual = c_data.get('visualChecks', {})
     if isinstance(visual, dict) and visual:
@@ -656,12 +656,12 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         section_num += 1
         doc.add_paragraph()
 
-    # Defects - MEE Kézikönyv szerinti kategorizálás
+    # Defects - Szabvány szerinti kategorizálás
     doc.add_heading(f'{section_num}. Feltárt Hibák és Hiányosságok', level=1)
     
-    # MEE severity legend
+    # Severity legend
     sev_legend = doc.add_paragraph()
-    sev_legend.add_run("Hibakategóriák a MEE Kézikönyv szerint:\n").bold = True
+    sev_legend.add_run("Hibakategóriák jelentősége:\n").bold = True
     sev_legend.add_run("(A) Közvetlen élet- és tűzveszély  ")
     sev_legend.add_run("(B) Súlyos hiba (soron kívül javítandó)  ")
     sev_legend.add_run("(C) Karbantartási hiba  ")
@@ -671,7 +671,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     if not d_data:
         doc.add_paragraph("A vizsgálat során nem tártunk fel hibát vagy hiányosságot.")
     else:
-        # MEE severity keyword detection (mirror of frontend logic)
+        # Severity keyword detection (mirror of frontend logic)
         critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 
                        'tűzveszély', 'védővezető hiány', 'beégett', 'érinthető feszültség']
         serious_kw = ['szigetelés', 'rcd nem', 'ávk nem', 'fi-relé nem', 'hurokellenállás',
@@ -684,7 +684,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         for idx, defect in enumerate(d_data, 1):
             desc_lower = defect.get('description', '').lower()
             
-            # Determine MEE severity
+            # Determine severity
             if any(kw in desc_lower for kw in critical_kw):
                 severity = '(A)'
                 sev_name = 'Közvetlen élet- és tűzveszély'
@@ -750,21 +750,21 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             if not std_ref.strip():
                 # Automatikus szabványhivatkozás a hiba tartalom alapján
                 if any(kw in desc_lower for kw in ['védővezető', 'rpe', 'folytonosság']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); MEE Kézikönyv M1; 40/2017. (XII.4.) NGM 5.§'
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.2 (Védővezető folytonosság); 40/2017. (XII.4.) NGM 5.§'
                 elif any(kw in desc_lower for kw in ['szigetelés', 'riso', 'insulation']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); MEE Kézikönyv M6; TvMI 7.7:2026.02.01 §4.3'
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.3 (Szigetelési ellenállás); TvMI 7.7:2026.02.01 §4.3'
                 elif any(kw in desc_lower for kw in ['hurok', 'hurokellenállás', 'hurokimpedancia', 'zs']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4; MEE Kézikönyv M1'
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.6 (Hurokimpedancia); MSZ HD 60364-4-41:2017 §411.4'
                 elif any(kw in desc_lower for kw in ['rcd', 'ávk', 'fi-relé', 'kioldás']):
-                    std_ref = 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1; MEE Kézikönyv M5'
+                    std_ref = 'MSZ HD 60364-6:2017 §61.3.7 (ÁVK vizsgálat); MSZ EN 61008-1'
                 elif any(kw in desc_lower for kw in ['eph', 'potenciál', 'földelés']):
                     std_ref = 'MSZ HD 60364-5-54:2011 §544 (EPH rendszer); MSZ HD 60364-4-41:2017 §411.3.1.2'
                 elif any(kw in desc_lower for kw in ['tűz', 'égett', 'ív']):
                     std_ref = 'TvMI 7.7:2026.02.01 (Tűzvédelmi felülvizsgálat); 54/2014. (XII.5.) BM rendelet (OTSZ)'
                 elif any(kw in desc_lower for kw in ['selv', 'pelv', 'törpe']):
-                    std_ref = 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV); MEE Kézikönyv M2'
+                    std_ref = 'MSZ HD 60364-4-41:2017 §414 (SELV/PELV)'
                 elif any(kw in desc_lower for kw in ['szerszám', 'kéziszerszám']):
-                    std_ref = 'MSZ EN 60745-1 (Kéziszerszámok biztonsága); MEE Kézikönyv M3-M4'
+                    std_ref = 'MSZ EN 60745-1 (Kéziszerszámok biztonsága)-M4'
                 else:
                     std_ref = 'MSZ HD 60364-6:2017 (Villamos berendezések hitelesítése); 40/2017. (XII.4.) NGM rendelet (VMBSZ)'
             dp.add_run(std_ref + "\n")
@@ -872,15 +872,15 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
             doc.add_paragraph(f'[Alaprajz beillesztési hiba: {str(e)}]')
         section_num += 1
             
-    # Result - MEE Handbook Minősítő Irat Változat kezelése
-    doc.add_heading(f'{section_num}. Összefoglaló Minősítés (MEE Handbook)', level=1)
+    # Result - Minősítő Irat Változat kezelése
+    doc.add_heading(f'{section_num}. Összefoglaló Minősítés', level=1)
 
 
     res_p = doc.add_paragraph()
-    r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
+    r_val = c_data.get('reportResult', c_data.get('autoQualification', 'N/A'))
     
-    # MEE Handbook változat szerinti leírás és szín
-    mee_descriptions = {
+    # Minősítő Irat változat szerinti leírás és szín
+    qual_descriptions = {
         'MEGFELELŐ': ('MEGFELELŐ', 'A vizsgált villamos berendezés / rendszer az érvényes szabványoknak és előírásoknak megfelel. Hibát nem tártunk fel. Az üzemeltetés folytatható.', RGBColor(0, 128, 0)),
         'VÁLTOZAT_C': ('C VÁLTOZAT – MEGFELELŐ (kisebb hibákkal)', 'A vizsgált villamos berendezés az MSZ HD 60364 szerint alapvetően megfelelő, azonban kisebb eltérések / hibák kerültek megállapításra, amelyek azonnali veszélyt nem jelentenek. A hibák kijavítása ajánlott a következő időszakos felülvizsgálatig.', RGBColor(255, 140, 0)),
         'VÁLTOZAT_B': ('B VÁLTOZAT – FELTÉTELESEN MEGFELELŐ', 'Súlyos hiba(k) kerültek feltárásra. A hibák kijavítása kötelező! Az ismételt ellenőrzés a javítás elvégzése után szükséges. A berendezés a hibák kijavításáig csak fokozott felügyelet mellett üzemeltethető.', RGBColor(255, 80, 0)),
@@ -888,7 +888,7 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         'NEM MEGFELELŐ': ('NEM MEGFELELŐ – KÖZVETLEN VESZÉLY', 'A vizsgált villamos berendezés közvetlen élet- és/vagy tűzveszélyes állapotban van! Az azonnali üzemen kívül helyezés és a szakszerű javítás KÖTELEZŐ! A berendezés további üzemeltetése tilos.', RGBColor(255, 0, 0)),
     }
     
-    title_text, desc_text, color = mee_descriptions.get(r_val, (r_val, '', RGBColor(128, 128, 128)))
+    title_text, desc_text, color = qual_descriptions.get(r_val, (r_val, '', RGBColor(128, 128, 128)))
     
     res_run = res_p.add_run(title_text)
     res_run.bold = True

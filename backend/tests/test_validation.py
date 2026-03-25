@@ -116,8 +116,8 @@ class TestCalibrationGate:
         assert cal_date < datetime.now()
 
 
-class TestMEEClassification:
-    """MEE Kézikönyv hibakategorizálás egyeztetési tesztek"""
+class TestDefectClassification:
+    """Hibakategorizálás egyeztetési tesztek"""
 
     CRITICAL_A = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés',
                   'tűzveszély', 'védővezető hiány', 'beégett', 'érinthető feszültség']

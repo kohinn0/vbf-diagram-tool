@@ -227,7 +227,7 @@ def generate_pdf_reportlab_stream(
             pass
 
     # Összefoglaló kártya
-    r_val = c_data.get('reportResult', c_data.get('meeQualification', 'N/A'))
+    r_val = c_data.get('reportResult', c_data.get('autoQualification', 'N/A'))
     critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 'tűzveszély']
     serious_kw = ['szigetelés', 'rcd nem', 'ávk nem', 'fi-relé nem', 'hurokellenállás']
     def _is_crit(d):
@@ -339,7 +339,7 @@ def generate_pdf_reportlab_stream(
     section_num += 1
 
     # Minősítés
-    story.append(Paragraph(f"{section_num}. Összefoglaló Minősítés (MEE Handbook)", styles['H1']))
+    story.append(Paragraph(f"{section_num}. Összefoglaló Minősítés", styles['H1']))
     story.append(Paragraph(r_val, styles['Body']))
     disclaimer = (
         "Az ellenőrzés csak a szemrevételezéssel és jelentős bontás nélkül megközelíthető részekre, "

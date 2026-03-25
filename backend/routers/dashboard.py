@@ -359,7 +359,7 @@ def _analyze_defects_from_query(db: Session, report_query) -> dict:
             total_defects += 1
             desc = (d.get('description') or '').lower()
 
-            # Auto-classify based on keywords (mirroring frontend autoDetectMEE)
+            # Auto-classify based on keywords (mirroring frontend autoDetectQualification)
             cat = _classify_defect(desc)
             category_counts[cat] += 1
 

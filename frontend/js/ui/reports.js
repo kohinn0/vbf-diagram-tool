@@ -293,7 +293,7 @@ export function initReports() {
         return { valid: errors.length === 0, errors, warnings };
     }
 
-    function autoDetectMEEQualification() {
+    function autoDetectQualification() {
         let hasAnyDefect = false;
         let hasCriticalDefect = false;
         let hasSeriousDefect = false;
@@ -407,7 +407,7 @@ export function initReports() {
             },
             buildingOtsz: document.getElementById('buildingOtsz')?.value || '',
             standardReference: 'TvMI 7.7:2026.02.01',
-            meeQualification: document.getElementById('reportResult')?.value || '',
+            autoQualification: document.getElementById('reportResult')?.value || '',
             nextInspectionDate: calculateNextInspectionDate(document.getElementById('buildingOtsz')?.value || ''),
             siteTree: (window.VBF && window.VBF.siteTree) ? window.VBF.siteTree.toJSON() : []
         };
@@ -518,7 +518,7 @@ export function initReports() {
             if (!confirm('⚠️ Figyelmeztetések:\n\n' + validation.warnings.join('\n\n') + '\n\nFolytatod a mentést a hiányosságok ellenére?')) return false;
         }
 
-        const autoQualification = autoDetectMEEQualification();
+        const autoQualification = autoDetectQualification();
         const currentResult = document.getElementById('reportResult')?.value || '';
 
         if (!silent && autoQualification !== currentResult) {

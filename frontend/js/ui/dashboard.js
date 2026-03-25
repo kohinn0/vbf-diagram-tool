@@ -133,7 +133,7 @@ export function initDashboard() {
             analyticsRow.innerHTML = `
                 <div class="panel-glass flex flex-col rounded-[var(--radius)]">
                     <h3 class="mb-1 text-base font-semibold text-[var(--text-main)]">Hibakategóriák</h3>
-                    <p class="mb-4 text-[0.8125rem] text-[var(--text-muted)]">MEE szerinti megoszlás</p>
+                    <p class="mb-4 text-[0.8125rem] text-[var(--text-muted)]">Minősítés szerinti megoszlás</p>
                     <div class="relative min-h-[260px] w-full flex-1 px-2 pb-4 pt-1 sm:px-4"><canvas id="chartDefects"></canvas></div>
                 </div>
                 <div class="panel-glass rounded-[var(--radius)]">
