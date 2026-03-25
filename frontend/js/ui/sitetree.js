@@ -121,9 +121,9 @@ export function initSiteTree() {
 
             if (type === 'rpe') {
                 window.createRow('table-rpe', `
-                    <td><input type="number" class="meas-point" placeholder="1"></td>
+                    <td><input type="text" inputmode="decimal" class="meas-point" placeholder="1"></td>
                     <td><input type="text" class="meas-loc" value="${safePath}"></td>
-                    <td><input type="number" step="0.01" class="meas-val" placeholder="0.12" oninput="window.validateRpe(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-val" placeholder="0.12" oninput="window.validateRpe(this.closest('tr'))"></td>
                     <td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>
                 `, node.id);
             } else if (type === 'loop') {
@@ -131,27 +131,27 @@ export function initSiteTree() {
                     <td><input type="text" class="meas-circuit" value="${safeName}" list="circuitNames"></td>
                     <td><input type="text" class="meas-device" value="${safeDeviceStr}" oninput="window.validateZs(this.closest('tr'))"></td>
                     <td><input type="text" class="meas-loc" value="${safePath}"></td>
-                    <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="window.validateZs(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-zs" placeholder="0.85" oninput="window.validateZs(this.closest('tr'))"></td>
                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             } else if (type === 'rcd') {
                 window.createRow('table-rcd', `
                     <td><input type="text" class="meas-circuit" value="${safeName}" list="circuitNames"></td>
                     <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
-                    <td><input type="number" class="meas-idn" value="30" oninput="window.validateRcd(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" class="meas-idn" value="30" oninput="window.validateRcd(this.closest('tr'))"></td>
                     <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
-                    <td><input type="number" step="1" class="meas-t1" placeholder="24" oninput="window.validateRcd(this.closest('tr'))"></td>
-                    <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="window.validateRcd(this.closest('tr'))"></td>
-                    <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="window.validateRcd(this.closest('tr'))"></td>
-                    <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                    <td><input type="text" inputmode="decimal" step="1" class="meas-t1" placeholder="24" oninput="window.validateRcd(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="1" class="meas-t5" placeholder="12" oninput="window.validateRcd(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-ramp" placeholder="21" oninput="window.validateRcd(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-uc" placeholder="1.2"></td>
                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             } else if (type === 'insulation') {
                 window.createRow('table-insulation', `
                     <td><input type="text" class="meas-circuit" value="${safePath}" list="circuitNames"></td>
-                    <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
-                    <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
-                    <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-ln" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-lpe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
+                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-npe" placeholder=">999" oninput="window.validateIns(this.closest('tr'))"></td>
                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                 `, node.id);
             }

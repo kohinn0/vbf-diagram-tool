@@ -39,9 +39,9 @@ export function initPadfx() {
                         if (l.includes('rpe') || l.includes('continuity') || l.includes('folytonosság')) {
                             if (val !== "") {
                                 window.createRow('table-rpe', `
-                                    <td><input type="number" class="meas-point" value="${++rpeCount}"></td>
+                                    <td><input type="text" inputmode="decimal" class="meas-point" value="${++rpeCount}"></td>
                                     <td><input type="text" class="meas-loc" value="CSV Import"></td>
-                                    <td><input type="number" step="0.01" class="meas-val" value="${val}" oninput="validateRpe(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-val" value="${val}" oninput="validateRpe(this.closest('tr'))"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-rpe tbody tr:last-child');
@@ -54,9 +54,9 @@ export function initPadfx() {
                             if (val !== "") {
                                 window.createRow('table-insulation', `
                                     <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
-                                    <td><input type="number" step="0.1" class="meas-ln" value="${val}" oninput="validateIns(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-ln" value="${val}" oninput="validateIns(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-insulation tbody tr:last-child');
@@ -71,7 +71,7 @@ export function initPadfx() {
                                     <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
                                     <td><input type="text" class="meas-device" value="C16" oninput="validateZs(this.closest('tr'))"></td>
                                     <td><input type="text" class="meas-loc" value=""></td>
-                                    <td><input type="number" step="0.01" class="meas-zs" value="${val}" oninput="validateZs(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-zs" value="${val}" oninput="validateZs(this.closest('tr'))"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-loop tbody tr:last-child');
@@ -85,12 +85,12 @@ export function initPadfx() {
                                 window.createRow('table-rcd', `
                                     <td><input type="text" class="meas-circuit" value="CSV Import" list="circuitNames"></td>
                                     <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
-                                    <td><input type="number" class="meas-idn" value="30" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" class="meas-idn" value="30" oninput="validateRcd(this.closest('tr'))"></td>
                                     <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
-                                    <td><input type="number" step="1" class="meas-t1" value="${val}" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                                    <td><input type="text" inputmode="decimal" step="1" class="meas-t1" value="${val}" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-uc" placeholder="1.2"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-rcd tbody tr:last-child');
@@ -141,9 +141,9 @@ export function initPadfx() {
                             if (m.type === "Rpe Folytonosság") {
                                 const val = m.results["r_43"] || m.results["r_46"] || "";
                                 window.createRow('table-rpe', `
-                                    <td><input type="number" class="meas-point" value="${++rpeCount}"></td>
+                                    <td><input type="text" inputmode="decimal" class="meas-point" value="${++rpeCount}"></td>
                                     <td><input type="text" class="meas-loc" value="${m.location}"></td>
-                                    <td><input type="number" step="0.01" class="meas-val" value="${parseFloat(val) || val}" oninput="validateRpe(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-val" value="${parseFloat(val) || val}" oninput="validateRpe(this.closest('tr'))"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 // Automatikus validáció futtatása
@@ -165,7 +165,7 @@ export function initPadfx() {
                                     <td><input type="text" class="meas-circuit" value="${m.location}" list="circuitNames"></td>
                                     <td><input type="text" class="meas-device" value="${device}" oninput="validateZs(this.closest('tr'))"></td>
                                     <td><input type="text" class="meas-loc" value="${m.location}"></td>
-                                    <td><input type="number" step="0.01" class="meas-zs" value="${zsVal}" oninput="validateZs(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.01" class="meas-zs" value="${zsVal}" oninput="validateZs(this.closest('tr'))"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-loop tbody tr:last-child');
@@ -177,12 +177,12 @@ export function initPadfx() {
                                 window.createRow('table-rcd', `
                                     <td><input type="text" class="meas-circuit" value="${m.location}" list="circuitNames"></td>
                                     <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
-                                    <td><input type="number" class="meas-idn" value="${idn}" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" class="meas-idn" value="${idn}" oninput="validateRcd(this.closest('tr'))"></td>
                                     <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
-                                    <td><input type="number" step="1" class="meas-t1" value="${t1}" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
-                                    <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                                    <td><input type="text" inputmode="decimal" step="1" class="meas-t1" value="${t1}" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
+                                    <td><input type="text" inputmode="decimal" step="0.1" class="meas-uc" placeholder="1.2"></td>
                                     ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                                 `);
                                 const lastRow = document.querySelector('#table-rcd tbody tr:last-child');
@@ -192,9 +192,9 @@ export function initPadfx() {
                                 const ln = m.results["r_11"] || m.results["r_14"] || "";
                                 window.createRow('table-insulation', `
                                 <td><input type="text" class="meas-circuit" value="${m.location}" list="circuitNames"></td>
-                                <td><input type="number" step="0.1" class="meas-ln" value="${ln || ''}" oninput="validateIns(this.closest('tr'))"></td>
-                                <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                                <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                <td><input type="text" inputmode="decimal" step="0.1" class="meas-ln" value="${ln || ''}" oninput="validateIns(this.closest('tr'))"></td>
+                                <td><input type="text" inputmode="decimal" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                                <td><input type="text" inputmode="decimal" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                                 ${window.vbfMeasPassCellHtmlFromPass ? window.vbfMeasPassCellHtmlFromPass('Igen') : '<td><select class="meas-pass"><option>Igen</option><option>Nem</option></select></td>'}
                             `);
                                 const lastRow = document.querySelector('#table-insulation tbody tr:last-child');

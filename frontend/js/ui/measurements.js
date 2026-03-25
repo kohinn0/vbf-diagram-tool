@@ -104,9 +104,9 @@ export function initMeasurements() {
         const gloc = document.getElementById('globalLocation')?.value || '';
         const safeGloc = window.VBF && VBF.sanitize ? VBF.sanitize.attr(gloc) : gloc;
         window.createRow('table-rpe', `
-                <td><input type="number" class="meas-point" placeholder="1"></td>
+                <td><input type="text" inputmode="decimal" class="meas-point" placeholder="1"></td>
                 <td><input type="text" class="meas-loc" placeholder="PE sín - Gázcső" value="${safeGloc}"></td>
-                <td><input type="number" step="0.01" class="meas-val" placeholder="0.12" oninput="validateRpe(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.01" class="meas-val" placeholder="0.12" oninput="validateRpe(this.closest('tr'))"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
@@ -140,8 +140,19 @@ export function initMeasurements() {
     // ─── RPE — Védővezető folytonosság ───────────────────────────────────────
     window.validateRpe = function (tr) {
         const valInput = tr.querySelector('.meas-val');
-        const val = parseFloat(valInput.value);
         const passSelect = tr.querySelector('.meas-pass');
+        if (!valInput) return;
+        const strVal = (valInput.value || '').trim().toLowerCase();
+        
+        if (['-', 'n/a', 'na', 'kettős', 'kettos', 'ii', 'ii.'].some(x => strVal === x || strVal.includes('kettős') || strVal.includes('kettos') || strVal.includes('ii.'))) {
+            vbfMeasSetInputState(valInput, 'ok');
+            if (passSelect) passSelect.value = 'Igen';
+            setMeasTooltip(valInput, '✅ Kettős szigetelésű berendezés vagy elhagyott mérés');
+            window.vbfSyncMeasPassUI(tr);
+            return;
+        }
+
+        const val = parseFloat(strVal.replace(',', '.'));
         if (isNaN(val)) return;
 
         // MSZ HD 60364-6:2017 §61.3.2: R_pe ≤ 1 Ω (± mérési bizonytalanság)
@@ -171,9 +182,9 @@ export function initMeasurements() {
         const safeGloc = window.VBF && VBF.sanitize ? VBF.sanitize.attr(gloc) : gloc;
         window.createRow('table-insulation', `
                 <td><input type="text" class="meas-circuit" placeholder="L1 - Világítás" list="circuitNames" value="${safeGloc ? safeGloc + ' - ' : ''}"></td>
-                <td><input type="number" step="0.1" class="meas-ln" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                <td><input type="number" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
-                <td><input type="number" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-ln" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-lpe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-npe" placeholder=">999" oninput="validateIns(this.closest('tr'))"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
@@ -188,9 +199,18 @@ export function initMeasurements() {
         const LIMIT = 1.0;
         const WARN  = 2.0;  // sárga: megfelel, de közel a határhoz
         let isOk = true; let anyFilled = false;
+        
         [lnI, lpeI, npeI].forEach(inp => {
             if (!inp) return;
-            const v = parseFloat(inp.value);
+            const strVal = (inp.value || '').trim().toLowerCase();
+            if (['-', 'n/a', 'na', 'kettős', 'kettos', 'ii', 'ii.'].some(x => strVal === x || strVal.includes('kettős') || strVal.includes('kettos') || strVal.includes('ii.'))) {
+                vbfMeasSetInputState(inp, 'ok');
+                setMeasTooltip(inp, '✅ Kettős szigetelés vagy nem releváns vizsgáló áramkör');
+                anyFilled = true;
+                return;
+            }
+
+            const v = parseFloat(strVal.replace(',', '.'));
             if (!isNaN(v)) {
                 anyFilled = true;
                 if (v < LIMIT) {
@@ -223,7 +243,7 @@ export function initMeasurements() {
                 <td><input type="text" class="meas-circuit" placeholder="Dugalj 1. szoba" list="circuitNames"></td>
                 <td><input type="text" class="meas-device" placeholder="B16" value="${safeGdev}" oninput="validateZs(this.closest('tr'))"></td>
                 <td><input type="text" class="meas-loc" placeholder="E1/4" value="${safeGloc}"></td>
-                <td><input type="number" step="0.01" class="meas-zs" placeholder="0.85" oninput="validateZs(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.01" class="meas-zs" placeholder="0.85" oninput="validateZs(this.closest('tr'))"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
@@ -231,8 +251,19 @@ export function initMeasurements() {
     window.validateZs = function (tr) {
         const deviceVal = (tr.querySelector('.meas-device')?.value || '').toUpperCase().trim();
         const zsInput = tr.querySelector('.meas-zs');
-        const zsVal = parseFloat(zsInput?.value);
         const passSelect = tr.querySelector('.meas-pass');
+        if (!zsInput) return;
+
+        const strVal = (zsInput.value || '').trim().toLowerCase();
+        if (['-', 'n/a', 'na', 'kettős', 'kettos', 'ii', 'ii.'].some(x => strVal === x || strVal.includes('kettős') || strVal.includes('kettos') || strVal.includes('ii.'))) {
+            vbfMeasSetInputState(zsInput, 'ok');
+            if (passSelect) passSelect.value = 'Igen';
+            setMeasTooltip(zsInput, '✅ Kettős szigetelésű berendezés (nem mérendő)');
+            window.vbfSyncMeasPassUI(tr);
+            return;
+        }
+
+        const zsVal = parseFloat(strVal.replace(',', '.'));
         if (!deviceVal || isNaN(zsVal)) return;
 
         const maxZs = calcZsMax(deviceVal);
@@ -264,12 +295,12 @@ export function initMeasurements() {
         window.createRow('table-rcd', `
                 <td><input type="text" class="meas-circuit" placeholder="Fürdő ÁVK" list="circuitNames"></td>
                 <td><select class="meas-type"><option>AC</option><option selected>A</option><option>B</option><option>F</option></select></td>
-                <td><input type="number" class="meas-idn" placeholder="30" oninput="validateRcd(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" class="meas-idn" placeholder="30" oninput="validateRcd(this.closest('tr'))"></td>
                 <td><select class="meas-05"><option>OK (Nem oldott)</option><option>HIBA (Kioldott)</option></select></td>
-                <td><input type="number" step="1" class="meas-t1" placeholder="24" oninput="validateRcd(this.closest('tr'))"></td>
-                <td><input type="number" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
-                <td><input type="number" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
-                <td><input type="number" step="0.1" class="meas-uc" placeholder="1.2"></td>
+                <td><input type="text" inputmode="decimal" step="1" class="meas-t1" placeholder="24" oninput="validateRcd(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="1" class="meas-t5" placeholder="12" oninput="validateRcd(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-ramp" placeholder="21" oninput="validateRcd(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-uc" placeholder="1.2"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
@@ -371,7 +402,7 @@ export function initMeasurements() {
         window.createRow('table-tools', `
                 <td><input type="text" class="meas-name" placeholder="Ütvefúró"></td>
                 <td><input type="text" class="meas-id" placeholder="HILTI-01"></td>
-                <td><input type="number" step="0.1" class="meas-val" placeholder="50" oninput="validateTool(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.1" class="meas-val" placeholder="50" oninput="validateTool(this.closest('tr'))"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
@@ -420,7 +451,7 @@ export function initMeasurements() {
                 <td><input type="text" class="meas-loc" placeholder="EPH sín"></td>
                 <td><input type="text" class="meas-mat" placeholder="Cu 6mm2"></td>
                 <td><select class="meas-conn"><option>EPH bilincs</option><option>Szemes saru</option><option>Hegesztett</option><option>Wago/Sorkapocs</option></select></td>
-                <td><input type="number" step="0.01" class="meas-val" placeholder="0.15" oninput="validateEph(this.closest('tr'))"></td>
+                <td><input type="text" inputmode="decimal" step="0.01" class="meas-val" placeholder="0.15" oninput="validateEph(this.closest('tr'))"></td>
                 ${window.vbfMeasPassCellHtmlFromPass('Igen')}
             `);
     });
