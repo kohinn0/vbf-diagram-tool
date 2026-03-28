@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true" role="img">
-  <defs>
-    <linearGradient id="vbfBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7eb8d4"/>
-      <stop offset="100%" stop-color="#4a9ec4"/>
-    </linearGradient>
-  </defs>
-  <path fill="url(#vbfBoltGrad)" d="M27 2L15 24h8l-6 22 16-22h-8L27 2z"/>
-</svg>

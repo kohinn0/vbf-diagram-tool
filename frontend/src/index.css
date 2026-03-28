@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-main: var(--bg-main);
+  --color-bg-card: var(--bg-card);
+  --color-bg-input: var(--bg-input);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+
+  --radius-vbf: var(--radius);
+  --font-sans: 'Outfit', system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    /* --- Sötét mód – magasabb kontraszt --- */
+    --bg-main: #060d1a;        /* Legmélyebb háttér */
+    --bg-card: #0f1f38;        /* Kártya háttér – jól elválik a main-től */
+    --bg-input: #1a3050;       /* Input / hover állapot */
+
+    --border-color: #2a527a;   /* Jól látható kék szegély */
+
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --accent: #fbbf24;
+
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    --text-main: #f0f6ff;          /* Tiszta fehér-kék árnyalat */
+    --text-muted: #6b8cad;         /* Halványabb szürke-kék */
+    --text-muted-strong: #a8c0d6;  /* Közép erősségű szöveg */
+
+    --radius: 8px;
+    --vbf-panel-padding: 1.5rem;
+    --vbf-panel-padding-md: 2rem;
+  }
+
+  .light-mode {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-input: #e2e8f0;
+
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --accent: #d97706;
+
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+

@@ -1,73 +1,148 @@
-# VBF / EPH Érintésvédelmi Rajzkészítő és Jegyzőkönyv Generáló SaaS
+# VBF Premium – Villamos Biztonsági Felülvizsgálati SaaS
 
-Modern, interaktív, vállalati szintű felhőalkalmazás (SaaS) **villamos biztonsági felülvizsgálati (VBF)** és **EPH** jegyzőkönyvek / nyilatkozatok rögzítéséhez, alaprajzok felvételéhez és automatizált jegyzőkönyvek generálásához. *Jelenleg a rendszer VBF és EPH generátor; a villámvédelmi felülvizsgálati (VVF) modul később kerül bele.*
+Modern, interaktív, vállalati szintű felhőalkalmazás (SaaS) **villamos biztonsági felülvizsgálati (VBF)** és **EPH** jegyzőkönyvek / nyilatkozatok rögzítéséhez, alaprajzok felvételéhez és automatizált, szabványos dokumentumok generálásához. *A villámvédelmi felülvizsgálati (VVF) modul fejlesztés alatt áll.*
 
-A rendszer tartalmaz egy Fabric.js alapú rajzoló felületet, okos Offline hálózatkezelést, QR kód szkennert, RBAC jogosultságkezelést és egy FastAPI alapú Python backendet a professzionális Word és elektronikusan aláírt PDF jegyzőkönyvek ipari előállításához.
+A rendszer Fabric.js alapú rajzoló felülettel, okos offline hálózatkezeléssel, QR kód szkenneléssel, RBAC jogosultságkezeléssel és FastAPI Python backenddel rendelkezik a professzionális Word és elektronikusan aláírt PDF dokumentumok előállításához.
 
-## 🚀 Főbb funkciók és Képességek
+---
 
-*   **🛡️ Szerepkör alapú jogosultságkezelés (RBAC)**: Adminisztrátorok osztanak ki naptárban feladatokat (munkákat), kezelik az előfizetéseket és a felhasználókat. A szerelők (TECH) csak a nekik szánt egyszerűsített felületet, naptárat és rajztáblát látják.
-*   **📡 Okos Offline Szinkronizáció (PWA szerű működés)**: Nincs internet a pincében? Semmi gond! A rendszer háttérben figyeli a hálózatot. Ha megszakad az internet, az alkalmazás "Offline Módba" kapcsol, a telefon memóriájában tárolja a munkát, és amint lesz térerő, a technikus egyetlen gombnyomással felküldi a módosított vagy új jegyzőkönyveket a felhőbe.
-*   **🌓 Prémium Élmény (Világos / Sötét mód)**: Modern, gyönyörű, testreszabható felület azonnali Dark/Light mode váltással, ami böngésző szinten megjegyzi a preferenciádat.
-*   **📷 QR Kódos Eszközmenedzsment & Képfeltöltés**: Beépített kamerás QR szkenner a jegyzőkönyvek azonnali beolvasásához. A mérésekhez (pl. egy RPE kötési ponthoz) a technikus a helyszínen fotókat is csatolhat, amik bekerülnek a Word mellékletébe!
-*   **🤖 Automatizált Hibagenerálás**: Egy gombnyomásra kielemzi az összes mérési lapot (táblázatot), és a "Nem" megfelelt értékekből automatikusan legenerálja a Feltárt Hibák és Hiányosságok listáját fotókkal és leírásokkal együtt.
-*   **🔒 Jegyzőkönyv Véglegesítés (Lock)**: Elkészült jegyzőkönyvek fagyasztása biztonsági és jogi okokból.
-*   **📄 Fejlett Export**: Valós idejű, formázott DOCX (Word) dokumentumok és szerverszinten elektronikusan aláírt PDF-ek (PyHanko és LibreOffice headless motorral) előállítása.
-*   **🛡️ Adatvédelem (GDPR)**: Adatkezelési tájékoztató, adatexport (adathordozhatóság), fióktörlés (törlés joga), süti tájékoztató és elfogadó, audit napló anonimizálás törléskor.
+## 🚀 Főbb funkciók
+
+- **🛡️ RBAC jogosultságkezelés** – Adminok osztanak ki feladatokat; a szerelők (TECH) csak a nekik szánt egyszerűsített naptáros és rajzos felületet látják.
+- **📡 Offline szinkronizáció (PWA)** – Nincs net a pincében? Az app offline módban menti a munkát a böngészőben, majd egyetlen gombnyomással szinkronizál.
+- **🌓 Sötét / Világos mód** – Modern design system CSS változókkal, azonnali témaváltással.
+- **📷 QR kód & képfeltöltés** – Beépített kamerás QR szkenner, fotómellékletek a Word exporthoz.
+- **🤖 Automatikus hibagenerálás** – Egy kattintásra elemzi a mérési lapokat, és legenerálja a feltárt hibák listáját.
+- **🔒 Zárolás** – Elkészült jegyzőkönyvek fagyasztása jogi és biztonsági okokból.
+- **📄 Export** – Valós idejű DOCX és elektronikusan aláírt PDF (PyHanko + LibreOffice headless).
+- **🛡️ GDPR** – Adatkezelési tájékoztató, adatexport, fióktörlés, audit napló.
+
+---
 
 ## 🛠️ Technológiai Stack
 
-*   **Frontend**: HTML5, Vanilla JavaScript (Moduláris), Tiszta CSS változókkal (Design System), Fabric.js (rajz), `html5-qrcode`.
-*   **Backend**: Python 3.11, FastAPI, SQLAlchemy (ORM), python-docx (DOCX manipuláció), pyhanko (PDF e-Aláírás).
-*   **Csomagolás és Adatbázis**: SQLite (a `backend/data` mappában tárolva), teljes Docker & Docker Compose ökoszisztéma LibreOffice csomagokkal a PDF konverzióhoz.
+### Frontend (Új – React)
+| Technológia | Verzió / Csomag | Cél |
+|---|---|---|
+| **React** | 19 | UI framework |
+| **TypeScript** | 5+ | Típusbiztonság |
+| **Vite** | 6 | Build eszköz, dev szerver |
+| **Tailwind CSS** | 4 | Utility-first stílusozás |
+| **Zustand** | persist middleware | Állapotkezelés (kosár, draft adatok) |
+| **React Router** | v7 | Routing (`/`, `/app/*`) |
+| **Fabric.js** | 6 | Vászon alapú elosztó rajzoló |
+| **Lucide React** | – | Ikonkészlet |
 
-## 📐 Frontend rétegek (átlátható felosztás)
-
-A felület három, cél szerint szétválasztott rétegben érhető el:
-
-| Réteg | Fájl | Cél |
-|--------|------|-----|
-| **Webshop** | `index.html` | Főoldal: árazás, vásárlás (utalás), kapcsolat. Regisztráció = vásárlás. |
-| **Cég admin** | `shop.html` | Dashboard (statisztikák, grafikonok), Admin (felhasználók, cégek, csomagok, megrendelések, fizetési előzmények, céges beállítások, munkakiosztás). Csak admin jogosultságúaknak. |
-| **Jegyzőkönyv alkalmazás** | `app.html` | Naptár és feladatok, rajz, jegyzőkönyv adatok, hibajegyzék, mérések, mentett ügyek, törzsadatok. Adminnak innen link a Cég admin felületre. |
-
-Részletesebb leírás: `ARCHITECTURE.md`.
-
-## 🐳 Futtatás Dockerrel (Ajánlott / Éles Környezet)
-
-A projekt teljes egészében, minden függőségével (PDF motorok, adatbázis) futtatható egyetlen pillanat alatt Docker és Docker Compose segítségével.
-
-1. **Klónozd a repót**:
-   ```bash
-   git clone https://github.com/kohinn0/vbf-diagram-tool.git
-   cd vbf-diagram-tool
-   ```
-
-2. **Indítsd el a konténereket a háttérben**:
-   ```bash
-   docker-compose up -d --build
-   ```
-
-3. **Használat**:
-   *   A frontend applikáció (Web kliens) elérhető: [http://localhost](http://localhost) vagy az adott gép / NAS IP címén (pl: `http://192.168.1.100`)
-   *   A backend API elérhető (FastAPI Docs Swagger): [http://localhost:8001/docs](http://localhost:8001/docs)
-
-4. **Frissítés (kód / image újraépítése)**:
-   ```bash
-   git pull
-   docker-compose up -d --build
-   ```
-   A `--build` újraépíti a frontend és backend image-eket a legfrissebb kódból, majd újraindítja a konténereket. Az adatbázis (SQLite a `vbf_data` volume-on) megmarad. Ha csak a konténereket akarod újraindítani build nélkül: `docker-compose up -d`.
-
-   **Fontos:** a frontend konténer a **`npm run build`** kimenetét (`frontend/dist/`) szolgálja ki. Ha a főoldal „nyers”, stílus nélküli HTML-ként jelenik meg, gyakran az a ok, hogy forrás `index.html` került nginx alá build nélkül, vagy lejárat / hiányzó `assets/` mappa. Mindig **`docker-compose up -d --build`** a frontend változás után. Kézi kiszolgáláshoz: `cd frontend && npm run build`, majd a **`dist/`** teljes tartalmát tedd a webszerver gyökerébe.
-
-*Alapértelmezett első belépés: Készíts egy felhasználót, az legelső regisztráló automatikusan ADMIN jogot kap az egész alkalmazás felett!*
-
-## 📁 Projekt struktúra (Nagyvonalakban)
-
-*   `frontend/`: Statikus fájlok, HTML beépített templatekkel, Moduláris CSS archtektúra és PWA JS alkalmazás kódja.
-*   `backend/`: Microservice orientált FastAPI alkalmazás (`main.py`, `generator.py` API-kkal), SQLite adatbázis relációkkal.
-*   `docker-compose.yml`: DevOps leíró konfiguráció az élesítéshez.
+### Backend
+| Technológia | Cél |
+|---|---|
+| **Python 3.11 + FastAPI** | REST API |
+| **SQLAlchemy + SQLite** | ORM és adatbázis |
+| **python-docx** | DOCX generálás |
+| **PyHanko + LibreOffice** | PDF e-Aláírás |
 
 ---
-VBF / EPH Cloud SaaS © 2026. Minden jog fenntartva.
+
+## 📐 Alkalmazás rétegek
+
+| Réteg | Útvonal | Cél |
+|---|---|---|
+| **Landing / Webshop** | `/` | Főoldal: funkciók, árazás, kosár (utalásos), kapcsolat |
+| **Diagram Tool** | `/app/*` | Naptár, rajz, VBF/EPH adatok, mérések, hibajegyzék, export |
+| **Admin** | `/app/admin` | Felhasználók, cégek, csomagok, megrendelések (csak ADMIN) |
+
+---
+
+## 🐳 Futtatás Dockerrel (Éles környezet)
+
+```bash
+# Klónozás
+git clone https://github.com/kohinn0/vbf-diagram-tool.git
+cd vbf-diagram-tool
+
+# Indítás (build + háttérben)
+docker-compose up -d --build
+
+# Elérhetőség
+# Frontend:  http://localhost  (vagy a NAS/szerver IP-je)
+# API docs:  http://localhost:8001/docs
+```
+
+**Frissítés:**
+```bash
+git pull
+docker-compose up -d --build
+```
+
+> **Fontos:** A frontend konténer az `npm run build` kimenetét (`frontend/dist/`) szolgálja ki nginx-szel. Kód változtatás után mindig `--build` szükséges.
+>
+> *Az első regisztrált felhasználó automatikusan ADMIN jogot kap.*
+
+---
+
+## 💻 Fejlesztői környezet (Helyi futtatás)
+
+### Frontend (React + Vite)
+
+```bash
+cd frontend
+
+# Függőségek telepítése
+npm install
+
+# Dev szerver indítása (http://localhost:5173)
+npm run dev
+```
+
+### Backend (FastAPI)
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8001
+```
+
+---
+
+## 📁 Projekt struktúra
+
+```
+vbf-diagram-tool/
+├── frontend/               # ✨ Új React + TypeScript frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── landing/    # HeroSection, PricingSection, FaqSection, stb.
+│   │   │   ├── diagram/    # CanvasWorkspace, MeasurementsTab, DefectsTab
+│   │   │   └── auth/       # LoginModal
+│   │   ├── pages/          # Landing.tsx, DiagramTool.tsx
+│   │   ├── store/          # Zustand: cartStore, draftStore
+│   │   └── lib/            # api.ts, utils.ts
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── backend/                # FastAPI Python backend
+│   ├── main.py
+│   └── generator.py
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## 📋 Fejlesztési státusz
+
+| Modul | Státusz |
+|---|---|
+| Landing Page (React) | ✅ Kész |
+| Webshop / Kosár (Zustand) | ✅ Kész |
+| Bejelentkezés (LoginModal) | ✅ Kész |
+| DiagramTool shell + routing | ✅ Kész |
+| CanvasWorkspace (Fabric.js) | ✅ Kész |
+| MeasurementsTab | ✅ Kész |
+| DefectsTab (Hibajegyzék) | ✅ Kész |
+| PDF / Word export (backend) | ✅ Kész |
+| VVF modul | 🔄 Fejlesztés alatt |
+
+---
+
+VBF Premium © 2026 – Szakembertől szakembereknek. Minden jog fenntartva.
