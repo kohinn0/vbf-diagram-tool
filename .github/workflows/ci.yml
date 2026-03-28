@@ -83,19 +83,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
       
-      - name: Check HTML entry point
-        run: |
-          python -c "
-          import re
-          with open('frontend/app.html', 'r', encoding='utf-8') as fh:
-              content = fh.read()
-              scripts = re.findall(r'<script[^>]*src=\"([^\"]+)\"', content)
-              if 'js/main.js' not in str(scripts) and 'main.js' not in str(scripts) and 'app.js' not in str(scripts):
-                  raise Exception('app.html must load main.js or app.js')
-          if not open('frontend/index.html').read():
-              raise Exception('index.html missing')
-          print('HTML entry OK')
-          "
+      # A Vite build folyamat automatikusan validálja az entry pointot (index.html) és a függőségeket
       
       - name: Install and build frontend
         run: |
@@ -146,9 +134,9 @@ jobs:
           # Search for potential secrets in code
           echo "Scanning for hardcoded secrets..."
           ! grep -rn "sk_live\|sk_test_[a-zA-Z0-9]\{20,\}\|password\s*=\s*['\"][^'\"]\{8,\}['\"]" \
-            --include="*.py" --include="*.js" \
+            --include="*.py" --include="*.js" --include="*.tsx" --include="*.ts" \
             --exclude-dir=node_modules --exclude-dir=__pycache__ \
-            backend/ frontend/js/ || echo "⚠️ Potential secrets found - review needed"
+            backend/ frontend/src/ || echo "⚠️ Potential secrets found - review needed"
       
       - name: Python dependency vulnerability scan
         run: |
