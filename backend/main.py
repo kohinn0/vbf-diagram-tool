@@ -91,6 +91,8 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 import database
 
+database.init_db()
+
 os.makedirs("data", exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
 

@@ -37,7 +37,7 @@ A rendszer Fabric.js alapú rajzoló felülettel, okos offline hálózatkezelés
 | Technológia | Cél |
 |---|---|
 | **Python 3.11 + FastAPI** | REST API |
-| **SQLAlchemy + SQLite** | ORM és adatbázis |
+| **SQLAlchemy + SQLite / PostgreSQL** | ORM; éles SaaS-hoz `DATABASE_URL` (lásd `ELESITES.md`, `docker-compose.postgres.yml`) |
 | **python-docx** | DOCX generálás |
 | **PyHanko + LibreOffice** | PDF e-Aláírás |
 

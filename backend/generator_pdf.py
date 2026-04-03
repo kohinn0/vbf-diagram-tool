@@ -24,6 +24,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 import database
 from database import Report
+from generator import _normalize_measurements_block
+from measurement_thresholds import MEASUREMENT_THRESHOLDS_BODY, MEASUREMENT_THRESHOLDS_TITLE
 
 # Helvetica mindig elérhető; DejaVu támogatja az ékezetes karaktereket (Docker: fonts-dejavu-core)
 FONT_NAME = 'Helvetica'
@@ -128,7 +130,7 @@ def _get_settings(report: Report, db) -> Optional[object]:
 def _build_integrity_data(report: Report, c_data: dict, d_data: list, r_val: str, rep_id_str: str) -> dict:
     meas = c_data.get('measurement_count', {}) or {}
     if not meas and report.measurements_data:
-        m0 = report.measurements_data[0] if report.measurements_data else {}
+        m0 = _normalize_measurements_block(report.measurements_data)
         meas = {
             'rpe': len(m0.get('rpe', []) if isinstance(m0, dict) else []),
             'riso': len(m0.get('insulation', []) if isinstance(m0, dict) else []),
@@ -165,9 +167,7 @@ def generate_pdf_reportlab_stream(
 
     c_data = report.client_data or {}
     d_data = report.defects_data or []
-    meas_data = report.measurements_data[0] if report.measurements_data else {}
-    if not isinstance(meas_data, dict):
-        meas_data = {}
+    meas_data = _normalize_measurements_block(report.measurements_data)
 
     company_name = getattr(settings, 'company_name', None) or "VBF Program"
 
@@ -247,17 +247,31 @@ def generate_pdf_reportlab_stream(
     ]
     story.append(Paragraph("ÖSSZEFOGLALÓ KÁRTYA", styles['H2']))
     story.append(_table_from_rows([['Mező', 'Érték']] + card_data))
+    story.append(Spacer(1, 0.25 * cm))
+    story.append(Paragraph(
+        "Az Összefoglaló kártya a jegyzőkönyv azonosító adatait és a minősítés rövid eredményét foglalja össze. "
+        "A részletes szemrevételezéses megállapítások, mérési táblázatok, feltárt hibák és a végleges minősítés indoklása "
+        "a dokumentum következő fejezeteiben található; ezek együttesen alkotják a teljes szakmai dokumentációt.",
+        styles['BodyJustify'],
+    ))
     story.append(Spacer(1, 0.5 * cm))
 
-    # 1. Cél és jogszabályok
+    # 1. Cél és jogszabályok (összhang a Word generátorral)
     story.append(Paragraph("1. Cél és Vonatkozó Jogszabályok", styles['H1']))
-    preamble = (
+    preamble_a = (
         "Jelen jegyzőkönyv a vizsgált villamos berendezés, villamos hálózat, illetve berendezések "
         "áramütés elleni védelmének, szabványos állapotának, valamint tűzvédelmi megfelelőségének "
         "minősítése céljából készült a Megrendelő megbízásából. A dokumentum az érvényben lévő nemzeti, "
         "illetve harmonizált európai szabványok szigorú betartása mellett lett összeállítva."
     )
-    story.append(Paragraph(preamble, styles['BodyJustify']))
+    preamble_b = (
+        "A rögzített eredmények bírósági, hatósági vagy biztosítási eljárások során — a vonatkozó eljárásjogi szabályok szerint — "
+        "szakmai dokumentációként felhasználhatók. A jegyzőkönyv szerkezete követi a szokásos felülvizsgálati fejezeteket: "
+        "alapadatok, felülvizsgáló és műszerek, szemrevételezés és mérések, hibák, összegző minősítés."
+    )
+    story.append(Paragraph(preamble_a, styles['BodyJustify']))
+    story.append(Spacer(1, 0.15 * cm))
+    story.append(Paragraph(preamble_b, styles['BodyJustify']))
     story.append(Spacer(1, 0.3 * cm))
 
     # 2. Alapadatok
@@ -271,14 +285,23 @@ def generate_pdf_reportlab_stream(
         f"<b>Épület rendeltetése:</b> {c_data.get('buildingPurpose', 'N/A')}{otsz_str}"
     )
     story.append(Paragraph(alap_str, styles['Body']))
-    
+
+    story.append(Spacer(1, 0.15 * cm))
+    story.append(Paragraph("2.1 Mérés Körülményei és Jogszabályok", styles['H2']))
     env_lines = []
-    if c_data.get('envTemp'): env_lines.append(f"<b>Hőmérséklet:</b> {c_data.get('envTemp')} °C")
-    if c_data.get('envHumidity'): env_lines.append(f"<b>Páratartalom:</b> {c_data.get('envHumidity')} %")
+    if c_data.get('envTemp'):
+        env_lines.append(f"<b>Hőmérséklet:</b> {c_data.get('envTemp')} °C")
+    if c_data.get('envHumidity'):
+        env_lines.append(f"<b>Páratartalom:</b> {c_data.get('envHumidity')} %")
     if env_lines:
-        story.append(Spacer(1, 0.1 * cm))
         story.append(Paragraph(" | ".join(env_lines), styles['Body']))
-        
+    else:
+        story.append(Paragraph(
+            "A környezeti paraméterek (hőmérséklet, relatív páratartalom) a vizsgálat időpontjában ebben a jegyzőkönyvben nem szerepelnek külön feltüntetve; "
+            "a mérési eredmények a szokásos belső környezeti feltételek mellett, a vonatkozó szabvány szerinti értelmezésben veendők figyelembe.",
+            styles['BodyJustify'],
+        ))
+
     story.append(Spacer(1, 0.1 * cm))
     story.append(Paragraph(f"<b>Alkalmazott Szabványok:</b> {c_data.get('appliedStandards', 'MSZ HD 60364-6:2017')}", styles['Body']))
     
@@ -290,6 +313,14 @@ def generate_pdf_reportlab_stream(
 
     # 3. Felülvizsgáló
     story.append(Paragraph("3. Felülvizsgáló és Műszerek", styles['H1']))
+    story.append(Paragraph(
+        "A vizsgálatot a vonatkozó jogszabályokban előírt szakmai végzettséggel és érvényes vizsgabizonyítvánnyal rendelkező személy végezte. "
+        "A felülvizsgáló a helyszínen történő megfigyelés, mérések és dokumentáció alapján ad szakmai véleményt; a mérésekhez alkalmazott műszerek "
+        "kalibrálási adatai biztosítják az eredmények méréstechnikai nyomon követhetőségét. "
+        "A felülvizsgáló független szakmai megítélése nem helyettesíti a gyártói, üzemeltetői vagy hatósági eljárásokat, de alapot ad a villamos biztonság megítéléséhez.",
+        styles['BodyJustify'],
+    ))
+    story.append(Spacer(1, 0.15 * cm))
     instr_str = (
         f"<b>Felülvizsgáló neve/cége:</b> {c_data.get('inspectorName', 'N/A')}<br/>"
         f"<b>Vizsgabizonyítvány száma:</b> {c_data.get('inspectorLicense', 'N/A')}<br/>"
@@ -361,6 +392,23 @@ def generate_pdf_reportlab_stream(
     if meas_data:
         story.append(PageBreak())
         story.append(Paragraph(f"{section_num}. Mérési Eredmények", styles['H1']))
+        story.append(Paragraph(
+            "Az alábbi szakasz az MSZ HD 60364-6:2017 szerinti, a helyszínen elvégzett mérési pontok eredményeit tartalmazza táblázatos formában "
+            "(védővezető folytonosság, szigetelési ellenállás, hurokimpedancia, FI-relé vizsgálatok, illetve — ha releváns — további kiegészítő mérések). "
+            "A határértékek és az elfogadási feltételek a vonatkozó szabvány- és termékszabvány-részletek szerint értelmezendők. "
+            "Amennyiben egy adott mérés nem volt kivitelezhető, nem volt értelmezhető, vagy a vizsgált körülmények miatt részleges, "
+            "azt a táblázat megjegyzése, a szabad szöveges összefoglaló vagy a felülvizsgálói megjegyzés rögzíti.",
+            styles['BodyJustify'],
+        ))
+        story.append(Spacer(1, 0.15 * cm))
+        thr_html = (
+            MEASUREMENT_THRESHOLDS_BODY.replace('&', '&amp;')
+            .replace('\n\n', '<br/><br/>')
+            .replace('\n', '<br/>')
+        )
+        story.append(Paragraph(f"<b>{MEASUREMENT_THRESHOLDS_TITLE}</b>", styles['H2']))
+        story.append(Paragraph(thr_html, styles['BodyJustify']))
+        story.append(Spacer(1, 0.2 * cm))
         sub = 1
 
         if rep_type.startswith("VBF") or rep_type == "VVF":
@@ -395,7 +443,13 @@ def generate_pdf_reportlab_stream(
     story.append(PageBreak())
     story.append(Paragraph(f"{section_num}. Feltárt Hibák és Hiányosságok", styles['H1']))
     if not d_data:
-        story.append(Paragraph("A vizsgálat során nem tártunk fel hibát vagy hiányosságot.", styles['Body']))
+        story.append(Paragraph(
+            "A vizsgálat során a szemrevételezés és a dokumentált mérések alapján — a vizsgált, hozzáférhető pontokon — "
+            "olyan hibát vagy hiányosságot nem tártunk fel, amely a jegyzőkönyvben külön hibajegyzékként szerepeltetendő lenne. "
+            "Ez nem zárja ki a rejtett szerelvényekben vagy a vizsgálat után bekövetkezett változásokból eredő kockázatokat; "
+            "az üzemeltető felelőssége a rendszer folyamatos, rendeltetésszerű karbantartása és a változások dokumentálása.",
+            styles['BodyJustify'],
+        ))
     else:
         for idx, defect in enumerate(d_data, 1):
             story.append(Paragraph(f"Hiba #{idx}: {defect.get('description', 'N/A')}", styles['H2']))
@@ -421,7 +475,7 @@ def generate_pdf_reportlab_stream(
         story.append(PageBreak())
         story.append(Paragraph(f"{section_num}. Digitális Integritás és Nyomonkövethetőség", styles['H1']))
 
-        m0 = report.measurements_data[0] if report.measurements_data else {}
+        m0 = _normalize_measurements_block(report.measurements_data)
         meas_counts = {
             'rpe': len(m0.get('rpe', [])) if isinstance(m0, dict) else 0,
             'riso': len(m0.get('insulation', [])) if isinstance(m0, dict) else 0,

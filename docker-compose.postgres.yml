@@ -1,0 +1,36 @@
+# PostgreSQL éles / SaaS stack — a SQLite alap compose mellé.
+# Használat (a projekt gyökeréből):
+#   export POSTGRES_PASSWORD='erős-jelszó'
+#   docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d --build
+#
+# A backend a DATABASE_URL-t kapja; a DATABASE_PATH (alap compose) ilyenkor nem használt.
+# Migráció SQLite → Postgres: backend/migrate_sqlite_to_postgres.py
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vbf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the environment}
+      POSTGRES_DB: ${POSTGRES_DB:-vbf}
+    volumes:
+      - vbf_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - vbf-network
+
+  backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-vbf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vbf}
+
+volumes:
+  vbf_pgdata:

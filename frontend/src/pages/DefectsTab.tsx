@@ -3,7 +3,8 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent } from '../components/ui/Card';
-import { useDraftStore } from '../store/draftStore';
+import { useDraftStore, useIsReportLocked } from '../store/draftStore';
+import { toast } from '../lib/toast';
 
 const defectTemplates = [
   "A biztosíték tábla nincs megfelelően feliratozva.",
@@ -13,7 +14,8 @@ const defectTemplates = [
 ];
 
 export default function DefectsTab() {
-  const { defects, addDefect, updateDefect, removeDefect } = useDraftStore();
+  const locked = useIsReportLocked();
+  const { defects, addDefect, updateDefect, removeDefect, collectDefectsFromMeasurements } = useDraftStore();
   const [filter, setFilter] = useState("");
 
   const handleAddDefect = () => {
@@ -28,6 +30,7 @@ export default function DefectsTab() {
   const filteredDefects = defects.filter(d => filter === "" || d.severity === filter);
 
   return (
+    <fieldset disabled={locked} className="min-h-0 border-0 p-0 m-0 flex flex-col flex-1">
     <div className="flex-1 w-full h-full flex flex-col p-[var(--vbf-panel-padding)] bg-[var(--bg-main)]">
       <div className="flex flex-col h-full rounded-xl border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-panel)_80%,transparent)] p-6 shadow-sm md:p-8">
         
@@ -52,7 +55,19 @@ export default function DefectsTab() {
             </div>
             
             <div className="flex w-full shrink-0 flex-wrap gap-2 md:w-auto md:justify-end md:pt-0.5">
-              <Button variant="secondary" size="sm">Automatikus gyűjtés</Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="min-h-11"
+                type="button"
+                onClick={() => {
+                  const r = collectDefectsFromMeasurements();
+                  if (r.added > 0) toast.success(r.message);
+                  else toast.error(r.message);
+                }}
+              >
+                Automatikus gyűjtés
+              </Button>
               <Button onClick={handleAddDefect} size="sm">Új hiba</Button>
             </div>
           </div>
@@ -127,5 +142,6 @@ export default function DefectsTab() {
         </div>
       </div>
     </div>
+    </fieldset>
   );
 }

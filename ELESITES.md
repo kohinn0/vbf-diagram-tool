@@ -11,8 +11,15 @@ JWT_EXPIRE_MINUTES=1440
 STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# Opcionális
-DATABASE_URL="sqlite:///./data/vbf_database.db"   # vagy PostgreSQL
+# Adatbázis — éles SaaS-hoz ajánlott: PostgreSQL
+# Ha nincs DATABASE_URL, a backend SQLite fájlt használ (DATABASE_PATH vagy ./data/vbf_database.db).
+# Python csomag: psycopg2-binary (requirements.txt).
+# Példa (jelszóban speciális karakterek: URL-kódolás, vagy egyszerű jelszó):
+# DATABASE_URL="postgresql://vbf:A_jelszo@db.example.com:5432/vbf"
+# Railway/Heroku stílusú postgres:// URL is elfogadott (automatikusan postgresql://-re normalizálódik).
+
+# Opcionális / fejlesztői alapértelmezés
+# DATABASE_URL="sqlite:///./data/vbf_database.db"
 SMTP_SERVER=...
 SMTP_USER=...
 SMTP_PASS=...
@@ -26,6 +33,15 @@ SENTRY_DSN=...
 - **SECRET_KEY**: JWT aláíráshoz; generálj egy erős random stringet (min. 32 karakter).
 - **JWT_EXPIRE_MINUTES**: Token érvényessége percben (pl. 1440 = 1 nap; alapértelmezett 7 nap).
 - **Stripe**: Dashboard → Developers → API keys (live) + Webhook endpoint → signing secret.
+
+### PostgreSQL (éles SaaS)
+
+- **Séma (Alembic):** induláskor `alembic upgrade head` (a `main.py` → `database.init_db()` hívja), majd `subscription_plans` seed, ha üres. Új migráció: `cd backend && DATABASE_URL=... alembic revision --autogenerate -m "leírás"` → ellenőrizd a diffet, commitold a `alembic/versions/` fájlt.
+- **SQLite (fejlesztői fájl):** továbbra is `create_all` + régi `ALTER` / PRAGMA migrációk — **nem** az Alembic lánc része.
+- **SQLite → Postgres adat:** `backend/migrate_sqlite_to_postgres.py` (cél felé először Alembic séma, majd sorok másolása).
+- **Pool (opcionális):** `DB_POOL_SIZE` (alap 5), `DB_MAX_OVERFLOW` (alap 10) — több uvicorn worker esetén érdemes számolni.
+- **Docker:** `docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d --build` — `POSTGRES_PASSWORD` kötelező. A `db-backup` profil SQLite fájlra ment; Postgreshez: `backend/scripts/pg_backup.sh` vagy managed backup.
+- **Mentés (Postgres):** `pg_dump "$DATABASE_URL" | gzip > backup.sql.gz` vagy a fenti szkript.
 
 ---
 

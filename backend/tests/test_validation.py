@@ -219,3 +219,14 @@ class TestStandardReferences:
     def test_rcd_standard(self):
         std = self._get_standard("RCD kioldási idő nem megfelelő")
         assert '§61.3.7' in std
+
+
+class TestMeasurementThresholdsDoc:
+    """Jegyzőkönyv: határérték blokk importálható és nem üres."""
+
+    def test_measurement_thresholds_module(self):
+        from measurement_thresholds import MEASUREMENT_THRESHOLDS_BODY, MEASUREMENT_THRESHOLDS_TITLE
+
+        assert len(MEASUREMENT_THRESHOLDS_TITLE) > 5
+        assert '§61.3.2' in MEASUREMENT_THRESHOLDS_BODY
+        assert '1,0 MΩ' in MEASUREMENT_THRESHOLDS_BODY or '1,0 M' in MEASUREMENT_THRESHOLDS_BODY

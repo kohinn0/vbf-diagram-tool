@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Any
 from datetime import datetime, timedelta
 import os
 import sys
@@ -93,15 +93,26 @@ def get_report(report_id: int, db: Session = Depends(auth.get_db), current_user:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     return report
 
-def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data: dict, db: Session):
+def _measurements_block(raw: Any) -> dict:
+    """Frontend: `[ { rpe, loop, ... } ]` vagy közvetlen dict; relációs sync ugyanabból."""
+    if raw is None:
+        return {}
+    if isinstance(raw, list) and len(raw) > 0 and isinstance(raw[0], dict):
+        return dict(raw[0])
+    if isinstance(raw, dict):
+        return dict(raw)
+    return {}
+
+
+def _sync_relational_data(report_id: int, diagram_data: Any, measurements_data: Any, db: Session):
     """
     Syncs the hierarchical site tree and measurements into relational tables.
     This ensures data stability and allows for complex SQL queries.
     """
     try:
+        if not isinstance(diagram_data, dict):
+            diagram_data = {}
         # 1. Sync Site Nodes from diagram_data (site_tree)
-        # Assuming diagram_data contains the tree structure produced by sitetree.js
-        # Actually, sitetree.js data is usually a nested list.
         tree_data = diagram_data.get("site_tree", []) if isinstance(diagram_data, dict) else []
         
         # Clear existing nodes for this report (Cascade is not used for String IDs usually, so manual cleanup)
@@ -134,58 +145,66 @@ def _sync_relational_data(report_id: int, diagram_data: dict, measurements_data:
         db.query(database.RcdMeasurement).filter(database.RcdMeasurement.node_id.in_(node_ids_subquery)).delete(synchronize_session=False)
         db.query(database.InsulationMeasurement).filter(database.InsulationMeasurement.node_id.in_(node_ids_subquery)).delete(synchronize_session=False)
 
-        # Process each measurement type from measurements_data
-        if isinstance(measurements_data, dict):
-            # RPE
-            for m in measurements_data.get("table-rpe", []):
-                if m.get("node_id"):
-                    db.add(database.RpeMeasurement(
-                        node_id=m["node_id"],
-                        point=m.get("point"),
-                        location=m.get("loc"),
-                        val=m.get("val"),
-                        pass_status=m.get("pass", "Igen")
-                    ))
-            
-            # Loop (Zs)
-            for m in measurements_data.get("table-loop", []):
-                if m.get("node_id"):
-                    db.add(database.LoopMeasurement(
-                        node_id=m["node_id"],
-                        circuit=m.get("circuit"),
-                        device=m.get("device"),
-                        location=m.get("loc"),
-                        zs=m.get("zs"),
-                        pass_status=m.get("pass", "Igen")
-                    ))
+        md = _measurements_block(measurements_data)
 
-            # RCD
-            for m in measurements_data.get("table-rcd", []):
-                if m.get("node_id"):
-                    db.add(database.RcdMeasurement(
-                        node_id=m["node_id"],
-                        circuit=m.get("circ"),
-                        type=m.get("type", "A"),
-                        idn=m.get("idn"),
-                        test_05=m.get("05"),
-                        t1=m.get("t1"),
-                        t5=m.get("t5"),
-                        ramp=m.get("ramp"),
-                        uc=m.get("uc"),
-                        pass_status=m.get("pass", "Igen")
-                    ))
+        def _rows(primary: str, fallback: str):
+            x = md.get(primary) or md.get(fallback) or []
+            return x if isinstance(x, list) else []
 
-            # Insulation (Riso)
-            for m in measurements_data.get("table-insulation", []):
-                if m.get("node_id"):
-                    db.add(database.InsulationMeasurement(
-                        node_id=m["node_id"],
-                        circuit=m.get("circuit"),
-                        ln=m.get("ln"),
-                        lpe=m.get("lpe"),
-                        npe=m.get("npe"),
-                        pass_status=m.get("pass", "Igen")
-                    ))
+        # RPE — table-rpe (régi) vagy rpe (SPA)
+        for m in _rows("table-rpe", "rpe"):
+            if not isinstance(m, dict) or not m.get("node_id"):
+                continue
+            db.add(database.RpeMeasurement(
+                node_id=m["node_id"],
+                point=m.get("point"),
+                location=m.get("loc") or m.get("location"),
+                val=m.get("val") or m.get("rpeValue"),
+                pass_status=m.get("pass", "Igen"),
+            ))
+
+        # Loop (Zs)
+        for m in _rows("table-loop", "loop"):
+            if not isinstance(m, dict) or not m.get("node_id"):
+                continue
+            db.add(database.LoopMeasurement(
+                node_id=m["node_id"],
+                circuit=m.get("circuit"),
+                device=m.get("device"),
+                location=m.get("loc"),
+                zs=m.get("zs"),
+                pass_status=m.get("pass", "Igen"),
+            ))
+
+        # RCD — test05 (frontend) vagy "05" (régi)
+        for m in _rows("table-rcd", "rcd"):
+            if not isinstance(m, dict) or not m.get("node_id"):
+                continue
+            db.add(database.RcdMeasurement(
+                node_id=m["node_id"],
+                circuit=m.get("circ"),
+                type=m.get("type", "A"),
+                idn=m.get("idn"),
+                test_05=m.get("test05") or m.get("05"),
+                t1=m.get("t1"),
+                t5=m.get("t5"),
+                ramp=m.get("ramp"),
+                uc=m.get("uc"),
+                pass_status=m.get("pass", "Igen"),
+            ))
+
+        # Insulation (Riso)
+        for m in _rows("table-insulation", "insulation"):
+            if not isinstance(m, dict) or not m.get("node_id"):
+                continue
+            db.add(database.InsulationMeasurement(
+                node_id=m["node_id"],
+                circuit=m.get("circuit"),
+                ln=m.get("ln"),
+                lpe=m.get("lpe"),
+                npe=m.get("npe"),
+                pass_status=m.get("pass", "Igen"),
+            ))
 
         db.commit()
         print(f"[Sync] Relational data synced for report {report_id}")

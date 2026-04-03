@@ -19,8 +19,52 @@ from typing import Optional
 
 import database
 from database import Report
+from measurement_thresholds import MEASUREMENT_THRESHOLDS_BODY, MEASUREMENT_THRESHOLDS_TITLE
 
 logger = logging.getLogger("vbf")
+
+
+def _normalize_measurements_block(raw):
+    """
+    A frontend JSON-ben measurements_data lehet:
+    - [ { "rpe": [...], "loop": [], ... } ]  (egy elemű lista), vagy
+    - { "rpe": [...], ... } dict.
+    RPE sor: generator a loc/val/pass mezőket várja; a UI location/rpeValue/isOk-t küldhet.
+    """
+    if raw is None:
+        return {}
+    if isinstance(raw, list) and len(raw) > 0 and isinstance(raw[0], dict):
+        md = dict(raw[0])
+    elif isinstance(raw, dict):
+        md = dict(raw)
+    else:
+        return {}
+    rpe_in = md.get("rpe") or []
+    rpe_out = []
+    for i, r in enumerate(rpe_in):
+        if not isinstance(r, dict):
+            continue
+        loc = r.get("loc")
+        if loc is None:
+            loc = r.get("location", "")
+        val = r.get("val")
+        if val is None:
+            val = r.get("rpeValue", "")
+        pas = r.get("pass")
+        if pas is None:
+            io = r.get("isOk", "")
+            pas = "Igen" if str(io).lower() in ("yes", "igen") else "Nem"
+        rpe_out.append(
+            {
+                "point": str(r.get("point", i + 1)),
+                "loc": str(loc) if loc is not None else "",
+                "val": str(val) if val is not None else "",
+                "pass": str(pas),
+            }
+        )
+    md["rpe"] = rpe_out
+    return md
+
 
 # ─── Premium dokumentum stílusok ───
 def _apply_premium_styles(doc, section, header_para):
@@ -206,6 +250,12 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     for i, (label, val) in enumerate(rows):
         card_table.rows[i].cells[0].text = label
         card_table.rows[i].cells[1].text = str(val)
+    card_expl = doc.add_paragraph(
+        "Az Összefoglaló kártya a jegyzőkönyv azonosító adatait és a minősítés rövid eredményét foglalja össze. "
+        "A részletes szemrevételezéses megállapítások, mérési táblázatok, feltárt hibák és a végleges minősítés indoklása "
+        "a dokumentum következő fejezeteiben található; ezek együttesen alkotják a teljes szakmai dokumentációt."
+    )
+    card_expl.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     doc.add_paragraph()
     
     # ── QR-kód a borítólapra (megosztási / PDF link) ──
@@ -296,7 +346,16 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         "A vizsgálati eredmények és a kiadott minősítés kizárólag a vizsgált berendezésre, hozzáférhető hálózati pontokra "
         "és a vizsgálat időpontjában (a helyszíni eljárás napján) fennálló fizikai és méréstechnikai állapotra vonatkoznak. "
         "A felülvizsgáló nem vállal felelősséget a vizsgálat lezárását követően a hálózaton végrehajtott engedély nélküli "
-        "beavatkozásokért, átalakításokért, bontásokért vagy a nem rendeltetésszerű használatból eredő meghibásodásokért, balesetekért."
+        "beavatkozásokért, átalakításokért, bontásokért vagy a nem rendeltetésszerű használatból eredő meghibásodásokért, balesetekért.\n\n"
+        "1.3. A jegyzőkönyv szerkezete:\n"
+        "A dokumentum tipikusan az alábbi elemeket tartalmazza: (1) cél és jogszabályi hátterek; (2) helyszín és megrendelői adatok; "
+        "(3) a felülvizsgáló azonosítása és a méréstechnika; (4) szemrevételezéses ellenőrzések és — ha releváns — egyvonalas rajz, alaprajz; "
+        "(5) mérési eredmények táblázatos összesítése; (6) feltárt hibák és javítási javaslatok; (7) bejövő hálózati paraméterek és egyéb megjegyzések; "
+        "(8) összegző minősítés és felelősségi nyilatkozat. A szabad szöveges megjegyzésmezőkben (pl. összefoglaló szöveg) a Megrendelő által "
+        "kívánt további megállapítások is rögzíthetők.\n\n"
+        "1.4. Adatkezelés és titkosság:\n"
+        "A jegyzőkönyvben szereplő üzemi és személyes adatok a szakmai feladat teljesítéséhez szükséges körben kerülnek dokumentálásra; "
+        "a Megrendelő felelős a helyszínre vonatkozó titokvédelmi és üzleti előírások betartásáért."
     )
     p_intro = doc.add_paragraph(preamble_text)
     p_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -352,7 +411,12 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
         p_env.add_run('Hőmérséklet a vizsgálat idején: ').bold = True
         p_env.add_run(f"{c_data.get('envTemp', 'N/A')} °C, ")
         p_env.add_run('Páratartalom: ').bold = True
-        p_env.add_run(f"{c_data.get('envHumidity', 'N/A')} %\n")
+        p_env.add_run(f"{c_data.get('envHumidity', 'N/A')} %\n\n")
+    else:
+        p_env.add_run(
+            "A környezeti paraméterek (hőmérséklet, relatív páratartalom) a vizsgálat időpontjában ebben a jegyzőkönyvben nem szerepelnek külön feltüntetve; "
+            "a mérési eredmények a szokásos belső környezeti feltételek mellett, a vonatkozó szabvány szerinti értelmezésben veendők figyelembe.\n\n"
+        )
     
     p_env.add_run('Alkalmazott szabványok és jogszabályok: ').bold = True
     p_env.add_run(c_data.get('appliedStandards', 'MSZ HD 60364-6:2017') + '\n')
@@ -363,7 +427,12 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     
     # Inspector Data
     doc.add_heading('3. Felülvizsgáló és Műszerek', level=1)
-    p2 = doc.add_paragraph("A vizsgálatot a vonatkozó jogszabályokban előírt szakmai végzettséggel és érvényes vizsgabizonyítvánnyal rendelkező személy végezte.\n")
+    p2 = doc.add_paragraph(
+        "A vizsgálatot a vonatkozó jogszabályokban előírt szakmai végzettséggel és érvényes vizsgabizonyítvánnyal rendelkező személy végezte. "
+        "A felülvizsgáló a helyszínen történő megfigyelés, mérések és dokumentáció alapján ad szakmai véleményt; a mérésekhez alkalmazott műszerek "
+        "kalibrálási adatai biztosítják az eredmények méréstechnikai nyomon követhetőségét. "
+        "A felülvizsgáló független szakmai megítélése nem helyettesíti a gyártói, üzemeltetői vagy hatósági eljárásokat, de alapot ad a villamos biztonság megítéléséhez.\n"
+    )
     p2.add_run('Felülvizsgáló neve/cége: ').bold = True
     p2.add_run(c_data.get('inspectorName', 'N/A') + '\n')
     
@@ -517,10 +586,22 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
 
         section_num += 1
     
-    # Measurements – measurements_data a DB-ben dict, nem lista
-    meas_data = report.measurements_data if isinstance(report.measurements_data, dict) else {}
+    # Measurements – dict vagy [dict] (frontend); RPE mezőnév-aliasok
+    meas_data = _normalize_measurements_block(report.measurements_data)
     if meas_data:
         doc.add_heading(f'{section_num}. Mérési Eredmények', level=1)
+        p_meas_intro = doc.add_paragraph(
+            "Az alábbi szakasz az MSZ HD 60364-6:2017 szerinti, a helyszínen elvégzett mérési pontok eredményeit tartalmazza táblázatos formában "
+            "(védővezető folytonosság, szigetelési ellenállás, hurokimpedancia, FI-relé vizsgálatok, illetve — ha releváns — további kiegészítő mérések). "
+            "A határértékek és az elfogadási feltételek a vonatkozó szabvány- és termékszabvány-részletek szerint értelmezendők. "
+            "Amennyiben egy adott mérés nem volt kivitelezhető, nem volt értelmezhető, vagy a vizsgált körülmények miatt részleges, "
+            "azt a táblázat megjegyzése, a szabad szöveges összefoglaló vagy a felülvizsgálói megjegyzés rögzíti."
+        )
+        p_meas_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        doc.add_heading(MEASUREMENT_THRESHOLDS_TITLE, level=3)
+        p_thr = doc.add_paragraph(MEASUREMENT_THRESHOLDS_BODY)
+        p_thr.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        doc.add_paragraph()
         sub_num = 1
         
         # VBF Measurements
@@ -741,7 +822,13 @@ def generate_docx_stream(report: Report, db=None, share_url: Optional[str] = Non
     
     d_data = report.defects_data or []
     if not d_data:
-        doc.add_paragraph("A vizsgálat során nem tártunk fel hibát vagy hiányosságot.")
+        nod = doc.add_paragraph(
+            "A vizsgálat során a szemrevételezés és a dokumentált mérések alapján — a vizsgált, hozzáférhető pontokon — "
+            "olyan hibát vagy hiányosságot nem tártunk fel, amely a jegyzőkönyvben külön hibajegyzékként szerepeltetendő lenne. "
+            "Ez nem zárja ki a rejtett szerelvényekben vagy a vizsgálat után bekövetkezett változásokból eredő kockázatokat; "
+            "az üzemeltető felelőssége a rendszer folyamatos, rendeltetésszerű karbantartása és a változások dokumentálása."
+        )
+        nod.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     else:
         # Severity keyword detection (mirror of frontend logic)
         critical_kw = ['életveszély', 'érintésvéd', 'pe vezető hiány', 'áramütés', 

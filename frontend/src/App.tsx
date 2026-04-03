@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { Layout } from './components/ui/Layout';
 import Landing from './pages/Landing';
 import DiagramTab from './pages/DiagramTab';
@@ -32,7 +33,10 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <RouterProvider router={router} />
+    <>
+      <Toaster position="top-center" richColors closeButton />
+      <RouterProvider router={router} />
+    </>
   );
 }
 

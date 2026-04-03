@@ -30,6 +30,7 @@ export function SymbolLibrary({ onAddSymbol }: SymbolLibraryProps) {
   return (
     <div className="w-[300px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-r border-[var(--border-color)] p-4">
       <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-1">VBF Eszköztár</h2>
+      <p className="text-xs text-[var(--color-text-muted)] mb-1">IEC 60617 / HD 637 jellegű egysoros szimbólumok</p>
       <p className="text-xs text-[var(--color-text-muted)] mb-5">Kattints a vászonra helyezéshez</p>
       
       {renderGroup('Védelem és Elosztás', powerSymbols)}

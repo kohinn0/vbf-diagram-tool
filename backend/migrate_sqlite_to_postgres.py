@@ -91,7 +91,7 @@ def main() -> None:
     os.environ.pop("DATABASE_URL", None)
 
     # Import database.py without requiring `backend` to be a package.
-    # (backend/ has no __init__.py in this repo.)
+    # (backend/ has no __init__.py in this repo.) init_db nem fut importkor — csak main hívja.
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, os.path.join(repo_root, "backend"))
     import database  # type: ignore  # noqa: E402
@@ -102,8 +102,8 @@ def main() -> None:
     )
     pg_engine = create_engine(postgres_url, pool_pre_ping=True)
 
-    # Create schema in Postgres based on SQLAlchemy models.
-    database.Base.metadata.create_all(bind=pg_engine)
+    # Séma: Alembic (ugyanaz, mint éles induláskor)
+    database.run_alembic_upgrade(postgres_url)
 
     # Safety check: abort if target already contains data.
     table_names = [t.name for t in database.Base.metadata.sorted_tables]

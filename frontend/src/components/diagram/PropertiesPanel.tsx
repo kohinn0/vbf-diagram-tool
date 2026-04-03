@@ -1,6 +1,7 @@
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { CIRCUIT_KIND_OPTIONS, normalizeCircuitKind } from './iecConductorStyle';
 
 // A "selectedObject" típusát leegyszerűsítjük, mert a fabric Object egyedi metódusokkal rendelkezik
 interface PropertiesPanelProps {
@@ -26,6 +27,51 @@ export function PropertiesPanel({ selectedObject, onUpdateProperty, onDeleteLaye
 
   const data = selectedObject.vbfData;
 
+  if (data.type === 'connectionLine') {
+    const fromRpe = (data as { source?: string }).source === 'rpeAuto';
+    const circuitKind = normalizeCircuitKind(
+      (data as { circuitKind?: string }).circuitKind,
+      fromRpe ? 'pe' : 'phase'
+    );
+    return (
+      <div className="w-[320px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-l border-[var(--border-color)] p-4 flex flex-col">
+        <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-2">Összekötő vonal</h2>
+        {fromRpe && (
+          <p className="text-xs font-medium text-[var(--color-primary)] mb-2 rounded-md bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] px-2 py-1.5">
+            RPE mérések alapján generálva (alapértelmezés: PE védővezető, MSZ HD 60364-6 §61.3.2) — újra a „Rajz: RPE vonalak” / „RPE → vonalak” gombbal frissíthető.
+          </p>
+        )}
+        <p className="text-sm text-[var(--color-text-muted)] mb-3 leading-relaxed">
+          Ortogonális elvi vezeték. Vezetékazonosítás: HD 308 S2 / IEC 60445. A végpontok mozgatásakor a vonal követi őket.
+        </p>
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label className="text-xs font-semibold text-[var(--color-text-muted-strong)] uppercase tracking-wider">
+            Vezeték fajta (egysoros ábra)
+          </label>
+          <Select
+            className="min-h-11"
+            value={circuitKind}
+            onChange={(e) => onUpdateProperty('circuitKind', e.target.value)}
+          >
+            {CIRCUIT_KIND_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} title={opt.hint}>
+                {opt.label}
+              </option>
+            ))}
+          </Select>
+          <p className="text-xs text-[var(--color-text-muted)] leading-snug">
+            {CIRCUIT_KIND_OPTIONS.find((o) => o.value === circuitKind)?.hint}
+          </p>
+        </div>
+        <div className="mt-auto pt-4 border-t border-[var(--border-color)]">
+          <Button variant="danger" className="w-full justify-start text-left min-h-11" onClick={onDeleteLayer}>
+            Vonal törlése
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-[320px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-l border-[var(--border-color)] p-4 flex flex-col">
       <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-4">Elem Tulajdonságai</h2>
@@ -50,8 +96,11 @@ export function PropertiesPanel({ selectedObject, onUpdateProperty, onDeleteLaye
           <Input 
             value={data.label || ''} 
             onChange={(e) => onUpdateProperty('label', e.target.value)} 
-            placeholder="pl. Nappali vagy F1"
+            placeholder="pl. 1 (RPE Pont) vagy F1"
           />
+          <p className="text-xs text-[var(--color-text-muted)] leading-snug">
+            RPE automatikus vonalhoz a felirat legyen ugyanaz, mint a mérési „Pont” (1, 2, …).
+          </p>
         </div>
 
         {!data.isArch && (

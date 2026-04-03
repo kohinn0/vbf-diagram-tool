@@ -6,7 +6,6 @@ import zipfile
 import sqlite3
 
 import sys
-import os
 
 # Base directory for the whole backend project
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +15,7 @@ if BASE_DIR not in sys.path:
 from auth import get_current_user
 import database
 import analyzer2
-import schemas
+from padfx_sqlite import parse_padfx_sqlite
 
 router = APIRouter(prefix="/api/padfx", tags=["padfx"])
 
@@ -61,23 +60,33 @@ async def parse_padfx_file(
             conn = None
             try:
                 conn = sqlite3.connect(str(sqlite_file))
+                conn.row_factory = sqlite3.Row
                 c = conn.cursor()
                 tables = c.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
                 table_names = [t[0] for t in tables]
-                
-                sample_data = {}
-                if "MeasureData" in table_names:
-                    c.execute("SELECT * FROM MeasureData LIMIT 5")
-                    sample_data["MeasureData_sample"] = c.fetchall()
-                    c.execute("PRAGMA table_info(MeasureData)")
-                    sample_data["MeasureData_cols"] = c.fetchall()
-                
-                return JSONResponse(status_code=200, content={
-                    "status": "success",
-                    "is_sqlite": True,
-                    "tables": table_names,
-                    "sample": sample_data
-                })
+
+                measurements = parse_padfx_sqlite(conn)
+                if not measurements:
+                    return JSONResponse(
+                        status_code=200,
+                        content={
+                            "status": "success",
+                            "is_sqlite": True,
+                            "tables": table_names,
+                            "measurements": [],
+                            "message": "SQLite felismerve, de nem található MID oszlopú mérési tábla/sor (MeasureData vagy hasonló).",
+                        },
+                    )
+
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "status": "success",
+                        "is_sqlite": True,
+                        "tables": table_names,
+                        "measurements": measurements,
+                    },
+                )
             except Exception as ex:
                 print(f"[PADFX] SQLite hiba: {ex}")
                 return JSONResponse(status_code=500, content={"status": "error", "message": f"SQLite error: {str(ex)}"})

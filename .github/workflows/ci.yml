@@ -34,6 +34,15 @@ jobs:
       - name: Ensure data dir
         run: mkdir -p data
       
+      - name: Alembic migration applies (SQLite)
+        env:
+          SKIP_DB_INIT: "1"
+        run: |
+          rm -f data/ci_alembic_apply.db
+          export DATABASE_URL="sqlite:///$(pwd)/data/ci_alembic_apply.db"
+          alembic upgrade head
+          alembic current
+      
       - name: Import check
         env:
           TESTING: '1'
@@ -117,7 +126,8 @@ jobs:
       
       - name: Docker Compose validation
         run: |
-          if [ -f docker-compose.yml ]; then docker compose config --quiet; else echo "No docker-compose.yml, skip"; fi
+          if [ -f docker-compose.yml ]; then docker compose -f docker-compose.yml config --quiet; else echo "No docker-compose.yml, skip"; fi
+          if [ -f docker-compose.postgres.yml ]; then docker compose -f docker-compose.yml -f docker-compose.postgres.yml config --quiet; fi
 
   # ═══════════════════════════════════════
   # 4. Security scan

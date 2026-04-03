@@ -8,8 +8,11 @@ os.makedirs("data", exist_ok=True)
 
 # 🌐 Database configuration
 # Set DATABASE_URL env var for PostgreSQL: postgresql://user:password@localhost:5432/dbname
+# Some hosts use postgres:// — SQLAlchemy expects postgresql://
 # TESTING=1 (pytest) → in-memory SQLite. Otherwise fall back to a local SQLite file.
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
+if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = "postgresql://" + SQLALCHEMY_DATABASE_URL[len("postgres://") :]
 if os.environ.get("TESTING") == "1" and not SQLALCHEMY_DATABASE_URL:
     SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -33,8 +36,15 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         cursor.execute("PRAGMA busy_timeout=5000")
         cursor.close()
 else:
-    # PostgreSQL configuration
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+    # PostgreSQL: connection pool (éles SaaS; workerenként egy pool)
+    _pool_size = int(os.environ.get("DB_POOL_SIZE", "5"))
+    _max_overflow = int(os.environ.get("DB_MAX_OVERFLOW", "10"))
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=_pool_size,
+        max_overflow=_max_overflow,
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -393,10 +403,10 @@ def marketing_unsubscribe_email(db: Session, email: str) -> None:
         db.commit()
 
 
-Base.metadata.create_all(bind=engine)
-
-# Migráció: company_settings.company_id (ha még nincs)
-if SQLALCHEMY_DATABASE_URL and "sqlite" in SQLALCHEMY_DATABASE_URL:
+def _run_sqlite_legacy_migrations() -> None:
+    """Régi SQLite fájlok: PRAGMA / ALTER — PostgreSQLen Alembic kezeli a sémát."""
+    if not SQLALCHEMY_DATABASE_URL or "sqlite" not in SQLALCHEMY_DATABASE_URL:
+        return
     with engine.connect() as conn:
         try:
             r = conn.execute(text("PRAGMA table_info(company_settings)"))
@@ -548,7 +558,36 @@ def _seed_subscription_plans():
     except Exception:
         pass
 
-_seed_subscription_plans()
+
+def run_alembic_upgrade(dsn: Optional[str] = None) -> None:
+    """Alembic `upgrade head`. Ha `dsn` nincs megadva, a modul `SQLALCHEMY_DATABASE_URL`-je."""
+    from pathlib import Path
+    from alembic.config import Config
+    from alembic import command
+
+    raw = dsn or SQLALCHEMY_DATABASE_URL
+    if not raw:
+        raise RuntimeError("run_alembic_upgrade: nincs adatbázis URL")
+    if raw.startswith("postgres://"):
+        raw = "postgresql://" + raw[len("postgres://") :]
+    ini = Path(__file__).resolve().parent / "alembic.ini"
+    cfg = Config(str(ini))
+    cfg.set_main_option("sqlalchemy.url", raw)
+    command.upgrade(cfg, "head")
+
+
+def init_db() -> None:
+    """Postgres: Alembic migráció + seed; SQLite: create_all + legacy ALTER + seed."""
+    if os.environ.get("SKIP_DB_INIT") == "1":
+        return
+    url = SQLALCHEMY_DATABASE_URL or ""
+    if url.startswith("postgresql") or url.startswith("postgres"):
+        run_alembic_upgrade()
+        _seed_subscription_plans()
+    else:
+        Base.metadata.create_all(bind=engine)
+        _run_sqlite_legacy_migrations()
+        _seed_subscription_plans()
 
 
 def get_effective_plan_limits(db, company):
