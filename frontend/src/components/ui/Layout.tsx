@@ -11,6 +11,7 @@ import {
 } from "../../lib/api";
 import { validateForExport, validateForFinalize, validateForSave } from "../../lib/validateReport";
 import { toast } from "../../lib/toast";
+import { legalUrls } from "../../lib/legalUrls";
 import { applyServerReportToDraft, normalizeServerUpdatedAt, type ServerReport } from "../../lib/hydrateReport";
 
 interface LayoutProps {
@@ -313,6 +314,47 @@ export function Layout({ children }: LayoutProps) {
       >
         {children}
       </main>
+
+      <footer
+        className={cn(
+          "shrink-0 border-t border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2.5 text-[11px] sm:text-xs text-[var(--text-muted)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1",
+          !locked && "pb-[max(5rem,env(safe-area-inset-bottom))] md:pb-2.5"
+        )}
+      >
+        <a href={legalUrls.terms} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Feltételek
+        </a>
+        <span className="text-[var(--border-color)]" aria-hidden>
+          |
+        </span>
+        <a href={legalUrls.aszf} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          ÁSZF
+        </a>
+        <span className="text-[var(--border-color)]" aria-hidden>
+          |
+        </span>
+        <a href={legalUrls.privacy} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Adatvédelem
+        </a>
+        <span className="text-[var(--border-color)]" aria-hidden>
+          |
+        </span>
+        <a href={legalUrls.imprint} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Impresszum
+        </a>
+        <span className="text-[var(--border-color)]" aria-hidden>
+          |
+        </span>
+        <a href={legalUrls.legalNotice} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Jogi
+        </a>
+        <span className="text-[var(--border-color)] hidden sm:inline" aria-hidden>
+          |
+        </span>
+        <Link to="/" className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Főoldal
+        </Link>
+      </footer>
 
       {!locked && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex gap-2 p-2 border-t border-[var(--border-color)] bg-[var(--bg-card)] min-h-[56px] items-center justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">

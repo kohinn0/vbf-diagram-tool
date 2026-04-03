@@ -1,5 +1,5 @@
-
 import { useCartStore } from '../store/cartStore';
+import { legalUrls } from '../lib/legalUrls';
 import { HeroSection } from '../components/landing/HeroSection';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { PricingSection } from '../components/landing/PricingSection';
@@ -133,9 +133,31 @@ export default function Landing() {
           <div>
             <h4 className="font-bold text-lg mb-4 text-[var(--text-main)]">Jogi</h4>
             <ul className="space-y-3 text-sm text-[var(--text-muted)] font-medium">
-              <li><a href="#" className="hover:text-primary transition-colors">ÁSZF</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Adatvédelmi Nyilatkozat</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Impresszum</a></li>
+              <li>
+                <a href={legalUrls.terms} className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  Felhasználási feltételek
+                </a>
+              </li>
+              <li>
+                <a href={legalUrls.aszf} className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  ÁSZF
+                </a>
+              </li>
+              <li>
+                <a href={legalUrls.privacy} className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  Adatvédelmi tájékoztató
+                </a>
+              </li>
+              <li>
+                <a href={legalUrls.imprint} className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  Impresszum
+                </a>
+              </li>
+              <li>
+                <a href={legalUrls.legalNotice} className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  Jogi nyilatkozat
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -145,7 +167,14 @@ export default function Landing() {
             &copy; 2026 VBF Premium SaaS. Minden jog fenntartva. <span className="font-semibold">Készült a magyar villanyszerelőkért.</span>
           </div>
           <div className="text-xs">
-            Az oldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. Részletek: <a href="#" className="text-[var(--text-main)] hover:underline font-semibold">Adatkezelési tájékoztató</a>.
+            Az oldal a bejelentkezéshez és a működéshez szükséges adatokat tárolja. Részletek:{' '}
+            <a
+              href={legalUrls.privacy}
+              className="text-[var(--text-main)] hover:underline font-semibold min-h-11 inline-flex items-center"
+            >
+              Adatkezelési tájékoztató
+            </a>
+            .
           </div>
         </div>
       </footer>
