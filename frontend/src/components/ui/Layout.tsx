@@ -1,5 +1,5 @@
-import { type ReactNode, useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { type ReactNode, useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useDraftStore } from "../../store/draftStore";
 import {
@@ -118,6 +118,34 @@ function IconUser() {
   );
 }
 
+function IconLogout() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 shrink-0">
+      <path d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" />
+      <polyline points="13,14 17,10 13,6" />
+      <line x1="17" y1="10" x2="7" y2="10" />
+    </svg>
+  );
+}
+
+function IconSettings() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 shrink-0">
+      <circle cx="10" cy="10" r="2.5" />
+      <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.1 4.1l1.1 1.1M14.8 14.8l1.1 1.1M4.1 15.9l1.1-1.1M14.8 5.2l1.1-1.1" />
+    </svg>
+  );
+}
+
+function IconHome() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 shrink-0">
+      <path d="M3 9.5L10 3l7 6.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+      <path d="M7 18v-6h6v6" />
+    </svg>
+  );
+}
+
 // ── Nav items ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
@@ -138,10 +166,13 @@ const PAGE_TITLES: Record<string, string> = {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
   const [storageSync, setStorageSync] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem("vbf_sidebar_collapsed") === "1"; } catch { return false; }
   });
@@ -151,6 +182,13 @@ export function Layout({ children }: LayoutProps) {
   const locked = reportStatus === "FINAL";
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? "VBF";
+
+  // Derive display name / initials from stored email (set by login flow)
+  const storedEmail = (() => { try { return localStorage.getItem("vbf_email") ?? ""; } catch { return ""; } })();
+  const userInitials = storedEmail
+    ? storedEmail.slice(0, 2).toUpperCase()
+    : "VF";
+  const userDisplayName = storedEmail || "Felhasználó";
 
   useEffect(() => {
     try { localStorage.setItem("vbf_sidebar_collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
@@ -201,6 +239,29 @@ export function Layout({ children }: LayoutProps) {
     })();
     return () => { cancelled = true; };
   }, [storageSync]);
+
+  // Click-outside → close user menu
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
+
+  const handleLogout = () => {
+    setUserMenuOpen(false);
+    try {
+      localStorage.removeItem("vbf_token");
+      localStorage.removeItem("vbf_last_report_id");
+      localStorage.removeItem("vbf_email");
+    } catch { /* ignore */ }
+    toast.success("Kijelentkeztél.");
+    navigate("/");
+  };
 
   const handleSave = async () => {
     const errs = validateForSave(reportData);
@@ -476,6 +537,74 @@ export function Layout({ children }: LayoutProps) {
               <IconSave />
               <span>{isSaving ? "…" : "Mentés"}</span>
             </button>
+
+            {/* Avatar + user menu */}
+            <div className="relative ml-1" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors shrink-0",
+                  "bg-primary/20 text-primary hover:bg-primary/30",
+                  userMenuOpen && "ring-2 ring-primary/50"
+                )}
+                aria-label="Felhasználói menü"
+                aria-expanded={userMenuOpen}
+              >
+                {userInitials}
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-lg z-50 overflow-hidden">
+                  {/* User info */}
+                  <div className="px-4 py-3 border-b border-[var(--border-color)]">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {userInitials}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-[var(--text-main)] truncate">{userDisplayName}</p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/15 text-primary mt-0.5">
+                          Premium
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Menu items */}
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full flex items-center gap-3 px-4 py-2 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-input)] transition-colors disabled:opacity-40 cursor-not-allowed"
+                    >
+                      <IconSettings />
+                      <span>Beállítások</span>
+                      <span className="ml-auto text-[10px] opacity-60">Hamarosan</span>
+                    </button>
+                    <Link
+                      to="/"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text-main)] transition-colors"
+                    >
+                      <IconHome />
+                      <span>Főoldal</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-[var(--border-color)] py-1">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <IconLogout />
+                      <span>Kijelentkezés</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

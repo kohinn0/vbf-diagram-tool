@@ -10,6 +10,7 @@ export function LoginModal() {
     e.preventDefault();
     if (email && password) {
       // Mock login logic, we just redirect to app in this phase
+      try { localStorage.setItem("vbf_email", email); } catch { /* ignore */ }
       const modal = document.getElementById('loginModal') as HTMLDialogElement;
       modal?.close();
       navigate('/app/report');
