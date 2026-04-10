@@ -3,6 +3,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
+import { PageActionBar } from "../components/ui/PageActionBar";
 import { useDraftStore, useIsReportLocked, type VisualChecksState } from "../store/draftStore";
 import { toast } from "../lib/toast";
 import {
@@ -65,9 +66,11 @@ export default function ReportTab() {
 
   return (
     <fieldset disabled={locked} className="min-h-0 border-0 p-0 m-0 flex flex-col flex-1">
+      <PageActionBar
+        title="Adatok"
+        description="Megrendelő · Előadó · Típus · Szemrevételezés"
+      />
       <div className="flex-1 w-full h-full overflow-y-auto p-[var(--vbf-panel-padding)] bg-[var(--bg-main)]">
-        <h2 className="text-2xl font-bold mb-2 text-[var(--color-text-main)]">Jegyzőkönyv típusa és alapadatok</h2>
-        <p className="mb-6 text-sm text-[var(--color-text-muted)]">Rajz → Adatok → Hibák → Mérések → Mentés</p>
 
         <div className="mb-8 p-6 rounded-2xl border-l-[3px] border-primary bg-[var(--color-bg-card)] shadow-sm">
           <label className="mb-3 block text-[0.95rem] font-bold leading-snug text-primary">Gyorskitöltő sablon betöltése</label>

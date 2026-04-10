@@ -13,6 +13,7 @@ import { validateForExport, validateForFinalize, validateForSave } from "../../l
 import { toast } from "../../lib/toast";
 import { legalUrls } from "../../lib/legalUrls";
 import { applyServerReportToDraft, normalizeServerUpdatedAt, type ServerReport } from "../../lib/hydrateReport";
+import { AppActionsContext } from "../../lib/appActionsContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -91,23 +92,6 @@ function IconChevronRight() {
   );
 }
 
-function IconSave() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-      <path d="M3 5a2 2 0 0 1 2-2h8l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z" />
-      <path d="M7 3v4h7V3M7 13h6v4H7v-4z" />
-    </svg>
-  );
-}
-
-function IconLock() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-      <rect x="4" y="9" width="12" height="9" rx="1.5" />
-      <path d="M7 9V6a3 3 0 0 1 6 0v3" />
-    </svg>
-  );
-}
 
 function IconUser() {
   return (
@@ -492,52 +476,8 @@ export function Layout({ children }: LayoutProps) {
             </span>
           )}
 
-          {/* Actions */}
+          {/* Avatar + user menu */}
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleExport("word")}
-              disabled={isSaving || locked}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[var(--border-color)] text-[var(--text-muted)] hover:border-blue-400 hover:text-blue-400 transition-colors disabled:opacity-40 hidden sm:flex items-center gap-1.5"
-              title="Word export"
-            >
-              Word
-            </button>
-            <button
-              type="button"
-              onClick={() => handleExport("pdf")}
-              disabled={isSaving}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[var(--border-color)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-400 transition-colors disabled:opacity-40 flex items-center gap-1.5"
-              title="PDF export"
-            >
-              PDF
-            </button>
-
-            <div className="w-px h-5 bg-[var(--border-color)] mx-0.5 hidden sm:block" />
-
-            {!locked && (
-              <button
-                type="button"
-                onClick={handleFinalize}
-                disabled={isSaving || !hasReportId}
-                className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[var(--border-color)] text-[var(--text-muted)] hover:border-amber-400 hover:text-amber-400 transition-colors disabled:opacity-40 hidden sm:flex items-center gap-1.5"
-                title="Véglegesítés"
-              >
-                <IconLock />
-                <span className="hidden lg:inline">Véglegesítés</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving || locked}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-40 flex items-center gap-1.5 min-w-[80px] justify-center"
-            >
-              <IconSave />
-              <span>{isSaving ? "…" : "Mentés"}</span>
-            </button>
-
             {/* Avatar + user menu */}
             <div className="relative ml-1" ref={userMenuRef}>
               <button
@@ -630,44 +570,17 @@ export function Layout({ children }: LayoutProps) {
           </div>
         )}
 
-        {/* Page content */}
+        {/* Page content — wrapped in context so pages can access save/export/finalize */}
         <main
           aria-busy={isHydrating}
           className="flex-1 overflow-hidden relative"
         >
-          {children}
+          <AppActionsContext.Provider
+            value={{ isSaving, locked, hasReportId, handleSave, handleExport, handleFinalize }}
+          >
+            {children}
+          </AppActionsContext.Provider>
         </main>
-
-        {/* Mobile bottom action bar */}
-        {!locked && (
-          <div className="md:hidden shrink-0 flex gap-2 px-3 py-2 border-t border-[var(--border-color)] bg-[var(--bg-card)] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex-1 min-h-10 rounded-lg bg-primary text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <IconSave />
-              Mentés
-            </button>
-            <button
-              type="button"
-              onClick={() => handleExport("pdf")}
-              disabled={isSaving}
-              className="flex-1 min-h-10 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] text-sm font-semibold disabled:opacity-50"
-            >
-              PDF
-            </button>
-            <button
-              type="button"
-              onClick={handleFinalize}
-              disabled={isSaving || !hasReportId}
-              className="flex-1 min-h-10 rounded-lg border border-amber-300 text-amber-700 text-sm font-semibold disabled:opacity-50"
-            >
-              Zárás
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
+import { PageActionBar } from '../components/ui/PageActionBar';
 import type { fabric } from 'fabric';
 import { runRpeAutoWire } from '../components/diagram/measurementAutoWire';
 import { uploadPadfxFile } from '../lib/api';
@@ -133,32 +134,28 @@ export default function MeasurementsTab() {
 
   return (
     <fieldset disabled={locked} className="min-h-0 border-0 p-0 m-0 flex flex-col flex-1">
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept=".zip,.xml,.padfx,.PADFX,application/zip,application/xml,text/xml"
+        onChange={onPadfxFile}
+      />
+      <PageActionBar title="Mérési adatok" description="Kézi bevitel · PADFX import">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={padfxLoading}
+          title="Metrel PADFX / ZIP (XML). Bejelentkezés szükséges."
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {padfxLoading ? 'Import…' : 'PADFX import'}
+        </Button>
+        <Button variant="secondary" size="sm" disabled>
+          CSV export (hamarosan)
+        </Button>
+      </PageActionBar>
     <div className="flex-1 w-full h-full overflow-y-auto p-[var(--vbf-panel-padding)] bg-[var(--bg-main)]">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--color-text-main)]">Mérési adatok (kézi bevitel)</h2>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept=".zip,.xml,.padfx,.PADFX,application/zip,application/xml,text/xml"
-            onChange={onPadfxFile}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-h-11"
-            disabled={padfxLoading}
-            title="Metrel PADFX / ZIP (XML). Bejelentkezés szükséges."
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {padfxLoading ? 'Import…' : 'PADFX import'}
-          </Button>
-          <Button variant="secondary" size="sm" className="min-h-11" disabled>
-            CSV export (hamarosan)
-          </Button>
-        </div>
-      </div>
 
       <div className="mb-6 p-4 rounded-[var(--radius-vbf)] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--bg-panel))]">
         <h3 className="text-base font-semibold text-[var(--color-text-main)] m-0 mb-2">{MEASUREMENT_THRESHOLDS_SECTION_TITLE}</h3>

@@ -8,6 +8,7 @@ import { IEC_DIAGRAM_LEGEND_SHORT } from '../components/diagram/iecConductorStyl
 import type { fabric } from 'fabric';
 import { useDraftStore, useIsReportLocked } from '../store/draftStore';
 import { Button } from '../components/ui/Button';
+import { PageActionBar } from '../components/ui/PageActionBar';
 import { toast } from '../lib/toast';
 
 export default function DiagramTab() {
@@ -35,18 +36,13 @@ export default function DiagramTab() {
   return (
     <div className="flex-1 w-full h-full flex flex-col bg-[var(--color-bg-main)]">
       {/* Eszköztár (Toolbar) Fejléc */}
-      <div className="h-14 flex-shrink-0 bg-[var(--color-bg-card)] border-b border-[var(--border-color)] flex items-center justify-between px-4 z-10 shadow-sm relative">
-        <div className="flex items-center gap-4">
-          <h2 className="font-bold text-[var(--color-text-main)]">Rajz és Alaprajz Szerkesztő</h2>
-          <div className="h-4 w-px bg-[var(--border-color)] mx-2"></div>
-          
-          {/* Alap eszközök (pl. mentés/letöltés/zoom) */}
+      <PageActionBar title="Rajz & Alaprajz">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
-            variant="default"
+            variant="secondary"
             size="sm"
-            className="min-h-11"
             disabled={locked}
-            title="RPE tábla Pont ↔ elem Felirat alapján láncolja az ortogonális vonalakat (újra kattintáskor az RPE-vonalak frissülnek)"
+            title="RPE tábla Pont ↔ elem Felirat alapján láncolja az ortogonális vonalakat"
             onClick={() => {
               const r = runRpeAutoWire(activeCanvas as fabric.Canvas | null, rpeRows);
               toast.success(r.detail);
@@ -57,7 +53,6 @@ export default function DiagramTab() {
           <Button
             variant="secondary"
             size="sm"
-            className="min-h-11"
             disabled={locked}
             title="Jelölj ki két elemet Shift+kattal, majd kattints ide"
             onClick={() => canvasRef.current?.connectSelectedObjects()}
@@ -67,20 +62,14 @@ export default function DiagramTab() {
           <Button variant="outline" size="sm" disabled={locked} onClick={() => canvasRef.current?.clearCanvas()}>
             Üres vászon
           </Button>
+          <Button variant="outline" size="sm" disabled={locked}>
+            Alaprajz +
+          </Button>
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
             PNG Export
           </Button>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm">
-            Többszörös kijelölés (Shift)
-          </Button>
-          <Button variant="default" size="sm">
-            Alaprajz háttérkép +
-          </Button>
-        </div>
-      </div>
+      </PageActionBar>
 
       <details className="flex-shrink-0 px-4 py-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_6%,var(--color-bg-card))] text-sm text-[var(--color-text-muted)]">
         <summary className="cursor-pointer min-h-11 flex items-center font-medium text-[var(--color-text-main)] list-none [&::-webkit-details-marker]:hidden">

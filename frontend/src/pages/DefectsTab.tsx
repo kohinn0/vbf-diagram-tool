@@ -5,6 +5,7 @@ import { Input } from '../components/ui/Input';
 import { useDraftStore, useIsReportLocked } from '../store/draftStore';
 import { toast } from '../lib/toast';
 import { cn } from '../lib/utils';
+import { PageActionBar } from '../components/ui/PageActionBar';
 
 const defectTemplates = [
   "A biztosíték tábla nincs megfelelően feliratozva.",
@@ -34,6 +35,11 @@ export default function DefectsTab() {
   const { defects, addDefect, updateDefect, removeDefect, collectDefectsFromMeasurements } = useDraftStore();
   const [filter, setFilter] = useState("");
 
+  const pendingCount = defects.filter(d => !d.isFixed).length;
+  const headerDescription = defects.length === 0
+    ? "Nincsenek bejegyett hibák"
+    : `${defects.length} bejegyzés${pendingCount > 0 ? ` · ${pendingCount} javításra vár` : ''}`;
+
   const handleAddDefect = () => {
     addDefect({ description: "", location: "", severity: "sulyos", isFixed: false });
   };
@@ -45,40 +51,32 @@ export default function DefectsTab() {
       <div className="flex-1 w-full h-full flex flex-col overflow-hidden bg-[var(--bg-main)]">
 
         {/* Page header */}
-        <div className="shrink-0 flex flex-col gap-3 px-5 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)] sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-[var(--text-main)]">Feltárt hibák és hiányosságok</h2>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {defects.length} bejegyzés{defects.filter(d => !d.isFixed).length > 0 && ` · ${defects.filter(d => !d.isFixed).length} javításra vár`}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              className="h-8 text-xs w-40"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="">Összes súlyosság</option>
-              <option value="kritikus">Kritikus</option>
-              <option value="sulyos">Súlyos</option>
-              <option value="kozepes">Közepes</option>
-              <option value="egyedi">Egyedi</option>
-            </Select>
-            <Button
-              variant="secondary"
-              size="sm"
-              type="button"
-              onClick={() => {
-                const r = collectDefectsFromMeasurements();
-                if (r.added > 0) toast.success(r.message);
-                else toast.error(r.message);
-              }}
-            >
-              Auto gyűjtés
-            </Button>
-            <Button size="sm" onClick={handleAddDefect}>+ Új hiba</Button>
-          </div>
-        </div>
+        <PageActionBar title="Feltárt hibák és hiányosságok" description={headerDescription}>
+          <Select
+            className="h-8 text-xs w-40"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="">Összes súlyosság</option>
+            <option value="kritikus">Kritikus</option>
+            <option value="sulyos">Súlyos</option>
+            <option value="kozepes">Közepes</option>
+            <option value="egyedi">Egyedi</option>
+          </Select>
+          <Button
+            variant="secondary"
+            size="sm"
+            type="button"
+            onClick={() => {
+              const r = collectDefectsFromMeasurements();
+              if (r.added > 0) toast.success(r.message);
+              else toast.error(r.message);
+            }}
+          >
+            Auto gyűjtés
+          </Button>
+          <Button size="sm" onClick={handleAddDefect}>+ Új hiba</Button>
+        </PageActionBar>
 
         {/* Table area */}
         <div className="flex-1 overflow-auto">
