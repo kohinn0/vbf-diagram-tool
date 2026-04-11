@@ -1,6 +1,6 @@
 import type { DefectItem, RpeRow } from '../store/draftStore';
 
-export type AutoDefectPayload = Omit<DefectItem, 'id'> & { autoSourceKey: string };
+type AutoDefectPayload = Omit<DefectItem, 'id'> & { autoSourceKey: string };
 
 function passIsFail(pass: string | undefined): boolean {
   const p = (pass ?? 'Igen').trim().toLowerCase();

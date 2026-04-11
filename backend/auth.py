@@ -97,8 +97,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             
     return user
 
-def _is_super_admin(user: User) -> bool:
-    return user.role in ("SUPER_ADMIN", "ADMIN")
+def is_platform_super_admin(user: User) -> bool:
+    """Teljes üzemeltetői jogkör: csak SUPER_ADMIN (cégek, pénzügyi admin API, minden jegyzőkönyv)."""
+    return user.role == "SUPER_ADMIN"
 
 
 def get_current_admin(current_user: User = Depends(get_current_user)):
@@ -112,10 +113,10 @@ def get_current_admin(current_user: User = Depends(get_current_user)):
 
 
 def get_current_super_admin(current_user: User = Depends(get_current_user)):
-    """Csak super admin: minden felhasználó/cég kezelése, új super admin/cég létrehozása."""
-    if not _is_super_admin(current_user):
+    """Csak SUPER_ADMIN: cégek, megrendelések, platform beállítások (ADMIN szerep nem fér hozzá)."""
+    if not is_platform_super_admin(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Csak főadminisztrátor jogosultság szükséges!",
+            detail="Csak a fő üzemeltető (SUPER_ADMIN) jogosultság szükséges.",
         )
     return current_user

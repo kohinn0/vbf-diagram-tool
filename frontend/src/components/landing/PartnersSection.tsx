@@ -2,11 +2,11 @@ export function PartnersSection() {
   return (
     <section id="partners" className="relative py-24 bg-[var(--bg-main)] overflow-hidden">
       {/* Background decorations */}
-      <div className="absolute left-[-10%] top-[20%] w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="pointer-events-none absolute left-[-10%] top-[20%] h-[400px] w-[400px] rounded-full bg-primary/5 blur-[100px]"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-5">
-          <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-500 px-4 py-1.5 rounded-full text-sm font-bold border border-blue-500/20 mb-2 shadow-sm">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary shadow-sm">
             Kik használják?
           </div>
           <h2 className="text-4xl font-extrabold text-[var(--text-main)] tracking-tight">Együttműködő partnereink</h2>
@@ -19,7 +19,7 @@ export function PartnersSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Partner 1 */}
           <a href="https://vizvillanyfutes.hu/" target="_blank" rel="noopener noreferrer" className="relative group perspective-1000">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-blue-500/10 rounded-3xl blur-md opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-primary/10 to-sky-500/10 opacity-0 blur-md transition duration-500 group-hover:opacity-100"></div>
             <div className="relative block bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--border-color)] p-8 sm:p-10 rounded-3xl hover:border-primary/50 hover:shadow-2xl transition-all duration-300 transform group-hover:-translate-y-1">
               <div className="mb-8 h-16 flex items-center justify-start">
                 <img src="https://vizvillanyfutes.hu/wp-content/uploads/2024/10/vizvillanyfutes-logo.png" alt="VízVillanyFűtés" className="max-h-12 w-auto opacity-80 group-hover:opacity-100 transition-opacity filter grayscale group-hover:grayscale-0 duration-500" />

@@ -20,10 +20,16 @@ router = APIRouter()
 
 
 def _reports_scope(db, current_user):
-    """TECH: saját + cég megosztott; COMPANY_ADMIN: cégé; SUPER_ADMIN/ADMIN: minden."""
+    """TECH: saját + cég megosztott; COMPANY_ADMIN: cégé; SUPER_ADMIN: minden; ADMIN: cég vagy saját."""
     from sqlalchemy import or_
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    if current_user.role == "SUPER_ADMIN":
         return db.query(database.Report)
+    if current_user.role == "ADMIN":
+        if current_user.company_id:
+            return db.query(database.Report).join(database.User, database.Report.owner_id == database.User.id).filter(
+                database.User.company_id == current_user.company_id
+            )
+        return db.query(database.Report).filter(database.Report.owner_id == current_user.id)
     if current_user.company_id:
         if current_user.role == "COMPANY_ADMIN":
             return db.query(database.Report).join(database.User, database.Report.owner_id == database.User.id).filter(
@@ -335,8 +341,15 @@ def _report_access(db, report_id: int, current_user: database.User):
     report = db.query(database.Report).filter(database.Report.id == report_id).first()
     if not report:
         return None
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    if current_user.role == "SUPER_ADMIN":
         return report
+    if current_user.role == "ADMIN":
+        if current_user.company_id:
+            owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+            if owner and owner.company_id == current_user.company_id:
+                return report
+            return None
+        return report if report.owner_id == current_user.id else None
     if current_user.company_id:
         owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
         if owner and owner.company_id == current_user.company_id:

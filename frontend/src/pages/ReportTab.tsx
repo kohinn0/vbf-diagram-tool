@@ -3,8 +3,16 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
+import { FormField } from "../components/ui/FormField";
+import { Skeleton } from "../components/ui/Skeleton";
+import { getFieldError, type ReportFieldKey } from "../lib/validateReport";
 import { useDraftStore, useIsReportLocked, type VisualChecksState } from "../store/draftStore";
 import { toast } from "../lib/toast";
+import {
+  BUILTIN_REPORT_TEMPLATES,
+  loadUserReportTemplates,
+  saveCurrentAsUserTemplate,
+} from "../lib/reportTemplates";
 import {
   fetchCustomers,
   fetchInspectors,
@@ -26,7 +34,8 @@ const VISUAL_LABELS: { key: keyof VisualChecksState; label: string }[] = [
 
 export default function ReportTab() {
   const locked = useIsReportLocked();
-  const { reportData, updateReportData, visualChecks, updateVisualCheck } = useDraftStore();
+  const { reportData, updateReportData, visualChecks, updateVisualCheck, applyReportTemplatePatch } =
+    useDraftStore();
   const [customers, setCustomers] = useState<CustomerDto[]>([]);
   const [inspectors, setInspectors] = useState<InspectorDto[]>([]);
   const [masterLoading, setMasterLoading] = useState(false);
@@ -34,6 +43,18 @@ export default function ReportTab() {
   const [newInspOpen, setNewInspOpen] = useState(false);
   const [newCust, setNewCust] = useState({ name: "", address: "", hrsz: "" });
   const [newInsp, setNewInsp] = useState({ name: "", license: "", instrument_type: "", instrument_cal: "" });
+  const [templateSelect, setTemplateSelect] = useState("");
+  const [userTemplates, setUserTemplates] = useState(() => loadUserReportTemplates());
+  const [touched, setTouched] = useState<Partial<Record<ReportFieldKey, boolean>>>({});
+
+  const touch = (k: ReportFieldKey) => setTouched((t) => ({ ...t, [k]: true }));
+
+  const fieldErr = (k: ReportFieldKey): string | undefined => {
+    if (!touched[k]) return undefined;
+    const exportKeys: ReportFieldKey[] = ["inspectorName", "inspectorLicense", "instrumentType", "instrumentCal"];
+    const phase = exportKeys.includes(k) ? "export" : "save";
+    return getFieldError(k, reportData[k], phase) || undefined;
+  };
 
   useEffect(() => {
     if (!localStorage.getItem("vbf_token")) return;
@@ -71,28 +92,208 @@ export default function ReportTab() {
 
         <div className="mb-8 p-6 rounded-2xl border-l-[3px] border-primary bg-[var(--color-bg-card)] shadow-sm">
           <label className="mb-3 block text-[0.95rem] font-bold leading-snug text-primary">Gyorskitöltő sablon betöltése</label>
+          <p className="text-xs text-[var(--color-text-muted)] mb-3">
+            {BUILTIN_REPORT_TEMPLATES.length} előre definiált + saját mentett sablon. A sablon a típust, OTSZ osztályt, környezetet és §6.4.2 jelölőket tölti — ügyfél és helyszín kézzel marad.
+          </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-4">
-            <Select className="flex-1" disabled={locked}>
+            <Select
+              className="flex-1 min-h-11"
+              disabled={locked}
+              value={templateSelect}
+              onChange={(e) => {
+                const v = e.target.value;
+                setTemplateSelect(v);
+                if (!v) return;
+                if (v.startsWith("builtin:")) {
+                  const id = v.slice("builtin:".length);
+                  const t = BUILTIN_REPORT_TEMPLATES.find((x) => x.id === id);
+                  if (t) {
+                    applyReportTemplatePatch(t.patch);
+                    toast.success("Sablon alkalmazva: " + t.label);
+                  }
+                } else if (v.startsWith("user:")) {
+                  const id = v.slice("user:".length);
+                  const t = userTemplates.find((x) => x.id === id);
+                  if (t) {
+                    applyReportTemplatePatch(t.patch);
+                    toast.success("Saját sablon betöltve: " + t.name);
+                  }
+                }
+                setTemplateSelect("");
+              }}
+            >
               <option value="">-- Válassz sablont (opcionális) --</option>
+              <optgroup label="Előre definiált jegyzőkönyv sablonok">
+                {BUILTIN_REPORT_TEMPLATES.map((t) => (
+                  <option key={t.id} value={`builtin:${t.id}`}>
+                    {t.label}
+                    {t.hint ? ` — ${t.hint}` : ""}
+                  </option>
+                ))}
+              </optgroup>
+              {userTemplates.length > 0 && (
+                <optgroup label="Saját mentett sablonok">
+                  {userTemplates.map((t) => (
+                    <option key={t.id} value={`user:${t.id}`}>
+                      {t.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </Select>
-            <Button type="button" disabled={locked}>Mentés saját sablonként</Button>
+            <Button
+              type="button"
+              disabled={locked}
+              className="min-h-11 shrink-0"
+              onClick={() => {
+                const name = window.prompt("Saját sablon neve (a jelenlegi jegyzőkönyv adatlap és §6.4.2 jelölők):");
+                if (!name?.trim()) return;
+                try {
+                  const st = useDraftStore.getState();
+                  saveCurrentAsUserTemplate(name.trim(), {
+                    reportData: { ...st.reportData },
+                    visualChecks: { ...st.visualChecks },
+                  });
+                  setUserTemplates(loadUserReportTemplates());
+                  toast.success("Saját sablon elmentve a böngészőbe.");
+                } catch (e: unknown) {
+                  toast.error(e instanceof Error ? e.message : "Mentés hiba");
+                }
+              }}
+            >
+              Mentés saját sablonként
+            </Button>
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="text-sm font-semibold text-[var(--color-text-muted-strong)] mb-2 block">Vizsgálat Típusa (MSZ HD 60364 / OTSZ)</label>
-          <Select
-            value={reportData["docType"] || ""}
-            onChange={(e) => updateReportData("docType", e.target.value)}
-            disabled={locked}
+          <FormField
+            label="Vizsgálat típusa (MSZ HD 60364 / OTSZ)"
+            htmlFor="report-docType"
+            error={fieldErr("docType")}
+            requiredMark
           >
-            <option value="VBF_IDOSZAKOS">VBF - Időszakos felülvizsgálat (OTSZ szerint)</option>
-            <option value="VBF_ELSO">VBF - Első felülvizsgálat (Üzembe helyezés előtti)</option>
-            <option value="VBF_BERBEADAS">VBF - Bérbeadás előtti felülvizsgálat (40/2017. NGM)</option>
-            <option value="VBF_ELADAS">VBF - Tulajdonosi jogváltás / Eladás előtti felülvizsgálat</option>
-            <option value="EPH">EPH - Egyenpotenciálra Hozó Hálózat Felülvizsgálat Mérés</option>
-          </Select>
+            <Select
+              id="report-docType"
+              value={reportData["docType"] || ""}
+              onChange={(e) => {
+                touch("docType");
+                updateReportData("docType", e.target.value);
+              }}
+              onBlur={() => touch("docType")}
+              disabled={locked}
+              className="min-h-11"
+              aria-invalid={fieldErr("docType") ? true : undefined}
+            >
+              <option value="VBF_IDOSZAKOS">VBF - Időszakos felülvizsgálat (OTSZ szerint)</option>
+              <option value="VBF_ELSO">VBF - Első felülvizsgálat (Üzembe helyezés előtti)</option>
+              <option value="VBF_BERBEADAS">VBF - Bérbeadás előtti felülvizsgálat (40/2017. NGM)</option>
+              <option value="VBF_ELADAS">VBF - Tulajdonosi jogváltás / Eladás előtti felülvizsgálat</option>
+              <option value="EPH">EPH - Egyenpotenciálra Hozó Hálózat Felülvizsgálat Mérés</option>
+            </Select>
+          </FormField>
         </div>
+
+        {reportData.docType === "EPH" && (
+          <div className="mb-8 p-6 rounded-2xl border border-[var(--border-color)] bg-[var(--color-bg-card)] shadow-sm">
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2">EPH és földelés — specifikus adatok</h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-4 m-0">
+              A Word és PDF „EPH és Földelés Specifikus Adatok” szakaszába kerülnek.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">
+                  Gázszolgáltató (gázmérő) bevonása szükséges
+                </label>
+                <Select
+                  className="min-h-11"
+                  disabled={locked}
+                  value={reportData.ephGasRequired === "Igen" ? "Igen" : "Nem"}
+                  onChange={(e) => updateReportData("ephGasRequired", e.target.value)}
+                >
+                  <option value="Nem">Nem</option>
+                  <option value="Igen">Igen</option>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">Gázmérő gyári száma</label>
+                <Input
+                  className="min-h-11"
+                  disabled={locked}
+                  value={reportData.ephGasMeter || ""}
+                  onChange={(e) => updateReportData("ephGasMeter", e.target.value)}
+                  placeholder="N/A"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">PE–N szétválasztás helye</label>
+                <Input
+                  className="min-h-11"
+                  disabled={locked}
+                  value={reportData.ephPenSep || ""}
+                  onChange={(e) => updateReportData("ephPenSep", e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">
+                  Földelési ellenállás mérési módszer
+                </label>
+                <Input
+                  className="min-h-11"
+                  disabled={locked}
+                  value={reportData.ephEarthMethod || ""}
+                  onChange={(e) => updateReportData("ephEarthMethod", e.target.value)}
+                />
+              </div>
+              <label className="flex items-start gap-3 min-h-11 cursor-pointer md:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-1.5 shrink-0 w-5 h-5 rounded border-[var(--border-color)]"
+                  disabled={locked}
+                  checked={Boolean(reportData.ephEarthNotMeasurable?.trim())}
+                  onChange={(e) =>
+                    updateReportData("ephEarthNotMeasurable", e.target.checked ? "1" : "")
+                  }
+                />
+                <span className="text-sm text-[var(--color-text-main)] leading-snug">
+                  A Ra mérés a helyszín adottságai miatt nem volt kivitelezhető (Rpe folytonosság mérve) — a generátor nem ír numerikus Ra értéket.
+                </span>
+              </label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">Mért földelési ellenállás Ra [Ω]</label>
+                <Input
+                  className="min-h-11"
+                  type="number"
+                  step="any"
+                  disabled={locked || Boolean(reportData.ephEarthNotMeasurable?.trim())}
+                  value={reportData.ephRaValue || ""}
+                  onChange={(e) => updateReportData("ephRaValue", e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[var(--color-text-muted-strong)]">EPH fővezeték keresztmetszete [mm²]</label>
+                <Input
+                  className="min-h-11"
+                  disabled={locked}
+                  value={reportData.ephConductor || ""}
+                  onChange={(e) => updateReportData("ephConductor", e.target.value)}
+                />
+              </div>
+              <label className="flex items-start gap-3 min-h-11 cursor-pointer md:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-1.5 shrink-0 w-5 h-5 rounded border-[var(--border-color)]"
+                  disabled={locked}
+                  checked={Boolean(reportData.ephDeclaration?.trim())}
+                  onChange={(e) => updateReportData("ephDeclaration", e.target.checked ? "1" : "")}
+                />
+                <span className="text-sm text-[var(--color-text-main)] leading-snug">
+                  EPH nyilatkozat: az egyidejűleg érinthető idegen fémszerkezetek bekötéséről (generátor szövege a dokumentumban).
+                </span>
+              </label>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <Card>
@@ -102,27 +303,31 @@ export default function ReportTab() {
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Ügyfél a törzsből</label>
-                <Select
-                  disabled={locked || masterLoading}
-                  value={reportData["customerId"] || ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) {
-                      updateReportData("customerId", "");
-                      return;
-                    }
-                    const c = customers.find((x) => String(x.id) === v);
-                    if (c) applyCustomer(c);
-                  }}
-                  className="min-h-11"
-                >
-                  <option value="">— Válassz vagy írj kézzel alább —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+                {masterLoading ? (
+                  <Skeleton className="h-11 w-full" label="Ügyfelek betöltése" />
+                ) : (
+                  <Select
+                    disabled={locked || masterLoading}
+                    value={reportData["customerId"] || ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) {
+                        updateReportData("customerId", "");
+                        return;
+                      }
+                      const c = customers.find((x) => String(x.id) === v);
+                      if (c) applyCustomer(c);
+                    }}
+                    className="min-h-11"
+                  >
+                    <option value="">— Válassz vagy írj kézzel alább —</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
                 {!locked && (
                   <div className="mt-1">
                     <button
@@ -184,22 +389,38 @@ export default function ReportTab() {
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Megrendelő Neve / Cégneve</label>
+              <FormField
+                label="Megrendelő neve / cégneve"
+                htmlFor="report-customerName"
+                error={fieldErr("customerName")}
+                requiredMark
+              >
                 <Input
+                  id="report-customerName"
                   value={reportData["customerName"] || ""}
                   onChange={(e) => updateReportData("customerName", e.target.value)}
+                  onBlur={() => touch("customerName")}
                   placeholder="Pl. Kovács Kft. vagy Gipsz Jakab"
+                  className="min-h-11"
+                  aria-invalid={fieldErr("customerName") ? true : undefined}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Vizsgált Objektum Címe</label>
+              </FormField>
+              <FormField
+                label="Vizsgált objektum címe"
+                htmlFor="report-siteAddress"
+                error={fieldErr("siteAddress")}
+                requiredMark
+              >
                 <Input
+                  id="report-siteAddress"
                   value={reportData["siteAddress"] || ""}
                   onChange={(e) => updateReportData("siteAddress", e.target.value)}
+                  onBlur={() => touch("siteAddress")}
                   placeholder="Pl. 1011 Bp., Fő utca 1."
+                  className="min-h-11"
+                  aria-invalid={fieldErr("siteAddress") ? true : undefined}
                 />
-              </div>
+              </FormField>
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Helyrajzi Szám (HRSZ) / Épület azonosító (OTSZ)</label>
                 <Input
@@ -211,24 +432,40 @@ export default function ReportTab() {
 
               <hr className="my-2 border-[var(--border-color)]" />
               <h3 className="font-semibold text-[var(--color-text-main)]">Környezeti Tényezők és Szabványok</h3>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Hőmérséklet a vizsgálat idején (°C)</label>
+              <FormField
+                label="Hőmérséklet a vizsgálat idején (°C)"
+                htmlFor="report-envTemp"
+                hint="Opcionális; ha kitöltöd: -40 … 60 °C."
+                error={fieldErr("envTemp")}
+              >
                 <Input
+                  id="report-envTemp"
                   type="number"
                   value={reportData["envTemp"] || ""}
                   onChange={(e) => updateReportData("envTemp", e.target.value)}
+                  onBlur={() => touch("envTemp")}
                   placeholder="Pl. 22"
+                  className="min-h-11"
+                  aria-invalid={fieldErr("envTemp") ? true : undefined}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Relatív páratartalom (%)</label>
+              </FormField>
+              <FormField
+                label="Relatív páratartalom (%)"
+                htmlFor="report-envHumidity"
+                hint="Opcionális; ha kitöltöd: 0–100%."
+                error={fieldErr("envHumidity")}
+              >
                 <Input
+                  id="report-envHumidity"
                   type="number"
                   value={reportData["envHumidity"] || ""}
                   onChange={(e) => updateReportData("envHumidity", e.target.value)}
+                  onBlur={() => touch("envHumidity")}
                   placeholder="Pl. 45"
+                  className="min-h-11"
+                  aria-invalid={fieldErr("envHumidity") ? true : undefined}
                 />
-              </div>
+              </FormField>
             </CardContent>
           </Card>
 
@@ -239,27 +476,31 @@ export default function ReportTab() {
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Felülvizsgáló a törzsből</label>
-                <Select
-                  disabled={locked || masterLoading}
-                  value={reportData["inspectorId"] || ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) {
-                      updateReportData("inspectorId", "");
-                      return;
-                    }
-                    const i = inspectors.find((x) => String(x.id) === v);
-                    if (i) applyInspector(i);
-                  }}
-                  className="min-h-11"
-                >
-                  <option value="">— Válassz vagy töltsd kézzel —</option>
-                  {inspectors.map((i) => (
-                    <option key={i.id} value={String(i.id)}>
-                      {i.name}
-                    </option>
-                  ))}
-                </Select>
+                {masterLoading ? (
+                  <Skeleton className="h-11 w-full" label="Felülvizsgálók betöltése" />
+                ) : (
+                  <Select
+                    disabled={locked || masterLoading}
+                    value={reportData["inspectorId"] || ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) {
+                        updateReportData("inspectorId", "");
+                        return;
+                      }
+                      const i = inspectors.find((x) => String(x.id) === v);
+                      if (i) applyInspector(i);
+                    }}
+                    className="min-h-11"
+                  >
+                    <option value="">— Válassz vagy töltsd kézzel —</option>
+                    {inspectors.map((i) => (
+                      <option key={i.id} value={String(i.id)}>
+                        {i.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
                 {!locked && (
                   <div className="mt-1">
                     <button
@@ -329,38 +570,74 @@ export default function ReportTab() {
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Felülvizsgáló Cég / Személy Neve</label>
+              <FormField
+                label="Felülvizsgáló cég / személy neve"
+                htmlFor="report-inspectorName"
+                hint="Export: kötelező."
+                error={fieldErr("inspectorName")}
+                requiredMark
+              >
                 <Input
+                  id="report-inspectorName"
                   value={reportData["inspectorName"] || ""}
                   onChange={(e) => updateReportData("inspectorName", e.target.value)}
+                  onBlur={() => touch("inspectorName")}
                   placeholder="Zöldfülű Vill Kft."
+                  className="min-h-11"
+                  aria-invalid={fieldErr("inspectorName") ? true : undefined}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Vizsgabizonyítvány Száma</label>
+              </FormField>
+              <FormField
+                label="Vizsgabizonyítvány száma"
+                htmlFor="report-inspectorLicense"
+                hint="Export: kötelező."
+                error={fieldErr("inspectorLicense")}
+                requiredMark
+              >
                 <Input
+                  id="report-inspectorLicense"
                   value={reportData["inspectorLicense"] || ""}
                   onChange={(e) => updateReportData("inspectorLicense", e.target.value)}
+                  onBlur={() => touch("inspectorLicense")}
                   placeholder="Pl. VBF-12345/2023"
+                  className="min-h-11"
+                  aria-invalid={fieldErr("inspectorLicense") ? true : undefined}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Mérőműszer (Típus és Gyári Szám)</label>
+              </FormField>
+              <FormField
+                label="Mérőműszer (típus és gyári szám)"
+                htmlFor="report-instrumentType"
+                hint="Export: kötelező."
+                error={fieldErr("instrumentType")}
+                requiredMark
+              >
                 <Input
+                  id="report-instrumentType"
                   value={reportData["instrumentType"] || ""}
                   onChange={(e) => updateReportData("instrumentType", e.target.value)}
+                  onBlur={() => touch("instrumentType")}
                   placeholder="Pl. Metrel MI 3152, SN:123456"
+                  className="min-h-11"
+                  aria-invalid={fieldErr("instrumentType") ? true : undefined}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Műszer Kalibrálás Érvényessége</label>
+              </FormField>
+              <FormField
+                label="Műszer kalibrálás érvényessége"
+                htmlFor="report-instrumentCal"
+                hint="Export: kötelező."
+                error={fieldErr("instrumentCal")}
+                requiredMark
+              >
                 <Input
+                  id="report-instrumentCal"
                   type="date"
                   value={reportData["instrumentCal"] || ""}
                   onChange={(e) => updateReportData("instrumentCal", e.target.value)}
+                  onBlur={() => touch("instrumentCal")}
+                  className="min-h-11"
+                  aria-invalid={fieldErr("instrumentCal") ? true : undefined}
                 />
-              </div>
+              </FormField>
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Műszer Mérési Bizonytalansága</label>
                 <Input
@@ -445,7 +722,7 @@ export default function ReportTab() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 min-h-11"
+                className="min-h-11 border border-violet-500/35 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
                 disabled={locked}
                 onClick={async () => {
                   try {
@@ -474,7 +751,7 @@ export default function ReportTab() {
               <div className="flex flex-col gap-2 mt-2">
                 <label className="text-sm font-semibold text-[var(--color-text-muted-strong)]">Belső megjegyzések (Csak neked, nem kerül be a nyomtatásba!)</label>
                 <textarea
-                  className="w-full min-h-[80px] p-3 text-sm rounded-md border border-[var(--border-color)] bg-[rgba(255,200,0,0.05)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-y disabled:opacity-50"
+                  className="min-h-[80px] w-full resize-y rounded-md border border-amber-500/25 bg-[var(--bg-input)] p-3 text-sm text-[var(--text-main)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-amber-500/40 disabled:opacity-50"
                   value={reportData["inspectorNotes"] || ""}
                   onChange={(e) => updateReportData("inspectorNotes", e.target.value)}
                   placeholder="Pl. Gipsz Jakab 10.000 Ft-ot még lóg a kiszállásért."

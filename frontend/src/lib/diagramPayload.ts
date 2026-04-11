@@ -54,7 +54,8 @@ export function mergeDiagramPayload(
 /** API / generátor felé — React `id` kulcsot nem küldjük */
 export function stripMeasurementIds(rows: Record<string, string>[]): Record<string, string>[] {
   return rows.map((r) => {
-    const { id: _id, ...rest } = r as Record<string, string> & { id?: string };
+    const { id, ...rest } = r as Record<string, string> & { id?: string };
+    void id;
     return rest;
   });
 }

@@ -249,12 +249,16 @@ export const CanvasWorkspace = forwardRef<CanvasRef, CanvasWorkspaceProps>(({ on
         vbfData?: Record<string, unknown>;
       })[];
       if (selected.length !== 2) {
-        window.alert('Válassz ki pontosan két elemet (Shift + kattintás a másodikra), majd kattints újra az Automata vonal gombra.');
+        toast.error(
+          'Válassz ki pontosan két elemet (Shift + kattintás a másodikra), majd kattints újra az Automata vonal gombra.'
+        );
         return false;
       }
       const [o1, o2] = selected;
       if (!isWireEndpoint(o1) || !isWireEndpoint(o2)) {
-        window.alert('Csak szimbólumok / alaprajz elemek között húzható automatikus vonal (vonal elem nem választható végpontnak).');
+        toast.error(
+          'Csak szimbólumok / alaprajz elemek között húzható automatikus vonal (vonal elem nem választható végpontnak).'
+        );
         return false;
       }
       const id1 = ensureElementId(o1);
@@ -263,7 +267,7 @@ export const CanvasWorkspace = forwardRef<CanvasRef, CanvasWorkspaceProps>(({ on
         return false;
       }
       if (connectionPairExists(canvas, id1, id2)) {
-        window.alert('Ezek az elemek már össze vannak kötve.');
+        toast.error('Ezek az elemek már össze vannak kötve.');
         return false;
       }
       const pathObj = createConnectionLineObject(o1, o2, { name: 'Vezeték (automatikus)', source: 'manual' });
@@ -277,7 +281,7 @@ export const CanvasWorkspace = forwardRef<CanvasRef, CanvasWorkspaceProps>(({ on
   }));
 
   return (
-    <div ref={containerRef} className="flex-1 w-full h-full relative overflow-hidden bg-dot-pattern">
+    <div ref={containerRef} className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-dot-pattern">
       <canvas ref={canvasElementRef} />
     </div>
   );

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 
-export interface CartItem {
+interface CartItem {
   id: string; // e.g. "monthly" or "yearly"
   title: string;
   price: number;
   quantity: number;
 }
 
-export interface CartState {
+interface CartState {
   isOpen: boolean;
   items: CartItem[];
   openCart: () => void;

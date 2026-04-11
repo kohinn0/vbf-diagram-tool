@@ -35,8 +35,8 @@ export function PricingSection() {
               <li className="flex items-start gap-4"><span className="text-green-500 font-bold bg-green-500/10 p-1 rounded-full text-xs">✓</span> Havonta max. 15 jegyzőkönyv</li>
               <li className="flex items-start gap-4"><span className="text-green-500 font-bold bg-green-500/10 p-1 rounded-full text-xs">✓</span> Rajzoló eszköz használata</li>
               <li className="flex items-start gap-4"><span className="text-green-500 font-bold bg-green-500/10 p-1 rounded-full text-xs">✓</span> Alap sablonok elérése</li>
-              <li className="flex items-start gap-4 text-gray-500"><span className="font-bold bg-[var(--bg-main)] p-1 rounded-full text-xs">✖</span> Auto-Hibagenerálás</li>
-              <li className="flex items-start gap-4 text-gray-500"><span className="font-bold bg-[var(--bg-main)] p-1 rounded-full text-xs">✖</span> Saját céges logó használata</li>
+              <li className="flex items-start gap-4 text-[var(--text-muted)]"><span className="rounded-full bg-[var(--bg-main)] p-1 text-xs font-bold">✖</span> Auto-Hibagenerálás</li>
+              <li className="flex items-start gap-4 text-[var(--text-muted)]"><span className="rounded-full bg-[var(--bg-main)] p-1 text-xs font-bold">✖</span> Saját céges logó használata</li>
             </ul>
 
             <button 
@@ -58,7 +58,7 @@ export function PricingSection() {
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-400 via-primary to-yellow-400"></div>
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors"></div>
 
-              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600 mb-2 mt-4">Éves előfizetés</h3>
+              <h3 className="mt-4 mb-2 bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-2xl font-black text-transparent">Éves előfizetés</h3>
               <div className="text-6xl font-black text-[var(--text-main)] mb-1 tracking-tight">99.000 <span className="text-2xl font-medium text-[var(--text-muted)]">Ft</span></div>
               <p className="text-sm text-primary mb-10 font-bold bg-primary/10 px-3 py-1 rounded-full">Évente számlázva (2 hónap ajándék)</p>
 
@@ -101,7 +101,7 @@ export function PricingSection() {
           </div>
         </div>
         
-        <div className="max-w-2xl mx-auto mt-16 p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-center text-blue-400">
+        <div className="mx-auto mt-16 max-w-2xl rounded-2xl border border-primary/20 bg-primary/10 p-6 text-center text-sky-300">
           <p className="font-medium flex items-center justify-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             Visszajelzés a béta verzió során: Ha bármilyen hibát tapasztalsz, jelezd felénk és azonnal javítjuk!

@@ -1,7 +1,16 @@
 """
 Szamlazz.hu API integráció – automatikus számla készítés fizetés után.
+
+A `create_invoice_for_stripe_session` és `create_invoice_for_pending_order` jelenleg
+stubok: vevő- és összegadatok összeállítása után nem küldenek XML-t az Agent API-nak;
+a tényleges számlakészítés később illeszthető (XML request + POST, válasz feldolgozás).
+
+Nem a végfelhasználóknak vállalt SaaS-szolgáltatás része; belső / üzemeltetői és webshop
+környezetben opcionális, ha a hitelesítő adatok be vannak állítva.
+
 Környezeti változók: SZAMLAZZ_USER, SZAMLAZZ_PASS, SZAMLAZZ_AGENT_URL (opcionális).
 Ha nincs beállítva, a create_invoice_for_stripe_session semmit nem csinál (nem dob hibát).
+
 Dokumentáció: https://docs.szamlazz.hu/
 """
 import os
@@ -43,7 +52,7 @@ def create_invoice_for_stripe_session(session: dict, company, plan_type: str) ->
         logger.warning("Szamlazz.hu: nincs amount_total a session-ben, számla kihagyva.")
         return None, None
 
-    # TODO: XML build + POST; válaszból szlahu_szamlaszam, PDF (ha az API visszaadja)
+    # Stub: XML Agent kérés és POST a SZAMLAZZ_AGENT_URL-re — lásd modul docstring.
     logger.info(
         "Szamlazz.hu: számla készítés (stub) vevő=%s összeg=%s HUF.",
         buyer.get("name"), amount_huf
@@ -73,5 +82,5 @@ def create_invoice_for_pending_order(order) -> Tuple[Optional[str], Optional[byt
         "Szamlazz.hu: utalásos számla (stub) vevő=%s összeg=%s HUF.",
         buyer.get("name"), amount_huf
     )
-    # TODO: XML + POST; válaszból számlaszám, PDF ha az API visszaadja
+    # Stub: ugyanaz a folyamat, mint a Stripe session esetén — lásd modul docstring.
     return None, None

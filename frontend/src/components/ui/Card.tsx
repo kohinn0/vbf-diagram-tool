@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "rounded-[var(--radius-vbf)] border border-[var(--border-color)] bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-sm",
+        "rounded-[var(--radius-vbf)] border border-[var(--border-color)] bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-[var(--shadow-premium-sm)] ring-1 ring-white/[0.04]",
         className
       )}
       {...props}
@@ -44,15 +44,4 @@ const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
 )
 CardContent.displayName = "CardContent"
 
-const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("flex items-center p-6 pt-0", className)}
-      {...props}
-    />
-  )
-)
-CardFooter.displayName = "CardFooter"
-
-export { Card, CardHeader, CardTitle, CardContent, CardFooter }
+export { Card, CardHeader, CardTitle, CardContent }

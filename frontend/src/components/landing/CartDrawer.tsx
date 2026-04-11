@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCartStore } from '../../store/cartStore';
+import { toast } from '../../lib/toast';
 
 export function CartDrawer() {
   const { isOpen, items, closeCart, getTotal, removeItem } = useCartStore();
@@ -67,8 +68,13 @@ export function CartDrawer() {
                     </div>
                     
                     <button 
+                      type="button"
                       className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded transition-colors"
-                      onClick={() => alert('Bankkártyás fizetés integráció...')}
+                      onClick={() =>
+                        toast.neutral(
+                          'A bankkártyás fizetés folyamatban — addig egyeztess utalással vagy írj az info@vbfpremium.hu címre.'
+                        )
+                      }
                     >
                       Megrendelés folytatása
                     </button>
@@ -111,9 +117,10 @@ export function CartDrawer() {
                   
                   <div className="mt-6 space-y-3">
                     <button 
+                      type="button"
                       className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded transition-colors"
                       onClick={() => {
-                        alert('Számlakérés elküldve!');
+                        toast.success('Kérés rögzítve — éles üzemben e-mailben visszaigazoljuk a számlaadatokat.');
                         setShowTransferForm(false);
                       }}
                     >

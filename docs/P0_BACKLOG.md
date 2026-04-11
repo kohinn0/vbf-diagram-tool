@@ -17,10 +17,11 @@ Ellenőrzőlista a **VBF Premium** „MVP+” / értékesíthető állapotához.
 
 ## P1 (követő hullám)
 
-- Ügyfél / felülvizsgáló törzs választó (nem placeholder).
-- Helyszínfa (`site_tree`) + relációs sync.
-- CSV export mérésekhez.
-- Offline/PWA ígéret vs. tényleges állapot összhang.
+- [x] Ügyfél / felülvizsgáló törzs választó — `ReportTab` (`fetchCustomers` / `fetchInspectors`, új törzs sor).
+- [x] Helyszínfa (`site_tree`) + relációs sync — UI: `SiteTreePanel`, mentés `diagram_data.site_tree`, backend `SiteNode`; **érvénytelen node_id** a mérési sorokban mentéskor és fa törléskor törlődik (`siteTreeRefs.ts`).
+- [x] CSV export mérésekhez — `MeasurementsTab` „CSV export”, `frontend/src/lib/exportMeasurementsCsv.ts` (UTF-8 BOM, `;`, szakaszok).
+- [x] Offline/PWA ígéret vs. tényleges állapot — README + landing FAQ / How it works (internet szükséges mentéshez; nincs teljes offline PWA ígéret).
+- [x] Hibák — **szabvány / §** opcionális mező (`standardRef`); API `severity` + `standard` szétválasztva (generátor automatikus MSZ kitöltés nem blokkolódik).
 - ~~Jegyzőkönyv betöltése API-ból~~ — kész (`Layout` hydrate, `hydrateReport.ts`).
 
 ---

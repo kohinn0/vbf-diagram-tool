@@ -7,7 +7,7 @@ import {
 
 export type { CircuitKind } from './iecConductorStyle';
 
-export interface Point {
+interface Point {
   x: number;
   y: number;
 }

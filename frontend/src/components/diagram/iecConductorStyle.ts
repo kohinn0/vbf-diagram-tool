@@ -7,7 +7,7 @@ import type { fabric } from 'fabric';
  */
 export type CircuitKind = 'phase' | 'n' | 'pe' | 'pen';
 
-export interface IecConductorVisual {
+interface IecConductorVisual {
   stroke: string;
   strokeWidth: number;
   /** üres = folytonos vonal */
@@ -15,7 +15,7 @@ export interface IecConductorVisual {
 }
 
 /** Képernyőn olvasható színek; nyomtatáskor a jegyzőkönyv fekete vonalat is használhat. */
-export const IEC_CONDUCTOR_STYLE: Record<CircuitKind, IecConductorVisual> = {
+const IEC_CONDUCTOR_STYLE: Record<CircuitKind, IecConductorVisual> = {
   phase: {
     stroke: '#111827',
     strokeWidth: 2.5,
@@ -57,7 +57,7 @@ export function applyCircuitStyleToPath(path: fabric.Path, kind: CircuitKind): v
   path.setCoords();
 }
 
-export function isCircuitKind(x: string | undefined): x is CircuitKind {
+function isCircuitKind(x: string | undefined): x is CircuitKind {
   return x === 'phase' || x === 'n' || x === 'pe' || x === 'pen';
 }
 

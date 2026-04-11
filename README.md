@@ -2,19 +2,19 @@
 
 Modern, interaktív, vállalati szintű felhőalkalmazás (SaaS) **villamos biztonsági felülvizsgálati (VBF)** és **EPH** jegyzőkönyvek / nyilatkozatok rögzítéséhez, alaprajzok felvételéhez és automatizált, szabványos dokumentumok generálásához. *A villámvédelmi felülvizsgálati (VVF) modul fejlesztés alatt áll.*
 
-A rendszer Fabric.js alapú rajzoló felülettel, okos offline hálózatkezeléssel, QR kód szkenneléssel, RBAC jogosultságkezeléssel és FastAPI Python backenddel rendelkezik a professzionális Word és elektronikusan aláírt PDF dokumentumok előállításához.
+A rendszer Fabric.js alapú rajzoló felülettel, mobilbarát felülettel, RBAC jogosultságkezeléssel és FastAPI Python backenddel rendelkezik a professzionális Word és elektronikusan aláírt PDF dokumentumok előállításához. A piszkozat a böngészőben is megmarad (Zustand persist); **éles szinkron és export internethez kötött**.
 
 ---
 
 ## 🚀 Főbb funkciók
 
 - **🛡️ RBAC jogosultságkezelés** – Adminok osztanak ki feladatokat; a szerelők (TECH) csak a nekik szánt egyszerűsített naptáros és rajzos felületet látják.
-- **📡 Offline szinkronizáció (PWA)** – Nincs net a pincében? Az app offline módban menti a munkát a böngészőben, majd egyetlen gombnyomással szinkronizál.
+- **💾 Helyi piszkozat** – A jegyzőkönyv adatai a böngészőben is tárolódhatnak (mentés / újranyitás); a felhőbe mentéshez és exporthoz szükség van hálózatra. (Teljes offline/PWA roadmap: lásd `docs/P0_BACKLOG.md`.)
 - **🌓 Sötét / Világos mód** – Modern design system CSS változókkal, azonnali témaváltással.
-- **📷 QR kód & képfeltöltés** – Beépített kamerás QR szkenner, fotómellékletek a Word exporthoz.
+- **📷 Képfeltöltés / mellékletek** – Fotók csatolhatók a jegyzőkönyvhöz (Word export), ahol a funkció elérhető.
 - **🤖 Automatikus hibagenerálás** – Egy kattintásra elemzi a mérési lapokat, és legenerálja a feltárt hibák listáját.
 - **🔒 Zárolás** – Elkészült jegyzőkönyvek fagyasztása jogi és biztonsági okokból.
-- **📄 Export** – Valós idejű DOCX és elektronikusan aláírt PDF (PyHanko + LibreOffice headless).
+- **📄 Export** – DOCX és elektronikusan aláírt PDF a backendben (PyHanko / natív PDF útvonal — a pontos láncolat a kódban, nem LibreOffice-központú).
 - **🛡️ GDPR** – Adatkezelési tájékoztató, adatexport, fióktörlés, audit napló.
 
 ---
@@ -39,7 +39,7 @@ A rendszer Fabric.js alapú rajzoló felülettel, okos offline hálózatkezelés
 | **Python 3.11 + FastAPI** | REST API |
 | **SQLAlchemy + SQLite / PostgreSQL** | ORM; éles SaaS-hoz `DATABASE_URL` (lásd `ELESITES.md`, `docker-compose.postgres.yml`) |
 | **python-docx** | DOCX generálás |
-| **PyHanko + LibreOffice** | PDF e-Aláírás |
+| **PyHanko + ReportLab (natív PDF)** | PDF és e-aláírás |
 
 ---
 

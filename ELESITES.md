@@ -78,9 +78,19 @@ Stripe Dashboard → Webhooks → Add endpoint:
 
 ---
 
-## 5. Gyors ellenőrzés
+## 5. Health, státusz oldal, megfigyelhetőség
 
-1. Backend: `GET /health` → `{"status":"ok"}`
+- **API probe:** `GET /health` — SQL `SELECT 1`; válasz: `{"status":"ok"}` vagy `503` + hiba (Kubernetes / load balancer ezt használhatja).
+- **Nyilvános UI:** a frontend **`/status`** oldala (auth nélkül) ugyanezt hívja, válaszidővel — felhasználói átláthatóság; nem helyettesíti a külső uptime monitorozást.
+- **Sentry / hibák:** opcionális `SENTRY_DSN` a backend környezetben (ha a build támogatja).
+- **Mentés:** SQLite fájl / Postgres — lásd fent §1 (`pg_dump`, `scripts/pg_backup.sh`, managed DB backup).
+- **GDPR (felhasználói UI):** a React app **`/app/data`** oldala — `GET /api/users/me/data-export`, `GET /api/users/me/data-export-zip`, `DELETE /api/users/me` (törlés előtt export ajánlott).
+
+---
+
+## 6. Gyors ellenőrzés
+
+1. Backend: `GET /health` → `{"status":"ok"}` (és a böngészőben: `/status`)
 2. Nyisd meg az `index.html`-t (landing): árazás, jogi linkek, Belépés.
 3. Belépés `app.html`-en az új adminnal.
 4. Admin → Előfizetési csomagok, Cégek, egy teszt felhasználó.

@@ -38,6 +38,9 @@ export default function DefectsTab() {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
             <div className="min-w-0 flex flex-col gap-3">
               <h2 className="text-xl font-semibold text-[var(--color-text-main)] sm:text-[1.35rem] leading-tight m-0">Feltárt Hibák és Hiányosságok</h2>
+              <p className="text-xs text-[var(--color-text-muted)] m-0 leading-relaxed max-w-3xl">
+                A <strong className="font-semibold text-[var(--color-text-main)]">szabvány / §</strong> mező opcionális: ha üresen hagyod, a Word export a hiba szövege alapján <strong className="font-semibold">automatikus MSZ hivatkozást</strong> tesz be (generátor logika). Kézzel is megadhatsz pontos §-ot.
+              </p>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="shrink-0 text-sm text-[var(--color-text-muted)]">Szűrés:</label>
                 <Select 
@@ -97,7 +100,7 @@ export default function DefectsTab() {
                       <Button variant="ghost" size="sm" className="ml-2 text-red-500" onClick={() => removeDefect(defect.id)}>✕</Button>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <label className="text-xs text-[var(--color-text-muted-strong)] uppercase tracking-wider mb-1 block">Súlyosság</label>
                         <Select
@@ -110,6 +113,16 @@ export default function DefectsTab() {
                           <option value="egyedi">Egyedi</option>
                         </Select>
                       </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="text-xs text-[var(--color-text-muted-strong)] uppercase tracking-wider mb-1 block">Szabvány / § (opcionális)</label>
+                        <Input
+                          value={defect.standardRef || ''}
+                          onChange={(e) => updateDefect(defect.id, { standardRef: e.target.value })}
+                          placeholder="pl. MSZ HD 60364-6:2017 §61.3.2 — üresen: automatikus a leíráshoz"
+                          className="min-h-11"
+                        />
+                      </div>
                       
                       <div>
                         <label className="text-xs text-[var(--color-text-muted-strong)] uppercase tracking-wider mb-1 block">Fizikai helyzet</label>
@@ -117,18 +130,18 @@ export default function DefectsTab() {
                           value={defect.location}
                           onChange={(e) => updateDefect(defect.id, { location: e.target.value })}
                           placeholder="Főelosztó, 2. emelet..."
+                          className="min-h-11"
                         />
                       </div>
-                      
-                      <div className="flex items-end">
-                        <Button 
-                          variant={defect.isFixed ? "outline" : "secondary"} 
-                          className="w-full"
-                          onClick={() => updateDefect(defect.id, { isFixed: !defect.isFixed })}
-                        >
-                          {defect.isFixed ? '✅ Kijavítva' : '⏳ Javításra vár'}
-                        </Button>
-                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button 
+                        variant={defect.isFixed ? "outline" : "secondary"} 
+                        className="min-h-11 w-full sm:w-auto"
+                        onClick={() => updateDefect(defect.id, { isFixed: !defect.isFixed })}
+                      >
+                        {defect.isFixed ? '✅ Kijavítva' : '⏳ Javításra vár'}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

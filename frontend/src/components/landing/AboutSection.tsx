@@ -2,7 +2,7 @@ export function AboutSection() {
   return (
     <section id="about" className="relative py-24 bg-[var(--bg-card)] border-t-2 border-[var(--border-color)] overflow-hidden">
       {/* Background glow effects */}
-      <div className="absolute top-0 right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="pointer-events-none absolute top-0 right-[-10%] h-[50%] w-[50%] rounded-full bg-primary/10 blur-[120px]"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[100px] rounded-full pointer-events-none"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,7 +17,7 @@ export function AboutSection() {
             
             <h2 className="text-4xl lg:text-5xl font-extrabold text-[var(--text-main)] tracking-tight leading-tight">
               Szakembertől <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">szakembereknek.</span>
+              <span className="bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent">szakembereknek.</span>
             </h2>
 
             <div className="relative p-6 sm:p-8 bg-[var(--bg-card)]/50 backdrop-blur-md border l border-[var(--border-color)] rounded-2xl border-l-4 border-l-primary shadow-lg">
@@ -37,10 +37,10 @@ export function AboutSection() {
 
           {/* Right Column: Key Focus */}
           <div className="relative group perspective-1000">
-            <div className="absolute -inset-1 bg-gradient-to-tr from-primary/30 to-blue-500/30 rounded-3xl blur-md opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-primary/30 to-sky-500/30 opacity-50 blur-md transition duration-1000 group-hover:opacity-100 group-hover:duration-200"></div>
             <div className="relative bg-[var(--bg-card)]/90 backdrop-blur-xl border border-[var(--border-color)] p-8 sm:p-10 rounded-3xl shadow-2xl flex flex-col gap-6 transform transition-all duration-500 hover:rotate-1 hover:scale-[1.02]">
               
-              <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20 shadow-inner">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-inner">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </div>
 

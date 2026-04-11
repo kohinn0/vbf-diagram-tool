@@ -1,5 +1,5 @@
 import { type ReactNode, useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useDraftStore } from "../../store/draftStore";
 import {
@@ -8,6 +8,9 @@ import {
   fetchReportById,
   exportPdf,
   exportWord,
+  clearSession,
+  fetchCurrentUser,
+  isSuperAdminRole,
 } from "../../lib/api";
 import { validateForExport, validateForFinalize, validateForSave } from "../../lib/validateReport";
 import { toast } from "../../lib/toast";
@@ -26,10 +29,13 @@ function isLikelyNetworkError(e: unknown): boolean {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
   /** Másik fülön változott token / jegyzőkönyv ID → újrahydrate */
   const [storageSync, setStorageSync] = useState(0);
+  /** Csak SUPER_ADMIN — Ops menü */
+  const [showOpsNav, setShowOpsNav] = useState(false);
   const reportData = useDraftStore((s) => s.reportData);
   const reportStatus = useDraftStore((s) => s.reportStatus);
   const locked = reportStatus === "FINAL";
@@ -40,9 +46,29 @@ export function Layout({ children }: LayoutProps) {
         setStorageSync((n) => n + 1);
       }
     };
+    /** Ugyanabban a lapon másik nézet állította a `vbf_last_report_id`-t (pl. dashboard). */
+    const onReportIdLocal = () => setStorageSync((n) => n + 1);
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("vbf-report-id-changed", onReportIdLocal);
+    const onToken = () => setStorageSync((n) => n + 1);
+    window.addEventListener("vbf-token-changed", onToken);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("vbf-report-id-changed", onReportIdLocal);
+      window.removeEventListener("vbf-token-changed", onToken);
+    };
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("vbf_token");
+    if (!token) {
+      setShowOpsNav(false);
+      return;
+    }
+    fetchCurrentUser()
+      .then((u) => setShowOpsNav(isSuperAdminRole(u.role)))
+      .catch(() => setShowOpsNav(false));
+  }, [storageSync]);
 
   useEffect(() => {
     const token = localStorage.getItem("vbf_token");
@@ -179,31 +205,77 @@ export function Layout({ children }: LayoutProps) {
     }
   };
 
-  const isDiagramTab = location.pathname.includes("/diagram");
-  const isReportTab = location.pathname.includes("/report");
-  const isDefectsTab = location.pathname.includes("/defects");
-  const isMeasurementsTab = location.pathname.includes("/measurements");
+  const pathNorm = location.pathname.replace(/\/$/, "") || "/";
+  const isDashboardTab = pathNorm === "/app/dashboard";
+  const isReportsListTab = pathNorm === "/app/reports";
+  const isSubscriptionTab = pathNorm === "/app/subscription";
+  const isDiagramTab = pathNorm === "/app/diagram";
+  const isReportTab = pathNorm === "/app/report";
+  const isDefectsTab = pathNorm === "/app/defects";
+  const isMeasurementsTab = pathNorm === "/app/measurements";
+  const isAdminTab = pathNorm === "/app/admin";
+  const isOpsTab = pathNorm === "/app/ops";
+  const isProfileTab = pathNorm === "/app/profile";
+  const isDataPrivacyTab = pathNorm === "/app/data";
 
   const hasReportId = !!localStorage.getItem("vbf_last_report_id");
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] overflow-hidden">
-      <header className="h-[60px] flex items-center justify-between px-4 bg-[var(--bg-card)] border-b border-[var(--border-color)] shrink-0 z-50">
-        <nav className="flex items-center gap-6 w-full h-full">
-          <div className="flex items-center h-full gap-4 min-w-0">
-            <Link to="/" className="flex items-center gap-2 text-primary font-bold text-lg hover:opacity-80 transition-opacity shrink-0">
-              <span className="w-7 h-7 bg-primary rounded shadow-sm flex items-center justify-center text-white text-xs">VBF</span>
-              <span className="hidden sm:inline">VBF Premium</span>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)]">
+      <header className="z-50 flex h-[60px] shrink-0 items-center justify-between border-b border-white/[0.08] bg-[var(--bg-card)]/85 px-4 shadow-[var(--shadow-premium-sm)] backdrop-blur-xl backdrop-saturate-150">
+        <nav className="flex h-full w-full items-center gap-6">
+          <div className="flex h-full min-w-0 items-center gap-4">
+            <Link
+              to="/"
+              className="flex shrink-0 items-center gap-2.5 text-lg font-semibold text-primary transition-opacity hover:opacity-90"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-sky-600 text-[11px] font-bold text-white shadow-[0_4px_14px_rgba(59,130,246,0.45)] ring-1 ring-white/20">
+                VBF
+              </span>
+              <span className="hidden tracking-tight sm:inline">VBF Premium</span>
             </Link>
 
-            <div className="hidden md:flex items-center h-full ml-6 space-x-1">
+            <div className="ml-4 hidden h-full items-center space-x-0.5 md:flex">
+              <Link
+                to="/app/dashboard"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isDashboardTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/app/reports"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isReportsListTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Lista
+              </Link>
+              <Link
+                to="/app/subscription"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isSubscriptionTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Előfizetés
+              </Link>
               <Link
                 to="/app/diagram"
                 className={cn(
-                  "h-full px-4 flex items-center text-sm font-medium border-b-2 transition-colors",
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
                   isDiagramTab
-                    ? "border-primary text-primary"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--text-muted)]"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
                 )}
               >
                 Rajz & Alaprajz
@@ -211,10 +283,10 @@ export function Layout({ children }: LayoutProps) {
               <Link
                 to="/app/report"
                 className={cn(
-                  "h-full px-4 flex items-center text-sm font-medium border-b-2 transition-colors",
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
                   isReportTab
-                    ? "border-primary text-primary"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--text-muted)]"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
                 )}
               >
                 Jegyzőkönyv adatok
@@ -222,10 +294,10 @@ export function Layout({ children }: LayoutProps) {
               <Link
                 to="/app/defects"
                 className={cn(
-                  "h-full px-4 flex items-center text-sm font-medium border-b-2 transition-colors",
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
                   isDefectsTab
-                    ? "border-primary text-primary"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--text-muted)]"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
                 )}
               >
                 Hibajegyzék & Képek
@@ -233,13 +305,59 @@ export function Layout({ children }: LayoutProps) {
               <Link
                 to="/app/measurements"
                 className={cn(
-                  "h-full px-4 flex items-center text-sm font-medium border-b-2 transition-colors",
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
                   isMeasurementsTab
-                    ? "border-primary text-primary"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--text-muted)]"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
                 )}
               >
                 Mérési adatok
+              </Link>
+              <Link
+                to="/app/admin"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isAdminTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Cég / admin
+              </Link>
+              {showOpsNav && (
+                <Link
+                  to="/app/ops"
+                  className={cn(
+                    "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                    isOpsTab
+                      ? "bg-amber-500/15 text-amber-200"
+                      : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                  )}
+                >
+                  Ops
+                </Link>
+              )}
+              <Link
+                to="/app/profile"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isProfileTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Profil
+              </Link>
+              <Link
+                to="/app/data"
+                className={cn(
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200",
+                  isDataPrivacyTab
+                    ? "bg-primary/10 text-primary"
+                    : "text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-main)]"
+                )}
+              >
+                Adatok
               </Link>
             </div>
           </div>
@@ -247,17 +365,29 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
             <button
               type="button"
+              onClick={() => {
+                clearSession();
+                window.dispatchEvent(new Event("vbf-token-changed"));
+                navigate("/");
+              }}
+              className="inline-flex min-h-11 items-center rounded-lg border border-transparent px-2 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition-colors hover:border-rose-500/35 hover:bg-rose-500/10 hover:text-rose-200 sm:px-3"
+            >
+              Kijelentkezés
+            </button>
+            <div className="w-px h-6 bg-[var(--border-color)] mx-0.5" />
+            <button
+              type="button"
               onClick={() => handleExport("word")}
               disabled={isSaving || locked}
-              className="px-2 sm:px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-600 rounded shadow hover:bg-blue-100 transition-colors disabled:opacity-50 min-h-11"
+              className="min-h-11 rounded-lg border border-sky-500/35 bg-sky-500/10 px-2 py-1.5 text-xs font-semibold text-sky-200 shadow-sm transition-colors hover:bg-sky-500/20 disabled:opacity-50 sm:px-3"
             >
-              📄 Word
+              Word
             </button>
             <button
               type="button"
               onClick={() => handleExport("pdf")}
               disabled={isSaving}
-              className="px-2 sm:px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-600 rounded shadow hover:bg-red-100 transition-colors disabled:opacity-50 inline-flex items-center justify-center min-w-[56px] sm:min-w-[70px] border border-red-200 min-h-11"
+              className="inline-flex min-h-11 min-w-[56px] items-center justify-center rounded-lg border border-red-500/40 bg-red-500/10 px-2 py-1.5 text-xs font-semibold text-red-200 shadow-sm transition-colors hover:bg-red-500/20 disabled:opacity-50 sm:min-w-[70px] sm:px-3"
             >
               PDF
             </button>
@@ -269,7 +399,7 @@ export function Layout({ children }: LayoutProps) {
                 type="button"
                 onClick={handleFinalize}
                 disabled={isSaving || !hasReportId}
-                className="px-2 sm:px-3 py-1.5 text-xs font-semibold bg-amber-50 text-amber-900 rounded border border-amber-200 hover:bg-amber-100 disabled:opacity-50 min-h-11"
+                className="min-h-11 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-500/20 disabled:opacity-50 sm:px-3"
                 title="Zárolt jegyzőkönyv — csak PDF"
               >
                 Véglegesítés
@@ -280,9 +410,9 @@ export function Layout({ children }: LayoutProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || locked}
-              className="px-3 sm:px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded shadow hover:bg-primary-hover transition-colors disabled:opacity-50 min-w-[80px] sm:min-w-[90px] min-h-11"
+              className="min-h-11 min-w-[80px] rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_4px_18px_rgba(59,130,246,0.35)] transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_6px_22px_rgba(59,130,246,0.45)] active:scale-[0.98] disabled:opacity-50 sm:min-w-[90px] sm:px-4"
             >
-              {isSaving ? "…" : "Mentés ☁️"}
+              {isSaving ? "…" : "Mentés"}
             </button>
           </div>
         </nav>
@@ -301,26 +431,33 @@ export function Layout({ children }: LayoutProps) {
 
       {locked && (
         <div
-          className="shrink-0 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-950 text-sm text-center"
+          className="shrink-0 border-b border-amber-500/35 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-100"
           role="status"
         >
-          Ez a jegyzőkönyv <strong>véglegesített</strong> — szerkesztés és Word export nem elérhető; PDF továbbra is letölthető.
+          Ez a jegyzőkönyv <strong className="font-semibold">véglegesített</strong> — szerkesztés és Word export nem elérhető;
+          PDF továbbra is letölthető.
         </div>
       )}
 
       <main
         aria-busy={isHydrating}
-        className={cn("flex-1 flex overflow-hidden relative", !locked && "pb-[72px] md:pb-0")}
+        className={cn("min-h-0 flex-1 flex overflow-hidden relative", !locked && "pb-[72px] md:pb-0")}
       >
         {children}
       </main>
 
       <footer
         className={cn(
-          "shrink-0 border-t border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2.5 text-[11px] sm:text-xs text-[var(--text-muted)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1",
+          "flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-white/[0.08] bg-[var(--bg-card)]/90 px-3 py-2.5 text-[11px] text-[var(--text-muted)] shadow-[0_-4px_28px_rgba(0,0,0,0.3)] backdrop-blur-xl backdrop-saturate-150 sm:text-xs",
           !locked && "pb-[max(5rem,env(safe-area-inset-bottom))] md:pb-2.5"
         )}
       >
+        <Link to="/status" className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
+          Állapot
+        </Link>
+        <span className="text-[var(--border-color)]" aria-hidden>
+          |
+        </span>
         <a href={legalUrls.terms} className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
           Feltételek
         </a>
@@ -351,18 +488,76 @@ export function Layout({ children }: LayoutProps) {
         <span className="text-[var(--border-color)] hidden sm:inline" aria-hidden>
           |
         </span>
+        <Link
+          to="/app/reports"
+          className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+        >
+          Lista
+        </Link>
+        <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+          |
+        </span>
+        <Link
+          to="/app/subscription"
+          className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+        >
+          Előfizetés
+        </Link>
+        <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+          |
+        </span>
+        <Link
+          to="/app/dashboard"
+          className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+        >
+          Dashboard
+        </Link>
+        <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+          |
+        </span>
+        <Link
+          to="/app/profile"
+          className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+        >
+          Profil
+        </Link>
+        <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+          |
+        </span>
+        <Link
+          to="/app/data"
+          className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+        >
+          Adatok
+        </Link>
+        {showOpsNav && (
+          <>
+            <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+              |
+            </span>
+            <Link
+              to="/app/ops"
+              className="hover:text-amber-200 font-medium min-h-11 inline-flex items-center sm:min-h-0 md:hidden"
+            >
+              Ops
+            </Link>
+          </>
+        )}
+        <span className="text-[var(--border-color)] md:hidden" aria-hidden>
+          |
+        </span>
         <Link to="/" className="hover:text-primary font-medium min-h-11 inline-flex items-center sm:min-h-0">
           Főoldal
         </Link>
       </footer>
 
       {!locked && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex gap-2 p-2 border-t border-[var(--border-color)] bg-[var(--bg-card)] min-h-[56px] items-center justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex min-h-[56px] items-center justify-center gap-2 border-t border-white/[0.08] bg-[var(--bg-card)]/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 min-h-11 rounded-lg bg-primary text-white text-sm font-semibold px-3 disabled:opacity-50"
+            className="min-h-11 flex-1 rounded-lg bg-[var(--color-primary)] px-3 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(59,130,246,0.35)] transition-all hover:bg-[var(--color-primary-hover)] active:scale-[0.99] disabled:opacity-50"
           >
             Mentés
           </button>
@@ -370,7 +565,7 @@ export function Layout({ children }: LayoutProps) {
             type="button"
             onClick={handleFinalize}
             disabled={isSaving || !hasReportId}
-            className="flex-1 min-h-11 rounded-lg border border-amber-300 bg-amber-50 text-amber-950 text-sm font-semibold px-3 disabled:opacity-50"
+            className="min-h-11 flex-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 text-sm font-semibold text-amber-100 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
           >
             Véglegesítés
           </button>

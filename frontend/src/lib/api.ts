@@ -1,6 +1,5 @@
 import type { ServerReport } from './hydrateReport';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from './apiBaseUrl';
 
 function getAuthHeader() {
   const token = localStorage.getItem('vbf_token');
@@ -76,13 +75,162 @@ export async function finalizeReport(reportId: string) {
   return res.json() as Promise<{ status: string; id: number }>;
 }
 
-export async function fetchReports() {
-  const res = await fetch(`${API_BASE_URL}/api/reports`, {
+export type ReportSummaryDto = {
+  id: number;
+  title: string;
+  report_type: string;
+  status: string;
+  owner_id: number;
+  created_at: string;
+  updated_at: string;
+  finalized_at?: string | null;
+};
+
+export async function fetchReports(limit = 100, skip = 0): Promise<ReportSummaryDto[]> {
+  const q = new URLSearchParams({ limit: String(limit), skip: String(skip) });
+  const res = await fetch(`${API_BASE_URL}/api/reports?${q}`, {
     headers: getAuthHeader()
   });
 
   if (!res.ok) throw new Error('Hiba a jegyzőkönyvek letöltésekor');
   return res.json();
+}
+
+export type DashboardStatsDto = {
+  total_reports: number;
+  monthly_reports: number;
+  finalized_reports: number;
+  draft_reports: number;
+  type_breakdown: Record<string, number>;
+  monthly_trend: { year: number; month: number; count: number }[];
+  defect_stats: unknown;
+  result_stats: unknown;
+  active_users: number;
+  pending_jobs: number;
+};
+
+export async function fetchDashboardStats(): Promise<DashboardStatsDto> {
+  const res = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
+    headers: getAuthHeader(),
+  });
+  if (res.status === 403) {
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error((err as { detail?: string }).detail || 'Nincs jogosultság.'), {
+      status: 403,
+    });
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Statisztika betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+export type UsageDto = {
+  plan: string;
+  reports_this_month: number;
+  reports_limit?: number | null;
+  users_count: number;
+  users_limit?: number | null;
+};
+
+export async function fetchUsage(): Promise<UsageDto> {
+  const res = await fetch(`${API_BASE_URL}/api/usage`, { headers: getAuthHeader() });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Kihasználtság betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+/** Csak platform tulajdonos (Ops menü / üzemeltetői oldal). Az `ADMIN` szerep nem látja. */
+export function isSuperAdminRole(role: string | undefined | null): boolean {
+  return role === 'SUPER_ADMIN';
+}
+
+export type PendingOrderDto = {
+  id: number;
+  email: string;
+  customer_name: string;
+  plan_type: string;
+  amount_huf: number;
+  status: string;
+  created_at: string;
+};
+
+export async function fetchPendingOrdersAdmin(): Promise<PendingOrderDto[]> {
+  const res = await fetch(`${API_BASE_URL}/api/admin/pending-orders`, { headers: getAuthHeader() });
+  if (res.status === 403) {
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error((err as { detail?: string }).detail || 'Nincs jogosultság.'), { status: 403 });
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Megrendelések betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+export type CompanyAdminRowDto = {
+  id: number;
+  name: string;
+  plan?: string | null;
+};
+
+export async function fetchAdminCompanies(): Promise<CompanyAdminRowDto[]> {
+  const res = await fetch(`${API_BASE_URL}/api/admin/companies`, { headers: getAuthHeader() });
+  if (res.status === 403) {
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error((err as { detail?: string }).detail || 'Nincs jogosultság.'), { status: 403 });
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Cégek betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+/** Nyilvános csomaglista — `GET /api/plans` (auth nélkül), SSOT: `SubscriptionPlanResponse` */
+export type SubscriptionPlanPublicDto = {
+  plan_key: string;
+  display_name: string;
+  price_monthly?: number | null;
+  price_yearly?: number | null;
+  reports_per_month_limit?: number | null;
+  max_users?: number | null;
+  features?: string[] | null;
+  sort_order: number;
+};
+
+export async function fetchPublicPlans(): Promise<SubscriptionPlanPublicDto[]> {
+  const res = await fetch(`${API_BASE_URL}/api/plans`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Csomagok betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+export async function fetchCardPaymentsEnabled(): Promise<boolean> {
+  const res = await fetch(`${API_BASE_URL}/api/payments/card-payments-enabled`);
+  if (!res.ok) return false;
+  const d = (await res.json()) as { enabled?: boolean };
+  return Boolean(d.enabled);
+}
+
+/** Nyilvános probe — auth nélkül, `GET /health` (DB ping). */
+type HealthResponse = { status: string; detail?: string };
+
+export async function fetchHealth(): Promise<{ ok: boolean; body: HealthResponse; latencyMs: number }> {
+  const t0 = performance.now();
+  const res = await fetch(`${API_BASE_URL}/health`, { method: "GET" });
+  const latencyMs = Math.round(performance.now() - t0);
+  const body = (await res.json().catch(() => ({}))) as HealthResponse;
+  const ok = res.ok && body.status === "ok";
+  if (!ok && !body.detail && !res.ok) {
+    body.detail = body.detail || `HTTP ${res.status}`;
+  }
+  return { ok, body, latencyMs };
 }
 
 export async function exportWord(reportId: string) {
@@ -126,7 +274,7 @@ export async function generateAiSummary(payload: any) {
   return data.summary;
 }
 
-export type PadfxParseResult =
+type PadfxParseResult =
   | {
       status: 'success';
       is_sqlite: boolean;
@@ -224,4 +372,148 @@ export async function createInspector(body: {
     throw new Error((err as { detail?: string }).detail || 'Felülvizsgáló mentése sikertelen.');
   }
   return res.json();
+}
+
+/** Bejelentkezett felhasználó — SSOT: backend `UserResponse` */
+export type CurrentUserDto = {
+  id: number;
+  username: string;
+  email?: string | null;
+  is_active: boolean;
+  role: string;
+  company_id?: number | null;
+  company_name?: string | null;
+  subscription_expires?: string | null;
+  company_plan?: string | null;
+  pdf_export_watermarked?: boolean;
+};
+
+export async function fetchCurrentUser(): Promise<CurrentUserDto> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me`, { headers: getAuthHeader() });
+  if (res.status === 401 || res.status === 403) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Bejelentkezés szükséges.');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Profil betöltése sikertelen.');
+  }
+  return res.json();
+}
+
+/** OAuth2 jelszó flow — `username` a backend felhasználónév (nem feltétlenül e-mail). */
+type TokenResponse = { access_token: string; token_type: string };
+
+export async function loginWithPassword(username: string, password: string): Promise<TokenResponse> {
+  const body = new URLSearchParams();
+  body.set('username', username.trim());
+  body.set('password', password);
+  const res = await fetch(`${API_BASE_URL}/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { detail?: string }).detail || 'Bejelentkezés sikertelen.');
+  }
+  return data as TokenResponse;
+}
+
+export function clearSession() {
+  localStorage.removeItem('vbf_token');
+}
+
+export async function updateMyProfile(body: { email?: string | null }): Promise<CurrentUserDto> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+    method: 'PATCH',
+    headers: getAuthHeader(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Profil mentése sikertelen.');
+  }
+  return res.json();
+}
+
+export async function changeMyPassword(current_password: string, new_password: string): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me/password`, {
+    method: 'PUT',
+    headers: getAuthHeader(),
+    body: JSON.stringify({ current_password, new_password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { detail?: string }).detail || 'Jelszócsere sikertelen.');
+  }
+  return data as { message: string };
+}
+
+/** Elfelejtett jelszó — a backend egységes választ ad (biztonság). */
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/request-password-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { detail?: string }).detail || 'Kérés sikertelen.');
+  }
+  return data as { message: string };
+}
+
+/** GDPR 20. cikk — géppel olvasható JSON letöltése. */
+export async function downloadMyDataJsonFile(): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me/data-export`, { headers: getAuthHeader() });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || 'Export sikertelen.');
+  }
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `vbf-adatexport-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** GDPR — teljes ZIP (jegyzőkönyvek, képek). */
+export async function downloadMyDataZipFile(): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me/data-export-zip`, { headers: getAuthHeader() });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "ZIP export sikertelen.");
+  }
+  const blob = await res.blob();
+  const cd = res.headers.get("Content-Disposition");
+  let filename = `vbf-adatexport-${Date.now()}.zip`;
+  const m = cd && /filename="([^"]+)"/.exec(cd);
+  if (m) filename = m[1];
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** GDPR 17. cikk — fiók törlése (visszavonhatatlan). */
+export async function deleteMyAccount(): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { detail?: string }).detail || "Fiók törlése sikertelen.");
+  }
+  return data as { message: string };
 }

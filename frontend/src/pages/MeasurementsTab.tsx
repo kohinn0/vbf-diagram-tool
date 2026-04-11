@@ -14,6 +14,7 @@ import {
   MEASUREMENT_THRESHOLDS_BULLETS,
   MEASUREMENT_THRESHOLDS_SECTION_TITLE,
 } from '../lib/measurementThresholds';
+import { downloadMeasurementsCsv } from '../lib/exportMeasurementsCsv';
 
 export default function MeasurementsTab() {
   const locked = useIsReportLocked();
@@ -23,7 +24,11 @@ export default function MeasurementsTab() {
     loopRows, addLoopRow, updateLoopRow, removeLoopRow,
     insulationRows, addInsulationRow, updateInsulationRow, removeInsulationRow,
     rcdRows, addRcdRow, updateRcdRow, removeRcdRow,
+    ephContRows, addEphContRow, updateEphContRow, removeEphContRow,
   } = useDraftStore();
+  const reportData = useDraftStore((s) => s.reportData);
+  const siteTree = useDraftStore((s) => s.siteTree);
+  const isEph = reportData.docType === 'EPH';
 
   const rowId = (r: Record<string, string>) => (r as { id?: string }).id || '';
   const activeCanvas = useDraftStore((s) => s.activeCanvas);
@@ -79,7 +84,14 @@ export default function MeasurementsTab() {
     <fieldset disabled={locked} className="min-h-0 border-0 p-0 m-0 flex flex-col flex-1">
     <div className="flex-1 w-full h-full overflow-y-auto p-[var(--vbf-panel-padding)] bg-[var(--bg-main)]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--color-text-main)]">Mérési adatok (kézi bevitel)</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-[var(--color-text-main)]">Mérési adatok (kézi bevitel)</h2>
+          {isEph && (
+            <p className="text-sm text-[var(--color-text-muted)] mt-1 m-0">
+              EPH jegyzőkönyv: a VBF táblázatok (Rpe, Zs, Riso, RCD) itt elrejtve; az „EPH bekötések folytonossága” táblát töltsd ki.
+            </p>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <input
             ref={fileInputRef}
@@ -98,8 +110,30 @@ export default function MeasurementsTab() {
           >
             {padfxLoading ? 'Import…' : 'PADFX import'}
           </Button>
-          <Button variant="secondary" size="sm" className="min-h-11" disabled>
-            CSV export (hamarosan)
+          <Button
+            variant="secondary"
+            size="sm"
+            className="min-h-11"
+            title="Bejövő paraméterek + Rpe / Zs / Riso / RCD táblák — UTF-8, pontosvessző (Excel HU)"
+            onClick={() => {
+              try {
+                downloadMeasurementsCsv({
+                  reportData,
+                  measurementsData,
+                  rpeRows,
+                  loopRows,
+                  insulationRows,
+                  rcdRows,
+                  ephContRows,
+                  siteTree,
+                });
+                toast.success('CSV letöltve (UTF-8, pontosvessző).');
+              } catch (e: unknown) {
+                toast.error(e instanceof Error ? e.message : 'Export hiba');
+              }
+            }}
+          >
+            CSV export
           </Button>
         </div>
       </div>
@@ -191,7 +225,111 @@ export default function MeasurementsTab() {
             </div>
           </div>
 
-          {/* 1. Védővezető folytonosság (Rpe) */}
+          {isEph && (
+          <div>
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">
+              EPH bekötések folytonossága
+            </h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-3 leading-relaxed">
+              A Word/PDF „Mérési eredmények” szakaszban ez a táblázat jelenik meg (MSZ HD 60364-6 szerinti kiegészítő mérés).
+            </p>
+            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
+              <table className="w-full text-left border-collapse min-w-[920px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
+                    <th className="p-2 text-xs font-semibold w-14">Sorsz.</th>
+                    <th className="p-2 text-xs font-semibold min-w-[100px]">Bekötött elem</th>
+                    <th className="p-2 text-xs font-semibold min-w-[100px]">Hely</th>
+                    <th className="p-2 text-xs font-semibold min-w-[88px]">Vezető (mm²)</th>
+                    <th className="p-2 text-xs font-semibold min-w-[88px]">Kötés módja</th>
+                    <th className="p-2 text-xs font-semibold w-24">Folyt. [Ω]</th>
+                    <th className="p-2 text-xs font-semibold w-28">Megfelel</th>
+                    <th className="p-2 w-10" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {ephContRows.map((row) => (
+                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateEphContRow(rowId(row), { node_id: v })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11 text-center"
+                          value={row.idx || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { idx: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.elem || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { elem: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.loc || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { loc: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.mat || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { mat: e.target.value })}
+                          placeholder="pl. 16"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.conn || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { conn: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          type="number"
+                          step="0.01"
+                          value={row.val || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { val: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Select
+                          className="h-9 text-xs min-h-11"
+                          value={row.pass || 'Igen'}
+                          onChange={(e) => updateEphContRow(rowId(row), { pass: e.target.value })}
+                        >
+                          <option value="Igen">Igen</option>
+                          <option value="Nem">Nem</option>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-center cursor-pointer text-[var(--color-text-muted)] hover:text-red-500 min-h-11" onClick={() => removeEphContRow(rowId(row))}>
+                        ✕
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button variant="secondary" size="sm" className="min-h-11" onClick={addEphContRow}>
+              + EPH sor
+            </Button>
+          </div>
+          )}
+
+          {/* 1–4. VBF táblázatok */}
+          {!isEph && (
+          <>
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-2 border-b border-[var(--border-color)] mt-4">
               <h3 className="text-lg font-bold text-[var(--color-text-main)]">1. Védővezető folytonosság (Rpe)</h3>
@@ -402,6 +540,8 @@ export default function MeasurementsTab() {
             </div>
             <Button variant="secondary" size="sm" className="min-h-11" onClick={addRcdRow}>+ RCD sor</Button>
           </div>
+          </>
+          )}
 
         </div>
       </div>

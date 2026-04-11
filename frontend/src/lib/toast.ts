@@ -1,18 +1,26 @@
 import { toast as sonner } from 'sonner';
+import { vbfToast } from './vbfUi';
 
 export const toast = {
   success: (msg: string) =>
     sonner.success(msg, {
       classNames: {
-        toast: 'bg-emerald-50 text-emerald-950 border border-emerald-200',
-        title: 'text-emerald-950',
+        toast: vbfToast.success,
+        title: 'text-emerald-50',
       },
     }),
   error: (msg: string) =>
     sonner.error(msg, {
       classNames: {
-        toast: 'bg-rose-50 text-rose-950 border border-rose-200',
-        title: 'text-rose-950',
+        toast: vbfToast.error,
+        title: 'text-rose-50',
+      },
+    }),
+  neutral: (msg: string) =>
+    sonner(msg, {
+      classNames: {
+        toast: vbfToast.neutral,
+        title: 'text-[var(--color-text-main)]',
       },
     }),
 };

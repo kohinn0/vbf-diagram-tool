@@ -8,7 +8,7 @@ Ez a fájl **nem** helyettesíti a részletes dokumentációt; célja, hogy egy 
 
 - **Termék:** SaaS villamos biztonsági felülvizsgálati (VBF) / EPH jegyzőkönyvek, alaprajz, mérések, hibajegyzék, export.
 - **Célközönség:** szakemberek, mobil-first; adatintegritás és jogi megfelelés fontosabb, mint „díszanimáció”.
-- **Állapot:** React alapú app + FastAPI backend; egyes README / régi `ARCHITECTURE.md` részek **a korábbi több HTML entrypontra** utalhatnak – a **jelenlegi UI** egy **React SPA** (`frontend/`), routing: lásd lent.
+- **Állapot:** React alapú app + FastAPI backend; egyes README részek marketing / régi stackre utalhatnak – a **jelenlegi UI** egy **React SPA** (`frontend/`), routing: lásd lent.
 
 ---
 
@@ -59,7 +59,7 @@ vbf-diagram-tool/
 ├── docker-compose.yml       # proxy, frontend, backend, opcionális db-backup profil
 ├── docker-compose.postgres.yml  # opcionális: Postgres szolgáltatás + backend DATABASE_URL
 ├── README.md                # áttekintés, futtatás (ellenőrizd a portokat a környezeteddel)
-├── ARCHITECTURE.md          # részben elavult (SPA előtti három HTML réteg leírása)
+├── ARCHITECTURE.md          # rövid pointer (régi három HTML modell helyett SPA; részletek: PROGRAM_LEIRAS.md)
 ├── INTEGRACIOK.md, ELESITES.md
 ├── docs/VBF_PRODUCT_COMPLETENESS.md   # szabvány / termék gap elemzés (MSZ, értékesítés)
 ├── docs/P0_BACKLOG.md               # értékesítés előtti P0 checklist + PADFX állapot
@@ -87,11 +87,18 @@ vbf-diagram-tool/
 | Útvonal | Tartalom |
 |---------|----------|
 | `/` | `Landing` – webshop/kosár, marketing |
+| `/status` | `StatusPage` – `GET /health` megjelenítése (nyilvános) |
 | `/app` | redirect → `/app/diagram` |
+| `/app/dashboard` | `DashboardTab` – usage, stats (admin), utolsó jegyzőkönyvek |
+| `/app/reports` | `ReportsListTab` – szűrhető lista (`GET /api/reports`, max 400) |
+| `/app/subscription` | `SubscriptionTab` – usage, csomagok (`/api/plans`), Stripe flag |
 | `/app/diagram` | `DiagramTab` – Fabric vászon |
 | `/app/report` | `ReportTab` |
 | `/app/defects` | `DefectsTab` |
 | `/app/measurements` | `MeasurementsTab` |
+| `/app/admin` | `AdminTab` |
+| `/app/profile` | `ProfileTab` — e-mail, jelszó, `loginWithPassword` a főoldali modalban |
+| `/app/data` | `DataPrivacyTab` — GDPR export ZIP/JSON, `DELETE /api/users/me` |
 
 **API bázis URL:** `frontend/src/lib/api.ts` – `import.meta.env.VITE_API_URL` **vagy** alapértelmezés `http://localhost:8000`. Lokálisan állítsd a Vite env-et a futó backend portnak megfelelően (a README helyi példa néha 8001-et említ – a kód alapja **8000**).
 
@@ -139,7 +146,7 @@ vbf-diagram-tool/
 ## 11. Ismert dokumentációs csúszások
 
 - **README** export sorában előfordulhat **LibreOffice** említés; a **projekt szabályok** szerint a cél a **natív PDF** pipeline (ReportLab / nem LibreOffice-alapú megoldás) – mindig a **tényleges kód** az irányadó.
-- **`ARCHITECTURE.md`** a régi **index.html / app.html / shop.html** szétválasztást írja le; a jelenlegi frontend **egyetlen Vite SPA**.
+- **`ARCHITECTURE.md`** csak **rövid iránytű**; a részletes felépítés: **`PROGRAM_LEIRAS.md`**, **`README.md`**. A jelenlegi frontend **egyetlen Vite SPA** (`frontend/`).
 
 ---
 
@@ -154,3 +161,9 @@ vbf-diagram-tool/
 ---
 
 *Utolsó frissítés: §6 — `updated_at` toast szűrés, szinkron csík, `storage` újrahydrate, hálózati toast.*
+
+---
+
+## 13. Pontos programleírás (embernek)
+
+A **felhasználói és termék szintű, pontos összefoglaló** (mit csinál a program, milyen útvonalak, mit ígér a marketing vs. kód): lásd **`PROGRAM_LEIRAS.md`** a repo gyökerében.
