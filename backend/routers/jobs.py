@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List
 from datetime import datetime, timedelta
 import os
@@ -15,9 +16,22 @@ router = APIRouter()
 
 
 def _jobs_scope(db, current_user):
-    """SUPER_ADMIN/ADMIN: minden; COMPANY_ADMIN: cég felhasználóinak feladatai; TECH: saját."""
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    """SUPER_ADMIN: minden; ADMIN: cég vagy saját létrehozott/kiosztott; COMPANY_ADMIN: cég; TECH: saját."""
+    if current_user.role == "SUPER_ADMIN":
         return db.query(database.Job)
+    if current_user.role == "ADMIN":
+        if current_user.company_id:
+            return (
+                db.query(database.Job)
+                .join(database.User, database.Job.assigned_to_id == database.User.id)
+                .filter(database.User.company_id == current_user.company_id)
+            )
+        return db.query(database.Job).filter(
+            or_(
+                database.Job.assigned_to_id == current_user.id,
+                database.Job.created_by_id == current_user.id,
+            )
+        )
     if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         return (
             db.query(database.Job)
@@ -103,12 +117,21 @@ END:VCALENDAR"""
     return db_job
 
 def _admin_job_scope(db, current_admin, job_id: int):
-    """Céges vezető csak a saját cégéhez tartozó feladatot módosíthatja."""
+    """Céges vezető csak a saját cégéhez tartozó feladatot módosíthatja; ADMIN nem lát minden feladatot."""
     db_job = db.query(database.Job).filter(database.Job.id == job_id).first()
     if not db_job:
         return None
-    if current_admin.role in ("SUPER_ADMIN", "ADMIN"):
+    if current_admin.role == "SUPER_ADMIN":
         return db_job
+    if current_admin.role == "ADMIN":
+        if current_admin.company_id:
+            assignee = db.query(database.User).filter(database.User.id == db_job.assigned_to_id).first()
+            if assignee and assignee.company_id == current_admin.company_id:
+                return db_job
+            return None
+        if db_job.assigned_to_id == current_admin.id or db_job.created_by_id == current_admin.id:
+            return db_job
+        return None
     if current_admin.role == "COMPANY_ADMIN" and current_admin.company_id:
         assignee = db.query(database.User).filter(database.User.id == db_job.assigned_to_id).first()
         if assignee and assignee.company_id == current_admin.company_id:
@@ -148,9 +171,16 @@ def update_job_status(job_id: int, status: str, db: Session = Depends(auth.get_d
     if not db_job:
         raise HTTPException(status_code=404, detail="A feladat nem található.")
     
-    # Check permissions: saját feladat, vagy admin/céges vezető a cég feladatához
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    # Check permissions: saját feladat, vagy SUPER_ADMIN; ADMIN csak cég / saját feladat
+    if current_user.role == "SUPER_ADMIN":
         pass
+    elif current_user.role == "ADMIN":
+        if current_user.company_id:
+            assignee = db.query(database.User).filter(database.User.id == db_job.assigned_to_id).first()
+            if not assignee or assignee.company_id != current_user.company_id:
+                raise HTTPException(status_code=403, detail="Nincs jogosultságod ehhez a feladathoz.")
+        elif db_job.assigned_to_id != current_user.id and db_job.created_by_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Nincs jogosultságod ehhez a feladathoz.")
     elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         assignee = db.query(database.User).filter(database.User.id == db_job.assigned_to_id).first()
         if not assignee or assignee.company_id != current_user.company_id:

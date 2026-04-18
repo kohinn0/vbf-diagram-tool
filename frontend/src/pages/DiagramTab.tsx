@@ -8,7 +8,6 @@ import { IEC_DIAGRAM_LEGEND_SHORT } from '../components/diagram/iecConductorStyl
 import type { fabric } from 'fabric';
 import { useDraftStore, useIsReportLocked } from '../store/draftStore';
 import { Button } from '../components/ui/Button';
-import { PageActionBar } from '../components/ui/PageActionBar';
 import { toast } from '../lib/toast';
 
 export default function DiagramTab() {
@@ -34,42 +33,40 @@ export default function DiagramTab() {
   };
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col bg-[var(--color-bg-main)]">
-      {/* Eszköztár (Toolbar) Fejléc */}
-      <PageActionBar title="Rajz & Alaprajz">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={locked}
-            title="RPE tábla Pont ↔ elem Felirat alapján láncolja az ortogonális vonalakat"
-            onClick={() => {
-              const r = runRpeAutoWire(activeCanvas as fabric.Canvas | null, rpeRows);
-              toast.success(r.detail);
-            }}
-          >
-            RPE → vonalak
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={locked}
-            title="Jelölj ki két elemet Shift+kattal, majd kattints ide"
-            onClick={() => canvasRef.current?.connectSelectedObjects()}
-          >
-            Kézi vonal
-          </Button>
-          <Button variant="outline" size="sm" disabled={locked} onClick={() => canvasRef.current?.clearCanvas()}>
-            Üres vászon
-          </Button>
-          <Button variant="outline" size="sm" disabled={locked}>
-            Alaprajz +
-          </Button>
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-            PNG Export
-          </Button>
-        </div>
-      </PageActionBar>
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-[var(--color-bg-main)]">
+      {/* Eszköztár */}
+      <div className="shrink-0 flex flex-wrap items-center gap-2 px-4 py-2 border-b border-[var(--border-color)] bg-[var(--color-bg-card)]">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={locked}
+          title="RPE tábla Pont ↔ elem Felirat alapján láncolja az ortogonális vonalakat"
+          onClick={() => {
+            const r = runRpeAutoWire(activeCanvas as fabric.Canvas | null, rpeRows);
+            toast.success(r.detail);
+          }}
+        >
+          RPE → vonalak
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={locked}
+          title="Jelölj ki két elemet Shift+kattal, majd kattints ide"
+          onClick={() => canvasRef.current?.connectSelectedObjects()}
+        >
+          Kézi vonal
+        </Button>
+        <Button variant="outline" size="sm" disabled={locked} onClick={() => canvasRef.current?.clearCanvas()}>
+          Üres vászon
+        </Button>
+        <Button variant="outline" size="sm" disabled={locked}>
+          Alaprajz +
+        </Button>
+        <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+          PNG Export
+        </Button>
+      </div>
 
       <details className="flex-shrink-0 px-4 py-2 border-b border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_6%,var(--color-bg-card))] text-sm text-[var(--color-text-muted)]">
         <summary className="cursor-pointer min-h-11 flex items-center font-medium text-[var(--color-text-main)] list-none [&::-webkit-details-marker]:hidden">
@@ -78,7 +75,7 @@ export default function DiagramTab() {
         <p className="pt-2 pb-1 leading-relaxed max-w-4xl">{IEC_DIAGRAM_LEGEND_SHORT}</p>
       </details>
 
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <SymbolLibrary onAddSymbol={handleAddSymbol} />
 
         <CanvasWorkspace
@@ -94,10 +91,10 @@ export default function DiagramTab() {
 
         {locked && (
           <div
-            className="absolute inset-0 z-50 bg-[rgba(0,0,0,0.06)] flex items-start justify-center pt-10 pointer-events-auto"
+            className="absolute inset-0 z-50 flex items-start justify-center bg-black/30 pt-10 pointer-events-auto backdrop-blur-[1px]"
             aria-hidden
           >
-            <p className="rounded-lg bg-amber-100 border border-amber-300 text-amber-950 px-4 py-2 text-sm shadow max-w-md text-center">
+            <p className="max-w-md rounded-lg border border-amber-500/35 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-100 shadow-lg">
               Véglegesített jegyzőkönyv — a rajz nem szerkeszthető.
             </p>
           </div>

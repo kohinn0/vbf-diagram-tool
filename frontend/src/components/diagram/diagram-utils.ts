@@ -62,7 +62,7 @@ export const powerSymbols: SymbolDef[] = [
   },
 ];
 
-export const connectionSymbols: SymbolDef[] = [
+const connectionSymbols: SymbolDef[] = [
   {
     id: 'terminal',
     name: 'Sorkapocs',
@@ -104,6 +104,11 @@ export const connectionSymbols: SymbolDef[] = [
       '<circle cx="16" cy="11" r="7" fill="none"/><circle cx="16" cy="21" r="7" fill="none"/><path d="M16 2v2m0 26v2"/>',
   },
 ];
+
+/** EPH / egyenpotenciál — kiemelve a szimbólumtár tetején (EPH jegyzőkönyvhöz). */
+export const ephSymbol: SymbolDef = connectionSymbols.find((s) => s.id === 'eph')!;
+
+export const connectionSymbolsWithoutEph: SymbolDef[] = connectionSymbols.filter((s) => s.id !== 'eph');
 
 export const consumerSymbols: SymbolDef[] = [
   {

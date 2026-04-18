@@ -1,4 +1,11 @@
-import { type SymbolDef, powerSymbols, connectionSymbols, consumerSymbols, archSymbols } from './diagram-utils';
+import {
+  type SymbolDef,
+  powerSymbols,
+  connectionSymbolsWithoutEph,
+  consumerSymbols,
+  archSymbols,
+  ephSymbol,
+} from './diagram-utils';
 
 interface SymbolLibraryProps {
   onAddSymbol: (sym: SymbolDef) => void;
@@ -28,13 +35,14 @@ export function SymbolLibrary({ onAddSymbol }: SymbolLibraryProps) {
   );
 
   return (
-    <div className="w-[300px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-r border-[var(--border-color)] p-4">
-      <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-1">VBF Eszköztár</h2>
+    <div className="flex h-full min-h-0 w-[min(100%,260px)] shrink-0 flex-col overflow-y-auto border-r border-[var(--border-color)] bg-[var(--color-bg-card)] p-3 sm:w-[min(100%,280px)] sm:p-4 xl:w-[300px]">
+      <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-1">VBF / EPH eszköztár</h2>
       <p className="text-xs text-[var(--color-text-muted)] mb-1">IEC 60617 / HD 637 jellegű egysoros szimbólumok</p>
-      <p className="text-xs text-[var(--color-text-muted)] mb-5">Kattints a vászonra helyezéshez</p>
-      
+      <p className="text-xs text-[var(--color-text-muted)] mb-4">Kattints — a vászon közepére kerül</p>
+
+      {renderGroup('EPH (egyenpotenciál)', [ephSymbol])}
       {renderGroup('Védelem és Elosztás', powerSymbols)}
-      {renderGroup('Kötések és Csatlakozások', connectionSymbols)}
+      {renderGroup('Kötések és Csatlakozások', connectionSymbolsWithoutEph)}
       {renderGroup('Fogyasztók', consumerSymbols)}
       {renderGroup('Építészeti Elemek', archSymbols)}
     </div>

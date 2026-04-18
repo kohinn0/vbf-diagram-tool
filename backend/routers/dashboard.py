@@ -10,7 +10,7 @@ Admin-only endpoints for:
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract, case, and_
+from sqlalchemy import func, extract, case, and_, or_
 from datetime import datetime, timedelta
 import json
 import smtplib
@@ -26,9 +26,17 @@ router = APIRouter()
 
 
 def _dashboard_reports_query(db, current_user):
-    """Jegyzőkönyvek lekérdezése: SUPER_ADMIN/ADMIN = minden, COMPANY_ADMIN = cégé, TECH = saját."""
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    """SUPER_ADMIN: minden; ADMIN: cég vagy saját; COMPANY_ADMIN: cégé; TECH = saját."""
+    if current_user.role == "SUPER_ADMIN":
         return db.query(database.Report)
+    if current_user.role == "ADMIN":
+        if current_user.company_id:
+            return (
+                db.query(database.Report)
+                .join(database.User, database.Report.owner_id == database.User.id)
+                .filter(database.User.company_id == current_user.company_id)
+            )
+        return db.query(database.Report).filter(database.Report.owner_id == current_user.id)
     if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         return (
             db.query(database.Report)
@@ -130,17 +138,32 @@ async def get_dashboard_stats(
     defect_stats = _analyze_defects_from_query(db, base_reports)
     result_stats = _analyze_results_from_query(db, base_reports)
 
-    # ── Active users: super admin = minden, céges vezető = cégé ──
+    # ── Active users: SUPER_ADMIN = minden; ADMIN/ céges vezető = cégé ──
     user_filter = db.query(database.User).filter(
         database.User.is_active == True, database.User.deleted_at == None
     )
-    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+    if current_user.role == "ADMIN" and current_user.company_id:
+        user_filter = user_filter.filter(database.User.company_id == current_user.company_id)
+    elif current_user.role == "ADMIN":
+        user_filter = user_filter.filter(database.User.id == current_user.id)
+    elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         user_filter = user_filter.filter(database.User.company_id == current_user.company_id)
     active_users = user_filter.count() or 0
 
-    # ── Pending jobs: super admin = minden, céges vezető = cég felhasználóinak ──
+    # ── Pending jobs: SUPER_ADMIN = minden; cég admin / ADMIN = cég ──
     job_q = db.query(func.count(database.Job.id)).filter(database.Job.status == "PENDING")
-    if current_user.role == "COMPANY_ADMIN" and current_user.company_id:
+    if current_user.role == "ADMIN" and current_user.company_id:
+        job_q = job_q.join(database.User, database.Job.assigned_to_id == database.User.id).filter(
+            database.User.company_id == current_user.company_id
+        )
+    elif current_user.role == "ADMIN":
+        job_q = job_q.filter(
+            or_(
+                database.Job.assigned_to_id == current_user.id,
+                database.Job.created_by_id == current_user.id,
+            )
+        )
+    elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         job_q = job_q.join(database.User, database.Job.assigned_to_id == database.User.id).filter(
             database.User.company_id == current_user.company_id
         )
@@ -237,8 +260,15 @@ async def send_inspection_reminder(
     report = db.query(database.Report).filter(database.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    if current_user.role in ("SUPER_ADMIN", "ADMIN"):
+    if current_user.role == "SUPER_ADMIN":
         pass
+    elif current_user.role == "ADMIN":
+        if current_user.company_id:
+            owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
+            if not owner or owner.company_id != current_user.company_id:
+                raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+        elif report.owner_id != current_user.id:
+            raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     elif current_user.role == "COMPANY_ADMIN" and current_user.company_id:
         owner = db.query(database.User).filter(database.User.id == report.owner_id).first()
         if not owner or owner.company_id != current_user.company_id:

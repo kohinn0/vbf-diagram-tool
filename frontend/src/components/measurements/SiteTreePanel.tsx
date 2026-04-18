@@ -2,6 +2,10 @@ import { useDraftStore, type SiteTreeNode } from '../../store/draftStore';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { cn } from '../../lib/utils';
+import { vbf } from '../../lib/vbfUi';
+import { pruneMeasurementNodeRefs, createDefaultStarterSiteTree } from '../../lib/siteTreeRefs';
+import { toast } from '../../lib/toast';
 
 function mapAtPath(
   nodes: SiteTreeNode[],
@@ -132,7 +136,7 @@ function TreeRows({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="min-h-11 text-rose-700 border-rose-200"
+                  className={cn("min-h-11", vbf.btnDangerOutline)}
                   disabled={locked}
                   onClick={() => onDelete(path)}
                 >
@@ -169,9 +173,25 @@ export function SiteTreePanel({ locked }: { locked: boolean }) {
   };
 
   const onDelete = (path: number[]) => {
-    useDraftStore.setState((state) => ({
-      siteTree: deleteAtPath(state.siteTree, path),
-    }));
+    useDraftStore.setState((state) => {
+      const nextTree = deleteAtPath(state.siteTree, path);
+      const pr = pruneMeasurementNodeRefs({
+        siteTree: nextTree,
+        rpeRows: state.rpeRows,
+        loopRows: state.loopRows,
+        insulationRows: state.insulationRows,
+        rcdRows: state.rcdRows,
+        ephContRows: state.ephContRows,
+      });
+      return {
+        siteTree: nextTree,
+        rpeRows: pr.rpeRows,
+        loopRows: pr.loopRows,
+        insulationRows: pr.insulationRows,
+        rcdRows: pr.rcdRows,
+        ephContRows: pr.ephContRows,
+      };
+    });
   };
 
   const onAddChild = (pathToParent: number[]) => {
@@ -195,12 +215,31 @@ export function SiteTreePanel({ locked }: { locked: boolean }) {
             MSZ mérések és szerver oldali helyszín szinkron (mentéskor a <code className="text-[11px]">diagram_data.site_tree</code> részbe kerül).
           </p>
         </div>
-        <Button type="button" variant="secondary" size="sm" className="min-h-11 shrink-0" disabled={locked} onClick={addRoot}>
-          + Gyökér
-        </Button>
+        <div className="flex flex-col gap-2 items-end">
+          <Button type="button" variant="secondary" size="sm" className="min-h-11 shrink-0 w-full sm:w-auto" disabled={locked} onClick={addRoot}>
+            + Gyökér
+          </Button>
+        </div>
       </div>
       {siteTree.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-muted)]">Még nincs elem — adj hozzá gyökéret (épület / főelosztó), majd szintenként bontsd.</p>
+        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--color-bg-input)] p-4 space-y-3">
+          <p className="text-sm text-[var(--color-text-muted)] m-0 leading-relaxed">
+            Még nincs elem — építs fát (épület → elosztó → körök), vagy indulj egy tipikus 2 szintes sablonnal; a mérési sorok „Helyszín” mezője ehhez kapcsolódik. Mentéskor a fa a <code className="text-[11px]">diagram_data.site_tree</code> részbe kerül, a szerver szinkronizálja a <code className="text-[11px]">SiteNode</code> táblát.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-11 w-full sm:w-auto"
+            disabled={locked}
+            onClick={() => {
+              useDraftStore.setState({ siteTree: createDefaultStarterSiteTree() });
+              toast.success('Tipikus fa: objektum → főelosztó — nevezd át a helyszínnek megfelelően.');
+            }}
+          >
+            Tipikus fa (objektum + főelosztó)
+          </Button>
+        </div>
       ) : (
         <TreeRows
           nodes={siteTree}

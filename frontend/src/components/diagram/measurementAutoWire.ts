@@ -6,7 +6,7 @@ import {
   isConnectionLine,
 } from './orthogonalWire';
 
-export interface RpeAutoWireResult {
+interface RpeAutoWireResult {
   ok: boolean;
   created: number;
   /** RPE sorok, amelyekhez nem találtunk egyező feliratú szimbólumot a rajzon */
@@ -25,7 +25,7 @@ function sortKeyForPoint(point: string): number {
 /**
  * Rajzi elem, amelynek a „Felirat” (label) mezője megegyezik az RPE „Pont” értékével.
  */
-export function findSymbolByRpePoint(canvas: fabric.Canvas, point: string): fabric.Object | undefined {
+function findSymbolByRpePoint(canvas: fabric.Canvas, point: string): fabric.Object | undefined {
   const key = point.trim();
   if (!key) return undefined;
   const objs = canvas.getObjects();
@@ -41,7 +41,7 @@ export function findSymbolByRpePoint(canvas: fabric.Canvas, point: string): fabr
   return undefined;
 }
 
-export function removeRpeAutoConnectionLines(canvas: fabric.Canvas): number {
+function removeRpeAutoConnectionLines(canvas: fabric.Canvas): number {
   let n = 0;
   const objs = canvas.getObjects().slice();
   for (const obj of objs) {
@@ -58,7 +58,7 @@ export function removeRpeAutoConnectionLines(canvas: fabric.Canvas): number {
  * RPE sorok „Pont” szerint rendezve; minden olyan szimbólum, amelynek felirata = pont,
  * láncba kötve (1→2→3…). Előző RPE-automatikus vonalak törlődnek.
  */
-export function applyRpeMeasurementAutoWire(canvas: fabric.Canvas, rpeRows: RpeRow[]): RpeAutoWireResult {
+function applyRpeMeasurementAutoWire(canvas: fabric.Canvas, rpeRows: RpeRow[]): RpeAutoWireResult {
   removeRpeAutoConnectionLines(canvas);
 
   const rows = [...rpeRows].filter((r) => r.point.trim() !== '');

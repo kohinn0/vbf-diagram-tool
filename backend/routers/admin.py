@@ -20,14 +20,19 @@ router = APIRouter()
 
 
 def _is_super_admin(user: database.User) -> bool:
-    return user.role in ("SUPER_ADMIN", "ADMIN")
+    """Csak SUPER_ADMIN — az ADMIN szerep nem lát minden fiókot."""
+    return auth.is_platform_super_admin(user)
 
 
 def _admin_user_scope_query(db: Session, current_admin: database.User):
-    """Felhasználók lekérdezése: super admin = minden, céges vezető = csak a saját cégé."""
+    """SUPER_ADMIN: minden; ADMIN: saját cég vagy csak saját fiók; COMPANY_ADMIN: saját cég."""
     q = db.query(database.User).filter(database.User.deleted_at == None)
     if _is_super_admin(current_admin):
         return q
+    if current_admin.role == "ADMIN":
+        if current_admin.company_id is not None:
+            return q.filter(database.User.company_id == current_admin.company_id)
+        return q.filter(database.User.id == current_admin.id)
     return q.filter(database.User.company_id == current_admin.company_id)
 
 
@@ -171,8 +176,6 @@ def generate_dijbekero_pdf_endpoint(
     current_admin: database.User = Depends(auth.get_current_super_admin),
 ):
     """Díjbekérő PDF letöltése. Céges adatok: IMPRINT_* env. Logó: Céges adatok vagy IMPRINT_LOGO_PATH."""
-    if current_admin.role not in ("SUPER_ADMIN", "ADMIN"):
-        raise HTTPException(status_code=403, detail="Csak főadmin hozhat létre díjbekérőt.")
     logo_path = os.getenv("IMPRINT_LOGO_PATH")
     if not logo_path and current_admin.company_id:
         settings = db.query(database.CompanySettings).filter(

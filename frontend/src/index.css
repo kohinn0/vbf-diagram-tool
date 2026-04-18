@@ -22,28 +22,32 @@
 
 @layer base {
   :root {
-    /* --- Sötét mód – magasabb kontraszt --- */
-    --bg-main: #060d1a;        /* Legmélyebb háttér */
-    --bg-card: #0f1f38;        /* Kártya háttér – jól elválik a main-től */
-    --bg-input: #1a3050;       /* Input / hover állapot */
+    /* Prémium sötét téma — mélység, finom fény, visszafogott szegély */
+    --bg-main: #030711;
+    --bg-card: #0a1222;
+    --bg-input: #121f35;
 
-    --border-color: #2a527a;   /* Jól látható kék szegély */
+    --border-color: rgba(96, 140, 190, 0.22);
+    --border-glow: rgba(59, 130, 246, 0.12);
 
     --primary: #3b82f6;
-    --primary-hover: #2563eb;
+    --primary-hover: #60a5fa;
     --accent: #fbbf24;
 
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
 
-    --text-main: #f0f6ff;          /* Tiszta fehér-kék árnyalat */
-    --text-muted: #6b8cad;         /* Halványabb szürke-kék */
-    --text-muted-strong: #a8c0d6;  /* Közép erősségű szöveg */
+    --text-main: #f4f8ff;
+    --text-muted: #7b95b5;
+    --text-muted-strong: #b3c9e8;
 
-    --radius: 8px;
+    --radius: 10px;
     --vbf-panel-padding: 1.5rem;
     --vbf-panel-padding-md: 2rem;
+
+    --shadow-premium: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --shadow-premium-sm: 0 4px 20px rgba(0, 0, 0, 0.35);
   }
 
   .light-mode {
@@ -63,12 +67,30 @@
     --text-muted: #64748b;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
   body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(ellipse 100% 60% at 50% -15%, rgba(59, 130, 246, 0.14), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 0%, rgba(14, 165, 233, 0.08), transparent 50%),
+      radial-gradient(ellipse 40% 30% at 0% 80%, rgba(59, 130, 246, 0.06), transparent 45%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: rgba(59, 130, 246, 0.35);
+    color: var(--text-main);
   }
 }
 

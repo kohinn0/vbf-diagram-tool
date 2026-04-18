@@ -8,6 +8,7 @@ import {
   type SiteTreeNode,
 } from '../lib/diagramPayload';
 import { collectAutoDefectsFromMeasurements } from '../lib/collectMeasurementDefects';
+import { pruneMeasurementNodeRefs } from '../lib/siteTreeRefs';
 
 export interface DefectItem {
   id: string;
@@ -15,6 +16,8 @@ export interface DefectItem {
   description: string;
   severity: 'kritikus' | 'sulyos' | 'kozepes' | 'egyedi';
   isFixed: boolean;
+  /** Kézi MSZ / § hivatkozás — ha üres, a Word generátor automatikus §-szöveget tesz a hiba tartalma alapján. */
+  standardRef?: string;
   /** Automatikus gyűjtés: sorazonosító, duplikátum elkerülésére (nem megy a API payloadba). */
   autoSourceKey?: string;
 }
@@ -49,9 +52,11 @@ const defaultVisualChecks = (): VisualChecksState => ({
 });
 
 /** `id`: React kulcs + kézi sor; mentéskor `stripMeasurementIds` */
-export type LoopRow = Record<string, string>;
-export type InsulationRow = Record<string, string>;
-export type RcdRow = Record<string, string>;
+type LoopRow = Record<string, string>;
+type InsulationRow = Record<string, string>;
+type RcdRow = Record<string, string>;
+/** Backend `measurements_data.eph_cont` — idx, elem, loc, mat, conn, val, pass */
+type EphContRow = Record<string, string>;
 
 export type { SiteTreeNode };
 
@@ -62,13 +67,15 @@ function ensureRowIds(rows: Record<string, string>[]): Record<string, string>[] 
   });
 }
 
-export interface DraftState {
+interface DraftState {
   reportData: Record<string, string>;
   measurementsData: Record<string, string>;
   rpeRows: RpeRow[];
   loopRows: LoopRow[];
   insulationRows: InsulationRow[];
   rcdRows: RcdRow[];
+  /** EPH bekötések folytonossága — `eph_cont` */
+  ephContRows: EphContRow[];
   defects: DefectItem[];
   activeCanvas: unknown | null;
   /** Backend `ReportResponse.status` — véglegesített jegyzőkönyv szerkesztése tiltva */
@@ -105,6 +112,10 @@ export interface DraftState {
   updateRcdRow: (id: string, updates: Partial<Record<string, string>>) => void;
   removeRcdRow: (id: string) => void;
 
+  addEphContRow: () => void;
+  updateEphContRow: (id: string, updates: Partial<Record<string, string>>) => void;
+  removeEphContRow: (id: string) => void;
+
   appendPadfxImport: (measurements: PadfxXmlMeasurement[]) => { added: number; message: string };
 
   addDefect: (defect: Omit<DefectItem, 'id'>) => void;
@@ -115,6 +126,11 @@ export interface DraftState {
 
   clearDraft: () => void;
   buildApiPayload: () => Record<string, unknown>;
+  /** Gyorskitöltő sablon: `reportData` és opcionális `visualChecks` egyesítése (FINAL esetén no-op). */
+  applyReportTemplatePatch: (patch: {
+    reportData?: Record<string, string>;
+    visualChecks?: Partial<VisualChecksState>;
+  }) => void;
 }
 
 const defaultRpe = (): RpeRow[] => [
@@ -130,6 +146,7 @@ export const useDraftStore = create<DraftState>()(
       loopRows: [],
       insulationRows: [],
       rcdRows: [],
+      ephContRows: [],
       defects: [],
       activeCanvas: null,
       reportStatus: null,
@@ -312,6 +329,49 @@ export const useDraftStore = create<DraftState>()(
           };
         }),
 
+      addEphContRow: () =>
+        set((state) => {
+          if (state.reportStatus === 'FINAL') return state;
+          const n = state.ephContRows.length + 1;
+          return {
+            ephContRows: [
+              ...state.ephContRows,
+              {
+                id: crypto.randomUUID(),
+                idx: String(n),
+                elem: '',
+                loc: '',
+                mat: '',
+                conn: '',
+                val: '',
+                pass: 'Igen',
+                node_id: '',
+              },
+            ],
+          };
+        }),
+
+      updateEphContRow: (id, updates) =>
+        set((state) => {
+          if (state.reportStatus === 'FINAL') return state;
+          return {
+            ephContRows: state.ephContRows.map((r) => {
+              const rid = (r as Record<string, string> & { id?: string }).id;
+              return rid === id ? ({ ...r, ...updates } as EphContRow) : r;
+            }),
+          };
+        }),
+
+      removeEphContRow: (id) =>
+        set((state) => {
+          if (state.reportStatus === 'FINAL') return state;
+          return {
+            ephContRows: state.ephContRows.filter(
+              (r) => (r as Record<string, string> & { id?: string }).id !== id
+            ),
+          };
+        }),
+
       appendPadfxImport: (measurements) => {
         if (get().reportStatus === 'FINAL') {
           return { added: 0, message: 'Véglegesített jegyzőkönyvhöz nem adható import.' };
@@ -431,6 +491,24 @@ export const useDraftStore = create<DraftState>()(
       },
 
       buildApiPayload: () => {
+        const state0 = get();
+        const pruned = pruneMeasurementNodeRefs({
+          siteTree: state0.siteTree,
+          rpeRows: state0.rpeRows,
+          loopRows: state0.loopRows,
+          insulationRows: state0.insulationRows,
+          rcdRows: state0.rcdRows,
+          ephContRows: state0.ephContRows,
+        });
+        if (pruned.dirty) {
+          set({
+            rpeRows: pruned.rpeRows,
+            loopRows: pruned.loopRows,
+            insulationRows: pruned.insulationRows,
+            rcdRows: pruned.rcdRows,
+            ephContRows: pruned.ephContRows,
+          });
+        }
         const state = get();
         let fabricPart: Record<string, unknown> | null = null;
         let diagram_image: string | null = null;
@@ -440,8 +518,8 @@ export const useDraftStore = create<DraftState>()(
             const c = state.activeCanvas as { toJSON: (a?: string[]) => unknown; toDataURL: (o?: object) => string };
             fabricPart = c.toJSON(['vbfData']) as Record<string, unknown>;
             diagram_image = c.toDataURL({ format: 'png', multiplier: 1 });
-          } catch (e) {
-            console.error('Canvas serialization error', e);
+          } catch {
+            /* Fabric toJSON / PNG — ritka hiba; mentés diagram nélkül folytatódik */
           }
         } else if (state.pendingDiagramData) {
           const { fabricJson } = splitDiagramPayload(state.pendingDiagramData);
@@ -474,6 +552,7 @@ export const useDraftStore = create<DraftState>()(
               insulation: stripMeasurementIds(state.insulationRows),
               loop: stripMeasurementIds(state.loopRows),
               rcd: stripMeasurementIds(state.rcdRows),
+              eph_cont: stripMeasurementIds(state.ephContRows),
             },
           ],
           incoming_phases: state.measurementsData,
@@ -481,7 +560,9 @@ export const useDraftStore = create<DraftState>()(
             templateId: d.description,
             description: d.description,
             location: d.location,
-            standard: d.severity,
+            severity: d.severity,
+            /** Generátor `defect.standard` — csak ha kitöltött; üresnél automatikus MSZ § a leírás alapján */
+            standard: (d.standardRef || '').trim(),
           })),
           notes: rd.reportNotes || '',
           inspector_notes: rd.inspectorNotes || '',
@@ -498,12 +579,26 @@ export const useDraftStore = create<DraftState>()(
           loopRows: [],
           insulationRows: [],
           rcdRows: [],
+          ephContRows: [],
           defects: [],
           reportStatus: null,
           lastKnownServerUpdatedAt: null,
           visualChecks: defaultVisualChecks(),
           pendingDiagramData: null,
           siteTree: [],
+        }),
+
+      applyReportTemplatePatch: (patch) =>
+        set((state) => {
+          if (state.reportStatus === 'FINAL') return state;
+          const rd = patch.reportData;
+          const vc = patch.visualChecks;
+          return {
+            reportData: rd ? { ...state.reportData, ...rd } : state.reportData,
+            visualChecks: vc
+              ? { ...state.visualChecks, ...vc }
+              : state.visualChecks,
+          };
         }),
     }),
     {
@@ -515,6 +610,7 @@ export const useDraftStore = create<DraftState>()(
         loopRows: s.loopRows,
         insulationRows: s.insulationRows,
         rcdRows: s.rcdRows,
+        ephContRows: s.ephContRows,
         defects: s.defects,
         reportStatus: s.reportStatus,
         lastKnownServerUpdatedAt: s.lastKnownServerUpdatedAt,
@@ -529,6 +625,7 @@ export const useDraftStore = create<DraftState>()(
           loopRows: ensureRowIds(p.loopRows ?? []),
           insulationRows: ensureRowIds(p.insulationRows ?? []),
           rcdRows: ensureRowIds(p.rcdRows ?? []),
+          ephContRows: ensureRowIds(p.ephContRows ?? []),
           siteTree: p.siteTree ?? [],
           visualChecks: { ...defaultVisualChecks(), ...p.visualChecks },
           reportStatus: p.reportStatus ?? null,

@@ -21,11 +21,11 @@ export function ExpertsSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Expert Card */}
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary/30 to-blue-500/20 rounded-3xl blur opacity-0 group-hover:opacity-70 transition duration-500"></div>
+            <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-tr from-primary/30 to-sky-500/20 opacity-0 blur transition duration-500 group-hover:opacity-70"></div>
             <div className="relative bg-[var(--bg-main)] border border-[var(--border-color)] p-8 rounded-3xl flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
-                <div className="relative w-24 h-24 bg-gradient-to-br from-primary to-blue-500 text-white rounded-full flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-primary/30 border-4 border-[var(--bg-card)]">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-[var(--bg-card)] bg-gradient-to-br from-primary to-sky-500 text-3xl font-extrabold text-white shadow-lg shadow-primary/30">
                   SZ
                 </div>
               </div>

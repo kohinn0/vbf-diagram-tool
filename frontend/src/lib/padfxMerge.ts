@@ -26,7 +26,7 @@ function rpeIsOkOhm(val: string): 'yes' | 'no' {
   return n <= 1.0 ? 'yes' : 'no';
 }
 
-export interface PadfxRpeRow {
+interface PadfxRpeRow {
   id: string;
   point: string;
   location: string;
@@ -34,7 +34,7 @@ export interface PadfxRpeRow {
   isOk: 'yes' | 'no';
 }
 
-export interface MergedPadfxTables {
+interface MergedPadfxTables {
   rpeRows: PadfxRpeRow[];
   loopRows: Record<string, string>[];
   insulationRows: Record<string, string>[];

@@ -1,9 +1,7 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
-import { cn } from '../lib/utils';
-import { PageActionBar } from '../components/ui/PageActionBar';
 import type { fabric } from 'fabric';
 import { runRpeAutoWire } from '../components/diagram/measurementAutoWire';
 import { uploadPadfxFile } from '../lib/api';
@@ -16,61 +14,7 @@ import {
   MEASUREMENT_THRESHOLDS_BULLETS,
   MEASUREMENT_THRESHOLDS_SECTION_TITLE,
 } from '../lib/measurementThresholds';
-
-// Shared table header cell
-const Th = ({ children, className }: { children?: ReactNode; className?: string }) => (
-  <th className={cn("px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] whitespace-nowrap", className)}>
-    {children}
-  </th>
-);
-
-// Pass/fail toggle badge
-function PassBadge({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const ok = value === "yes" || value === "Igen";
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(ok ? (value === "yes" ? "no" : "Nem") : (value === "no" ? "yes" : "Igen"))}
-      className={cn(
-        "w-full h-8 rounded-md border text-xs font-semibold transition-colors",
-        ok
-          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25"
-          : "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25"
-      )}
-    >
-      {ok ? "Megfelel" : "Nem felel"}
-    </button>
-  );
-}
-
-// Delete icon button
-function DeleteBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors mx-auto"
-      title="Sor törlése"
-    >
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="w-4 h-4">
-        <line x1="4" y1="4" x2="12" y2="12" /><line x1="12" y1="4" x2="4" y2="12" />
-      </svg>
-    </button>
-  );
-}
-
-// Section header
-function SectionHeader({ number, title, description }: { number: string; title: string; description?: string }) {
-  return (
-    <div className="flex items-start gap-3 py-2 border-b border-[var(--border-color)] mb-3">
-      <span className="mt-0.5 w-6 h-6 rounded-md bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">{number}</span>
-      <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-[var(--text-main)] leading-tight">{title}</h3>
-        {description && <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">{description}</p>}
-      </div>
-    </div>
-  );
-}
+import { downloadMeasurementsCsv } from '../lib/exportMeasurementsCsv';
 
 export default function MeasurementsTab() {
   const locked = useIsReportLocked();
@@ -80,7 +24,11 @@ export default function MeasurementsTab() {
     loopRows, addLoopRow, updateLoopRow, removeLoopRow,
     insulationRows, addInsulationRow, updateInsulationRow, removeInsulationRow,
     rcdRows, addRcdRow, updateRcdRow, removeRcdRow,
+    ephContRows, addEphContRow, updateEphContRow, removeEphContRow,
   } = useDraftStore();
+  const reportData = useDraftStore((s) => s.reportData);
+  const siteTree = useDraftStore((s) => s.siteTree);
+  const isEph = reportData.docType === 'EPH';
 
   const rowId = (r: Record<string, string>) => (r as { id?: string }).id || '';
   const activeCanvas = useDraftStore((s) => s.activeCanvas);
@@ -134,33 +82,66 @@ export default function MeasurementsTab() {
 
   return (
     <fieldset disabled={locked} className="min-h-0 border-0 p-0 m-0 flex flex-col flex-1">
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        accept=".zip,.xml,.padfx,.PADFX,application/zip,application/xml,text/xml"
-        onChange={onPadfxFile}
-      />
-      <PageActionBar title="Mérési adatok" description="Kézi bevitel · PADFX import">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={padfxLoading}
-          title="Metrel PADFX / ZIP (XML). Bejelentkezés szükséges."
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {padfxLoading ? 'Import…' : 'PADFX import'}
-        </Button>
-        <Button variant="secondary" size="sm" disabled>
-          CSV export (hamarosan)
-        </Button>
-      </PageActionBar>
     <div className="flex-1 w-full h-full overflow-y-auto p-[var(--vbf-panel-padding)] bg-[var(--bg-main)]">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-[var(--color-text-main)]">Mérési adatok (kézi bevitel)</h2>
+          {isEph && (
+            <p className="text-sm text-[var(--color-text-muted)] mt-1 m-0">
+              EPH jegyzőkönyv: a VBF táblázatok (Rpe, Zs, Riso, RCD) itt elrejtve; az „EPH bekötések folytonossága” táblát töltsd ki.
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".zip,.xml,.padfx,.PADFX,application/zip,application/xml,text/xml"
+            onChange={onPadfxFile}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            disabled={padfxLoading}
+            title="Metrel PADFX / ZIP (XML). Bejelentkezés szükséges."
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {padfxLoading ? 'Import…' : 'PADFX import'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="min-h-11"
+            title="Bejövő paraméterek + Rpe / Zs / Riso / RCD táblák — UTF-8, pontosvessző (Excel HU)"
+            onClick={() => {
+              try {
+                downloadMeasurementsCsv({
+                  reportData,
+                  measurementsData,
+                  rpeRows,
+                  loopRows,
+                  insulationRows,
+                  rcdRows,
+                  ephContRows,
+                  siteTree,
+                });
+                toast.success('CSV letöltve (UTF-8, pontosvessző).');
+              } catch (e: unknown) {
+                toast.error(e instanceof Error ? e.message : 'Export hiba');
+              }
+            }}
+          >
+            CSV export
+          </Button>
+        </div>
+      </div>
 
       <div className="mb-6 p-4 rounded-[var(--radius-vbf)] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--bg-panel))]">
         <h3 className="text-base font-semibold text-[var(--color-text-main)] m-0 mb-2">{MEASUREMENT_THRESHOLDS_SECTION_TITLE}</h3>
         <p className="text-xs text-[var(--color-text-muted)] m-0 mb-2 leading-relaxed">
-          Ugyanez a tájékoztató szöveg bekerül a Word és PDF jegyzőkönyv „Mérési eredmények" fejezetébe. A pontos elfogadási feltétel a berendezéstől függ.
+          Ugyanez a tájékoztató szöveg bekerül a Word és PDF jegyzőkönyv „Mérési eredmények” fejezetébe. A pontos elfogadási feltétel a berendezéstől függ.
         </p>
         <ul className="m-0 pl-5 list-disc space-y-1.5 text-sm text-[var(--color-text-muted)] leading-relaxed">
           {MEASUREMENT_THRESHOLDS_BULLETS.map((line) => (
@@ -244,19 +225,119 @@ export default function MeasurementsTab() {
             </div>
           </div>
 
-          {/* 1. Védővezető folytonosság (Rpe) */}
+          {isEph && (
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-              <SectionHeader
-                number="1"
-                title="Védővezető folytonosság (Rpe)"
-                description="MSZ HD 60364-6 §61.3.2 — PE védővezető lánc ellenőrzése. Rajz fülön a szimbólum felirata = Pont érték."
-              />
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">
+              EPH bekötések folytonossága
+            </h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-3 leading-relaxed">
+              A Word/PDF „Mérési eredmények” szakaszban ez a táblázat jelenik meg (MSZ HD 60364-6 szerinti kiegészítő mérés).
+            </p>
+            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
+              <table className="w-full text-left border-collapse min-w-[920px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
+                    <th className="p-2 text-xs font-semibold w-14">Sorsz.</th>
+                    <th className="p-2 text-xs font-semibold min-w-[100px]">Bekötött elem</th>
+                    <th className="p-2 text-xs font-semibold min-w-[100px]">Hely</th>
+                    <th className="p-2 text-xs font-semibold min-w-[88px]">Vezető (mm²)</th>
+                    <th className="p-2 text-xs font-semibold min-w-[88px]">Kötés módja</th>
+                    <th className="p-2 text-xs font-semibold w-24">Folyt. [Ω]</th>
+                    <th className="p-2 text-xs font-semibold w-28">Megfelel</th>
+                    <th className="p-2 w-10" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {ephContRows.map((row) => (
+                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateEphContRow(rowId(row), { node_id: v })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11 text-center"
+                          value={row.idx || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { idx: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.elem || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { elem: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.loc || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { loc: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.mat || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { mat: e.target.value })}
+                          placeholder="pl. 16"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          value={row.conn || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { conn: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          className="h-9 text-xs min-h-11"
+                          type="number"
+                          step="0.01"
+                          value={row.val || ''}
+                          onChange={(e) => updateEphContRow(rowId(row), { val: e.target.value })}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Select
+                          className="h-9 text-xs min-h-11"
+                          value={row.pass || 'Igen'}
+                          onChange={(e) => updateEphContRow(rowId(row), { pass: e.target.value })}
+                        >
+                          <option value="Igen">Igen</option>
+                          <option value="Nem">Nem</option>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-center cursor-pointer text-[var(--color-text-muted)] hover:text-red-500 min-h-11" onClick={() => removeEphContRow(rowId(row))}>
+                        ✕
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button variant="secondary" size="sm" className="min-h-11" onClick={addEphContRow}>
+              + EPH sor
+            </Button>
+          </div>
+          )}
+
+          {/* 1–4. VBF táblázatok */}
+          {!isEph && (
+          <>
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-2 border-b border-[var(--border-color)] mt-4">
+              <h3 className="text-lg font-bold text-[var(--color-text-main)]">1. Védővezető folytonosság (Rpe)</h3>
               <Button
                 variant="secondary"
                 size="sm"
-                className="shrink-0 self-start mt-1"
-                title='A rajzi elemek „Felirat" mezője egyezzen a Pont oszloppal'
+                className="min-h-11 shrink-0 w-full sm:w-auto"
+                title="A rajzi elemek „Felirat” mezője egyezzen a Pont oszloppal; a vonalak a pontok sorrendjében készülnek"
                 onClick={() => {
                   const r = runRpeAutoWire(activeCanvas as fabric.Canvas | null, rpeRows);
                   toast.success(r.detail);
@@ -265,37 +346,47 @@ export default function MeasurementsTab() {
                 Rajz: RPE vonalak
               </Button>
             </div>
-            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-lg mb-3">
+            <p className="text-sm text-[var(--color-text-muted)] mb-3 leading-relaxed">
+              A <strong className="font-semibold text-[var(--color-text-main)]">Rajz</strong> fülön minden szimbólumnál állítsd a feliratot ugyanarra, mint a <strong className="font-semibold text-[var(--color-text-main)]">Pont</strong> (pl. 1, 2, 3). A gomb a láncot <strong className="font-semibold text-[var(--color-text-main)]">PE védővezetőként</strong> (HD 308 S2, zöld szaggatott) rajzolja — a védővezető folytonosság (RPE) méréshez illeszkedően (MSZ HD 60364-6 §61.3.2).
+            </p>
+            <div className="w-full overflow-hidden border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-                  <tr>
-                    <Th className="w-16">Pont</Th>
-                    <Th className="min-w-[140px]">Helyszín</Th>
-                    <Th>Mérés helye</Th>
-                    <Th className="w-28">Rpe [Ω]</Th>
-                    <Th className="w-28">Eredmény</Th>
-                    <Th className="w-10" />
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-3 text-sm font-semibold text-[var(--color-text-muted-strong)] w-16">Pont</th>
+                    <th className="p-3 text-sm font-semibold text-[var(--color-text-muted-strong)] min-w-[140px]">Helyszín</th>
+                    <th className="p-3 text-sm font-semibold text-[var(--color-text-muted-strong)]">Mérés Helye</th>
+                    <th className="p-3 text-sm font-semibold text-[var(--color-text-muted-strong)] w-32">Rpe [Ω]</th>
+                    <th className="p-3 text-sm font-semibold text-[var(--color-text-muted-strong)] w-32">Megfelel?</th>
+                    <th className="p-3 w-12"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {rpeRows.map(row => (
-                    <tr key={row.id} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-input)] transition-colors">
-                      <td className="px-2 py-1.5">
+                    <tr key={row.id} className="bg-[var(--color-bg-input)] border-b border-[var(--border-color)] group hover:bg-[color-mix(in_srgb,var(--primary)_5%,var(--color-bg-input))] transition-colors">
+                      <td className="p-2">
                         <Input className="h-8 text-center text-xs" value={row.point} onChange={e => updateRpeRow(row.id, { point: e.target.value })} />
                       </td>
-                      <td className="px-2 py-1.5 min-w-[140px]">
-                        <SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateRpeRow(row.id, { node_id: v || undefined })} />
+                      <td className="p-2 min-w-[140px]">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateRpeRow(row.id, { node_id: v || undefined })}
+                        />
                       </td>
-                      <td className="px-2 py-1.5">
+                      <td className="p-2">
                         <Input className="h-8 text-xs" value={row.location} onChange={e => updateRpeRow(row.id, { location: e.target.value })} placeholder="Valamilyen gép földelése" />
                       </td>
-                      <td className="px-2 py-1.5">
+                      <td className="p-2">
                         <Input className="h-8 text-xs text-right" type="number" step="0.01" value={row.rpeValue} onChange={e => updateRpeRow(row.id, { rpeValue: e.target.value })} placeholder="0.10" />
                       </td>
-                      <td className="px-2 py-1.5">
-                        <PassBadge value={row.isOk} onChange={(v) => updateRpeRow(row.id, { isOk: v as never })} />
+                      <td className="p-2">
+                        <Select className={`h-8 text-xs ${row.isOk === 'yes' ? 'bg-[rgba(16,185,129,0.1)] text-[#10b981] border-[#10b981]' : 'bg-[rgba(239,68,68,0.1)] text-[#ef4444] border-[#ef4444]'}`} value={row.isOk} onChange={e => updateRpeRow(row.id, { isOk: e.target.value as any })}>
+                          <option value="yes">Igen</option>
+                          <option value="no">Nem</option>
+                        </Select>
                       </td>
-                      <td className="px-2 py-1.5"><DeleteBtn onClick={() => removeRpeRow(row.id)} /></td>
+                      <td className="p-2 text-center text-[var(--color-text-muted)] cursor-pointer hover:text-red-500" onClick={() => removeRpeRow(row.id)}>✕</td>
                     </tr>
                   ))}
                 </tbody>
@@ -306,113 +397,151 @@ export default function MeasurementsTab() {
 
           {/* 2. Hurokellenállás Zs §61.3.6 */}
           <div>
-            <SectionHeader number="2" title="Hurokellenállás (Zs) — §61.3.6" description="Kézi sorok; PADFX import is ide tölt." />
-            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-lg mb-3">
-              <table className="w-full text-left border-collapse min-w-[720px]">
-                <thead className="bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-                  <tr>
-                    <Th className="min-w-[120px]">Helyszín</Th>
-                    <Th>Áramkör / pont</Th>
-                    <Th>Kikapcsoló</Th>
-                    <Th>Hely</Th>
-                    <Th className="w-24">Zs [Ω]</Th>
-                    <Th className="w-28">Eredmény</Th>
-                    <Th className="w-10" />
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">2. Hurokellenállás (Zs) — §61.3.6</h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-3">Kézi sorok; PADFX import is ide tölt. A generált Word táblázat oszlopai: áramkör, készülék, hely, Zs, megfelel.</p>
+            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
+              <table className="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
+                    <th className="p-2 text-xs font-semibold">Áramkör / pont</th>
+                    <th className="p-2 text-xs font-semibold">Kikapcsoló</th>
+                    <th className="p-2 text-xs font-semibold">Hely</th>
+                    <th className="p-2 text-xs font-semibold w-24">Zs [Ω]</th>
+                    <th className="p-2 text-xs font-semibold w-28">Megfelel</th>
+                    <th className="p-2 w-10" />
                   </tr>
                 </thead>
                 <tbody>
                   {loopRows.map((row) => (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-input)] transition-colors">
-                      <td className="px-2 py-1.5"><SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateLoopRow(rowId(row), { node_id: v })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.circuit || ''} onChange={(e) => updateLoopRow(rowId(row), { circuit: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.device || ''} onChange={(e) => updateLoopRow(rowId(row), { device: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.loc || ''} onChange={(e) => updateLoopRow(rowId(row), { loc: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(rowId(row), { zs: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><PassBadge value={row.pass || 'Igen'} onChange={(v) => updateLoopRow(rowId(row), { pass: v })} /></td>
-                      <td className="px-2 py-1.5"><DeleteBtn onClick={() => removeLoopRow(rowId(row))} /></td>
+                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateLoopRow(rowId(row), { node_id: v })}
+                        />
+                      </td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateLoopRow(rowId(row), { circuit: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.device || ''} onChange={(e) => updateLoopRow(rowId(row), { device: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.loc || ''} onChange={(e) => updateLoopRow(rowId(row), { loc: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(rowId(row), { zs: e.target.value })} /></td>
+                      <td className="p-2">
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateLoopRow(rowId(row), { pass: e.target.value })}>
+                          <option value="Igen">Igen</option>
+                          <option value="Nem">Nem</option>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-center cursor-pointer text-[var(--color-text-muted)] hover:text-red-500 min-h-11" onClick={() => removeLoopRow(rowId(row))}>✕</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <Button variant="secondary" size="sm" onClick={addLoopRow}>+ Zs sor</Button>
+            <Button variant="secondary" size="sm" className="min-h-11" onClick={addLoopRow}>+ Zs sor</Button>
           </div>
 
           {/* 3. Szigetelés Riso §61.3.3 */}
           <div>
-            <SectionHeader number="3" title="Szigetelési ellenállás (Riso) — §61.3.3" description="L-N, L-PE, N-PE [MΩ] — a generátor 500 V DC szekciót készít." />
-            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-lg mb-3">
-              <table className="w-full text-left border-collapse min-w-[780px]">
-                <thead className="bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-                  <tr>
-                    <Th className="min-w-[120px]">Helyszín</Th>
-                    <Th>Áramkör</Th>
-                    <Th className="w-24">Riso L-N</Th>
-                    <Th className="w-24">Riso L-PE</Th>
-                    <Th className="w-24">Riso N-PE</Th>
-                    <Th className="w-28">Eredmény</Th>
-                    <Th className="w-10" />
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">3. Szigetelési ellenállás (Riso) — §61.3.3</h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-3">L-N, L-PE, N-PE [MΩ] — a generátor 500 V DC szekciót készít.</p>
+            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
+              <table className="w-full text-left border-collapse min-w-[840px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
+                    <th className="p-2 text-xs font-semibold">Áramkör</th>
+                    <th className="p-2 text-xs font-semibold">Riso L-N</th>
+                    <th className="p-2 text-xs font-semibold">Riso L-PE</th>
+                    <th className="p-2 text-xs font-semibold">Riso N-PE</th>
+                    <th className="p-2 text-xs font-semibold w-28">Megfelel</th>
+                    <th className="p-2 w-10" />
                   </tr>
                 </thead>
                 <tbody>
                   {insulationRows.map((row) => (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-input)] transition-colors">
-                      <td className="px-2 py-1.5"><SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateInsulationRow(rowId(row), { node_id: v })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.circuit || ''} onChange={(e) => updateInsulationRow(rowId(row), { circuit: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.ln || ''} onChange={(e) => updateInsulationRow(rowId(row), { ln: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.lpe || ''} onChange={(e) => updateInsulationRow(rowId(row), { lpe: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.npe || ''} onChange={(e) => updateInsulationRow(rowId(row), { npe: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><PassBadge value={row.pass || 'Igen'} onChange={(v) => updateInsulationRow(rowId(row), { pass: v })} /></td>
-                      <td className="px-2 py-1.5"><DeleteBtn onClick={() => removeInsulationRow(rowId(row))} /></td>
+                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateInsulationRow(rowId(row), { node_id: v })}
+                        />
+                      </td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateInsulationRow(rowId(row), { circuit: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ln || ''} onChange={(e) => updateInsulationRow(rowId(row), { ln: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.lpe || ''} onChange={(e) => updateInsulationRow(rowId(row), { lpe: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.npe || ''} onChange={(e) => updateInsulationRow(rowId(row), { npe: e.target.value })} /></td>
+                      <td className="p-2">
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateInsulationRow(rowId(row), { pass: e.target.value })}>
+                          <option value="Igen">Igen</option>
+                          <option value="Nem">Nem</option>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-center cursor-pointer min-h-11" onClick={() => removeInsulationRow(rowId(row))}>✕</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <Button variant="secondary" size="sm" onClick={addInsulationRow}>+ Riso sor</Button>
+            <Button variant="secondary" size="sm" className="min-h-11" onClick={addInsulationRow}>+ Riso sor</Button>
           </div>
 
           {/* 4. RCD / ÁVK §61.3.7 */}
           <div>
-            <SectionHeader number="4" title="FI-relé (ÁVK) — §61.3.7" description="Részletes próbatáblázat a Word exportban; ide a tipikus mezők." />
-            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-lg mb-3">
-              <table className="w-full text-left border-collapse min-w-[960px]">
-                <thead className="bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-                  <tr>
-                    <Th className="min-w-[110px]">Helyszín</Th>
-                    <Th>Áramkör</Th>
-                    <Th className="w-16">Típus</Th>
-                    <Th className="w-18">IΔn mA</Th>
-                    <Th className="w-18">0.5×IΔn</Th>
-                    <Th className="w-16">1× ms</Th>
-                    <Th className="w-16">5× ms</Th>
-                    <Th className="w-14">IΔ</Th>
-                    <Th className="w-14">Uc</Th>
-                    <Th className="w-28">Eredmény</Th>
-                    <Th className="w-10" />
+            <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">4. FI-relé (ÁVK) — §61.3.7</h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-3">Részletes próbatáblázat a Word exportban; ide a tipikus mezők.</p>
+            <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
+              <table className="w-full text-left border-collapse min-w-[1020px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                    <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
+                    <th className="p-2 text-xs font-semibold">Áramkör</th>
+                    <th className="p-2 text-xs font-semibold w-16">Típus</th>
+                    <th className="p-2 text-xs font-semibold w-20">IΔn mA</th>
+                    <th className="p-2 text-xs font-semibold w-20">0.5×IΔn</th>
+                    <th className="p-2 text-xs font-semibold w-16">1× ms</th>
+                    <th className="p-2 text-xs font-semibold w-16">5× ms</th>
+                    <th className="p-2 text-xs font-semibold w-16">IΔ</th>
+                    <th className="p-2 text-xs font-semibold w-16">Uc</th>
+                    <th className="p-2 text-xs font-semibold w-24">Megfelel</th>
+                    <th className="p-2 w-10" />
                   </tr>
                 </thead>
                 <tbody>
                   {rcdRows.map((row) => (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-input)] transition-colors">
-                      <td className="px-2 py-1.5"><SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateRcdRow(rowId(row), { node_id: v })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.circ || ''} onChange={(e) => updateRcdRow(rowId(row), { circ: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={row.type || ''} onChange={(e) => updateRcdRow(rowId(row), { type: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.idn || ''} onChange={(e) => updateRcdRow(rowId(row), { idn: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.test05 || ''} onChange={(e) => updateRcdRow(rowId(row), { test05: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.t1 || ''} onChange={(e) => updateRcdRow(rowId(row), { t1: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.t5 || ''} onChange={(e) => updateRcdRow(rowId(row), { t5: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.ramp || ''} onChange={(e) => updateRcdRow(rowId(row), { ramp: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><Input className="h-8 text-xs text-right" value={row.uc || ''} onChange={(e) => updateRcdRow(rowId(row), { uc: e.target.value })} /></td>
-                      <td className="px-2 py-1.5"><PassBadge value={row.pass || 'Igen'} onChange={(v) => updateRcdRow(rowId(row), { pass: v })} /></td>
-                      <td className="px-2 py-1.5"><DeleteBtn onClick={() => removeRcdRow(rowId(row))} /></td>
+                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2">
+                        <SiteNodeSelect
+                          value={row.node_id || ''}
+                          disabled={locked}
+                          onChange={(v) => updateRcdRow(rowId(row), { node_id: v })}
+                        />
+                      </td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circ || ''} onChange={(e) => updateRcdRow(rowId(row), { circ: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.type || ''} onChange={(e) => updateRcdRow(rowId(row), { type: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.idn || ''} onChange={(e) => updateRcdRow(rowId(row), { idn: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.test05 || ''} onChange={(e) => updateRcdRow(rowId(row), { test05: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t1 || ''} onChange={(e) => updateRcdRow(rowId(row), { t1: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t5 || ''} onChange={(e) => updateRcdRow(rowId(row), { t5: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ramp || ''} onChange={(e) => updateRcdRow(rowId(row), { ramp: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.uc || ''} onChange={(e) => updateRcdRow(rowId(row), { uc: e.target.value })} /></td>
+                      <td className="p-2">
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateRcdRow(rowId(row), { pass: e.target.value })}>
+                          <option value="Igen">Igen</option>
+                          <option value="Nem">Nem</option>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-center cursor-pointer min-h-11" onClick={() => removeRcdRow(rowId(row))}>✕</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <Button variant="secondary" size="sm" onClick={addRcdRow}>+ RCD sor</Button>
+            <Button variant="secondary" size="sm" className="min-h-11" onClick={addRcdRow}>+ RCD sor</Button>
           </div>
+          </>
+          )}
 
         </div>
       </div>

@@ -59,6 +59,7 @@ function normalizeMeasurements(raw: unknown): {
   loopRows: Record<string, string>[];
   insulationRows: Record<string, string>[];
   rcdRows: Record<string, string>[];
+  ephContRows: Record<string, string>[];
 } {
   let block: Record<string, unknown> | null = null;
   if (Array.isArray(raw) && raw.length > 0) {
@@ -67,7 +68,13 @@ function normalizeMeasurements(raw: unknown): {
     block = raw as Record<string, unknown>;
   }
   if (!block) {
-    return { rpeRows: defaultRpe(), loopRows: [], insulationRows: [], rcdRows: [] };
+    return {
+      rpeRows: defaultRpe(),
+      loopRows: [],
+      insulationRows: [],
+      rcdRows: [],
+      ephContRows: [],
+    };
   }
 
   const rpeArr = Array.isArray(block.rpe) ? block.rpe : [];
@@ -110,21 +117,35 @@ function normalizeMeasurements(raw: unknown): {
     loopRows: toStrRows(block.loop),
     insulationRows: toStrRows(block.insulation),
     rcdRows: toStrRows(block.rcd),
+    ephContRows: toStrRows(block.eph_cont),
   };
 }
 
 function normalizeDefects(raw: unknown): DefectItem[] {
   if (!Array.isArray(raw)) return [];
+  const allowed: DefectItem['severity'][] = ['kritikus', 'sulyos', 'kozepes', 'egyedi'];
   return raw.map((d) => {
     const o = d && typeof d === 'object' ? (d as Record<string, unknown>) : {};
-    const sev = (o.standard || o.severity || 'kozepes') as DefectItem['severity'];
-    const allowed: DefectItem['severity'][] = ['kritikus', 'sulyos', 'kozepes', 'egyedi'];
+    const explicitSev = String(o.severity ?? '').trim();
+    const legacyStd = String(o.standard ?? '').trim();
+    let severity: DefectItem['severity'] = 'kozepes';
+    if (allowed.includes(explicitSev as DefectItem['severity'])) {
+      severity = explicitSev as DefectItem['severity'];
+    } else if (allowed.includes(legacyStd as DefectItem['severity'])) {
+      severity = legacyStd as DefectItem['severity'];
+    }
+    let standardRef: string | undefined;
+    if (legacyStd && !allowed.includes(legacyStd as DefectItem['severity'])) {
+      standardRef = legacyStd;
+    }
     return {
       id: crypto.randomUUID(),
       description: String(o.description ?? o.templateId ?? ''),
       location: String(o.location ?? ''),
-      severity: allowed.includes(sev) ? sev : 'kozepes',
-      isFixed: false,
+      severity,
+      isFixed: Boolean(o.isFixed),
+      standardRef,
+      autoSourceKey: o.autoSourceKey != null ? String(o.autoSourceKey) : undefined,
     };
   });
 }
@@ -197,6 +218,7 @@ export function applyServerReportToDraft(report: ServerReport): void {
     loopRows: withRowIds(meas.loopRows),
     insulationRows: withRowIds(meas.insulationRows),
     rcdRows: withRowIds(meas.rcdRows),
+    ephContRows: withRowIds(meas.ephContRows),
     defects,
     measurementsData,
     reportStatus: st,

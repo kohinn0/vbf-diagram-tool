@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { legalUrls } from '../lib/legalUrls';
 import { HeroSection } from '../components/landing/HeroSection';
@@ -19,25 +20,31 @@ export default function Landing() {
   return (
     <div className="min-h-screen font-sans bg-[var(--bg-main)] text-[var(--text-main)] w-full overflow-x-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 inset-x-0 h-16 sm:h-20 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border-color)] z-50 flex items-center justify-between px-4 sm:px-8">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary font-extrabold shadow-sm">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/[0.08] bg-[var(--bg-card)]/75 px-4 shadow-[var(--shadow-premium-sm)] backdrop-blur-xl backdrop-saturate-150 sm:h-20 sm:px-8">
+        <div className="flex cursor-pointer items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-sky-600 text-[11px] font-extrabold text-white shadow-[0_4px_16px_rgba(59,130,246,0.4)] ring-1 ring-white/15 sm:h-11 sm:w-11 sm:text-xs">
             VBF
           </div>
-          <span className="font-bold text-[var(--text-main)] text-xl hidden sm:block">VBF Premium</span>
+          <span className="hidden text-xl font-semibold tracking-tight text-[var(--text-main)] sm:block">VBF Premium</span>
         </div>
         
-        <div className="hidden lg:flex items-center gap-6 font-semibold text-[var(--text-muted-strong)]">
-          <a href="#features" className="hover:text-primary transition-colors">Funkciók</a>
-          <a href="#about" className="hover:text-primary transition-colors">Rólunk</a>
-          <a href="#how-it-works" className="hover:text-primary transition-colors">Működés</a>
-          <a href="#pricing" className="hover:text-primary transition-colors">Árak és Vásárlás</a>
-          <a href="#partners" className="hover:text-primary transition-colors">Partnereink</a>
-          <a href="#experts" className="hover:text-primary transition-colors">Szakemberkereső</a>
-          <a href="#faq" className="hover:text-primary transition-colors">Gyakori kérdések</a>
+        <div className="hidden items-center gap-1 font-medium text-[var(--text-muted-strong)] lg:flex">
+          <a href="#features" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Funkciók</a>
+          <a href="#about" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Rólunk</a>
+          <a href="#how-it-works" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Működés</a>
+          <a href="#pricing" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Árak és Vásárlás</a>
+          <a href="#partners" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Partnereink</a>
+          <a href="#experts" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Szakemberkereső</a>
+          <a href="#faq" className="rounded-lg px-3 py-2 transition-all duration-200 hover:bg-white/[0.05] hover:text-primary">Gyakori kérdések</a>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link
+            to="/status"
+            className="rounded-lg px-2 py-2 text-sm font-semibold text-[var(--text-muted-strong)] transition-colors hover:text-primary lg:hidden min-h-11 inline-flex items-center"
+          >
+            Állapot
+          </Link>
           <button 
             type="button" 
             onClick={openCart} 
@@ -54,11 +61,11 @@ export default function Landing() {
           
           <button 
             onClick={() => (document.getElementById('loginModal') as HTMLDialogElement)?.showModal()}
-            className="hidden sm:block px-5 py-2.5 border border-[var(--border-color)] text-[var(--text-main)] bg-[var(--bg-input)] hover:bg-[var(--bg-card)] focus:ring-2 focus:ring-primary/20 font-bold rounded-xl transition-all shadow-sm hover:shadow"
+            className="hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-input)] px-5 py-2.5 font-semibold text-[var(--text-main)] shadow-sm transition-all duration-200 hover:bg-[var(--bg-card)] hover:shadow-md focus:ring-2 focus:ring-primary/25 sm:block"
           >
             Bejelentkezés
           </button>
-          <a href="#pricing" className="px-5 py-2.5 bg-primary text-white hover:bg-primary-hover font-bold rounded-xl transition-all shadow-md shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5">
+          <a href="#pricing" className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-white shadow-[0_4px_22px_rgba(59,130,246,0.4)] transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_6px_28px_rgba(59,130,246,0.5)] hover:-translate-y-0.5 active:translate-y-0">
             Vásárlás
           </a>
         </div>
@@ -122,10 +129,22 @@ export default function Landing() {
           <div>
             <h4 className="font-bold text-lg mb-4 text-[var(--text-main)]">Támogatás</h4>
             <ul className="space-y-3 text-sm text-[var(--text-muted)] font-medium">
-              <li><a href="#" className="hover:text-primary transition-colors">Dokumentáció</a></li>
+              <li>
+                <Link to="/status" className="hover:text-primary transition-colors min-h-11 inline-flex items-center">
+                  Rendszer állapot
+                </Link>
+              </li>
               <li><a href="#faq" className="hover:text-primary transition-colors">Gyakori kérdések</a></li>
               <li><a href="#contact" className="hover:text-primary transition-colors">Kapcsolat</a></li>
-              <li><button onClick={() => alert('Visszajelzés...')} className="hover:text-primary transition-colors text-left flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Visszajelzés (béta verzió)</button></li>
+              <li>
+                <a
+                  href="mailto:info@vbfpremium.hu?subject=VBF%20Premium%20%E2%80%93%20visszajelz%C3%A9s&body=K%C3%B6rnyezet%20%2F%20b%C3%B6ng%C3%A9sz%C5%91%3A%20"
+                  className="hover:text-primary transition-colors inline-flex min-h-11 items-center gap-2 text-left"
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary/80" aria-hidden />
+                  Visszajelzés (e-mail)
+                </a>
+              </li>
             </ul>
           </div>
 

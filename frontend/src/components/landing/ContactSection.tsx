@@ -1,9 +1,11 @@
+import { toast } from '../../lib/toast';
+
 export function ContactSection() {
   return (
     <section id="contact" className="relative py-24 bg-[var(--bg-card)] border-t-2 border-[var(--border-color)] overflow-hidden">
       {/* Glows */}
       <div className="absolute bottom-0 left-[-10%] w-[500px] h-[400px] bg-primary/8 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="pointer-events-none absolute top-[-10%] right-[-5%] h-[400px] w-[400px] rounded-full bg-primary/5 blur-[100px]"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-5">
@@ -56,9 +58,17 @@ export function ContactSection() {
 
           {/* Form */}
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 to-blue-500/20 rounded-3xl blur-md opacity-60 pointer-events-none"></div>
+            <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-primary/20 to-sky-500/20 opacity-60 blur-md"></div>
             <div className="relative bg-[var(--bg-card)]/90 backdrop-blur-xl border border-[var(--border-color)] p-8 sm:p-10 rounded-3xl shadow-2xl">
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); alert('Üzenet elküldve (Demó)!'); }}>
+              <form
+                className="space-y-5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  toast.success(
+                    'Köszönjük — az űrlap jelenleg demó: éles üzemben a backend kapná az üzenetet. Addig írj közvetlenül: info@vbfpremium.hu.'
+                  );
+                }}
+              >
                 <div className="flex flex-col gap-2">
                   <label htmlFor="contactName" className="text-sm font-bold text-[var(--text-main)]">Név *</label>
                   <input type="text" id="contactName" required placeholder="Kovács János" className="w-full p-3.5 border border-[var(--border-color)] bg-[var(--bg-input)] text-[var(--text-main)] rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all placeholder:text-[var(--text-muted)]" />

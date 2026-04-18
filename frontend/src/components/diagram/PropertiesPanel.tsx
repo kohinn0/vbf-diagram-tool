@@ -13,7 +13,7 @@ interface PropertiesPanelProps {
 export function PropertiesPanel({ selectedObject, onUpdateProperty, onDeleteLayer }: PropertiesPanelProps) {
   if (!selectedObject || !selectedObject.vbfData) {
     return (
-      <div className="w-[320px] flex-shrink-0 h-full bg-[var(--color-bg-card)] border-l border-[var(--border-color)] p-6">
+      <div className="h-full w-[min(100%,260px)] shrink-0 border-l border-[var(--border-color)] bg-[var(--color-bg-card)] p-4 sm:w-[280px] xl:w-[300px] xl:p-6">
         <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-1">Tulajdonságok</h2>
         <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] text-center pb-20">
           <svg className="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@ export function PropertiesPanel({ selectedObject, onUpdateProperty, onDeleteLaye
       fromRpe ? 'pe' : 'phase'
     );
     return (
-      <div className="w-[320px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-l border-[var(--border-color)] p-4 flex flex-col">
+      <div className="h-full w-[min(100%,260px)] shrink-0 overflow-y-auto border-l border-[var(--border-color)] bg-[var(--color-bg-card)] p-4 sm:w-[280px] xl:w-[300px] flex flex-col">
         <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-2">Összekötő vonal</h2>
         {fromRpe && (
           <p className="text-xs font-medium text-[var(--color-primary)] mb-2 rounded-md bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] px-2 py-1.5">
@@ -73,7 +73,7 @@ export function PropertiesPanel({ selectedObject, onUpdateProperty, onDeleteLaye
   }
 
   return (
-    <div className="w-[320px] flex-shrink-0 h-full overflow-y-auto bg-[var(--color-bg-card)] border-l border-[var(--border-color)] p-4 flex flex-col">
+    <div className="h-full w-[min(100%,260px)] shrink-0 overflow-y-auto border-l border-[var(--border-color)] bg-[var(--color-bg-card)] p-4 sm:w-[280px] xl:w-[300px] flex flex-col">
       <h2 className="text-lg font-bold text-[var(--color-text-main)] mb-4">Elem Tulajdonságai</h2>
       
       <div className="flex-1 flex flex-col gap-4">

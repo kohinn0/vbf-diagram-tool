@@ -45,11 +45,11 @@ export function FeaturesSection() {
   return (
     <section id="features" className="relative py-24 bg-[var(--bg-main)] overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="pointer-events-none absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px]"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-5">
-          <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-600 px-4 py-1.5 rounded-full text-sm font-bold border border-blue-500/20 mb-2">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
             Funkciók
           </div>
           <h2 className="text-4xl font-extrabold text-[var(--text-main)] tracking-tight">VBF és EPH jegyzőkönyv – minden egy helyen</h2>

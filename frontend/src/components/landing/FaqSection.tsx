@@ -11,7 +11,7 @@ export function FaqSection() {
     },
     {
       q: "Mi a VBF Premium, és kinek való?",
-      a: "A VBF Premium egy magyar, felhőalapú villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver – villanyszerelőknek, villamos szakembereknek és villamos biztonsági vizsgálatot végző cégeknek. VBF szakértő készítette: egy helyen jegyzőkönyv, elosztó rajz, Metrel PADFX mérésimport, hibajegyzék. MSZ HD 60364, OTSZ szerinti sablonok. Tableten is működik – akár offline a terepen."
+      a: "A VBF Premium egy magyar, felhőalapú villamos biztonsági felülvizsgálati (VBF) és EPH jegyzőkönyv szoftver – villanyszerelőknek, villamos szakembereknek és villamos biztonsági vizsgálatot végző cégeknek. VBF szakértő készítette: egy helyen jegyzőkönyv, elosztó rajz, Metrel PADFX mérésimport, hibajegyzék. MSZ HD 60364, OTSZ szerinti sablonok. Tableten és telefonon is használható böngészőből; a felhőbe mentéshez és exporthoz internet kell."
     },
     {
       q: "Milyen csomagok vannak, és mennyibe kerül?",
@@ -31,7 +31,7 @@ export function FaqSection() {
     },
     {
       q: "Mi történik, ha nincs internet a helyszínen?",
-      a: "A 'Terepi mérés' modul PWA technológiával készült, ami azt jelenti, hogy miután egyszer betöltötted (pl. reggel otthon), képes internet nélkül is elmenteni a méréseket a böngésző helyi tárhelyébe. Amint újra lesz net, egy kattintással fellőheted őket a felhőbe."
+      a: "A munkát a böngészőben elkezdheted és a piszkozat egy része helyben is megmaradhat, de a felhőbe mentés, a szerveres szinkron és a Word/PDF export **internet nélkül nem működik**. Ha nincs térerő, jegyzetelj vagy mérj offline műszerrel, majd add meg a méréseket, amikor újra van kapcsolat — teljes telepíthető offline PWA jelenleg nem ígért funkció."
     },
     {
       q: "A VBF és EPH jegyzőkönyv sablonok megfelelnek az MSZ-nek és az OTSZ-nek?",
@@ -47,7 +47,7 @@ export function FaqSection() {
     },
     {
       q: "Milyen gépen, telefonon vagy tableten lehet használni?",
-      a: "Bármilyen modern böngészőben megy (Chrome, Firefox, Edge, Safari), asztali gépen, laptopon, tableten vagy telefonon. A rajzolás és a terepi munka tableten is jól használható, akár offline is – később szinkronizálod."
+      a: "Bármilyen modern böngészőben megy (Chrome, Firefox, Edge, Safari), asztali gépen, laptopon, tableten vagy telefonon. A rajzolás és a terepi munka tableten is jól használható; a mentés a felhőbe és az export hálózattal történik."
     },
     {
       q: "Biztonságban vannak az adataim?",
