@@ -136,6 +136,8 @@ interface DraftState {
   removeDefect: (id: string) => void;
   /** „Nem megfelelő” Rpe / Zs / Riso / RCD sorok → hibajegyzék */
   collectDefectsFromMeasurements: () => { added: number; skipped: number; message: string };
+  /** Mérési sablon betöltése: struktúra (sor nevek) → friss üres értékekkel. */
+  loadMeasurementTemplate: (tpl: import('../lib/measurementTemplateStorage').MeasurementTemplate) => void;
 
   clearDraft: () => void;
   buildApiPayload: () => Record<string, unknown>;
@@ -623,6 +625,53 @@ export const useDraftStore = create<DraftState>()(
           diagram_data,
           diagram_image,
         };
+      },
+
+      loadMeasurementTemplate: (tpl) => {
+        if (get().reportStatus === 'FINAL') return;
+        set({
+          rpeRows: tpl.rpePoints.map((p) => ({
+            id: crypto.randomUUID(),
+            point: p.point,
+            location: p.location,
+            rpeValue: '',
+            isOk: 'yes' as const,
+            node_id: '',
+          })),
+          loopRows: tpl.loopCircuits.map((c) => ({
+            id: crypto.randomUUID(),
+            circuit: c.circuit,
+            device: c.device,
+            device_type: c.device_type,
+            in_rating: c.in_rating,
+            loc: c.loc,
+            zs: '',
+            pass: 'Igen',
+            node_id: '',
+          })),
+          insulationRows: tpl.insulationCircuits.map((c) => ({
+            id: crypto.randomUUID(),
+            circuit: c.circuit,
+            ln: '',
+            lpe: '',
+            npe: '',
+            pass: 'Igen',
+            node_id: '',
+          })),
+          rcdRows: tpl.rcdCircuits.map((c) => ({
+            id: crypto.randomUUID(),
+            circ: c.circ,
+            type: c.type,
+            idn: c.idn,
+            test05: '',
+            t1: '',
+            t5: '',
+            ramp: '',
+            uc: '',
+            pass: 'Igen',
+            node_id: '',
+          })),
+        });
       },
 
       clearDraft: () =>

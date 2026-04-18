@@ -3,6 +3,12 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { calcZsMax } from '../lib/measurementAutoPass';
+import {
+  loadTemplates,
+  saveNewTemplate,
+  deleteTemplate,
+  type MeasurementTemplate,
+} from '../lib/measurementTemplateStorage';
 import type { fabric } from 'fabric';
 import { runRpeAutoWire } from '../components/diagram/measurementAutoWire';
 import { uploadPadfxFile } from '../lib/api';
@@ -34,8 +40,12 @@ export default function MeasurementsTab() {
   const rowId = (r: Record<string, string>) => (r as { id?: string }).id || '';
   const activeCanvas = useDraftStore((s) => s.activeCanvas);
   const appendPadfxImport = useDraftStore((s) => s.appendPadfxImport);
+  const loadMeasurementTemplate = useDraftStore((s) => s.loadMeasurementTemplate);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [padfxLoading, setPadfxLoading] = useState(false);
+  const [tplOpen, setTplOpen] = useState(false);
+  const [tplName, setTplName] = useState('');
+  const [templates, setTemplates] = useState<MeasurementTemplate[]>(() => loadTemplates());
 
   const onPadfxFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,6 +146,108 @@ export default function MeasurementsTab() {
           >
             CSV export
           </Button>
+
+          {/* Sablonok */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11"
+              disabled={locked}
+              onClick={() => { setTemplates(loadTemplates()); setTplOpen((v) => !v); }}
+            >
+              Sablonok ▾
+            </Button>
+            {tplOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 w-80 rounded-xl border border-[var(--border-color)] bg-[var(--color-bg-card)] shadow-xl p-4 flex flex-col gap-3">
+                {/* Mentés */}
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-semibold text-[var(--color-text-main)]">Mentés sablonként</p>
+                  <div className="flex gap-2">
+                    <Input
+                      className="h-8 text-xs flex-1"
+                      placeholder="pl. Tipikus lakás – 6 kör"
+                      value={tplName}
+                      onChange={(e) => setTplName(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!tplName.trim()}
+                      onClick={() => {
+                        saveNewTemplate(tplName, {
+                          rpePoints: rpeRows.map((r) => ({ point: r.point, location: r.location })),
+                          loopCircuits: loopRows.map((r) => ({
+                            circuit: r.circuit || '',
+                            device: r.device || '',
+                            device_type: r.device_type || '',
+                            in_rating: r.in_rating || '',
+                            loc: r.loc || '',
+                          })),
+                          insulationCircuits: insulationRows.map((r) => ({ circuit: r.circuit || '' })),
+                          rcdCircuits: rcdRows.map((r) => ({
+                            circ: r.circ || '',
+                            type: r.type || 'A',
+                            idn: r.idn || '',
+                          })),
+                        });
+                        setTemplates(loadTemplates());
+                        setTplName('');
+                        toast.success('Sablon mentve.');
+                      }}
+                    >
+                      Mentés
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Betöltés */}
+                {templates.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-semibold text-[var(--color-text-main)]">Mentett sablonok</p>
+                    <ul className="flex flex-col gap-1 max-h-52 overflow-y-auto">
+                      {templates.map((t) => (
+                        <li key={t.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[var(--color-bg-input)]">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-[var(--color-text-main)] truncate">{t.name}</p>
+                            <p className="text-[10px] text-[var(--color-text-muted)]">
+                              {t.rpePoints.length} Rpe · {t.loopCircuits.length} Zs · {t.insulationCircuits.length} Riso · {t.rcdCircuits.length} RCD
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              if (!window.confirm(`„${t.name}" betöltése felülírja a jelenlegi mérési sorokat. Folytatod?`)) return;
+                              loadMeasurementTemplate(t);
+                              setTplOpen(false);
+                              toast.success(`„${t.name}" sablon betöltve.`);
+                            }}
+                          >
+                            Betölt
+                          </Button>
+                          <button
+                            type="button"
+                            className="text-[var(--color-text-muted)] hover:text-red-400 text-xs px-1"
+                            title="Törlés"
+                            onClick={() => {
+                              deleteTemplate(t.id);
+                              setTemplates(loadTemplates());
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {templates.length === 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)] text-center py-2">Még nincs mentett sablon.</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
