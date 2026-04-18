@@ -1,4 +1,5 @@
 import type { DefectItem, RpeRow } from '../store/draftStore';
+import { suggestOtszClass } from '../store/draftStore';
 
 type AutoDefectPayload = Omit<DefectItem, 'id'> & { autoSourceKey: string };
 
@@ -37,6 +38,7 @@ export function collectAutoDefectsFromMeasurements(params: {
       description: desc,
       location: loc,
       severity: 'sulyos',
+      otsz_class: suggestOtszClass('sulyos'),
       isFixed: false,
       autoSourceKey: `rpe:${row.id}`,
     });
@@ -53,6 +55,7 @@ export function collectAutoDefectsFromMeasurements(params: {
       description: desc,
       location: loc,
       severity: 'sulyos',
+      otsz_class: suggestOtszClass('sulyos'),
       isFixed: false,
       autoSourceKey: `loop:${rowId(row, i)}`,
     });
@@ -68,6 +71,7 @@ export function collectAutoDefectsFromMeasurements(params: {
       description: desc,
       location: loc,
       severity: 'sulyos',
+      otsz_class: suggestOtszClass('sulyos'),
       isFixed: false,
       autoSourceKey: `ins:${rowId(row, i)}`,
     });
@@ -83,6 +87,7 @@ export function collectAutoDefectsFromMeasurements(params: {
       description: desc,
       location: loc,
       severity: 'sulyos',
+      otsz_class: suggestOtszClass('sulyos'),
       isFixed: false,
       autoSourceKey: `rcd:${rowId(row, i)}`,
     });

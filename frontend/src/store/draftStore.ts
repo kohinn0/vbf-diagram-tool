@@ -16,11 +16,23 @@ export interface DefectItem {
   location: string;
   description: string;
   severity: 'kritikus' | 'sulyos' | 'kozepes' | 'egyedi';
+  /** OTSZ / MSZ HD 60364-6 §6.3 szerinti hibaosztály (A=azonnali veszély … D=megfigyelt) */
+  otsz_class?: 'A' | 'B' | 'C' | 'D' | '';
   isFixed: boolean;
   /** Kézi MSZ / § hivatkozás — ha üres, a Word generátor automatikus §-szöveget tesz a hiba tartalma alapján. */
   standardRef?: string;
   /** Automatikus gyűjtés: sorazonosító, duplikátum elkerülésére (nem megy a API payloadba). */
   autoSourceKey?: string;
+}
+
+/** Súlyosság → ajánlott OTSZ hibaosztály leképezés */
+export function suggestOtszClass(severity: DefectItem['severity']): 'A' | 'B' | 'C' | 'D' {
+  switch (severity) {
+    case 'kritikus': return 'A';
+    case 'sulyos':   return 'B';
+    case 'kozepes':  return 'C';
+    case 'egyedi':   return 'D';
+  }
 }
 
 export interface RpeRow {
@@ -438,13 +450,28 @@ export const useDraftStore = create<DraftState>()(
       addDefect: (defect) =>
         set((state) => {
           if (state.reportStatus === 'FINAL') return state;
-          return { defects: [...state.defects, { ...defect, id: crypto.randomUUID() }] };
+          const withClass = {
+            ...defect,
+            id: crypto.randomUUID(),
+            otsz_class: defect.otsz_class ?? suggestOtszClass(defect.severity),
+          };
+          return { defects: [...state.defects, withClass] };
         }),
 
       updateDefect: (id, updates) =>
         set((state) => {
           if (state.reportStatus === 'FINAL') return state;
-          return { defects: state.defects.map((d) => (d.id === id ? { ...d, ...updates } : d)) };
+          return {
+            defects: state.defects.map((d) => {
+              if (d.id !== id) return d;
+              const merged = { ...d, ...updates };
+              // Ha csak a severity változott (otsz_class nem volt explicit), auto-frissítjük
+              if ('severity' in updates && !('otsz_class' in updates)) {
+                merged.otsz_class = suggestOtszClass(merged.severity);
+              }
+              return merged;
+            }),
+          };
         }),
 
       removeDefect: (id) =>
@@ -587,6 +614,7 @@ export const useDraftStore = create<DraftState>()(
             description: d.description,
             location: d.location,
             severity: d.severity,
+            otsz_class: d.otsz_class || suggestOtszClass(d.severity),
             /** Generátor `defect.standard` — csak ha kitöltött; üresnél automatikus MSZ § a leírás alapján */
             standard: (d.standardRef || '').trim(),
           })),

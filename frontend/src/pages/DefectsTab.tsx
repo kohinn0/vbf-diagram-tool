@@ -114,6 +114,29 @@ export default function DefectsTab() {
                         </Select>
                       </div>
 
+                      <div>
+                        <label className="text-xs text-[var(--color-text-muted-strong)] uppercase tracking-wider mb-1 block">
+                          OTSZ osztály
+                          <span className="ml-1 normal-case font-normal opacity-60">(auto)</span>
+                        </label>
+                        <Select
+                          value={defect.otsz_class ?? ''}
+                          onChange={(e) => updateDefect(defect.id, { otsz_class: e.target.value as any })}
+                          className={
+                            defect.otsz_class === 'A' ? 'border-red-500/60 text-red-400' :
+                            defect.otsz_class === 'B' ? 'border-orange-500/60 text-orange-400' :
+                            defect.otsz_class === 'C' ? 'border-yellow-500/60 text-yellow-500' :
+                            ''
+                          }
+                        >
+                          <option value="">— nincs megadva</option>
+                          <option value="A">A — Azonnali veszély</option>
+                          <option value="B">B — Rövid időn belül</option>
+                          <option value="C">C — Következő vizsgálatig</option>
+                          <option value="D">D — Megfigyelt</option>
+                        </Select>
+                      </div>
+
                       <div className="sm:col-span-2">
                         <label className="text-xs text-[var(--color-text-muted-strong)] uppercase tracking-wider mb-1 block">Szabvány / § (opcionális)</label>
                         <Input
