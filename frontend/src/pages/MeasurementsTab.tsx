@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, Fragment } from 'react';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
@@ -17,11 +17,125 @@ import { useDraftStore, useIsReportLocked } from '../store/draftStore';
 import { toast } from '../lib/toast';
 import { SiteTreePanel } from '../components/measurements/SiteTreePanel';
 import { SiteNodeSelect } from '../components/measurements/SiteNodeSelect';
-import {
-  MEASUREMENT_THRESHOLDS_BULLETS,
-  MEASUREMENT_THRESHOLDS_SECTION_TITLE,
-} from '../lib/measurementThresholds';
+import { MEASUREMENT_THRESHOLDS_BULLETS, MEASUREMENT_THRESHOLDS_SECTION_TITLE } from '../lib/measurementThresholds';
 import { downloadMeasurementsCsv } from '../lib/exportMeasurementsCsv';
+
+// ── Kép tömörítés ────────────────────────────────────────────────────────────
+
+async function compressImage(file: File, maxPx = 800, quality = 0.72): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Kép betöltési hiba')); };
+    img.src = url;
+  });
+}
+
+// ── Melléklet gomb ───────────────────────────────────────────────────────────
+
+function AttachBtn({ hasContent, onClick }: { hasContent: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative w-7 h-7 rounded flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--primary,#4f46e5)] hover:bg-[color-mix(in_srgb,var(--primary,#4f46e5)_10%,transparent)] transition-colors"
+      title="Megjegyzés / fotó csatolása"
+    >
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="w-4 h-4">
+        <path d="M2 4h12M2 8h12M2 12h7" />
+      </svg>
+      {hasContent && (
+        <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[var(--primary,#4f46e5)]" />
+      )}
+    </button>
+  );
+}
+
+// ── Expandált melléklet sor ───────────────────────────────────────────────────
+
+function RowAttachment({
+  colSpan, note, photo,
+  onNoteChange, onPhotoChange,
+}: {
+  colSpan: number;
+  note: string;
+  photo: string;
+  onNoteChange: (v: string) => void;
+  onPhotoChange: (v: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  return (
+    <tr className="bg-[color-mix(in_srgb,var(--primary,#4f46e5)_4%,var(--color-bg-input))]">
+      <td colSpan={colSpan} className="px-4 py-3">
+        <div className="flex gap-3 items-start">
+          <textarea
+            className="flex-1 text-xs rounded-lg border border-[var(--border-color)] bg-transparent p-2 min-h-[56px] resize-y focus:outline-none focus:border-[var(--primary,#4f46e5)]"
+            placeholder="Megjegyzés ehhez a sorhoz (megjelenik a Word exportban)..."
+            value={note}
+            onChange={(e) => onNoteChange(e.target.value)}
+          />
+          <div className="flex flex-col gap-2 items-center shrink-0">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (!file) return;
+                setUploading(true);
+                try {
+                  onPhotoChange(await compressImage(file));
+                } catch {
+                  toast.error('Kép betöltési hiba');
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="text-[11px] rounded border border-[var(--border-color)] px-2 py-1 hover:bg-[var(--color-bg-card)] transition-colors whitespace-nowrap disabled:opacity-50"
+            >
+              {uploading ? '…' : '📷 Fotó'}
+            </button>
+            {photo && (
+              <>
+                <img
+                  src={photo}
+                  alt="Melléklet"
+                  className="w-16 h-16 object-cover rounded-lg border border-[var(--border-color)] cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => window.open(photo, '_blank')}
+                  title="Megnyitás teljes méretben"
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline"
+                  onClick={() => onPhotoChange('')}
+                >
+                  Törlés
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function MeasurementsTab() {
   const locked = useIsReportLocked();
@@ -43,6 +157,12 @@ export default function MeasurementsTab() {
   const loadMeasurementTemplate = useDraftStore((s) => s.loadMeasurementTemplate);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [padfxLoading, setPadfxLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleRow = (id: string) => setExpandedRows((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
   const [tplOpen, setTplOpen] = useState(false);
   const [tplName, setTplName] = useState('');
   const [templates, setTemplates] = useState<MeasurementTemplate[]>(() => loadTemplates());
@@ -476,16 +596,13 @@ export default function MeasurementsTab() {
                 </thead>
                 <tbody>
                   {rpeRows.map(row => (
-                    <tr key={row.id} className="bg-[var(--color-bg-input)] border-b border-[var(--border-color)] group hover:bg-[color-mix(in_srgb,var(--primary)_5%,var(--color-bg-input))] transition-colors">
+                    <Fragment key={row.id}>
+                    <tr className="bg-[var(--color-bg-input)] border-b border-[var(--border-color)] group hover:bg-[color-mix(in_srgb,var(--primary)_5%,var(--color-bg-input))] transition-colors">
                       <td className="p-2">
                         <Input className="h-8 text-center text-xs" value={row.point} onChange={e => updateRpeRow(row.id, { point: e.target.value })} />
                       </td>
                       <td className="p-2 min-w-[140px]">
-                        <SiteNodeSelect
-                          value={row.node_id || ''}
-                          disabled={locked}
-                          onChange={(v) => updateRpeRow(row.id, { node_id: v || undefined })}
-                        />
+                        <SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateRpeRow(row.id, { node_id: v || undefined })} />
                       </td>
                       <td className="p-2">
                         <Input className="h-8 text-xs" value={row.location} onChange={e => updateRpeRow(row.id, { location: e.target.value })} placeholder="Valamilyen gép földelése" />
@@ -499,8 +616,19 @@ export default function MeasurementsTab() {
                           <option value="no">Nem</option>
                         </Select>
                       </td>
-                      <td className="p-2 text-center text-[var(--color-text-muted)] cursor-pointer hover:text-red-500" onClick={() => removeRpeRow(row.id)}>✕</td>
+                      <td className="p-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <AttachBtn hasContent={!!(row.note || row.photo)} onClick={() => toggleRow(row.id)} />
+                          <button type="button" className="text-[var(--color-text-muted)] hover:text-red-500 w-7 h-7 flex items-center justify-center" onClick={() => removeRpeRow(row.id)}>✕</button>
+                        </div>
+                      </td>
                     </tr>
+                    {expandedRows.has(row.id) && (
+                      <RowAttachment colSpan={6} note={row.note || ''} photo={row.photo || ''}
+                        onNoteChange={(v) => updateRpeRow(row.id, { note: v })}
+                        onPhotoChange={(v) => updateRpeRow(row.id, { photo: v })} />
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -549,19 +677,15 @@ export default function MeasurementsTab() {
                 </thead>
                 <tbody>
                   {loopRows.map((row) => {
+                    const id = rowId(row);
                     const zsMax = calcZsMax(row.device_type || '', row.in_rating || '', measurementsData['inSystemType'] || '');
                     return (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                    <Fragment key={id}>
+                    <tr className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                      <td className="p-2"><SiteNodeSelect value={row.node_id || ''} disabled={locked} onChange={(v) => updateLoopRow(id, { node_id: v })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateLoopRow(id, { circuit: e.target.value })} /></td>
                       <td className="p-2">
-                        <SiteNodeSelect
-                          value={row.node_id || ''}
-                          disabled={locked}
-                          onChange={(v) => updateLoopRow(rowId(row), { node_id: v })}
-                        />
-                      </td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateLoopRow(rowId(row), { circuit: e.target.value })} /></td>
-                      <td className="p-2">
-                        <Select className="h-9 text-xs min-h-11" value={row.device_type || ''} onChange={(e) => updateLoopRow(rowId(row), { device_type: e.target.value })}>
+                        <Select className="h-9 text-xs min-h-11" value={row.device_type || ''} onChange={(e) => updateLoopRow(id, { device_type: e.target.value })}>
                           <option value="">—</option>
                           <option value="B">B</option>
                           <option value="C">C</option>
@@ -569,24 +693,31 @@ export default function MeasurementsTab() {
                           <option value="gG">gG</option>
                         </Select>
                       </td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" type="number" placeholder="16" value={row.in_rating || ''} onChange={(e) => updateLoopRow(rowId(row), { in_rating: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.loc || ''} onChange={(e) => updateLoopRow(rowId(row), { loc: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" type="number" placeholder="16" value={row.in_rating || ''} onChange={(e) => updateLoopRow(id, { in_rating: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.loc || ''} onChange={(e) => updateLoopRow(id, { loc: e.target.value })} /></td>
                       <td className="p-2">
-                        <Input className="h-9 text-xs min-h-11" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(rowId(row), { zs: e.target.value })} />
-                        {zsMax !== null && (
-                          <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 px-1">
-                            max: {zsMax.toFixed(3)} Ω
-                          </p>
-                        )}
+                        <Input className="h-9 text-xs min-h-11" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(id, { zs: e.target.value })} />
+                        {zsMax !== null && <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 px-1">max: {zsMax.toFixed(3)} Ω</p>}
                       </td>
                       <td className="p-2">
-                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateLoopRow(rowId(row), { pass: e.target.value })}>
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateLoopRow(id, { pass: e.target.value })}>
                           <option value="Igen">Igen</option>
                           <option value="Nem">Nem</option>
                         </Select>
                       </td>
-                      <td className="p-2 text-center cursor-pointer text-[var(--color-text-muted)] hover:text-red-500 min-h-11" onClick={() => removeLoopRow(rowId(row))}>✕</td>
+                      <td className="p-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <AttachBtn hasContent={!!(row.note || row.photo)} onClick={() => toggleRow(id)} />
+                          <button type="button" className="text-[var(--color-text-muted)] hover:text-red-500 w-7 h-7 flex items-center justify-center" onClick={() => removeLoopRow(id)}>✕</button>
+                        </div>
+                      </td>
                     </tr>
+                    {expandedRows.has(id) && (
+                      <RowAttachment colSpan={8} note={row.note || ''} photo={row.photo || ''}
+                        onNoteChange={(v) => updateLoopRow(id, { note: v })}
+                        onPhotoChange={(v) => updateLoopRow(id, { photo: v })} />
+                    )}
+                    </Fragment>
                     );
                   })}
                 </tbody>
@@ -613,28 +744,43 @@ export default function MeasurementsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {insulationRows.map((row) => (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                  {insulationRows.map((row) => {
+                    const id = rowId(row);
+                    return (
+                    <Fragment key={id}>
+                    <tr className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
                       <td className="p-2">
                         <SiteNodeSelect
                           value={row.node_id || ''}
                           disabled={locked}
-                          onChange={(v) => updateInsulationRow(rowId(row), { node_id: v })}
+                          onChange={(v) => updateInsulationRow(id, { node_id: v })}
                         />
                       </td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateInsulationRow(rowId(row), { circuit: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ln || ''} onChange={(e) => updateInsulationRow(rowId(row), { ln: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.lpe || ''} onChange={(e) => updateInsulationRow(rowId(row), { lpe: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.npe || ''} onChange={(e) => updateInsulationRow(rowId(row), { npe: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateInsulationRow(id, { circuit: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ln || ''} onChange={(e) => updateInsulationRow(id, { ln: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.lpe || ''} onChange={(e) => updateInsulationRow(id, { lpe: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.npe || ''} onChange={(e) => updateInsulationRow(id, { npe: e.target.value })} /></td>
                       <td className="p-2">
-                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateInsulationRow(rowId(row), { pass: e.target.value })}>
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateInsulationRow(id, { pass: e.target.value })}>
                           <option value="Igen">Igen</option>
                           <option value="Nem">Nem</option>
                         </Select>
                       </td>
-                      <td className="p-2 text-center cursor-pointer min-h-11" onClick={() => removeInsulationRow(rowId(row))}>✕</td>
+                      <td className="p-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <AttachBtn hasContent={!!(row.note || row.photo)} onClick={() => toggleRow(id)} />
+                          <button type="button" className="text-[var(--color-text-muted)] hover:text-red-500 w-7 h-7 flex items-center justify-center" onClick={() => removeInsulationRow(id)}>✕</button>
+                        </div>
+                      </td>
                     </tr>
-                  ))}
+                    {expandedRows.has(id) && (
+                      <RowAttachment colSpan={7} note={row.note || ''} photo={row.photo || ''}
+                        onNoteChange={(v) => updateInsulationRow(id, { note: v })}
+                        onPhotoChange={(v) => updateInsulationRow(id, { photo: v })} />
+                    )}
+                    </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -663,32 +809,47 @@ export default function MeasurementsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rcdRows.map((row) => (
-                    <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
+                  {rcdRows.map((row) => {
+                    const id = rowId(row);
+                    return (
+                    <Fragment key={id}>
+                    <tr className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
                       <td className="p-2">
                         <SiteNodeSelect
                           value={row.node_id || ''}
                           disabled={locked}
-                          onChange={(v) => updateRcdRow(rowId(row), { node_id: v })}
+                          onChange={(v) => updateRcdRow(id, { node_id: v })}
                         />
                       </td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circ || ''} onChange={(e) => updateRcdRow(rowId(row), { circ: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.type || ''} onChange={(e) => updateRcdRow(rowId(row), { type: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.idn || ''} onChange={(e) => updateRcdRow(rowId(row), { idn: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.test05 || ''} onChange={(e) => updateRcdRow(rowId(row), { test05: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t1 || ''} onChange={(e) => updateRcdRow(rowId(row), { t1: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t5 || ''} onChange={(e) => updateRcdRow(rowId(row), { t5: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ramp || ''} onChange={(e) => updateRcdRow(rowId(row), { ramp: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.uc || ''} onChange={(e) => updateRcdRow(rowId(row), { uc: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circ || ''} onChange={(e) => updateRcdRow(id, { circ: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.type || ''} onChange={(e) => updateRcdRow(id, { type: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.idn || ''} onChange={(e) => updateRcdRow(id, { idn: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.test05 || ''} onChange={(e) => updateRcdRow(id, { test05: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t1 || ''} onChange={(e) => updateRcdRow(id, { t1: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.t5 || ''} onChange={(e) => updateRcdRow(id, { t5: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.ramp || ''} onChange={(e) => updateRcdRow(id, { ramp: e.target.value })} /></td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.uc || ''} onChange={(e) => updateRcdRow(id, { uc: e.target.value })} /></td>
                       <td className="p-2">
-                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateRcdRow(rowId(row), { pass: e.target.value })}>
+                        <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateRcdRow(id, { pass: e.target.value })}>
                           <option value="Igen">Igen</option>
                           <option value="Nem">Nem</option>
                         </Select>
                       </td>
-                      <td className="p-2 text-center cursor-pointer min-h-11" onClick={() => removeRcdRow(rowId(row))}>✕</td>
+                      <td className="p-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <AttachBtn hasContent={!!(row.note || row.photo)} onClick={() => toggleRow(id)} />
+                          <button type="button" className="text-[var(--color-text-muted)] hover:text-red-500 w-7 h-7 flex items-center justify-center" onClick={() => removeRcdRow(id)}>✕</button>
+                        </div>
+                      </td>
                     </tr>
-                  ))}
+                    {expandedRows.has(id) && (
+                      <RowAttachment colSpan={11} note={row.note || ''} photo={row.photo || ''}
+                        onNoteChange={(v) => updateRcdRow(id, { note: v })}
+                        onPhotoChange={(v) => updateRcdRow(id, { photo: v })} />
+                    )}
+                    </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
