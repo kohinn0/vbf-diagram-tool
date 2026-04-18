@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { mergePadfxMeasurements, type PadfxXmlMeasurement } from '../lib/padfxMerge';
+import { zsAutoPass, risoAutoPass, rcdAutoPass } from '../lib/measurementAutoPass';
 import {
   mergeDiagramPayload,
   splitDiagramPayload,
@@ -219,6 +220,8 @@ export const useDraftStore = create<DraftState>()(
                 id: crypto.randomUUID(),
                 circuit: '',
                 device: '',
+                device_type: '',
+                in_rating: '',
                 loc: '',
                 zs: '',
                 pass: 'Igen',
@@ -234,7 +237,11 @@ export const useDraftStore = create<DraftState>()(
           return {
             loopRows: state.loopRows.map((r) => {
               const rid = (r as Record<string, string> & { id?: string }).id;
-              return rid === id ? ({ ...r, ...updates } as LoopRow) : r;
+              if (rid !== id) return r;
+              const merged = { ...r, ...updates } as Record<string, string>;
+              const auto = zsAutoPass(merged.zs, merged.device_type, merged.in_rating);
+              if (auto !== null) merged.pass = auto;
+              return merged as LoopRow;
             }),
           };
         }),
@@ -272,7 +279,11 @@ export const useDraftStore = create<DraftState>()(
           return {
             insulationRows: state.insulationRows.map((r) => {
               const rid = (r as Record<string, string> & { id?: string }).id;
-              return rid === id ? ({ ...r, ...updates } as InsulationRow) : r;
+              if (rid !== id) return r;
+              const merged = { ...r, ...updates } as Record<string, string>;
+              const auto = risoAutoPass(merged.ln, merged.lpe, merged.npe);
+              if (auto !== null) merged.pass = auto;
+              return merged as InsulationRow;
             }),
           };
         }),
@@ -316,7 +327,11 @@ export const useDraftStore = create<DraftState>()(
           return {
             rcdRows: state.rcdRows.map((r) => {
               const rid = (r as Record<string, string> & { id?: string }).id;
-              return rid === id ? ({ ...r, ...updates } as RcdRow) : r;
+              if (rid !== id) return r;
+              const merged = { ...r, ...updates } as Record<string, string>;
+              const auto = rcdAutoPass(merged.t1, merged.t5);
+              if (auto !== null) merged.pass = auto;
+              return merged as RcdRow;
             }),
           };
         }),

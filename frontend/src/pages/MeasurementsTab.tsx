@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
+import { calcZsMax } from '../lib/measurementAutoPass';
 import type { fabric } from 'fabric';
 import { runRpeAutoWire } from '../components/diagram/measurementAutoWire';
 import { uploadPadfxFile } from '../lib/api';
@@ -400,20 +401,23 @@ export default function MeasurementsTab() {
             <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">2. Hurokellenállás (Zs) — §61.3.6</h3>
             <p className="text-sm text-[var(--color-text-muted)] mb-3">Kézi sorok; PADFX import is ide tölt. A generált Word táblázat oszlopai: áramkör, készülék, hely, Zs, megfelel.</p>
             <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
-              <table className="w-full text-left border-collapse min-w-[760px]">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
                     <th className="p-2 text-xs font-semibold min-w-[120px]">Helyszín</th>
                     <th className="p-2 text-xs font-semibold">Áramkör / pont</th>
-                    <th className="p-2 text-xs font-semibold">Kikapcsoló</th>
+                    <th className="p-2 text-xs font-semibold w-20">Tip.</th>
+                    <th className="p-2 text-xs font-semibold w-20">In [A]</th>
                     <th className="p-2 text-xs font-semibold">Hely</th>
-                    <th className="p-2 text-xs font-semibold w-24">Zs [Ω]</th>
+                    <th className="p-2 text-xs font-semibold w-28">Zs [Ω] / max</th>
                     <th className="p-2 text-xs font-semibold w-28">Megfelel</th>
                     <th className="p-2 w-10" />
                   </tr>
                 </thead>
                 <tbody>
-                  {loopRows.map((row) => (
+                  {loopRows.map((row) => {
+                    const zsMax = calcZsMax(row.device_type || '', row.in_rating || '');
+                    return (
                     <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
                       <td className="p-2">
                         <SiteNodeSelect
@@ -423,9 +427,25 @@ export default function MeasurementsTab() {
                         />
                       </td>
                       <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.circuit || ''} onChange={(e) => updateLoopRow(rowId(row), { circuit: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.device || ''} onChange={(e) => updateLoopRow(rowId(row), { device: e.target.value })} /></td>
+                      <td className="p-2">
+                        <Select className="h-9 text-xs min-h-11" value={row.device_type || ''} onChange={(e) => updateLoopRow(rowId(row), { device_type: e.target.value })}>
+                          <option value="">—</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="gG">gG</option>
+                        </Select>
+                      </td>
+                      <td className="p-2"><Input className="h-9 text-xs min-h-11" type="number" placeholder="16" value={row.in_rating || ''} onChange={(e) => updateLoopRow(rowId(row), { in_rating: e.target.value })} /></td>
                       <td className="p-2"><Input className="h-9 text-xs min-h-11" value={row.loc || ''} onChange={(e) => updateLoopRow(rowId(row), { loc: e.target.value })} /></td>
-                      <td className="p-2"><Input className="h-9 text-xs min-h-11" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(rowId(row), { zs: e.target.value })} /></td>
+                      <td className="p-2">
+                        <Input className="h-9 text-xs min-h-11" type="number" step="0.01" value={row.zs || ''} onChange={(e) => updateLoopRow(rowId(row), { zs: e.target.value })} />
+                        {zsMax !== null && (
+                          <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 px-1">
+                            max: {zsMax.toFixed(3)} Ω
+                          </p>
+                        )}
+                      </td>
                       <td className="p-2">
                         <Select className="h-9 text-xs min-h-11" value={row.pass || 'Igen'} onChange={(e) => updateLoopRow(rowId(row), { pass: e.target.value })}>
                           <option value="Igen">Igen</option>
@@ -434,7 +454,8 @@ export default function MeasurementsTab() {
                       </td>
                       <td className="p-2 text-center cursor-pointer text-[var(--color-text-muted)] hover:text-red-500 min-h-11" onClick={() => removeLoopRow(rowId(row))}>✕</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
