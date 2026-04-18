@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, status, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List, Any
+from typing import List, Optional, Any
 from datetime import datetime, timedelta
 import os
 import sys
@@ -17,6 +17,16 @@ import schemas, auth, database, generator
 from fastapi.responses import StreamingResponse
 
 router = APIRouter()
+
+
+def _audit(db: Session, user_id: Optional[int], action: str, detail: Optional[str], ip: Optional[str] = None):
+    entry = database.AuditLog(user_id=user_id, action=action, detail=detail, ip=ip)
+    db.add(entry)
+    db.commit()
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
 
 
 def _reports_scope(db, current_user):
@@ -60,7 +70,7 @@ def _company_reports_limit(db: Session, company_id: int):
 
 
 @router.post("/api/reports", response_model=schemas.ReportResponse)
-def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+def create_report(report: schemas.ReportCreate, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     # SaaS: cégenkénti havi limit (vagy user.report_limit ha nincs cég)
     current_date = datetime.utcnow()
     first_day_of_month = datetime(current_date.year, current_date.month, 1)
@@ -90,6 +100,7 @@ def create_report(report: schemas.ReportCreate, db: Session = Depends(auth.get_d
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
+    _audit(db, current_user.id, "report_create", f"id={db_report.id} title={db_report.title!r}", _client_ip(request))
     return db_report
 
 @router.get("/api/reports/{report_id}", response_model=schemas.ReportResponse)
@@ -244,23 +255,48 @@ def update_report(report_id: int, updated_report: schemas.ReportUpdate, db: Sess
 
     return db_report
 
+def _create_report_snapshot(db: Session, report: database.Report, user_id: Optional[int], note: Optional[str] = None):
+    last = db.query(database.ReportVersion).filter(
+        database.ReportVersion.report_id == report.id
+    ).order_by(database.ReportVersion.version_num.desc()).first()
+    version_num = (last.version_num + 1) if last else 1
+    snap = {c.name: getattr(report, c.name) for c in report.__table__.columns}
+    # datetime objects → ISO strings for JSON
+    for k, v in snap.items():
+        if isinstance(v, datetime):
+            snap[k] = v.isoformat()
+    entry = database.ReportVersion(
+        report_id=report.id,
+        version_num=version_num,
+        created_by=user_id,
+        snapshot=snap,
+        note=note,
+    )
+    db.add(entry)
+    db.commit()
+    return entry
+
+
 @router.post("/api/reports/{report_id}/finalize", response_model=schemas.ReportResponse)
-def finalize_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+def finalize_report(report_id: int, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = _report_access(db, report_id, current_user)
     if db_report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
-    
+
+    _create_report_snapshot(db, db_report, current_user.id, note="auto: véglegesítés előtt")
+
     db_report.status = "FINAL"
     db_report.finalized_at = datetime.utcnow()
     db.commit()
     db.refresh(db_report)
+    _audit(db, current_user.id, "report_finalize", f"id={report_id} title={db_report.title!r}", _client_ip(request))
     return db_report
 
 from fastapi.responses import StreamingResponse
 import generator
 
 @router.get("/api/reports/{report_id}/export/docx")
-def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+def export_report_docx(report_id: int, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     report = _report_access(db, report_id, current_user)
     if report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
@@ -278,14 +314,15 @@ def export_report_docx(report_id: int, db: Session = Depends(auth.get_db), curre
         'Content-Disposition': f'attachment; filename="{filename}"',
         'Access-Control-Expose-Headers': 'Content-Disposition'
     }
+    _audit(db, current_user.id, "report_export_docx", f"id={report_id}", _client_ip(request))
     return StreamingResponse(
-        content=stream, 
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+        content=stream,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers=headers
     )
 
 @router.get("/api/reports/{report_id}/export/pdf")
-def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+def export_report_pdf(report_id: int, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     report = _report_access(db, report_id, current_user)
     if report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
@@ -318,21 +355,24 @@ def export_report_pdf(report_id: int, db: Session = Depends(auth.get_db), curren
         'Content-Disposition': f'attachment; filename="{filename}"',
         'Access-Control-Expose-Headers': 'Content-Disposition'
     }
+    _audit(db, current_user.id, "report_export_pdf", f"id={report_id}", _client_ip(request))
     return StreamingResponse(
-        content=stream, 
-        media_type="application/pdf", 
+        content=stream,
+        media_type="application/pdf",
         headers=headers
     )
 
 @router.delete("/api/reports/{report_id}")
-def delete_report(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+def delete_report(report_id: int, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
     db_report = _report_access(db, report_id, current_user)
     if db_report is None:
         raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
     if db_report.owner_id != current_user.id and current_user.role not in ("SUPER_ADMIN", "ADMIN", "COMPANY_ADMIN"):
         raise HTTPException(status_code=403, detail="Csak a saját jegyzőkönyvedet törölheted.")
+    title = db_report.title
     db.delete(db_report)
     db.commit()
+    _audit(db, current_user.id, "report_delete", f"id={report_id} title={title!r}", _client_ip(request))
     return {"message": "Report successfully deleted"}
 
 
@@ -623,3 +663,110 @@ def send_report_email(report_id: int, email_data: schemas.EmailRequest, db: Sess
         print(f"ATTACHMENT: {filename} ({len(doc_bytes)} bytes)")
         return {"message": "Email sikeresen elküldve! (Szimulált üzemmód SMTP hiányában)"}
 
+
+
+# ── Verziókezelés ─────────────────────────────────────────────────────────────
+
+@router.post("/api/reports/{report_id}/snapshot")
+def create_snapshot(report_id: int, request: Request, note: Optional[str] = None, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Manuális pillanatkép mentés."""
+    report = _report_access(db, report_id, current_user)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    entry = _create_report_snapshot(db, report, current_user.id, note=note or "kézi mentés")
+    _audit(db, current_user.id, "report_snapshot", f"id={report_id} v={entry.version_num}", _client_ip(request))
+    return {"id": entry.id, "version_num": entry.version_num, "note": entry.note, "created_at": entry.created_at.isoformat()}
+
+
+@router.get("/api/reports/{report_id}/versions")
+def list_versions(report_id: int, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Verziónapló listázása (tartalom nélkül)."""
+    report = _report_access(db, report_id, current_user)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    versions = db.query(database.ReportVersion).filter(
+        database.ReportVersion.report_id == report_id
+    ).order_by(database.ReportVersion.version_num.desc()).all()
+    return [
+        {
+            "id": v.id,
+            "version_num": v.version_num,
+            "note": v.note,
+            "created_by": v.created_by,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+        }
+        for v in versions
+    ]
+
+
+@router.post("/api/reports/{report_id}/versions/{version_id}/restore")
+def restore_version(report_id: int, version_id: int, request: Request, db: Session = Depends(auth.get_db), current_user: database.User = Depends(auth.get_current_user)):
+    """Visszaállítás egy korábbi verzióra (csak DRAFT státuszú jelentésnél)."""
+    report = _report_access(db, report_id, current_user)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Jegyzőkönyv nem található.")
+    if report.status == "FINAL":
+        raise HTTPException(status_code=400, detail="Véglegesített jegyzőkönyv nem állítható vissza. Másolatot készíts belőle.")
+    version = db.query(database.ReportVersion).filter(
+        database.ReportVersion.id == version_id,
+        database.ReportVersion.report_id == report_id,
+    ).first()
+    if version is None:
+        raise HTTPException(status_code=404, detail="Verzió nem található.")
+
+    # Snapshot a visszaállítás előtti állapotról
+    _create_report_snapshot(db, report, current_user.id, note=f"auto: visszaállítás v{version.version_num} előtt")
+
+    snap = version.snapshot or {}
+    SKIP = {"id", "owner_id", "created_at", "updated_at", "finalized_at", "status"}
+    for col in report.__table__.columns:
+        if col.name in SKIP:
+            continue
+        if col.name in snap:
+            setattr(report, col.name, snap[col.name])
+    db.commit()
+    db.refresh(report)
+    _audit(db, current_user.id, "report_restore", f"id={report_id} from_version={version.version_num}", _client_ip(request))
+    return {"message": f"Visszaállítva a(z) {version.version_num}. verzióra.", "report_id": report_id}
+
+
+# ── Audit log ─────────────────────────────────────────────────────────────────
+
+@router.get("/api/audit-logs")
+def get_audit_logs(
+    skip: int = 0,
+    limit: int = 100,
+    user_id: Optional[int] = None,
+    action: Optional[str] = None,
+    db: Session = Depends(auth.get_db),
+    current_user: database.User = Depends(auth.get_current_user),
+):
+    """Audit napló lekérdezés (ADMIN / COMPANY_ADMIN / SUPER_ADMIN)."""
+    if current_user.role not in ("SUPER_ADMIN", "ADMIN", "COMPANY_ADMIN"):
+        raise HTTPException(status_code=403, detail="Nincs jogosultságod az audit naplóhoz.")
+    q = db.query(database.AuditLog)
+    if current_user.role == "COMPANY_ADMIN":
+        company_user_ids = [
+            u.id for u in db.query(database.User).filter(database.User.company_id == current_user.company_id).all()
+        ]
+        q = q.filter(database.AuditLog.user_id.in_(company_user_ids))
+    if user_id is not None:
+        q = q.filter(database.AuditLog.user_id == user_id)
+    if action:
+        q = q.filter(database.AuditLog.action.ilike(f"%{action}%"))
+    total = q.count()
+    logs = q.order_by(database.AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+    return {
+        "total": total,
+        "items": [
+            {
+                "id": l.id,
+                "user_id": l.user_id,
+                "action": l.action,
+                "detail": l.detail,
+                "ip": l.ip,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+            }
+            for l in logs
+        ],
+    }

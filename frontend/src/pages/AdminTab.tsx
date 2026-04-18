@@ -1,10 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../lib/apiBaseUrl';
-import { fetchCurrentUser, type CurrentUserDto } from '../lib/api';
+import { fetchCurrentUser, fetchAuditLogs, type CurrentUserDto, type AuditLogItem } from '../lib/api';
 import { SignedOutCallout } from '../components/ui/SignedOutCallout';
 import { PageHeader } from '../components/ui/PageHeader';
 import { vbf } from '../lib/vbfUi';
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  login_ok: '🔓 Bejelentkezés',
+  login_fail: '⛔ Sikertelen belépés',
+  register: '✅ Regisztráció',
+  report_create: '📄 Jkv. létrehozva',
+  report_finalize: '🔒 Jkv. véglegesítve',
+  report_delete: '🗑️ Jkv. törölve',
+  report_export_docx: '📥 DOCX export',
+  report_export_pdf: '📥 PDF export',
+  report_snapshot: '📷 Pillanatkép',
+  report_restore: '↩️ Visszaállítás',
+  delete_account: '❌ Fiók törlés',
+};
+
+function fmtDate(iso: string | null) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' }); }
+  catch { return iso; }
+}
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'COMPANY_ADMIN']);
 
@@ -12,6 +32,11 @@ export default function AdminTab() {
   const [user, setUser] = useState<CurrentUserDto | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditFilter, setAuditFilter] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('vbf_token');
@@ -143,6 +168,88 @@ export default function AdminTab() {
             </div>
           </div>
         </div>
+
+        {/* Audit napló */}
+        {ADMIN_ROLES.has(user?.role ?? '') && (
+          <div className="mt-6 rounded-xl border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-panel)_80%,transparent)] overflow-hidden shadow-sm">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-[var(--color-bg-input)] transition-colors"
+              onClick={() => {
+                setAuditOpen((v) => !v);
+                if (!auditOpen) {
+                  setAuditLoading(true);
+                  fetchAuditLogs({ limit: 100 })
+                    .then((r) => { setAuditLogs(r.items); setAuditTotal(r.total); })
+                    .catch(() => {})
+                    .finally(() => setAuditLoading(false));
+                }
+              }}
+            >
+              <span className="font-semibold text-[var(--color-text-main)]">🔍 Audit napló</span>
+              <span className="text-xs text-[var(--color-text-muted)]">{auditOpen ? '▲ Összecsuk' : '▼ Megnyit'}</span>
+            </button>
+            {auditOpen && (
+              <div className="px-6 pb-6 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    type="text"
+                    className="h-9 rounded-lg border border-[var(--border-color)] bg-[var(--color-bg-input)] px-3 text-sm focus:outline-none focus:border-[var(--primary)]"
+                    placeholder="Szűrés (pl. report_create, login...)"
+                    value={auditFilter}
+                    onChange={(e) => setAuditFilter(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="h-9 rounded-lg border border-[var(--border-color)] bg-[var(--color-bg-card)] px-3 text-sm hover:bg-[var(--color-bg-input)] transition-colors"
+                    onClick={() => {
+                      setAuditLoading(true);
+                      fetchAuditLogs({ limit: 200, action: auditFilter || undefined })
+                        .then((r) => { setAuditLogs(r.items); setAuditTotal(r.total); })
+                        .catch(() => {})
+                        .finally(() => setAuditLoading(false));
+                    }}
+                  >
+                    Frissítés
+                  </button>
+                  <span className="text-xs text-[var(--color-text-muted)]">Összes: {auditTotal}</span>
+                </div>
+                {auditLoading && <p className="text-xs text-[var(--color-text-muted)]">Betöltés…</p>}
+                {!auditLoading && auditLogs.length === 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)]">Nincsenek naplóbejegyzések.</p>
+                )}
+                {auditLogs.length > 0 && (
+                  <div className="overflow-x-auto rounded-lg border border-[var(--border-color)]">
+                    <table className="w-full text-xs text-left border-collapse min-w-[640px]">
+                      <thead>
+                        <tr className="bg-[var(--color-bg-card)] border-b border-[var(--border-color)]">
+                          <th className="px-3 py-2 font-semibold w-36">Dátum</th>
+                          <th className="px-3 py-2 font-semibold w-16">User ID</th>
+                          <th className="px-3 py-2 font-semibold w-44">Esemény</th>
+                          <th className="px-3 py-2 font-semibold">Részletek</th>
+                          <th className="px-3 py-2 font-semibold w-28">IP</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditLogs.map((log) => (
+                          <tr key={log.id} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)] hover:bg-[color-mix(in_srgb,var(--primary)_4%,var(--color-bg-input))] transition-colors">
+                            <td className="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">{fmtDate(log.created_at)}</td>
+                            <td className="px-3 py-2 text-[var(--color-text-muted)] text-center">{log.user_id ?? '—'}</td>
+                            <td className="px-3 py-2 font-medium">
+                              {AUDIT_ACTION_LABELS[log.action] ?? log.action}
+                            </td>
+                            <td className="px-3 py-2 text-[var(--color-text-muted)] truncate max-w-[280px]" title={log.detail ?? ''}>{log.detail || '—'}</td>
+                            <td className="px-3 py-2 text-[var(--color-text-muted)] font-mono">{log.ip || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       )}
     </div>
   );

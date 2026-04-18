@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ReportVersionsPanel } from "../components/reports/ReportVersionsPanel";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
@@ -46,6 +47,7 @@ export default function ReportTab() {
   const [templateSelect, setTemplateSelect] = useState("");
   const [userTemplates, setUserTemplates] = useState(() => loadUserReportTemplates());
   const [touched, setTouched] = useState<Partial<Record<ReportFieldKey, boolean>>>({});
+  const [versionsOpen, setVersionsOpen] = useState(false);
 
   const touch = (k: ReportFieldKey) => setTouched((t) => ({ ...t, [k]: true }));
 
@@ -760,6 +762,28 @@ export default function ReportTab() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Verziónapló */}
+        {localStorage.getItem('vbf_last_report_id') && (
+          <div className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 py-3 px-4 cursor-pointer select-none"
+                onClick={() => setVersionsOpen((v) => !v)}>
+                <CardTitle className="text-base m-0 flex-1">🕐 Verziónapló</CardTitle>
+                <span className="text-xs text-[var(--color-text-muted)]">{versionsOpen ? '▲ Összecsuk' : '▼ Megnyit'}</span>
+              </CardHeader>
+              {versionsOpen && (
+                <CardContent className="pt-0">
+                  <ReportVersionsPanel
+                    reportId={Number(localStorage.getItem('vbf_last_report_id'))}
+                    locked={locked}
+                    onRestored={() => { /* full reload handled by Layout autosave */ }}
+                  />
+                </CardContent>
+              )}
+            </Card>
+          </div>
+        )}
       </div>
     </fieldset>
   );

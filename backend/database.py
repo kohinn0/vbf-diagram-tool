@@ -271,6 +271,18 @@ class PendingOrder(Base):
     reminder_sent_at = Column(DateTime, nullable=True)  # határidő emlékeztető elküldve
 
 
+class ReportVersion(Base):
+    """Verziókezelt pillanatkép (snapshot) egy jegyzőkönyvről."""
+    __tablename__ = "report_versions"
+    id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_num = Column(Integer, nullable=False)  # szekvenciális a jelentésen belül
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    snapshot = Column(JSON, nullable=False)  # a Report összes mezőjének másolata
+    note = Column(String, nullable=True)     # pl. "auto: véglegesítés előtt" / kézi megjegyzés
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ReportShareToken(Base):
     """Jegyzőkönyv megosztás: read-only link token alapján."""
     __tablename__ = "report_share_tokens"

@@ -517,3 +517,64 @@ export async function deleteMyAccount(): Promise<{ message: string }> {
   }
   return data as { message: string };
 }
+
+// ── Verziókezelés ─────────────────────────────────────────────────────────────
+
+export interface ReportVersionMeta {
+  id: number;
+  version_num: number;
+  note: string | null;
+  created_by: number | null;
+  created_at: string | null;
+}
+
+export async function listReportVersions(reportId: number): Promise<ReportVersionMeta[]> {
+  const res = await fetch(`${API_BASE_URL}/api/reports/${reportId}/versions`, { headers: getAuthHeader() });
+  if (!res.ok) throw new Error('Verziók lekérése sikertelen.');
+  return res.json();
+}
+
+export async function createReportSnapshot(reportId: number, note?: string): Promise<ReportVersionMeta> {
+  const url = new URL(`${API_BASE_URL}/api/reports/${reportId}/snapshot`);
+  if (note) url.searchParams.set('note', note);
+  const res = await fetch(url.toString(), { method: 'POST', headers: getAuthHeader() });
+  if (!res.ok) throw new Error('Snapshot mentése sikertelen.');
+  return res.json();
+}
+
+export async function restoreReportVersion(reportId: number, versionId: number): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/reports/${reportId}/versions/${versionId}/restore`, {
+    method: 'POST',
+    headers: getAuthHeader(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { detail?: string }).detail || 'Visszaállítás sikertelen.');
+  return data as { message: string };
+}
+
+// ── Audit log ─────────────────────────────────────────────────────────────────
+
+export interface AuditLogItem {
+  id: number;
+  user_id: number | null;
+  action: string;
+  detail: string | null;
+  ip: string | null;
+  created_at: string | null;
+}
+
+export interface AuditLogsResponse {
+  total: number;
+  items: AuditLogItem[];
+}
+
+export async function fetchAuditLogs(params?: { skip?: number; limit?: number; action?: string; user_id?: number }): Promise<AuditLogsResponse> {
+  const url = new URL(`${API_BASE_URL}/api/audit-logs`);
+  if (params?.skip) url.searchParams.set('skip', String(params.skip));
+  if (params?.limit) url.searchParams.set('limit', String(params.limit));
+  if (params?.action) url.searchParams.set('action', params.action);
+  if (params?.user_id) url.searchParams.set('user_id', String(params.user_id));
+  const res = await fetch(url.toString(), { headers: getAuthHeader() });
+  if (!res.ok) throw new Error('Audit napló lekérése sikertelen.');
+  return res.json();
+}
