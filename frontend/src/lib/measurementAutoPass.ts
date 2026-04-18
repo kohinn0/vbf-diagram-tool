@@ -20,7 +20,23 @@ const IA_MULT: Record<string, number> = {
   GL: 6,
 };
 
-export function calcZsMax(deviceType: string, inRating: string): number | null {
+/** TN rendszerek, ahol a Zs ≤ U0×0,95/Ia formula alkalmazható */
+const TN_SYSTEMS = new Set(['TN-S', 'TN-C', 'TN-C-S', 'TN']);
+
+/**
+ * TT/IT rendszernél a Zs formula nem alkalmazható — TT-nél Ra×IΔn ≤ 50V
+ * (IEC 60364-4-41 §411.5.3), IT-nél szigetelt semleges. Visszatér null-lal.
+ */
+export function calcZsMax(
+  deviceType: string,
+  inRating: string,
+  systemType = ''
+): number | null {
+  const sys = systemType?.trim().toUpperCase();
+  if (sys && !TN_SYSTEMS.has(sys.replace('-', '-'))) {
+    // TT, IT, vagy ismeretlen — TN-alapú formula nem alkalmazható
+    if (sys === 'TT' || sys === 'IT') return null;
+  }
   const mult = IA_MULT[deviceType?.trim().toUpperCase()];
   const inA = parseFloat(String(inRating ?? '').replace(',', '.'));
   if (!mult || !isFinite(inA) || inA <= 0) return null;
@@ -30,9 +46,10 @@ export function calcZsMax(deviceType: string, inRating: string): number | null {
 export function zsAutoPass(
   zs: string,
   deviceType: string,
-  inRating: string
+  inRating: string,
+  systemType = ''
 ): 'Igen' | 'Nem' | null {
-  const zsMax = calcZsMax(deviceType, inRating);
+  const zsMax = calcZsMax(deviceType, inRating, systemType);
   if (zsMax === null) return null;
   const zsVal = parseFloat(String(zs ?? '').replace(',', '.'));
   if (!isFinite(zsVal)) return null;

@@ -172,7 +172,17 @@ export const useDraftStore = create<DraftState>()(
       updateMeasurementData: (key, value) =>
         set((state) => {
           if (state.reportStatus === 'FINAL') return state;
-          return { measurementsData: { ...state.measurementsData, [key]: value } };
+          const newMeasData = { ...state.measurementsData, [key]: value };
+          // Ha a rendszer típusa változik, az összes Zs sort újraszámoljuk
+          if (key === 'inSystemType') {
+            const loopRows = state.loopRows.map((r) => {
+              const row = r as Record<string, string>;
+              const auto = zsAutoPass(row.zs, row.device_type, row.in_rating, value);
+              return auto !== null ? { ...row, pass: auto } as typeof r : r;
+            });
+            return { measurementsData: newMeasData, loopRows };
+          }
+          return { measurementsData: newMeasData };
         }),
 
       updateVisualCheck: (key, value) =>
@@ -239,7 +249,8 @@ export const useDraftStore = create<DraftState>()(
               const rid = (r as Record<string, string> & { id?: string }).id;
               if (rid !== id) return r;
               const merged = { ...r, ...updates } as Record<string, string>;
-              const auto = zsAutoPass(merged.zs, merged.device_type, merged.in_rating);
+              const systemType = state.measurementsData['inSystemType'] || '';
+              const auto = zsAutoPass(merged.zs, merged.device_type, merged.in_rating, systemType);
               if (auto !== null) merged.pass = auto;
               return merged as LoopRow;
             }),

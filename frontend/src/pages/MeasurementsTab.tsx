@@ -400,6 +400,27 @@ export default function MeasurementsTab() {
           <div>
             <h3 className="text-lg font-bold text-[var(--color-text-main)] mb-2 pb-2 border-b border-[var(--border-color)]">2. Hurokellenállás (Zs) — §61.3.6</h3>
             <p className="text-sm text-[var(--color-text-muted)] mb-3">Kézi sorok; PADFX import is ide tölt. A generált Word táblázat oszlopai: áramkör, készülék, hely, Zs, megfelel.</p>
+            {(() => {
+              const sys = measurementsData['inSystemType'] || '';
+              if (sys === 'TT') return (
+                <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                  <span className="shrink-0 font-bold">TT rendszer:</span>
+                  <span>A Zs ≤ U₀×0,95/Ia formula TT rendszernél nem alkalmazható. Védelmet FI-relé (ÁVK) biztosít: Ra×IΔn ≤ 50 V (IEC 60364-4-41 §411.5.3). Az automatikus Megfelel számítás ki van kapcsolva — töltsd ki az RCD táblát.</span>
+                </div>
+              );
+              if (sys === 'IT') return (
+                <div className="mb-3 flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/8 px-3 py-2 text-xs text-blue-700 dark:text-blue-300">
+                  <span className="shrink-0 font-bold">IT rendszer:</span>
+                  <span>Elszigetelt semleges — az első földhiba nem okoz veszélyes érintési feszültséget. A hurokellenállás mérés elvégezhető, de az automatikus küszöbértékelés nem alkalmazható. Ellenőrizd a szigetelés-figyelőt (IMD).</span>
+                </div>
+              );
+              if (!sys) return (
+                <div className="mb-3 flex items-start gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--color-bg-card)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+                  <span>Tipp: a Bejövő paraméterek &rarr; Rendszer típusa (TN-S/TN-C/TT/IT) megadásával az automatikus Zs_max számítás pontosabb lesz.</span>
+                </div>
+              );
+              return null;
+            })()}
             <div className="w-full overflow-x-auto border border-[var(--border-color)] rounded-[var(--radius-vbf)] mb-3">
               <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
@@ -416,7 +437,7 @@ export default function MeasurementsTab() {
                 </thead>
                 <tbody>
                   {loopRows.map((row) => {
-                    const zsMax = calcZsMax(row.device_type || '', row.in_rating || '');
+                    const zsMax = calcZsMax(row.device_type || '', row.in_rating || '', measurementsData['inSystemType'] || '');
                     return (
                     <tr key={rowId(row)} className="border-b border-[var(--border-color)] bg-[var(--color-bg-input)]">
                       <td className="p-2">
